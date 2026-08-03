@@ -1044,6 +1044,34 @@ function goToNextQuestion(mode) {
 }
 
 const CELEBRATE_EMOJI = ['⭐', '✨', '🎉', '🎆', '🌟', '💫'];
+const FIREWORK_EMOJI = ['🎆', '🎇', '💥', '✨', '⭐'];
+const STAR_SHOWER_EMOJI = ['⭐', '✨', '🌟', '💫'];
+// Batch-of-10-complete effect: a few staggered radial "firework" bursts (reuses the existing
+// .burst/burst-fly radial mechanic, just from several origin points instead of renderCelebration's
+// single center-top one) layered under a wider "star shower" of stars drifting down the whole card
+// (.star-fall/star-fall-drift) — deliberately a different look from renderCelebration's single burst,
+// so mastering a node and finishing a batch don't feel like the same animation.
+function renderFireworksStarShower() {
+  const origins = [{ left: 22, top: 18 }, { left: 50, top: 8 }, { left: 78, top: 20 }];
+  const fireworks = origins.map((o, gi) => Array.from({ length: 8 }, () => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 90;
+    const dx = Math.round(Math.cos(angle) * dist);
+    const dy = Math.round(Math.sin(angle) * dist);
+    const delay = (gi * 0.25 + Math.random() * 0.15).toFixed(2);
+    const emoji = FIREWORK_EMOJI[Math.floor(Math.random() * FIREWORK_EMOJI.length)];
+    return `<span class="burst" style="left:${o.left}%;top:${o.top}px;--dx:${dx}px;--dy:${dy}px;animation-delay:${delay}s">${emoji}</span>`;
+  }).join('')).join('');
+  const stars = Array.from({ length: 18 }, () => {
+    const left = Math.round(Math.random() * 100);
+    const drift = Math.round((Math.random() - 0.5) * 60);
+    const delay = (Math.random() * 0.7).toFixed(2);
+    const duration = (1.4 + Math.random() * 0.9).toFixed(2);
+    const emoji = STAR_SHOWER_EMOJI[Math.floor(Math.random() * STAR_SHOWER_EMOJI.length)];
+    return `<span class="star-fall" style="left:${left}%;--drift:${drift}px;animation-delay:${delay}s;animation-duration:${duration}s">${emoji}</span>`;
+  }).join('');
+  return fireworks + stars;
+}
 function renderCelebration(code) {
   const particles = Array.from({ length: 24 }, () => {
     const angle = Math.random() * Math.PI * 2;
@@ -1075,6 +1103,7 @@ function renderBatchReport() {
   const repeatLabel = mode === 'node' ? `🔁 Another batch (${fixedCode})` : mode === 'reading' ? '🔁 Continue' : '🔁 Another batch';
   return `
     <div class="celebrate">
+      ${renderFireworksStarShower()}
       <h2>📊 Batch complete</h2>
       <p>${batchCorrect} / ${batchCount} correct</p>
       <div class="next-choices">

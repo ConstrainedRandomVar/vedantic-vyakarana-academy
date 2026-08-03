@@ -66,6 +66,13 @@
    0%{transform:translate(-50%,-50%) scale(.3);opacity:1}
    100%{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15);opacity:0}
  }
+ .star-fall{position:absolute;top:-24px;font-size:20px;pointer-events:none;
+   animation:star-fall-drift linear forwards;}
+ @keyframes star-fall-drift{
+   0%{transform:translateY(0) translateX(0) rotate(0deg);opacity:0}
+   12%{opacity:1}
+   100%{transform:translateY(240px) translateX(var(--drift,0px)) rotate(360deg);opacity:0}
+ }
 </style></head><body>
 <header><h1>Vyākaraṇa Quiz <small>— Khan Academy for Vedāntic Sanskrit</small></h1></header>
 <div id="app">loading…</div>

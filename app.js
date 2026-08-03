@@ -278,6 +278,7 @@ function buildOptions(item, code) {
   if (item.kind === 'taddhita') return buildTaddhitaOptions(item);
   if (item.kind === 'spot') return buildSpotOptions(item);
   if (item.kind === 'meaning') return buildMeaningOptions(item);
+  if (item.subtype === 'spotlopa') return buildSpotOptions(item); // same shape as spot: kRt/taddhita items
   if (item.subtype === 'lopa') return buildLopaOptions(item);
   if (item.subtype === 'fullsplit') return buildFullSplitOptions(item);
   if (item.code === 'ABT' || item.askSplit) return buildSplitOptions(item);
@@ -780,6 +781,7 @@ function questionSignature(item) {
   if (item.kind === 'spot') return `spot:${item.subtype}:${item.ref}:${item.targetWord}`;
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
+  if (item.subtype === 'spotlopa') return `spotlopa:${item.ref}:${item.targetWord}`;
   if (item.subtype === 'lopa') return `lopa:${item.code}:${item.before.join('+')}`;
   if (item.subtype === 'fullsplit') return `pch:${item.ref}:${item.surface}`;
   return `sdh:${item.code}:${item.before.join('+')}:${item.after}`;
@@ -1245,6 +1247,12 @@ function renderPrompt(item) {
   if (item.subtype === 'fullsplit') {
     return `<div class="prompt">${esc(item.surface)}</div>
       <div class="prompt-hint">Split this into all its original words.</div>${ctxLine}${srcLine}`;
+  }
+  if (item.subtype === 'spotlopa') {
+    const hint = item.code === 'VSL' ? 'Which word here is missing its visarga (due to sandhi with the next word)?'
+      : 'Which word here has silently absorbed a leading vowel from the previous word?';
+    return `<div class="prompt spot-prompt">${esc(item.context)}</div>
+      <div class="prompt-hint">${hint}</div>${srcLine}`;
   }
   if (item.subtype === 'lopa') {
     return `<div class="prompt">${esc(item.before[0])} <span class="plus">+</span> ${esc(item.before[1])}</div>

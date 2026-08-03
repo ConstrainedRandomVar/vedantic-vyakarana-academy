@@ -11,6 +11,7 @@ const LABELS = {
   ABT: 'no-sandhi word boundary', SAMASA: 'samāsa classification',
   VIB: 'vibhakti (case-ending)', DHT: 'dhātu (verb-ending/tense)', MNG: 'word meaning',
   KRT: 'kṛt-pratyaya (kṛdanta)', TAD: 'taddhita-pratyaya (secondary derivation)',
+  PCH: 'padaccheda (full word-split)',
 };
 // Student-facing labels for samāsa categories — the internal strings (from classify_samasa.js)
 // are debug-oriented, mixing English/Devanāgarī for the survey that produced them.
@@ -278,6 +279,7 @@ function buildOptions(item, code) {
   if (item.kind === 'spot') return buildSpotOptions(item);
   if (item.kind === 'meaning') return buildMeaningOptions(item);
   if (item.subtype === 'lopa') return buildLopaOptions(item);
+  if (item.subtype === 'fullsplit') return buildFullSplitOptions(item);
   if (item.code === 'ABT' || item.askSplit) return buildSplitOptions(item);
   return buildSandhiOptions(item, code);
 }
@@ -327,6 +329,50 @@ function splitDistractors(item) {
     if (cand !== correctSplit && !out.includes(cand)) out.push(cand);
   }
   return out;
+}
+// Wrong-boundary candidates for ONE junction within a full multi-way split — same near-the-true-
+// cut character-offset approach as splitDistractors (same validSplitOffset combining-mark guard),
+// but returns raw [x, y] piece pairs instead of a formatted "X + Y" string, since the caller needs
+// to splice the pair back into a longer word list, not display it alone. Kept separate from
+// splitDistractors (not refactored to share) to avoid any risk of changing that function's
+// existing, already-tested behavior.
+function nearbyWrongPairs(after, trueBoundary, maxCount) {
+  const out = [];
+  const offsets = shuffle([-3, -2, -1, 1, 2, 3].map(d => trueBoundary + d));
+  for (const k of offsets) {
+    if (out.length >= maxCount) break;
+    if (!validSplitOffset(after, k)) continue;
+    out.push([after.slice(0, k), after.slice(k)]);
+  }
+  for (let k = 1; k < after.length && out.length < maxCount; k++) {
+    if (!validSplitOffset(after, k)) continue;
+    const pair = [after.slice(0, k), after.slice(k)];
+    if (!out.some(([x, y]) => x === pair[0] && y === pair[1])) out.push(pair);
+  }
+  return out;
+}
+// "Find ALL the word boundaries" (padaccheda) question — the whole fused surface is the prompt,
+// options are complete alternative segmentations. Correct = the real word list; each wrong answer
+// perturbs exactly ONE boundary (reusing splitDistractors' near-the-true-cut approach) while
+// keeping every OTHER boundary at its real, correct position — a plausible-looking wrong full
+// segmentation, not scattered noise across the whole string.
+function buildFullSplitOptions(item) {
+  const correct = item.words.join(' + ');
+  const distractors = [];
+  const boundaryOrder = shuffle(item.afters.map((_, i) => i));
+  for (const i of boundaryOrder) {
+    if (distractors.length >= 3) break;
+    const trueBoundary = commonPrefixLen(item.afters[i], item.words[i]);
+    for (const [x, y] of nearbyWrongPairs(item.afters[i], trueBoundary, 3)) {
+      if (distractors.length >= 3) break;
+      const candWords = [...item.words.slice(0, i), x, y, ...item.words.slice(i + 2)];
+      const cand = candWords.join(' + ');
+      if (cand !== correct && !distractors.includes(cand)) distractors.push(cand);
+    }
+  }
+  const shown = [correct, ...distractors];
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
 }
 function buildSplitOptions(item) {
   const correct = item.before[0] + ' + ' + item.before[1];
@@ -735,6 +781,7 @@ function questionSignature(item) {
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
   if (item.subtype === 'lopa') return `lopa:${item.code}:${item.before.join('+')}`;
+  if (item.subtype === 'fullsplit') return `pch:${item.ref}:${item.surface}`;
   return `sdh:${item.code}:${item.before.join('+')}:${item.after}`;
 }
 function pickNextWalkItem() {
@@ -1194,6 +1241,10 @@ function renderPrompt(item) {
   if (item.kind === 'meaning') {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">What does this word mean?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.subtype === 'fullsplit') {
+    return `<div class="prompt">${esc(item.surface)}</div>
+      <div class="prompt-hint">Split this into all its original words.</div>${ctxLine}${srcLine}`;
   }
   if (item.subtype === 'lopa') {
     return `<div class="prompt">${esc(item.before[0])} <span class="plus">+</span> ${esc(item.before[1])}</div>

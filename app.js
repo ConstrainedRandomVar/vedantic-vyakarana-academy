@@ -136,7 +136,12 @@ let enabledSkills = loadEnabledSkills();
 // advancing, and verse-crossing so all three agree on what "the next question" even means once
 // some kinds are filtered out.
 function eligibleIndices(step) {
-  return step.items.map((_, i) => i).filter(i => enabledSkills[step.items[i].kind] !== false);
+  return step.items.map((_, i) => i).filter(i => {
+    const it = step.items[i];
+    // 'spot' items aren't their own toggleable skill — they're the basic-tier question for
+    // whichever node their subtype names (krdanta or taddhita), so they follow THAT toggle.
+    return it.kind === 'spot' ? enabledSkills[it.subtype] !== false : enabledSkills[it.kind] !== false;
+  });
 }
 let walkSteps = []; // flattened {verseRef, verseLabel, moola, section, word, wordIndex, items, defaultItemIndex}[]
 let walkPos = { stepIdx: 0, itemIdx: 0 };
@@ -270,6 +275,7 @@ function buildOptions(item, code) {
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
   if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);
   if (item.kind === 'taddhita') return buildTaddhitaOptions(item);
+  if (item.kind === 'spot') return buildSpotOptions(item);
   if (item.kind === 'meaning') return buildMeaningOptions(item);
   if (item.subtype === 'lopa') return buildLopaOptions(item);
   if (item.code === 'ABT' || item.askSplit) return buildSplitOptions(item);
@@ -574,6 +580,16 @@ function buildTaddhitaOptions(item) {
   return { options, correctIndex: options.indexOf(correct) };
 }
 
+// ---- "spot the word" (basic tier for kṛdanta/taddhita — recognition, not yet naming the
+// pratyaya): options are real OTHER words from the SAME sentence, baked in at build time
+// (build_reading_walk.js), not drawn from a chapter-wide pool — an unrelated word from a
+// different verse would make the question meaningless. Only the display order is randomized here.
+function buildSpotOptions(item) {
+  const correct = item.targetWord;
+  const options = shuffle([correct, ...item.distractorWords]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
 // ---- word-meaning (fallback axis) ----
 function buildMeaningOptions(item) {
   const correct = item.meaning;
@@ -715,6 +731,7 @@ function questionSignature(item) {
     return `krt:${item.word}:${item.pratyaya}`;
   }
   if (item.kind === 'taddhita') return `tad:${item.word}:${item.pratyaya}`;
+  if (item.kind === 'spot') return `spot:${item.subtype}:${item.ref}:${item.targetWord}`;
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
   if (item.subtype === 'lopa') return `lopa:${item.code}:${item.before.join('+')}`;
@@ -1169,6 +1186,11 @@ function renderPrompt(item) {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">Which taddhita-pratyaya (secondary derivation) formed this word?</div>${ctxLine}${srcLine}`;
   }
+  if (item.kind === 'spot') {
+    const hint = item.subtype === 'krdanta' ? 'Which word here is a kṛdanta (participle)?' : 'Which word here is taddhita-derived (secondary derivation)?';
+    return `<div class="prompt spot-prompt">${esc(item.context)}</div>
+      <div class="prompt-hint">${hint}</div>${srcLine}`;
+  }
   if (item.kind === 'meaning') {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">What does this word mean?</div>${ctxLine}${srcLine}`;
@@ -1258,6 +1280,11 @@ function renderQuiz() {
       const correct = i === correctIndex;
       playAnswerSound(correct);
       const { justMastered } = recordAnswer(code, correct);
+      // A 'spot' item built from a real kṛdanta+taddhita co-occurrence (creditBoth) tests telling
+      // BOTH categories apart, not just one — so it credits both nodes' streaks, not only the one
+      // named in its own `code`. (No second celebration screen if the other node also masters on
+      // this exact answer — that's an acceptable, deliberately unhandled rare coincidence, not a bug.)
+      if (item.kind === 'spot' && item.creditBoth) recordAnswer(code === 'KRT' ? 'TAD' : 'KRT', correct);
       session.batchCount++;
       if (correct) session.batchCorrect++;
       if (session.batchCount === BATCH_SIZE) setTimeout(playBatchCompleteSound, 400);

@@ -1,0 +1,10 @@
+{
+  "name": "Vyākaraṇa Quiz — Khan Academy for Vedāntic Sanskrit",
+  "short_name": "Vyākaraṇa Quiz",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#3a2f2a",
+  "icons": []
+}

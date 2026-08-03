@@ -1,0 +1,80 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Vyākaraṇa Quiz</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3a2f2a">
+<style>
+ body{font-family:system-ui,sans-serif;margin:0;background:#faf9f7;color:#222}
+ header{background:#3a2f2a;color:#fff;padding:12px 18px}
+ header h1{margin:0;font-size:18px;font-weight:600}
+ header small{opacity:.85;font-weight:400}
+ #app{padding:18px;max-width:900px;margin:0 auto}
+ .dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;color:#555;flex-wrap:wrap;gap:10px}
+ .dash-actions{display:flex;gap:8px;flex-wrap:wrap}
+ .primary{font-size:15px;padding:9px 16px;border:none;border-radius:6px;background:#3a2f2a;color:#fff;cursor:pointer}
+ .primary:hover{background:#2a211d}
+ .secondary{font-size:15px;padding:9px 16px;border:1px solid #bbb;border-radius:6px;background:#fff;color:#3a2f2a;cursor:pointer}
+ .secondary:hover{border-color:#3a2f2a}
+ .link{background:none;border:none;color:#217a3c;cursor:pointer;font-size:14px;padding:0}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+ .card{background:#fff;border:1px solid #e3e0da;border-radius:8px;padding:12px 14px;cursor:pointer;transition:box-shadow .1s}
+ .card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+ .card.mastered{border-color:#bfe3c8;background:#f7fdf9}
+ .card-top{display:flex;justify-content:space-between;align-items:center}
+ .card .code{font-weight:700;color:#3a2f2a}
+ .card .label{font-size:12px;color:#7a6a55;margin:2px 0 8px}
+ .picker-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+ .picker-head h2{margin:0;font-size:20px;color:#3a2f2a}
+ .reading-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+ .picker-level{margin-bottom:14px}
+ .picker-level label{display:block;font-size:13px;color:#7a6a55;margin-bottom:4px}
+ .picker-level select{font-size:15px;padding:8px;border:1px solid #bbb;border-radius:6px;width:100%;max-width:360px}
+ .verse-jump{display:flex;gap:6px;margin-top:8px;align-items:center}
+ .verse-jump select{font-size:13px;padding:6px;border:1px solid #bbb;border-radius:6px;flex:1}
+ .deep-toggle{margin-top:16px;font-size:14px;color:#555}
+ .skills-toggle{margin-top:12px;font-size:14px;color:#555;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+ .skills-toggle .skills-head{width:100%;font-size:13px;color:#7a6a55;margin-bottom:2px}
+ .badge{font-size:11px;color:#217a3c;background:#eafaf0;border:1px solid #bfe3c8;border-radius:4px;padding:0 6px}
+ .bar{height:6px;background:#eee;border-radius:3px;overflow:hidden}
+ .fill{height:100%;background:#c9a35a}
+ .card.mastered .fill{background:#3f9e5f}
+ .stats{font-size:11px;color:#888;margin-top:6px}
+ .quiz-head{display:flex;gap:12px;align-items:center;margin-bottom:18px;font-size:14px;flex-wrap:wrap}
+ .quiz-head .code{font-weight:700;color:#3a2f2a}
+ .quiz-head .label{color:#7a6a55}
+ .quiz-head .batch{color:#888;font-variant-numeric:tabular-nums}
+ .quiz-head .streak{margin-left:auto;color:#555}
+ .question{background:#fff;border:1px solid #e3e0da;border-radius:8px;padding:18px;margin-bottom:16px}
+ .prompt{font-size:26px;line-height:1.6}
+ .prompt .plus,.prompt .arrow{color:#999;font-size:20px;margin:0 6px}
+ .prompt-hint{font-size:13px;color:#888;margin-top:2px}
+ .context{font-size:16px;color:#555;margin-top:10px;line-height:1.6}
+ .src{font-size:12px;color:#888;margin-top:8px}
+ .options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+ .opt{font-size:19px;padding:12px;border:1px solid #bbb;border-radius:6px;background:#fff;cursor:pointer}
+ .opt:hover:not(:disabled){border-color:#3a2f2a}
+ .opt.correct{border-color:#3f9e5f;background:#eafaf0;color:#1e5c34}
+ .opt.wrong{border-color:#c0392b;background:#fdecea;color:#a3372a}
+ .opt:disabled{cursor:default}
+ .feedback{font-size:14px;color:#555;min-height:20px;margin-bottom:10px}
+ @media(max-width:480px){.options{grid-template-columns:1fr}}
+ .celebrate{position:relative;text-align:center;padding:26px 10px 10px;overflow:visible}
+ .celebrate h2{margin:0 0 4px;font-size:24px;color:#3a2f2a}
+ .celebrate p{margin:0 0 16px;color:#7a6a55;font-size:14px}
+ .next-choices{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+ .burst{position:absolute;top:36px;left:50%;font-size:24px;pointer-events:none;
+   animation:burst-fly .9s ease-out forwards;}
+ @keyframes burst-fly{
+   0%{transform:translate(-50%,-50%) scale(.3);opacity:1}
+   100%{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15);opacity:0}
+ }
+</style></head><body>
+<header><h1>Vyākaraṇa Quiz <small>— Khan Academy for Vedāntic Sanskrit</small></h1></header>
+<div id="app">loading…</div>
+
+<script src="quiz-items.js"></script>
+<script src="walk-manifest.js"></script>
+<script src="pratipadika_endings.js"></script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body></html>

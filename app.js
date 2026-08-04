@@ -1257,7 +1257,7 @@ function renderPrompt(item) {
   }
   if (item.kind === 'karaka') {
     return `<div class="prompt">${esc(item.word)}</div>
-      <div class="prompt-hint">What kāraka (syntactic role) does this word play in the sentence?</div>${ctxLine}${srcLine}`;
+      <div class="prompt-hint">What is this word's syntactic relation (kāraka or otherwise) to the rest of the sentence?</div>${ctxLine}${srcLine}`;
   }
   if (item.kind === 'spot') {
     const hint = item.subtype === 'krdanta' ? 'Which word here is a kṛdanta (participle)?' : 'Which word here is taddhita-derived (secondary derivation)?';

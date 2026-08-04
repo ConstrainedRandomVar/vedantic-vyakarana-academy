@@ -11,7 +11,7 @@ const LABELS = {
   ABT: 'no-sandhi word boundary', SAMASA: 'samāsa classification',
   VIB: 'vibhakti (case-ending)', DHT: 'dhātu (verb-ending/tense)', MNG: 'word meaning',
   KRT: 'kṛt-pratyaya (kṛdanta)', TAD: 'taddhita-pratyaya (secondary derivation)',
-  PCH: 'padaccheda (full word-split)',
+  PCH: 'padaccheda (full word-split)', KAR: 'kāraka (syntactic role)',
 };
 // Student-facing labels for samāsa categories — the internal strings (from classify_samasa.js)
 // are debug-oriented, mixing English/Devanāgarī for the survey that produced them.
@@ -121,6 +121,7 @@ const SKILL_KINDS = [
   { kind: 'dhatu', label: 'धातु (verb tense/voice)' },
   { kind: 'krdanta', label: 'कृदन्त (participles)' },
   { kind: 'taddhita', label: 'तद्धित (secondary derivation)' },
+  { kind: 'karaka', label: 'कारक (kāraka role)' },
   { kind: 'meaning', label: 'अर्थ (word meaning/translation)' },
 ];
 const SKILLS_KEY = 'sandhiQuizReadingSkills';
@@ -276,6 +277,7 @@ function buildOptions(item, code) {
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
   if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);
   if (item.kind === 'taddhita') return buildTaddhitaOptions(item);
+  if (item.kind === 'karaka') return buildKarakaOptions(item);
   if (item.kind === 'spot') return buildSpotOptions(item);
   if (item.kind === 'meaning') return buildMeaningOptions(item);
   if (item.subtype === 'spotlopa') return buildSpotOptions(item); // same shape as spot: kRt/taddhita items
@@ -627,6 +629,21 @@ function buildTaddhitaOptions(item) {
   return { options, correctIndex: options.indexOf(correct) };
 }
 
+// ---- kāraka (syntactic role) — externally sourced (see build_karaka_data.js), not classified
+// in-house. Same shape as taddhita: 4 options drawn from the chapter's own closed 6-role universe.
+function buildKarakaOptions(item) {
+  const correct = item.role;
+  const recentAnswers = recentAnswersByCode.KAR || [];
+  const pool = shuffle((walkItemPools.karaka || []).filter(r => r !== correct));
+  const distractors = [];
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c) && !recentAnswers.includes(c)) distractors.push(c); }
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c)) distractors.push(c); }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.KAR = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
 // ---- "spot the word" (basic tier for kṛdanta/taddhita — recognition, not yet naming the
 // pratyaya): options are real OTHER words from the SAME sentence, baked in at build time
 // (build_reading_walk.js), not drawn from a chapter-wide pool — an unrelated word from a
@@ -746,9 +763,11 @@ function computeWalkPools() {
   const dhatuTenseItems = allItems.filter(it => it.kind === 'dhatu' && it.subtype === 'tense');
   const krdantaItems = allItems.filter(it => it.kind === 'krdanta' && it.subtype === 'pratyaya');
   const taddhitaItems = allItems.filter(it => it.kind === 'taddhita' && it.subtype === 'pratyaya');
+  const karakaItems = allItems.filter(it => it.kind === 'karaka');
   walkItemPools = {
     krt: [...new Set(krdantaItems.map(it => it.pratyaya))],
     taddhita: [...new Set(taddhitaItems.map(it => it.pratyaya))],
+    karaka: [...new Set(karakaItems.map(it => it.role))],
     stem: [...new Set(vibItems.filter(it => it.subtype === 'stem').map(it => it.lemma))],
     meaning: [...new Set(allItems.filter(it => it.kind === 'meaning').map(it => it.meaning))],
     vibhakti: [...new Set(vibItems.filter(it => it.subtype === 'caseNumber').map(it => it.vibhakti))],
@@ -778,6 +797,7 @@ function questionSignature(item) {
     return `krt:${item.word}:${item.pratyaya}`;
   }
   if (item.kind === 'taddhita') return `tad:${item.word}:${item.pratyaya}`;
+  if (item.kind === 'karaka') return `kar:${item.word}:${item.role}`;
   if (item.kind === 'spot') return `spot:${item.subtype}:${item.ref}:${item.targetWord}`;
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
@@ -1234,6 +1254,10 @@ function renderPrompt(item) {
   if (item.kind === 'taddhita') {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">Which taddhita-pratyaya (secondary derivation) formed this word?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">What kāraka (syntactic role) does this word play in the sentence?</div>${ctxLine}${srcLine}`;
   }
   if (item.kind === 'spot') {
     const hint = item.subtype === 'krdanta' ? 'Which word here is a kṛdanta (participle)?' : 'Which word here is taddhita-derived (secondary derivation)?';

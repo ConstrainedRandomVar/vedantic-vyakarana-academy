@@ -819,9 +819,18 @@ function pickNextWalkItem() {
         askedSignatures.add(questionSignature(item));
         return { item, code: item.code };
       }
+      // kāraka items are unlike every other kind here: each one names a DIFFERENT underlying
+      // sub-word within a fused corpus token (e.g. "प्रोक्तवानहमव्ययम्" = प्रोक्तवान्+अहम्+अव्ययम्,
+      // each with its own role) rather than another facet of the SAME word — so once the step's
+      // one guaranteed (default-rotation) question is spent, remaining unasked kāraka items jump
+      // the queue ahead of other kinds' facets (see the matching stepHasMoreKaraka gate in
+      // advanceWalk/peekNextVerseCrossing that keeps the walk on this step until they're asked).
+      const rest = eligible.filter(i => i !== step.defaultItemIndex);
+      const karakaFirst = rest.filter(i => step.items[i].kind === 'karaka');
+      const others = rest.filter(i => step.items[i].kind !== 'karaka');
       const order = eligible.includes(step.defaultItemIndex)
-        ? [step.defaultItemIndex, ...eligible.filter(i => i !== step.defaultItemIndex)]
-        : eligible;
+        ? [step.defaultItemIndex, ...karakaFirst, ...others]
+        : [...karakaFirst, ...others];
       const itemIdx = order.find(i => !askedSignatures.has(questionSignature(step.items[i])));
       if (itemIdx !== undefined) {
         const item = step.items[itemIdx];
@@ -840,6 +849,13 @@ function pickNextWalkItem() {
   }
   return null; // chapter complete
 }
+// See the comment in pickNextWalkItem: a step can hold kāraka items for several distinct
+// sub-words (fused corpus tokens), and none of them should be skipped just because the step
+// already yielded its one default-rotation question — so the step isn't "done", even outside
+// deep mode, while an eligible kāraka item here hasn't been asked yet.
+function stepHasMoreKaraka(step) {
+  return eligibleIndices(step).some(i => step.items[i].kind === 'karaka' && !askedSignatures.has(questionSignature(step.items[i])));
+}
 // True if advancing past the CURRENT (not-yet-advanced) step/item would move into a different
 // verse, or run off the end of the chapter — decided BEFORE advancing so the answer-feedback
 // screen can choose the right terminal panel for the question just answered.
@@ -847,6 +863,7 @@ function peekNextVerseCrossing() {
   const curStep = walkSteps[walkPos.stepIdx];
   if (!curStep) return true;
   if (session.deep && eligibleIndices(curStep).some(i => i > walkPos.itemIdx)) return false;
+  if (!session.deep && stepHasMoreKaraka(curStep)) return false;
   const nextStep = walkSteps[walkPos.stepIdx + 1];
   return !nextStep || nextStep.verseRef !== curStep.verseRef;
 }
@@ -854,6 +871,7 @@ function advanceWalk() {
   const step = walkSteps[walkPos.stepIdx];
   const nextEligible = step && session.deep ? eligibleIndices(step).find(i => i > walkPos.itemIdx) : undefined;
   if (nextEligible !== undefined) walkPos.itemIdx = nextEligible;
+  else if (step && !session.deep && stepHasMoreKaraka(step)) { /* stay put — more distinct-word kāraka facts remain at this step */ }
   else { walkPos.stepIdx++; walkPos.itemIdx = 0; }
   saveReadingProgress(session.chapterKey, walkPos);
 }

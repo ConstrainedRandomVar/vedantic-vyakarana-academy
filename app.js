@@ -746,15 +746,20 @@ function pickNode(mode, code) {
 }
 
 // ---- reading-walk: load, flatten, position, and step through a chosen chapter ----
-function loadReadingProgress(chapterKey) {
+// Resume position is keyed by chapterKey ALONE for the default 'both' scope (preserves every
+// existing saved resume point unchanged), and by `${chapterKey}::${scope}` for the 'mula'/'bhasya'
+// scopes — those walk a DIFFERENT, differently-sized steps array (see flattenWalk), so a stepIdx
+// saved under one scope would silently point at an unrelated word position under another.
+function readingProgressKey(chapterKey, scope) { return (!scope || scope === 'both') ? chapterKey : `${chapterKey}::${scope}`; }
+function loadReadingProgress(chapterKey, scope) {
   let p = {};
   try { p = JSON.parse(localStorage.getItem(READING_KEY)) || {}; } catch (e) {}
-  return p[chapterKey] || null;
+  return p[readingProgressKey(chapterKey, scope)] || null;
 }
-function saveReadingProgress(chapterKey, pos) {
+function saveReadingProgress(chapterKey, scope, pos) {
   let p = {};
   try { p = JSON.parse(localStorage.getItem(READING_KEY)) || {}; } catch (e) {}
-  p[chapterKey] = pos;
+  p[readingProgressKey(chapterKey, scope)] = pos;
   localStorage.setItem(READING_KEY, JSON.stringify(p));
 }
 function loadWalkDataScript(chapterKey, file) {
@@ -767,11 +772,14 @@ function loadWalkDataScript(chapterKey, file) {
     document.head.appendChild(s);
   });
 }
-function flattenWalk(chapterKey) {
+// scope: 'both' (default) | 'mula' | 'bhasya' — per Harsha's request to read mūla-only or
+// bhāṣya-only, not always both interleaved per verse.
+function flattenWalk(chapterKey, scope) {
   const ch = window.WALK_DATA[chapterKey];
+  const sections = scope === 'mula' ? ['mula'] : scope === 'bhasya' ? ['bhasya'] : ['mula', 'bhasya'];
   const out = [];
   for (const v of ch.verses) {
-    for (const section of ['mula', 'bhasya']) {
+    for (const section of sections) {
       for (const s of v.sections[section].steps) {
         out.push({ verseRef: v.ref, verseLabel: v.label, moola: v.moola, section, ...s });
       }
@@ -882,7 +890,7 @@ function pickNextWalkItem() {
     // 'meaning' turned off). Either way, skip straight to the next word; persist immediately so a
     // reload mid-skip resumes from the position actually being shown, not the one skipped past.
     walkPos = { stepIdx: walkPos.stepIdx + 1, itemIdx: 0 };
-    saveReadingProgress(session.chapterKey, walkPos);
+    saveReadingProgress(session.chapterKey, session.scope, walkPos);
     step = walkSteps[walkPos.stepIdx];
   }
   return null; // chapter complete
@@ -911,7 +919,7 @@ function advanceWalk() {
   if (nextEligible !== undefined) walkPos.itemIdx = nextEligible;
   else if (step && !session.deep && stepHasMoreKaraka(step)) { /* stay put — more distinct-word kāraka facts remain at this step */ }
   else { walkPos.stepIdx++; walkPos.itemIdx = 0; }
-  saveReadingProgress(session.chapterKey, walkPos);
+  saveReadingProgress(session.chapterKey, session.scope, walkPos);
 }
 function continueReadingBatch() {
   advanceWalk();
@@ -928,7 +936,7 @@ function repeatCurrentVerse() {
   const verseRef = curStep ? curStep.verseRef : (walkSteps[walkSteps.length - 1] || {}).verseRef;
   const firstIdx = walkSteps.findIndex(s => s.verseRef === verseRef);
   walkPos = { stepIdx: firstIdx >= 0 ? firstIdx : 0, itemIdx: 0 };
-  saveReadingProgress(session.chapterKey, walkPos);
+  saveReadingProgress(session.chapterKey, session.scope, walkPos);
   session.batchCount = 0;
   session.batchCorrect = 0;
   newQuestion();
@@ -936,8 +944,9 @@ function repeatCurrentVerse() {
 function startReading(chapterKey, opts) {
   const entry = (window.WALK_MANIFEST || []).find(e => e.chapterKey === chapterKey);
   if (!entry) return;
+  const scope = opts.scope || 'both';
   loadWalkDataScript(chapterKey, entry.file).then(() => {
-    walkSteps = flattenWalk(chapterKey);
+    walkSteps = flattenWalk(chapterKey, scope);
     computeWalkPools();
     if (opts.verseRef) {
       const idx = walkSteps.findIndex(s => s.verseRef === opts.verseRef);
@@ -949,11 +958,11 @@ function startReading(chapterKey, opts) {
     } else {
       // plain "continue" — same logical session as before, so keep askedSignatures as-is (it only
       // resets on an actual page reload, since it's in-memory-only, same scope as recentByCode)
-      walkPos = loadReadingProgress(chapterKey) || { stepIdx: 0, itemIdx: 0 };
+      walkPos = loadReadingProgress(chapterKey, scope) || { stepIdx: 0, itemIdx: 0 };
     }
     if (walkPos.stepIdx >= walkSteps.length) walkPos = { stepIdx: 0, itemIdx: 0 }; // stale/out-of-range resume point (e.g. after a content rebuild)
-    session = { mode: 'reading', chapterKey, deep: !!opts.deep, batchCount: 0, batchCorrect: 0 };
-    saveReadingProgress(chapterKey, walkPos); // a verse-jump is itself a valid resume point, persist it immediately
+    session = { mode: 'reading', chapterKey, scope, deep: !!opts.deep, batchCount: 0, batchCorrect: 0 };
+    saveReadingProgress(chapterKey, scope, walkPos); // a verse-jump is itself a valid resume point, persist it immediately
     newQuestion();
   }).catch(err => {
     app.innerHTML = `<div class="celebrate"><h2>⚠ couldn't load this chapter</h2><p>${esc(err.message)}</p>
@@ -1065,13 +1074,13 @@ function groupVersesBySection(chapterEntry) {
 function renderReadingPicker() {
   const manifest = window.WALK_MANIFEST || [];
   const texts = groupManifestByText(manifest);
-  const p = view.picker || (view.picker = { slug: null, chapterKey: null, sectionKey: null });
+  const p = view.picker || (view.picker = { slug: null, chapterKey: null, sectionKey: null, contentScope: 'both' });
   const selectedText = texts.find(t => t.slug === p.slug) || null;
   const selectedChapter = selectedText ? selectedText.chapters.find(c => c.chapterKey === p.chapterKey) : null;
   const sections = selectedChapter ? groupVersesBySection(selectedChapter) : null;
   const selectedSection = sections ? sections.find(s => s.key === p.sectionKey) : null;
   const verseChoices = !selectedChapter ? [] : sections ? (selectedSection ? selectedSection.verses : []) : selectedChapter.verses;
-  const hasProgress = selectedChapter && !!loadReadingProgress(selectedChapter.chapterKey);
+  const hasProgress = selectedChapter && !!loadReadingProgress(selectedChapter.chapterKey, p.contentScope);
 
   app.innerHTML = `
     <div class="picker-head">
@@ -1108,6 +1117,12 @@ function renderReadingPicker() {
       <select id="verseSelect">${verseChoices.map(v => `<option value="${esc(v.ref)}">${esc(v.label)}</option>`).join('')}</select>
       <button class="secondary" data-action="goto" data-key="${selectedChapter.chapterKey}">▶ Go to verse</button>
     </div>` : ''}`}
+    <div class="scope-toggle">
+      <div class="scope-head">Read</div>
+      <label><input type="radio" name="scopeRadio" value="both" ${p.contentScope === 'both' ? 'checked' : ''}> mūlam + bhāṣyam</label>
+      <label><input type="radio" name="scopeRadio" value="mula" ${p.contentScope === 'mula' ? 'checked' : ''}> mūlam only</label>
+      <label><input type="radio" name="scopeRadio" value="bhasya" ${p.contentScope === 'bhasya' ? 'checked' : ''}> bhāṣyam only</label>
+    </div>
     <div class="deep-toggle"><label><input type="checkbox" id="deepToggle"> Go deep — ask every applicable question per word, not just one</label></div>
     <div class="skills-toggle">
       <div class="skills-head">Which skills do you want to be quizzed on?</div>
@@ -1120,14 +1135,18 @@ function renderReadingPicker() {
   if (chapterSelect) chapterSelect.onchange = e => { p.chapterKey = e.target.value || null; p.sectionKey = null; renderReadingPicker(); };
   const sectionSelect = document.getElementById('sectionSelect');
   if (sectionSelect) sectionSelect.onchange = e => { p.sectionKey = e.target.value || null; renderReadingPicker(); };
+  // Re-render on scope change (not just record it) — hasProgress and the Continue/Start over
+  // label depend on which scope's OWN saved resume point exists (see readingProgressKey).
+  app.querySelectorAll('input[name="scopeRadio"]').forEach(r => r.onchange = () => { p.contentScope = r.value; renderReadingPicker(); });
   app.querySelectorAll('[data-action]').forEach(btn => {
     btn.onclick = () => {
       const deep = document.getElementById('deepToggle').checked;
+      const scope = p.contentScope;
       const key = btn.dataset.key;
       if (btn.dataset.action === 'goto') {
-        startReading(key, { deep, verseRef: document.getElementById('verseSelect').value });
+        startReading(key, { deep, scope, verseRef: document.getElementById('verseSelect').value });
       } else {
-        startReading(key, { deep, fromBeginning: btn.dataset.action === 'start' });
+        startReading(key, { deep, scope, fromBeginning: btn.dataset.action === 'start' });
       }
     };
   });

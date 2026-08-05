@@ -277,6 +277,7 @@ function buildOptions(item, code) {
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
   if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);
   if (item.kind === 'taddhita') return buildTaddhitaOptions(item);
+  if (item.kind === 'karaka' && item.subtype === 'associate') return buildKarakaAssociateOptions(item);
   if (item.kind === 'karaka') return buildKarakaOptions(item);
   if (item.kind === 'spot') return buildSpotOptions(item);
   if (item.kind === 'meaning') return buildMeaningOptions(item);
@@ -658,6 +659,16 @@ function buildKarakaOptions(item) {
   const options = shuffle(shown);
   return { options, correctIndex: options.indexOf(correct) };
 }
+// सुप्_समुच्चितम् ("which word does this go with?") — options are real words from the SAME verse,
+// baked in at build time (build_karaka_data.js), same shape as buildSpotOptions: no chapter-wide
+// pool, since an unrelated word from a different verse would make the question meaningless (and,
+// specific to this axis, the build-time exclusion already keeps out any word from the target's own
+// referential cluster — see that script's own comment for why).
+function buildKarakaAssociateOptions(item) {
+  const correct = item.targetWord;
+  const options = shuffle([correct, ...item.distractorWords]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
 
 // ---- "spot the word" (basic tier for kṛdanta/taddhita — recognition, not yet naming the
 // pratyaya): options are real OTHER words from the SAME sentence, baked in at build time
@@ -778,7 +789,7 @@ function computeWalkPools() {
   const dhatuTenseItems = allItems.filter(it => it.kind === 'dhatu' && it.subtype === 'tense');
   const krdantaItems = allItems.filter(it => it.kind === 'krdanta' && it.subtype === 'pratyaya');
   const taddhitaItems = allItems.filter(it => it.kind === 'taddhita' && it.subtype === 'pratyaya');
-  const karakaItems = allItems.filter(it => it.kind === 'karaka');
+  const karakaItems = allItems.filter(it => it.kind === 'karaka' && it.subtype === 'role');
   walkItemPools = {
     krt: [...new Set(krdantaItems.map(it => it.pratyaya))],
     taddhita: [...new Set(taddhitaItems.map(it => it.pratyaya))],
@@ -812,6 +823,7 @@ function questionSignature(item) {
     return `krt:${item.word}:${item.pratyaya}`;
   }
   if (item.kind === 'taddhita') return `tad:${item.word}:${item.pratyaya}`;
+  if (item.kind === 'karaka' && item.subtype === 'associate') return `kar:assoc:${item.word}:${item.targetWord}`;
   if (item.kind === 'karaka') return `kar:${item.word}:${item.role}`;
   if (item.kind === 'spot') return `spot:${item.subtype}:${item.ref}:${item.targetWord}`;
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
@@ -1287,6 +1299,10 @@ function renderPrompt(item) {
   if (item.kind === 'taddhita') {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">Which taddhita-pratyaya (secondary derivation) formed this word?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka' && item.subtype === 'associate') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">This word is conjoined (सुप्_समुच्चितम्) with another word in the verse via "and" — which one?</div>${ctxLine}${srcLine}`;
   }
   if (item.kind === 'karaka') {
     return `<div class="prompt">${esc(item.word)}</div>

@@ -277,7 +277,7 @@ function buildOptions(item, code) {
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
   if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);
   if (item.kind === 'taddhita') return buildTaddhitaOptions(item);
-  if (item.kind === 'karaka' && item.subtype === 'associate') return buildKarakaAssociateOptions(item);
+  if (item.kind === 'karaka' && (item.subtype === 'associate' || item.subtype === 'governor' || item.subtype === 'implied')) return buildKarakaAssociateOptions(item);
   if (item.kind === 'karaka') return buildKarakaOptions(item);
   if (item.kind === 'spot') return buildSpotOptions(item);
   if (item.kind === 'meaning') return buildMeaningOptions(item);
@@ -823,8 +823,19 @@ function questionSignature(item) {
     return `krt:${item.word}:${item.pratyaya}`;
   }
   if (item.kind === 'taddhita') return `tad:${item.word}:${item.pratyaya}`;
-  if (item.kind === 'karaka' && item.subtype === 'associate') return `kar:assoc:${item.word}:${item.targetWord}`;
-  if (item.kind === 'karaka') return `kar:${item.word}:${item.role}`;
+  if (item.kind === 'karaka' && item.subtype === 'associate') return `kar:assoc:${item.ref}:${item.word}:${item.targetWord}`;
+  if (item.kind === 'karaka' && item.subtype === 'governor') return `kar:gov:${item.ref}:${item.word}:${item.targetWord}`;
+  // `wordIndex` (not just word text) disambiguates a repeated GOVERNING word (BG 4.17's triple
+  // बोद्धव्यम्, each with its own elided "(तत्त्वम्)") — item.word alone is identical text for all
+  // three occurrences and would otherwise collide, same collision class as the जन्म fix above.
+  if (item.kind === 'karaka' && item.subtype === 'implied') return `kar:implied:${item.ref}:${item.wordIndex}:${item.role}:${item.targetWord}`;
+  // `ref` (not just word+role) and occurrenceIndex both matter here: without `ref`, the same
+  // word+role recurring in a LATER verse (e.g. सः as कर्ता in two different verses) would collide
+  // and silently never be asked a second time; without occurrenceIndex, two occurrences of the SAME
+  // word+role WITHIN one verse (e.g. BG 4.4's जन्म, कर्ता at both word 2 and word 4 — see
+  // annotateKarakaOccurrences in build_reading_walk.js) would do the same. Absent for the (common)
+  // non-repeating case, so `|| 1` there changes nothing about existing signatures.
+  if (item.kind === 'karaka') return `kar:${item.ref}:${item.word}:${item.role}:${item.occurrenceIndex || 1}`;
   if (item.kind === 'spot') return `spot:${item.subtype}:${item.ref}:${item.targetWord}`;
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
@@ -990,6 +1001,10 @@ let session = null; // {mode:'node'|'adaptive'|'mixed', fixedCode, batchCount, b
 let view = { screen: 'dashboard' };
 
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
 
 function renderDashboard() {
   const masteredN = CODES.filter(c => progress[c].mastered).length;
@@ -1304,9 +1319,20 @@ function renderPrompt(item) {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">This word is conjoined (सुप्_समुच्चितम्) with another word in the verse via "and" — which one?</div>${ctxLine}${srcLine}`;
   }
-  if (item.kind === 'karaka') {
+  if (item.kind === 'karaka' && item.subtype === 'governor') {
     return `<div class="prompt">${esc(item.word)}</div>
-      <div class="prompt-hint">What is this word's syntactic relation (kāraka or otherwise) to the rest of the sentence?</div>${ctxLine}${srcLine}`;
+      <div class="prompt-hint">This word's kāraka role is defined relative to a verb or participle elsewhere in the verse — which one does it attach to?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka' && item.subtype === 'implied') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">This word's ${esc(item.role)} is elided — implied by context, not printed anywhere in this verse. Which word (absent from the text below) supplies it?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka') {
+    const occHint = item.occurrenceTotal > 1
+      ? ` (${ordinal(item.occurrenceIndex)} of ${item.occurrenceTotal} occurrences of "${esc(item.word)}" in this verse${item.line ? `, line ${item.line}` : ''})`
+      : '';
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">What is this word's syntactic relation (kāraka or otherwise) to the rest of the sentence?${occHint}</div>${ctxLine}${srcLine}`;
   }
   if (item.kind === 'spot') {
     const hint = item.subtype === 'krdanta' ? 'Which word here is a kṛdanta (participle)?' : 'Which word here is taddhita-derived (secondary derivation)?';

@@ -631,10 +631,25 @@ function buildTaddhitaOptions(item) {
 
 // ---- kāraka (syntactic role) — externally sourced (see build_karaka_data.js), not classified
 // in-house. Same shape as taddhita: 4 options drawn from the chapter's own closed 6-role universe.
+// समानाधिकरणम् is the merged label for कर्तृ-/कर्मसमानाधिकरणम् when only one of the two occurs in a
+// verse (see build_karaka_data.js) — but when BOTH occur, the verse keeps them distinct instead of
+// folding, so the chapter-wide pool can carry all three strings at once. They must never appear
+// together in one question (as correct answer + distractor either way): समानाधिकरणम् is really just
+// "agrees with something, subtype unspecified" — offering it alongside the specific कर्तृ/कर्म
+// subtype isn't a real wrong answer, it's an ambiguous near-duplicate of the right one. Per Harsha
+// (2026-08-05).
+const KARAKA_MUTUALLY_EXCLUSIVE_GROUPS = [
+  ['समानाधिकरणम्', 'कर्तृसमानाधिकरणम्', 'कर्मसमानाधिकरणम्'],
+];
+function karakaConflictsWith(role) {
+  const group = KARAKA_MUTUALLY_EXCLUSIVE_GROUPS.find(g => g.includes(role));
+  return group ? new Set(group.filter(r => r !== role)) : new Set();
+}
 function buildKarakaOptions(item) {
   const correct = item.role;
   const recentAnswers = recentAnswersByCode.KAR || [];
-  const pool = shuffle((walkItemPools.karaka || []).filter(r => r !== correct));
+  const excluded = karakaConflictsWith(correct);
+  const pool = shuffle((walkItemPools.karaka || []).filter(r => r !== correct && !excluded.has(r)));
   const distractors = [];
   for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c) && !recentAnswers.includes(c)) distractors.push(c); }
   for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c)) distractors.push(c); }

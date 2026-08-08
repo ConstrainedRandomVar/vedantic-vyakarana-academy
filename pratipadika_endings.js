@@ -13,7 +13,10 @@
  * विमत्सरि (इकारान्त), etc. — real declension-class shapes, not real dictionary words.
  *
  * 9 classes supported (confirmed against Harsha's worked example for विमत्सर + generalized to
- * आत्मन्→आतृ for the ऋ case): अ, आ, इ, ई, उ, ऊ, ऋ, न्, स्.
+ * आत्मन्→आतृ for the ऋ case): अ, आ, इ, ई, उ, ऊ, ऋ, न्, स्. ऊ is recognized (MATRA_CLASS) so a real
+ * ऊ-कारान्त word's own class still detects correctly, but excluded from CLASSES/distractor
+ * generation — per Harsha (2026-08-08), ऊ-कारान्त prātipadikas are rare enough that offering one
+ * as a fake distractor reads as an obviously-wrong option rather than a fair test.
  */
 (function (global, factory) {
   var api = factory();
@@ -24,7 +27,7 @@
 
   var HALANT = '्';
   var MATRA_CLASS = { 'ा': 'आ', 'ि': 'इ', 'ी': 'ई', 'ु': 'उ', 'ू': 'ऊ', 'ृ': 'ऋ' };
-  var CLASSES = ['अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ऋ', 'न्', 'स्'];
+  var CLASSES = ['अ', 'आ', 'इ', 'ई', 'उ', 'ऋ', 'न्', 'स्']; // ऊ excluded — see file header comment
 
   // Determines which of the 9 classes a citation-form stem ends in, or null if its ending isn't
   // one of them (e.g. a त्/द्/ष्-final participle) — callers should fall back to a different

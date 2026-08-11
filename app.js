@@ -1619,14 +1619,15 @@ function renderQuiz() {
     : verseComplete ? renderVerseComplete()
     : batchDone ? renderBatchReport()
     : '<button class="primary" id="nextBtn">Next question →</button>';
-  // Mix-it-up AND reading-walk mode are both partly a "which node is this even testing?"
-  // challenge — showing the code/label upfront (e.g. "GUN · guṇa") hands that away before the
-  // learner has looked at the question at all (reading-walk mixes question kinds word-by-word
-  // just like mixed mode does). Applies uniformly to every node kind (sandhi codes, samāsa,
-  // vibhakti, dhātu, kṛdanta, taddhita, kāraka — not special-cased per kind), gated behind an
-  // explicit hint click. 'node' (a single fixed code chosen deliberately) and 'adaptive' still
-  // show it plainly since the learner already knows/chose what they're practicing.
-  const showNodeLabel = (mode !== 'mixed' && mode !== 'reading') || view.hintRevealed;
+  // Mix-it-up, reading-walk, AND adaptive ("Practice") mode are all partly a "which node is this
+  // even testing?" challenge — showing the code/label upfront (e.g. "GUN · guṇa") hands that away
+  // before the learner has looked at the question at all. Adaptive draws a weighted-random code
+  // across ALL nodes each question (pickWeightedNode) — the learner hasn't chosen a specific node
+  // for THIS question any more than mixed mode has, so it gets the same treatment (Harsha,
+  // 2026-08-11: caught this after shipping the mixed/reading fix). Applies uniformly to every node
+  // kind, gated behind an explicit hint click. Only 'node' mode (a single fixed code deliberately
+  // chosen from the dashboard) still shows it plainly, since there's nothing to hide there.
+  const showNodeLabel = mode === 'node' || view.hintRevealed;
   const nodeLabelHtml = showNodeLabel
     ? `<span class="code">${code}</span> <span class="label">${LABELS[code] || ''}</span>`
     : `<button class="link" id="hintBtn">💡 hint</button>`;

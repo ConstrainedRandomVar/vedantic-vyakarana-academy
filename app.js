@@ -8,7 +8,7 @@ const LABELS = {
   SCU: 'ścutva', JSH: 'jaśtva', CAR: 'cartva', ANU: 'anusvāra', PSV: 'parasavarṇa',
   NUD: 'ṅamuṭ', HKC: 'hakāra→caturtha', LAT: 'latva',
   VSS: 'visarga → s', VSR: 'visarga → r', VSO: 'visarga → o', VSL: 'visarga-lopa',
-  ABT: 'no-sandhi word boundary', SAMASA: 'samāsa classification',
+  ABT: 'no-sandhi word boundary', MIX: 'sandhi (rule unclassified)', SAMASA: 'samāsa classification',
   VIB: 'vibhakti (case-ending)', DHT: 'dhātu (verb-ending/tense)', MNG: 'word meaning',
   KRT: 'kṛt-pratyaya (kṛdanta)', TAD: 'taddhita-pratyaya (secondary derivation)',
   PCH: 'padaccheda (full word-split)', KAR: 'kāraka (syntactic role)',
@@ -44,6 +44,29 @@ const MASTERY_TARGET = 10;
 const BATCH_SIZE = 10;
 const STORAGE_KEY = 'sandhiQuizProgress';
 const RECENT_WINDOW = 5;
+
+// ---- "report wrong answer" feature: pre-filled GitHub issue, no backend. Two-tier hide (see
+// isReportHidden()): an instant per-browser hide the moment a report is filed, plus a shipped
+// window.FLAGGED_WRONG list (flagged-wrong.js) Harsha edits once he's reviewed the issue — only
+// entries in THAT file are hidden for every user. ----
+const REPORTER_KEY = 'sandhiQuizReporterName';
+const REPORTER_EMAIL_KEY = 'sandhiQuizReporterEmail';
+const HIDDEN_REPORTS_KEY = 'sandhiQuizHiddenReports';
+function loadReporterName() { return localStorage.getItem(REPORTER_KEY) || ''; }
+function saveReporterName(name) { localStorage.setItem(REPORTER_KEY, name); }
+function loadReporterEmail() { return localStorage.getItem(REPORTER_EMAIL_KEY) || ''; }
+function saveReporterEmail(email) { localStorage.setItem(REPORTER_EMAIL_KEY, email); }
+function loadHiddenReports() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HIDDEN_REPORTS_KEY));
+    if (Array.isArray(saved)) return new Set(saved);
+  } catch (e) { /* fall through to empty set */ }
+  return new Set();
+}
+function saveHiddenReports(set) { localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify([...set])); }
+let hiddenReports = loadHiddenReports();
+const SHIPPED_FLAGGED = new Set(window.FLAGGED_WRONG || []);
+function isReportHidden(key) { return hiddenReports.has(key) || SHIPPED_FLAGGED.has(key); }
 // Single-click flow: after answering, auto-advance instead of waiting for a separate "Next
 // question" click — keeps tempo up, a mishit/mistake is cheap to recover from. Correct answers
 // advance fast (nothing new to read); wrong ones pause a bit longer so the highlighted correct
@@ -140,6 +163,7 @@ let enabledSkills = loadEnabledSkills();
 function eligibleIndices(step) {
   return step.items.map((_, i) => i).filter(i => {
     const it = step.items[i];
+    if (isReportHidden(reportKey(it, null))) return false;
     // 'spot' items aren't their own toggleable skill — they're the basic-tier question for
     // whichever node their subtype names (krdanta or taddhita), so they follow THAT toggle.
     return it.kind === 'spot' ? enabledSkills[it.subtype] !== false : enabledSkills[it.kind] !== false;
@@ -852,6 +876,16 @@ function questionSignature(item) {
   if (item.subtype === 'fullsplit') return `pch:${item.ref}:${item.surface}`;
   return `sdh:${item.code}:${item.before.join('+')}:${item.after}`;
 }
+// A stable key identifying THIS specific question for report/hide purposes — distinct from
+// questionSignature() alone because reading-walk and global-pool items need different
+// disambiguation (see PLANS.md's "report wrong answer" design): reading-walk items are keyed by
+// chapter + signature (questionSignature alone can collide across different texts' same `ref`);
+// global-pool items use their own `id` when present (existing field from build_items.js/
+// build_samasa_items.js), falling back to code + signature for the rare item without one.
+function reportKey(item, code) {
+  if (session && session.mode === 'reading') return `${session.chapterKey}:${questionSignature(item)}`;
+  return item.id ? item.id : `${code}:${questionSignature(item)}`;
+}
 function pickNextWalkItem() {
   let step = walkSteps[walkPos.stepIdx];
   while (step) {
@@ -863,7 +897,7 @@ function pickNextWalkItem() {
         walkPos.itemIdx = realIdx; // normalize past any disabled-kind items sitting before it
         const item = step.items[realIdx];
         askedSignatures.add(questionSignature(item));
-        return { item, code: item.code };
+        return { item, code: item.code, moola: step.moola, verseLabel: step.verseLabel };
       }
       // kāraka items are unlike every other kind here: each one names a DIFFERENT underlying
       // sub-word within a fused corpus token (e.g. "प्रोक्तवानहमव्ययम्" = प्रोक्तवान्+अहम्+अव्ययम्,
@@ -881,7 +915,7 @@ function pickNextWalkItem() {
       if (itemIdx !== undefined) {
         const item = step.items[itemIdx];
         askedSignatures.add(questionSignature(item));
-        return { item, code: item.code };
+        return { item, code: item.code, moola: step.moola, verseLabel: step.verseLabel };
       }
     }
     // Either every eligible axis at this word position has already been asked (its exact content,
@@ -972,7 +1006,9 @@ function startReading(chapterKey, opts) {
 }
 
 function pickItem(code) {
-  const pool = itemsByCode[code];
+  const fullPool = itemsByCode[code];
+  const unhidden = fullPool.filter(it => !isReportHidden(reportKey(it, code)));
+  const pool = unhidden.length ? unhidden : fullPool; // fallback: don't let hiding empty out a node entirely
   const recent = recentByCode[code] || [];
   let candidates = pool.filter(it => !recent.includes(it.id));
   if (!candidates.length) candidates = pool;
@@ -1176,20 +1212,37 @@ function renderReadingComplete() {
   document.getElementById('rcDashBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
 }
 
+// The question just left, snapshotted at CREATION time (see newQuestion()) so "flag previous
+// question" (see PLANS.md's report-feature design, extended 2026-08-11 for the two flows Harsha
+// identified: an expert spotting a broken question before even answering it, and wanting to flag
+// the PREVIOUS question once the app has already moved on) always reports the right content/session
+// context even if the session itself has since changed (e.g. the user picked a brand-new quiz mode
+// — reportKey()/chapterKey are computed once, up front, not re-derived later from a possibly-stale
+// live `session`).
+let lastQuestion = null;
 function newQuestion() {
+  if (view.screen === 'quiz') {
+    lastQuestion = {
+      item: view.item, code: view.code, options: view.options, correctIndex: view.correctIndex,
+      key: view.key, chapterKeyForReport: view.chapterKeyForReport, moola: view.moola, verseLabel: view.verseLabel,
+      answered: view.answered, picked: view.picked,
+    };
+  }
   if (session.mode === 'reading') {
     const picked = pickNextWalkItem();
     if (!picked) { view = { screen: 'readingComplete' }; renderReadingComplete(); return; }
-    const { item, code } = picked;
+    const { item, code, moola, verseLabel } = picked;
     const { options, correctIndex } = buildOptions(item, code);
-    view = { screen: 'quiz', code, item, options, correctIndex, answered: false, picked: -1, justMastered: false, crossingVerse: false };
+    const key = reportKey(item, code), chapterKeyForReport = session.chapterKey;
+    view = { screen: 'quiz', code, item, options, correctIndex, answered: false, picked: -1, justMastered: false, crossingVerse: false, key, chapterKeyForReport, moola, verseLabel, hintRevealed: false };
     renderQuiz();
     return;
   }
   const c = pickNode(session.mode, session.fixedCode);
   const item = pickItem(c);
   const { options, correctIndex } = buildOptions(item, c);
-  view = { screen: 'quiz', code: c, item, options, correctIndex, answered: false, picked: -1, justMastered: false };
+  const key = reportKey(item, c);
+  view = { screen: 'quiz', code: c, item, options, correctIndex, answered: false, picked: -1, justMastered: false, key, chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false };
   renderQuiz();
 }
 
@@ -1392,6 +1445,103 @@ function renderPrompt(item) {
 }
 function displayOption(item, opt) { return item.kind === 'samasa' ? samasaLabel(opt) : opt; }
 
+// Truncate long bhāṣya context so the resulting GitHub issue URL doesn't run into browser/GitHub
+// length limits (~8k chars) — the report body only needs enough context to locate the question,
+// not the full clause.
+function truncateForReport(s, max) { return !s ? s : s.length > max ? s.slice(0, max) + '…' : s; }
+// Pulls the actual question text/prompt out of renderPrompt()'s HTML (via a detached element,
+// not by re-deriving the per-kind hint strings a second time) so the report body shows exactly
+// what the learner saw, and stays in sync automatically if renderPrompt's wording ever changes.
+function extractPromptText(item) {
+  const div = document.createElement('div');
+  div.innerHTML = renderPrompt(item);
+  const word = div.querySelector('.prompt');
+  const hint = div.querySelector('.prompt-hint');
+  return { word: word ? word.textContent.trim() : '', question: hint ? hint.textContent.trim() : '' };
+}
+// target: {item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked}
+function buildReportIssueUrl(target, name, email, reason) {
+  const { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
+  const { word: promptWord, question } = extractPromptText(item);
+  const wordLabel = item.word || (item.before ? item.before.join(' + ') : promptWord || key);
+  const yourAnswer = answered && picked >= 0 && options[picked] !== undefined ? displayOption(item, options[picked]) : '(not answered — flagged before choosing)';
+  const lines = [
+    `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}`,
+    reason ? `Comments: ${reason}` : null,
+    '',
+    `report-key: ${key}`,
+    `kind: ${item.kind || 'sandhi'}${item.subtype ? ' / subtype: ' + item.subtype : ''}`,
+    `code: ${code}`,
+    chapterKeyForReport ? `chapterKey: ${chapterKeyForReport}` : null,
+    item.ref ? `ref: ${item.ref}` : null,
+    item.source ? `source: ${item.source}` : null,
+    item.slug ? `slug: ${item.slug}` : null,
+    verseLabel ? `verse: ${verseLabel}` : null,
+    `word: ${wordLabel}`,
+    '',
+    `question: ${question || '(n/a)'}`,
+    moola && moola !== item.context ? `mūlam: ${truncateForReport(moola, 400)}` : null,
+    item.context ? `${item.source === 'mula' ? 'mūlam' : 'bhāṣyam'} line: ${truncateForReport(item.context, 400)}` : null,
+    '',
+    `choices shown: ${options.map((o, i) => `${i === correctIndex ? '✓ ' : ''}${displayOption(item, o)}`).join(' | ')}`,
+    `your answer: ${yourAnswer}`,
+  ].filter(x => x !== null).join('\n');
+  const title = `Wrong answer: ${code} — ${wordLabel}`;
+  const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
+  url.searchParams.set('title', title);
+  url.searchParams.set('body', lines);
+  return url.toString();
+}
+// Which question a report targets — 'current' (the one on screen right now, answered or not: an
+// expert may spot that the right answer isn't even offered before ever picking one) or 'previous'
+// (the one just left, for when the app has already auto-advanced by the time someone wants to
+// flag it). Both shapes match buildReportIssueUrl's expected `target`.
+function reportTargetData(which) {
+  if (which === 'previous') return lastQuestion;
+  const { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked } = view;
+  return { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked };
+}
+// Shows the located mūlam/bhāṣyam line(s) + verse ref right in the report form, so the reporter
+// can confirm what they're actually flagging before submitting — not just baked invisibly into
+// the eventual GitHub issue body. Node-pool (mixed/practice) items only ever carry ONE located
+// line (mūlam if source==='mula', bhāṣyam if source==='bhashya' — build_items.js never pairs a
+// bhāṣya item back to its own verse's mūlam text); reading-walk items can carry both (the step's
+// own `moola` alongside the item's bhāṣya-clause `context`), so show whichever is available.
+function renderReportBreadcrumb(target) {
+  const { item, verseLabel, moola } = target;
+  const ref = verseLabel || item.ref || null;
+  const lines = [];
+  if (moola && moola !== item.context) lines.push(`<div>mūlam: ${esc(truncateForReport(moola, 200))}</div>`);
+  if (item.context) lines.push(`<div>${item.source === 'mula' ? 'mūlam' : 'bhāṣyam'} line: ${esc(truncateForReport(item.context, 200))}</div>`);
+  if (!ref && !lines.length) return '<div class="report-breadcrumb">(no located verse/context for this item)</div>';
+  return `<div class="report-breadcrumb">${ref ? `<div class="ref">${esc(ref)}</div>` : ''}${lines.join('')}</div>`;
+}
+function renderReportArea() {
+  if (view.reportOpen) {
+    const targetLabel = view.reportOpen === 'previous' ? 'the previous question' : 'this question';
+    const target = reportTargetData(view.reportOpen);
+    return `<div class="report-area">
+      <div class="report-target-label">Reporting ${esc(targetLabel)}:</div>
+      ${renderReportBreadcrumb(target)}
+      <label>Your name <input type="text" id="reportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
+      <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
+      <label>Comments <textarea id="reportReason" placeholder="optional — why do you think this is wrong?"></textarea></label>
+      <button class="secondary" id="reportSubmitBtn">Submit report</button>
+      <button class="link" id="reportCancelBtn">cancel</button>
+    </div>`;
+  }
+  const parts = [];
+  parts.push(view.reportedCurrent
+    ? `<span class="report-area reported">🚩 reported — hidden from your practice. Thank you!</span>`
+    : `<button class="link" id="reportCurrentBtn">🚩 report this question</button>`);
+  if (lastQuestion) {
+    parts.push(view.reportedPrevious
+      ? `<span class="report-area reported">🚩 previous question flagged. Thank you!</span>`
+      : `<button class="link" id="reportPreviousBtn">🚩 flag previous question</button>`);
+  }
+  return parts.join(' ');
+}
+
 function renderQuiz() {
   const { code, item, options, correctIndex, answered, picked, justMastered, crossingVerse } = view;
   const { mode, batchCount } = session;
@@ -1405,10 +1555,18 @@ function renderQuiz() {
     : verseComplete ? renderVerseComplete()
     : batchDone ? renderBatchReport()
     : '<button class="primary" id="nextBtn">Next question →</button>';
+  // Mix-it-up mode is partly a "which node is this even testing?" challenge — showing the code/
+  // label upfront (e.g. "GUN · guṇa") hands that away before the learner has looked at the
+  // question at all. Applies uniformly to every node kind (sandhi codes, samāsa, vibhakti, dhātu,
+  // kṛdanta, taddhita, kāraka — not special-cased per kind), gated behind an explicit hint click.
+  const showNodeLabel = mode !== 'mixed' || view.hintRevealed;
+  const nodeLabelHtml = showNodeLabel
+    ? `<span class="code">${code}</span> <span class="label">${LABELS[code] || ''}</span>`
+    : `<button class="link" id="hintBtn">💡 hint</button>`;
   app.innerHTML = `
     <div class="quiz-head">
       <button class="link" id="backBtn">← dashboard</button>
-      <span class="code">${code}</span> <span class="label">${LABELS[code] || ''}${modeTag}</span>
+      ${nodeLabelHtml}<span class="mode-tag">${modeTag}</span>
       <span class="batch">Q${Math.min(batchCount + (answered ? 0 : 1), BATCH_SIZE)}/${BATCH_SIZE}</span>
       <span class="streak">streak ${p.streak} · best ${p.best}${p.mastered ? ' · ✓ mastered' : ''}</span>
     </div>
@@ -1428,8 +1586,34 @@ function renderQuiz() {
     <div class="feedback">${answered ? (picked === correctIndex
         ? `correct! ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`
         : `not quite — correct answer highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`) : ''}</div>
+    ${renderReportArea()}
     ${bottom}`;
   document.getElementById('backBtn').onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
+  const hintBtn = document.getElementById('hintBtn');
+  if (hintBtn) hintBtn.onclick = () => { view = { ...view, hintRevealed: true }; renderQuiz(); };
+  const reportCurrentBtn = document.getElementById('reportCurrentBtn');
+  if (reportCurrentBtn) reportCurrentBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'current' }; renderQuiz(); };
+  const reportPreviousBtn = document.getElementById('reportPreviousBtn');
+  if (reportPreviousBtn) reportPreviousBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'previous' }; renderQuiz(); };
+  const reportCancelBtn = document.getElementById('reportCancelBtn');
+  if (reportCancelBtn) reportCancelBtn.onclick = () => { view = { ...view, reportOpen: null }; renderQuiz(); };
+  const reportSubmitBtn = document.getElementById('reportSubmitBtn');
+  if (reportSubmitBtn) reportSubmitBtn.onclick = () => {
+    const name = document.getElementById('reportName').value.trim();
+    const email = document.getElementById('reportEmail').value.trim();
+    const reason = document.getElementById('reportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const wasCurrentUnanswered = view.reportOpen === 'current' && !answered;
+    const target = reportTargetData(view.reportOpen);
+    hiddenReports.add(target.key);
+    saveHiddenReports(hiddenReports);
+    window.open(buildReportIssueUrl(target, name, email, reason), '_blank', 'noopener');
+    if (wasCurrentUnanswered) { nextQuestion(); return; } // don't make them answer a question they just flagged as broken
+    const flag = view.reportOpen === 'previous' ? 'reportedPrevious' : 'reportedCurrent';
+    view = { ...view, reportOpen: null, [flag]: true };
+    renderQuiz();
+  };
   if (answered && justMastered) {
     document.getElementById('mixBtn2').onclick = () => startQuiz('mixed');
     document.getElementById('sameBtn2').onclick = () => startQuiz('node', code);
@@ -1450,7 +1634,10 @@ function renderQuiz() {
     document.getElementById('dashBtn3').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   } else if (answered) {
     document.getElementById('nextBtn').onclick = () => goToNextQuestion(mode); // manual override, skips the auto-advance wait
-    pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), picked === correctIndex ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
+    // Don't auto-advance out from under someone mid-report — they cancel or submit to move on.
+    if (!view.reportOpen) {
+      pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), picked === correctIndex ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
+    }
   } else {
     app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
       const i = +btn.dataset.i;

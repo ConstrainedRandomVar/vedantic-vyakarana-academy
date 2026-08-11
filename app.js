@@ -1086,12 +1086,22 @@ function ordinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
+// Sandhi's 22 codes are cryptic 3-letter Pāṇini-sūtra abbreviations (SVD, GUN, VRD...) that
+// genuinely need the short code as the headline, with the fuller name as a secondary line — with
+// 22 of them, compact labels help scanning. Every OTHER kind currently has exactly one code, so
+// abbreviating it buys nothing and just adds an unexplained acronym (Harsha, 2026-08-11: "don't
+// abbreviate to 3 letters for anything outside sandhi... call it out as meaning, kāraka,
+// kṛdanta,..."). Non-sandhi cards show KIND_LABELS' full descriptive name as the headline instead,
+// dropping the secondary label line (would just repeat the same name).
 function renderNodeCard(c) {
   const p = progress[c];
   const pct = Math.min(100, Math.round((p.streak / MASTERY_TARGET) * 100));
+  const kind = (itemsByCode[c][0] && itemsByCode[c][0].kind) || 'sandhi';
+  const isSandhi = kind === 'sandhi';
+  const headline = isSandhi ? c : (KIND_LABELS[kind] || LABELS[c] || c);
   return `<div class="card${p.mastered ? ' mastered' : ''}" data-code="${c}">
-    <div class="card-top"><span class="code">${c}</span>${p.mastered ? '<span class="badge">✓ mastered</span>' : ''}</div>
-    <div class="label">${LABELS[c] || ''}</div>
+    <div class="card-top"><span class="code">${headline}</span>${p.mastered ? '<span class="badge">✓ mastered</span>' : ''}</div>
+    ${isSandhi ? `<div class="label">${LABELS[c] || ''}</div>` : ''}
     <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
     <div class="stats">streak ${p.streak} · best ${p.best}</div>
   </div>`;
@@ -1539,8 +1549,13 @@ function buildReportDetails(target) {
   const subject = `Wrong answer: ${code} — ${wordLabel}`;
   return { subject, details };
 }
-// `message` is the (possibly reporter-edited) full textarea content — pre-filled from
-// buildReportDetails, so by the time either submission path runs it already IS the report body.
+// The structured details are ALWAYS re-derived fresh from `target` here, never taken from the
+// editable textarea — a reporter could otherwise tamper with report-key/ref/choices/etc. before
+// submitting. `userComment` is the one genuinely free-text field (their own remarks), prepended.
+function composeReportMessage(target, userComment) {
+  const { details } = buildReportDetails(target);
+  return userComment ? `Comments: ${userComment}\n\n${details}` : details;
+}
 function buildReportIssueUrl(target, name, email, message) {
   const { subject } = buildReportDetails(target);
   const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n\n${message}`;
@@ -1610,14 +1625,13 @@ function renderReportArea() {
     const status = view.reportSubmitError
       ? `<div class="report-status error">Couldn't send — check your connection and try again, or use the GitHub issue link below.</div>`
       : '';
-    const { details } = buildReportDetails(target);
     return `<div class="report-area">
-      <div class="report-target-label">Reporting ${esc(targetLabel)}:</div>
+      <div class="report-target-label">Reporting ${esc(targetLabel)}: <span class="report-autosent-note">(the details below will be auto-sent with your report)</span></div>
       ${renderReportBreadcrumb(target)}
       <label>Your name <input type="text" id="reportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
       <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
-      <label>Report details (add your own comments, edit anything that's wrong)
-        <textarea id="reportReason" rows="10">${esc(details)}</textarea>
+      <label>Add your own comments
+        <textarea id="reportReason" placeholder="optional — why do you think this is wrong?"></textarea>
       </label>
       ${status}
       <button class="secondary" id="reportSubmitBtn" ${view.reportSubmitting ? 'disabled' : ''}>${view.reportSubmitting ? 'Sending…' : 'Submit report'}</button>
@@ -1700,11 +1714,12 @@ function renderQuiz() {
   if (reportSubmitBtn) reportSubmitBtn.onclick = async () => {
     const name = document.getElementById('reportName').value.trim();
     const email = document.getElementById('reportEmail').value.trim();
-    const message = document.getElementById('reportReason').value.trim();
+    const userComment = document.getElementById('reportReason').value.trim();
     saveReporterName(name);
     saveReporterEmail(email);
     const wasCurrentUnanswered = view.reportOpen === 'current' && !answered;
     const target = reportTargetData(view.reportOpen);
+    const message = composeReportMessage(target, userComment);
     view = { ...view, reportSubmitting: true, reportSubmitError: false };
     renderQuiz();
     const ok = await submitReportToFormspree(target, name, email, message);
@@ -1720,10 +1735,11 @@ function renderQuiz() {
   if (reportGithubBtn) reportGithubBtn.onclick = () => {
     const name = document.getElementById('reportName').value.trim();
     const email = document.getElementById('reportEmail').value.trim();
-    const message = document.getElementById('reportReason').value.trim();
+    const userComment = document.getElementById('reportReason').value.trim();
     saveReporterName(name);
     saveReporterEmail(email);
     const target = reportTargetData(view.reportOpen);
+    const message = composeReportMessage(target, userComment);
     window.open(buildReportIssueUrl(target, name, email, message), '_blank', 'noopener');
     // Not marked reported/hidden here — opening the pre-filled page doesn't guarantee the visitor
     // actually has a GitHub account and completes the submission on that tab.

@@ -1093,15 +1093,21 @@ function ordinal(n) {
 // abbreviate to 3 letters for anything outside sandhi... call it out as meaning, kāraka,
 // kṛdanta,..."). Non-sandhi cards show KIND_LABELS' full descriptive name as the headline instead,
 // dropping the secondary label line (would just repeat the same name).
+// ABT ("no-sandhi word boundary") and PCH ("padaccheda", the multi-word chain-splitting node)
+// aren't actual Pāṇini sandhi RULES the way SVD/GUṆ/VṚD/etc. are — they're structurally different
+// question types (spot where nothing happens; find every boundary in a chain) that just happen to
+// live under the sandhi kind. Harsha, 2026-08-11: give them their own full name too, same as every
+// non-sandhi kind, rather than an abbreviation that implies they're one more rule among 20 others.
+const SANDHI_FULL_NAME_CODES = new Set(['ABT', 'PCH']);
 function renderNodeCard(c) {
   const p = progress[c];
   const pct = Math.min(100, Math.round((p.streak / MASTERY_TARGET) * 100));
   const kind = (itemsByCode[c][0] && itemsByCode[c][0].kind) || 'sandhi';
-  const isSandhi = kind === 'sandhi';
-  const headline = isSandhi ? c : (KIND_LABELS[kind] || LABELS[c] || c);
+  const useCodeAbbrev = kind === 'sandhi' && !SANDHI_FULL_NAME_CODES.has(c);
+  const headline = useCodeAbbrev ? c : (SANDHI_FULL_NAME_CODES.has(c) ? (LABELS[c] || c) : (KIND_LABELS[kind] || LABELS[c] || c));
   return `<div class="card${p.mastered ? ' mastered' : ''}" data-code="${c}">
     <div class="card-top"><span class="code">${headline}</span>${p.mastered ? '<span class="badge">✓ mastered</span>' : ''}</div>
-    ${isSandhi ? `<div class="label">${LABELS[c] || ''}</div>` : ''}
+    ${useCodeAbbrev ? `<div class="label">${LABELS[c] || ''}</div>` : ''}
     <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
     <div class="stats">streak ${p.streak} · best ${p.best}</div>
   </div>`;

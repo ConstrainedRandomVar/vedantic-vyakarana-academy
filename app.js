@@ -7,7 +7,7 @@ const LABELS = {
   SVD: 'savarṇadīrgha', GUN: 'guṇa', VRD: 'vṛddhi', YAN: 'yaṇ', AYA: 'ayādi', PVR: 'pūrvarūpa',
   SCU: 'ścutva', JSH: 'jaśtva', CAR: 'cartva', ANU: 'anusvāra', PSV: 'parasavarṇa',
   NUD: 'ṅamuṭ', HKC: 'hakāra→caturtha', LAT: 'latva',
-  VSS: 'visarga → s', VSR: 'visarga → r', VSO: 'visarga → o', VSL: 'visarga-lopa',
+  VSS: 'visarga → s', VSR: 'visarga → r', VSO: 'visarga → o', VSL: 'visarga-lopa', ANN: 'anunāsika',
   ABT: 'no-sandhi word boundary', MIX: 'sandhi (rule unclassified)', SAMASA: 'samāsa classification',
   VIB: 'vibhakti (case-ending)', DHT: 'dhātu (verb-ending/tense)', MNG: 'word meaning',
   KRT: 'kṛt-pratyaya (kṛdanta)', TAD: 'taddhita-pratyaya (secondary derivation)',
@@ -125,6 +125,24 @@ const itemsByCode = {};
 for (const it of window.QUIZ_ITEMS) (itemsByCode[it.code] = itemsByCode[it.code] || []).push(it);
 const CODES = Object.keys(itemsByCode).sort();
 const SAMASA_CATEGORIES = itemsByCode.SAMASA ? [...new Set(itemsByCode.SAMASA.map(i => i.category))] : [];
+
+// ---- Dashboard grouping: every item already carries a `kind` (same taxonomy SKILL_KINDS below
+// already uses for the reading-walk's per-kind toggles) — derived here, not hand-maintained, so a
+// newly-added axis/code is grouped automatically instead of silently landing in the wrong bucket
+// or needing a hardcoded list update. `sandhi` dwarfs every other kind (dozens of individual
+// Pāṇini-sūtra codes vs. one code per axis for everything else) — kept as its own collapsible
+// group in renderDashboard() rather than forcing every kind through the same accordion treatment.
+const KIND_LABELS = {
+  sandhi: 'सन्धि · Sandhi rules', vibhakti: 'विभक्ति · Case, gender, stem',
+  dhatu: 'धातु · Verb tense/voice', samasa: 'समास · Compound classification',
+  krdanta: 'कृदन्त · Participles', taddhita: 'तद्धित · Secondary derivation',
+  karaka: 'कारक · Syntactic role', meaning: 'अर्थ · Word meaning',
+};
+const CODES_BY_KIND = {};
+for (const code of CODES) {
+  const kind = itemsByCode[code][0].kind || 'sandhi';
+  (CODES_BY_KIND[kind] = CODES_BY_KIND[kind] || []).push(code);
+}
 
 // ---- Reading-walk mode: sequential verse-by-verse walk through a chosen text/chapter, instead of
 // random node/adaptive/mixed selection. Content is lazy-loaded (walk-data-<chapterKey>.js, only
@@ -1068,8 +1086,26 @@ function ordinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
+function renderNodeCard(c) {
+  const p = progress[c];
+  const pct = Math.min(100, Math.round((p.streak / MASTERY_TARGET) * 100));
+  return `<div class="card${p.mastered ? ' mastered' : ''}" data-code="${c}">
+    <div class="card-top"><span class="code">${c}</span>${p.mastered ? '<span class="badge">✓ mastered</span>' : ''}</div>
+    <div class="label">${LABELS[c] || ''}</div>
+    <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="stats">streak ${p.streak} · best ${p.best}</div>
+  </div>`;
+}
+// Sandhi dwarfs every other kind (dozens of Pāṇini-sūtra codes vs. one code per axis elsewhere) —
+// collapsed by default behind a native <details>/<summary> (no JS state needed, accessible for
+// free) so the other 7 axes aren't buried under a wall of cryptic 3-letter sandhi codes. Every
+// other kind renders its card(s) directly — with just one code each today, wrapping them in their
+// own accordion would be a click to reveal a single card, pure ceremony.
 function renderDashboard() {
   const masteredN = CODES.filter(c => progress[c].mastered).length;
+  const sandhiCodes = CODES_BY_KIND.sandhi || [];
+  const sandhiMastered = sandhiCodes.filter(c => progress[c].mastered).length;
+  const otherKinds = Object.keys(CODES_BY_KIND).filter(k => k !== 'sandhi').sort((a, b) => (KIND_LABELS[a] || a).localeCompare(KIND_LABELS[b] || b));
   app.innerHTML = `
     <div class="dash-head">
       <div>${masteredN} / ${CODES.length} nodes mastered</div>
@@ -1079,17 +1115,12 @@ function renderDashboard() {
         <button class="secondary" id="adaptiveBtn">Practice</button>
       </div>
     </div>
+    ${sandhiCodes.length ? `<details class="category">
+      <summary>${esc(KIND_LABELS.sandhi)} <span class="category-stats">${sandhiMastered}/${sandhiCodes.length} mastered</span></summary>
+      <div class="grid">${sandhiCodes.map(renderNodeCard).join('')}</div>
+    </details>` : ''}
     <div class="grid">
-      ${CODES.map(c => {
-        const p = progress[c];
-        const pct = Math.min(100, Math.round((p.streak / MASTERY_TARGET) * 100));
-        return `<div class="card${p.mastered ? ' mastered' : ''}" data-code="${c}">
-          <div class="card-top"><span class="code">${c}</span>${p.mastered ? '<span class="badge">✓ mastered</span>' : ''}</div>
-          <div class="label">${LABELS[c] || ''}</div>
-          <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
-          <div class="stats">streak ${p.streak} · best ${p.best}</div>
-        </div>`;
-      }).join('')}
+      ${otherKinds.flatMap(k => CODES_BY_KIND[k]).map(renderNodeCard).join('')}
     </div>`;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');

@@ -1,6 +1,6 @@
 // Minimal cache-first service worker — makes the quiz fully usable offline after first load.
 // Bump CACHE_NAME whenever a shipped file changes so clients pick up the new version.
-const CACHE_NAME = 'sandhi-quiz-v49';
+const CACHE_NAME = 'sandhi-quiz-v50';
 const ASSETS = ['./', './index.html', './app.js', './pratipadika_endings.js', './quiz-items.js', './manifest.json', './walk-manifest.js', './walk-data-Gita-4.js', './flagged-wrong.js'];
 
 self.addEventListener('install', event => {

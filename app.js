@@ -1115,6 +1115,10 @@ function renderDashboard() {
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   const sandhiCodes = CODES_BY_KIND.sandhi || [];
   const sandhiMastered = sandhiCodes.filter(c => progress[c].mastered).length;
+  // Same fraction the "X/22 mastered" text already reports, translated into the bar's fill % —
+  // consistent with every individual card's bar, which is also a single mastery-progress ratio,
+  // not e.g. an average streak (would conflate "barely started" with "not started" confusingly).
+  const sandhiPct = sandhiCodes.length ? Math.round((sandhiMastered / sandhiCodes.length) * 100) : 0;
   const otherKinds = Object.keys(CODES_BY_KIND).filter(k => k !== 'sandhi').sort((a, b) => (KIND_LABELS[a] || a).localeCompare(KIND_LABELS[b] || b));
   app.innerHTML = `
     <div class="dash-head">
@@ -1126,7 +1130,10 @@ function renderDashboard() {
       </div>
     </div>
     ${sandhiCodes.length ? `<details class="category">
-      <summary>${esc(KIND_LABELS.sandhi)} <span class="category-stats">${sandhiMastered}/${sandhiCodes.length} mastered</span></summary>
+      <summary>
+        <div class="category-head-row"><span>${esc(KIND_LABELS.sandhi)}</span><span class="category-stats">${sandhiMastered}/${sandhiCodes.length} mastered</span></div>
+        <div class="bar"><div class="fill" style="width:${sandhiPct}%"></div></div>
+      </summary>
       <div class="grid">${sandhiCodes.map(renderNodeCard).join('')}</div>
     </details>` : ''}
     <div class="grid">

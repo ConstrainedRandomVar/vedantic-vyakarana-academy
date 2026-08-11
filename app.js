@@ -1264,6 +1264,7 @@ function newQuestion() {
 }
 
 function startQuiz(mode, code) {
+  walkItemPools = computeItemPools(window.QUIZ_ITEMS); // reset from any leftover chapter-scoped reading pools
   session = { mode, fixedCode: code, batchCount: 0, batchCorrect: 0 };
   newQuestion();
 }
@@ -1477,16 +1478,16 @@ function extractPromptText(item) {
   return { word: word ? word.textContent.trim() : '', question: hint ? hint.textContent.trim() : '' };
 }
 // target: {item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked}
-// Shared by both submission paths (Formspree AJAX and the GitHub-issue fallback link) so the two
-// never drift out of sync with each other.
-function buildReportContent(target, name, email, reason) {
+// Pure function of `target` alone (no name/email/comments — those are separate form fields) —
+// this is what PRE-FILLS the report textarea (same spirit as the GitHub issue link's own
+// pre-filled body: the reporter sees exactly what's about to be sent and can edit/add to it,
+// rather than it being assembled invisibly only at submit time).
+function buildReportDetails(target) {
   const { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
   const { word: promptWord, question } = extractPromptText(item);
   const wordLabel = item.word || (item.before ? item.before.join(' + ') : promptWord || key);
   const yourAnswer = answered && picked >= 0 && options[picked] !== undefined ? displayOption(item, options[picked]) : '(not answered — flagged before choosing)';
-  const body = [
-    reason ? `Comments: ${reason}` : null,
-    '',
+  const details = [
     `report-key: ${key}`,
     `kind: ${item.kind || 'sandhi'}${item.subtype ? ' / subtype: ' + item.subtype : ''}`,
     `code: ${code}`,
@@ -1505,11 +1506,13 @@ function buildReportContent(target, name, email, reason) {
     `your answer: ${yourAnswer}`,
   ].filter(x => x !== null).join('\n');
   const subject = `Wrong answer: ${code} — ${wordLabel}`;
-  return { subject, body };
+  return { subject, details };
 }
-function buildReportIssueUrl(target, name, email, reason) {
-  const { subject, body } = buildReportContent(target, name, email, reason);
-  const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n${body}`;
+// `message` is the (possibly reporter-edited) full textarea content — pre-filled from
+// buildReportDetails, so by the time either submission path runs it already IS the report body.
+function buildReportIssueUrl(target, name, email, message) {
+  const { subject } = buildReportDetails(target);
+  const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n\n${message}`;
   const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
   url.searchParams.set('title', subject);
   url.searchParams.set('body', fullBody);
@@ -1522,13 +1525,13 @@ function buildReportIssueUrl(target, name, email, reason) {
 // else goes in `message`. Returns true/false rather than throwing — callers decide the fallback
 // (the GitHub issue link) themselves.
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mnpadval';
-async function submitReportToFormspree(target, name, email, reason) {
-  const { subject, body } = buildReportContent(target, name, email, reason);
+async function submitReportToFormspree(target, name, email, message) {
+  const { subject } = buildReportDetails(target);
   try {
     const res = await fetch(FORMSPREE_ENDPOINT, {
       method: 'POST',
       headers: { Accept: 'application/json' },
-      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message: body }),
+      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message }),
     });
     return res.ok;
   } catch (e) { return false; } // offline, or Formspree unreachable — caller falls back to the GitHub link
@@ -1564,12 +1567,15 @@ function renderReportArea() {
     const status = view.reportSubmitError
       ? `<div class="report-status error">Couldn't send — check your connection and try again, or use the GitHub issue link below.</div>`
       : '';
+    const { details } = buildReportDetails(target);
     return `<div class="report-area">
       <div class="report-target-label">Reporting ${esc(targetLabel)}:</div>
       ${renderReportBreadcrumb(target)}
       <label>Your name <input type="text" id="reportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
       <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
-      <label>Comments <textarea id="reportReason" placeholder="optional — why do you think this is wrong?"></textarea></label>
+      <label>Report details (add your own comments, edit anything that's wrong)
+        <textarea id="reportReason" rows="10">${esc(details)}</textarea>
+      </label>
       ${status}
       <button class="secondary" id="reportSubmitBtn" ${view.reportSubmitting ? 'disabled' : ''}>${view.reportSubmitting ? 'Sending…' : 'Submit report'}</button>
       <button class="link" id="reportCancelBtn">cancel</button>
@@ -1601,11 +1607,14 @@ function renderQuiz() {
     : verseComplete ? renderVerseComplete()
     : batchDone ? renderBatchReport()
     : '<button class="primary" id="nextBtn">Next question →</button>';
-  // Mix-it-up mode is partly a "which node is this even testing?" challenge — showing the code/
-  // label upfront (e.g. "GUN · guṇa") hands that away before the learner has looked at the
-  // question at all. Applies uniformly to every node kind (sandhi codes, samāsa, vibhakti, dhātu,
-  // kṛdanta, taddhita, kāraka — not special-cased per kind), gated behind an explicit hint click.
-  const showNodeLabel = mode !== 'mixed' || view.hintRevealed;
+  // Mix-it-up AND reading-walk mode are both partly a "which node is this even testing?"
+  // challenge — showing the code/label upfront (e.g. "GUN · guṇa") hands that away before the
+  // learner has looked at the question at all (reading-walk mixes question kinds word-by-word
+  // just like mixed mode does). Applies uniformly to every node kind (sandhi codes, samāsa,
+  // vibhakti, dhātu, kṛdanta, taddhita, kāraka — not special-cased per kind), gated behind an
+  // explicit hint click. 'node' (a single fixed code chosen deliberately) and 'adaptive' still
+  // show it plainly since the learner already knows/chose what they're practicing.
+  const showNodeLabel = (mode !== 'mixed' && mode !== 'reading') || view.hintRevealed;
   const nodeLabelHtml = showNodeLabel
     ? `<span class="code">${code}</span> <span class="label">${LABELS[code] || ''}</span>`
     : `<button class="link" id="hintBtn">💡 hint</button>`;
@@ -1647,14 +1656,14 @@ function renderQuiz() {
   if (reportSubmitBtn) reportSubmitBtn.onclick = async () => {
     const name = document.getElementById('reportName').value.trim();
     const email = document.getElementById('reportEmail').value.trim();
-    const reason = document.getElementById('reportReason').value.trim();
+    const message = document.getElementById('reportReason').value.trim();
     saveReporterName(name);
     saveReporterEmail(email);
     const wasCurrentUnanswered = view.reportOpen === 'current' && !answered;
     const target = reportTargetData(view.reportOpen);
     view = { ...view, reportSubmitting: true, reportSubmitError: false };
     renderQuiz();
-    const ok = await submitReportToFormspree(target, name, email, reason);
+    const ok = await submitReportToFormspree(target, name, email, message);
     if (!ok) { view = { ...view, reportSubmitting: false, reportSubmitError: true }; renderQuiz(); return; }
     hiddenReports.add(target.key);
     saveHiddenReports(hiddenReports);
@@ -1667,11 +1676,11 @@ function renderQuiz() {
   if (reportGithubBtn) reportGithubBtn.onclick = () => {
     const name = document.getElementById('reportName').value.trim();
     const email = document.getElementById('reportEmail').value.trim();
-    const reason = document.getElementById('reportReason').value.trim();
+    const message = document.getElementById('reportReason').value.trim();
     saveReporterName(name);
     saveReporterEmail(email);
     const target = reportTargetData(view.reportOpen);
-    window.open(buildReportIssueUrl(target, name, email, reason), '_blank', 'noopener');
+    window.open(buildReportIssueUrl(target, name, email, message), '_blank', 'noopener');
     // Not marked reported/hidden here — opening the pre-filled page doesn't guarantee the visitor
     // actually has a GitHub account and completes the submission on that tab.
   };

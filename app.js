@@ -9,9 +9,26 @@ const LABELS = {
   NUD: 'ṅamuṭ', HKC: 'hakāra→caturtha', LAT: 'latva',
   VSS: 'visarga → s', VSR: 'visarga → r', VSO: 'visarga → o', VSL: 'visarga-lopa', ANN: 'anunāsika',
   ABT: 'no-sandhi word boundary', MIX: 'sandhi (rule unclassified)', SAMASA: 'samāsa classification',
-  VIB: 'vibhakti (case-ending)', DHT: 'dhātu (verb-ending/tense)', MNG: 'word meaning',
+  DHT: 'dhātu (verb-ending/tense)', VIB: 'vibhakti (case-ending)', MNG: 'word meaning',
+  MNG1: 'word meaning (vocabulary)', MNG2: 'word meaning (compound/phrase)',
+  VIB1: 'vibhakti (case & number)', VIB2: 'vibhakti (stem/gender/pronoun)',
   KRT: 'kṛt-pratyaya (kṛdanta)', TAD: 'taddhita-pratyaya (secondary derivation)',
   PCH: 'padaccheda (full word-split)', KAR: 'kāraka (syntactic role)',
+};
+// meaning and vibhakti each split into two distinct GLOBAL-pool dashboard nodes (MNG1/MNG2,
+// VIB1/VIB2) since each pair is a materially different skill — meaning: MNG1 recalls a single
+// word's plain meaning (gloss is 1-2 words) vs. MNG2 parses+translates a long compound into a full
+// phrase. vibhakti: VIB1 is the classic "what case/number is this word in" drill vs. VIB2 is
+// word-property identification (stem/lemma, gender, pronoun-recognition). The bare VIB/MNG codes
+// above are still needed too — reading-walk items (walk-data-<chapter>.js) keep their original
+// unsplit code, only the corpus-wide axis pool (build_axis_items.js) is split. KIND_LABELS below
+// is keyed by kind, which can't tell VIB1 from VIB2 (or MNG1 from MNG2) apart, so these codes get
+// their own headline via CODE_LABEL_OVERRIDES instead (see renderNodeCard); renderCategorySection
+// groups each split pair under one collapsible card with combined progress, same pattern as the
+// Sandhi category.
+const CODE_LABEL_OVERRIDES = {
+  MNG1: 'अर्थ · Word meaning (vocabulary)', MNG2: 'अर्थ · Word meaning (compound/phrase)',
+  VIB1: 'विभक्ति · Case & number', VIB2: 'विभक्ति · Stem, gender & pronoun',
 };
 // Student-facing labels for samāsa categories — the internal strings (from classify_samasa.js)
 // are debug-oriented, mixing English/Devanāgarī for the survey that produced them.
@@ -139,9 +156,51 @@ const KIND_LABELS = {
   karaka: 'कारक · Syntactic role', meaning: 'अर्थ · Word meaning',
 };
 const CODES_BY_KIND = {};
+const CODE_KIND = {};
 for (const code of CODES) {
   const kind = itemsByCode[code][0].kind || 'sandhi';
+  CODE_KIND[code] = kind;
   (CODES_BY_KIND[kind] = CODES_BY_KIND[kind] || []).push(code);
+}
+
+// ---- Lazy-loaded global axis pools (axis-manifest.js, e.g. meaning-1/meaning-2) — declared here
+// but not fetched until their dashboard card is actually clicked (ensureAxisLoaded()), same lazy
+// <script> pattern reading-walk already uses for walk-data-<chapter>.js. Added 2026-08-11: the
+// eagerly-loaded quiz-items.js baseline alone had crept to ~96MB of GitHub's 100MB hard push
+// limit from organic corpus growth, before any meaning content was even added — bundling every
+// large axis in eagerly was no longer sustainable. These codes are listed in CODES/CODES_BY_KIND
+// immediately (so their dashboard card renders and progress pre-seeds like any other node), but
+// deliberately WITHOUT an itemsByCode entry until loaded — pickMixedNode/pickWeightedNode below
+// filter on itemsByCode[c] being present, so Mix it up/Practice simply won't draw a lazy axis
+// until its card has been opened directly at least once this session.
+const AXIS_MANIFEST = window.AXIS_MANIFEST || [];
+for (const ax of AXIS_MANIFEST) {
+  if (itemsByCode[ax.code]) continue; // already present eagerly — don't shadow
+  CODE_KIND[ax.code] = ax.kind;
+  CODES.push(ax.code);
+  (CODES_BY_KIND[ax.kind] = CODES_BY_KIND[ax.kind] || []).push(ax.code);
+}
+CODES.sort();
+function ensureAxisLoaded(code) {
+  if (itemsByCode[code]) return Promise.resolve();
+  const entry = AXIS_MANIFEST.find(a => a.code === code);
+  if (!entry) return Promise.resolve();
+  if (ensureAxisLoaded._pending && ensureAxisLoaded._pending[code]) return ensureAxisLoaded._pending[code];
+  ensureAxisLoaded._pending = ensureAxisLoaded._pending || {};
+  const p = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = entry.file;
+    s.onload = () => {
+      const items = (window.AXIS_DATA && window.AXIS_DATA[code]) || [];
+      itemsByCode[code] = items;
+      for (const it of items) window.QUIZ_ITEMS.push(it);
+      resolve();
+    };
+    s.onerror = () => reject(new Error('failed to load ' + entry.file));
+    document.head.appendChild(s);
+  });
+  ensureAxisLoaded._pending[code] = p;
+  return p;
 }
 
 // ---- Reading-walk mode: sequential verse-by-verse walk through a chosen text/chapter, instead of
@@ -804,9 +863,13 @@ function loadProgress() {
 function saveProgress(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
 let progress = loadProgress();
 
+// Lazy axis codes (see AXIS_MANIFEST above) are listed in CODES from page load so their card
+// renders, but have no itemsByCode entry until opened directly — excluded here so Mix it
+// up/Practice never draws a code with nothing loaded to draw from yet.
 function pickWeightedNode() {
-  const unmastered = CODES.filter(c => !progress[c].mastered);
-  const pool = unmastered.length ? unmastered : CODES;
+  const loaded = CODES.filter(c => itemsByCode[c]);
+  const unmastered = loaded.filter(c => !progress[c].mastered);
+  const pool = unmastered.length ? unmastered : loaded;
   if (unmastered.length) {
     const weights = pool.map(c => MASTERY_TARGET + 1 - Math.min(progress[c].streak, MASTERY_TARGET));
     const total = weights.reduce((a, b) => a + b, 0);
@@ -819,7 +882,7 @@ function pickWeightedNode() {
 
 // 'mixed' = plain uniform shuffle across every node, ignoring mastery — for variety/review,
 // distinct from 'adaptive' which deliberately steers toward weak/unmastered nodes.
-function pickMixedNode() { return CODES[Math.floor(Math.random() * CODES.length)]; }
+function pickMixedNode() { const loaded = CODES.filter(c => itemsByCode[c]); return loaded[Math.floor(Math.random() * loaded.length)]; }
 
 function pickNode(mode, code) {
   if (mode === 'adaptive') return pickWeightedNode();
@@ -1102,9 +1165,9 @@ const SANDHI_FULL_NAME_CODES = new Set(['ABT', 'PCH']);
 function renderNodeCard(c) {
   const p = progress[c];
   const pct = Math.min(100, Math.round((p.streak / MASTERY_TARGET) * 100));
-  const kind = (itemsByCode[c][0] && itemsByCode[c][0].kind) || 'sandhi';
+  const kind = CODE_KIND[c] || 'sandhi';
   const useCodeAbbrev = kind === 'sandhi' && !SANDHI_FULL_NAME_CODES.has(c);
-  const headline = useCodeAbbrev ? c : (SANDHI_FULL_NAME_CODES.has(c) ? (LABELS[c] || c) : (KIND_LABELS[kind] || LABELS[c] || c));
+  const headline = useCodeAbbrev ? c : (CODE_LABEL_OVERRIDES[c] || (SANDHI_FULL_NAME_CODES.has(c) ? (LABELS[c] || c) : (KIND_LABELS[kind] || LABELS[c] || c)));
   return `<div class="card${p.mastered ? ' mastered' : ''}" data-code="${c}">
     <div class="card-top"><span class="code">${headline}</span>${p.mastered ? '<span class="badge">✓ mastered</span>' : ''}</div>
     ${useCodeAbbrev ? `<div class="label">${LABELS[c] || ''}</div>` : ''}
@@ -1112,20 +1175,42 @@ function renderNodeCard(c) {
     <div class="stats">streak ${p.streak} · best ${p.best}</div>
   </div>`;
 }
-// Sandhi dwarfs every other kind (dozens of Pāṇini-sūtra codes vs. one code per axis elsewhere) —
-// collapsed by default behind a native <details>/<summary> (no JS state needed, accessible for
-// free) so the other 7 axes aren't buried under a wall of cryptic 3-letter sandhi codes. Every
-// other kind renders its card(s) directly — with just one code each today, wrapping them in their
-// own accordion would be a click to reveal a single card, pure ceremony.
-function renderDashboard() {
-  const masteredN = CODES.filter(c => progress[c].mastered).length;
-  const sandhiCodes = CODES_BY_KIND.sandhi || [];
-  const sandhiMastered = sandhiCodes.filter(c => progress[c].mastered).length;
+// Any kind with MORE THAN ONE code (sandhi's dozens of Pāṇini-sūtra codes, or a split axis like
+// vibhakti's VIB1/VIB2, meaning's MNG1/MNG2) collapses behind a native <details>/<summary> with an
+// aggregate progress bar across its codes — no JS state needed, accessible for free, and one
+// consistent place to see "how am I doing on vibhakti overall" without averaging two separate
+// cards yourself. A kind with just one code (kāraka, taddhita, kṛdanta, dhātu today) renders its
+// single card directly — wrapping one card in its own accordion would be a click to reveal
+// nothing extra, pure ceremony.
+function renderCategorySection(kind, codes) {
+  const mastered = codes.filter(c => progress[c].mastered).length;
   // Same fraction the "X/22 mastered" text already reports, translated into the bar's fill % —
   // consistent with every individual card's bar, which is also a single mastery-progress ratio,
   // not e.g. an average streak (would conflate "barely started" with "not started" confusingly).
-  const sandhiPct = sandhiCodes.length ? Math.round((sandhiMastered / sandhiCodes.length) * 100) : 0;
-  const otherKinds = Object.keys(CODES_BY_KIND).filter(k => k !== 'sandhi').sort((a, b) => (KIND_LABELS[a] || a).localeCompare(KIND_LABELS[b] || b));
+  const pct = codes.length ? Math.round((mastered / codes.length) * 100) : 0;
+  return `<details class="category">
+      <summary>
+        <div class="category-head-row"><span>${esc(KIND_LABELS[kind] || kind)}</span><span class="category-stats">${mastered}/${codes.length} mastered</span></div>
+        <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+      </summary>
+      <div class="grid">${codes.map(renderNodeCard).join('')}</div>
+    </details>`;
+}
+function renderDashboard() {
+  const masteredN = CODES.filter(c => progress[c].mastered).length;
+  // sandhi always first (dwarfs every other kind, most-visited by far), rest alphabetical.
+  const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
+    if (a === 'sandhi') return -1;
+    if (b === 'sandhi') return 1;
+    return (KIND_LABELS[a] || a).localeCompare(KIND_LABELS[b] || b);
+  });
+  const categorySections = [];
+  const flatCodes = [];
+  for (const kind of kinds) {
+    const codes = CODES_BY_KIND[kind];
+    if (codes.length > 1) categorySections.push(renderCategorySection(kind, codes));
+    else flatCodes.push(...codes);
+  }
   app.innerHTML = `
     <div class="dash-head">
       <div>${masteredN} / ${CODES.length} nodes mastered</div>
@@ -1135,20 +1220,14 @@ function renderDashboard() {
         <button class="secondary" id="adaptiveBtn">Practice</button>
       </div>
     </div>
-    ${sandhiCodes.length ? `<details class="category">
-      <summary>
-        <div class="category-head-row"><span>${esc(KIND_LABELS.sandhi)}</span><span class="category-stats">${sandhiMastered}/${sandhiCodes.length} mastered</span></div>
-        <div class="bar"><div class="fill" style="width:${sandhiPct}%"></div></div>
-      </summary>
-      <div class="grid">${sandhiCodes.map(renderNodeCard).join('')}</div>
-    </details>` : ''}
+    ${categorySections.join('')}
     <div class="grid">
-      ${otherKinds.flatMap(k => CODES_BY_KIND[k]).map(renderNodeCard).join('')}
+      ${flatCodes.map(renderNodeCard).join('')}
     </div>`;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
-  app.querySelectorAll('.card').forEach(el => el.onclick = () => startQuiz('node', el.dataset.code));
+  app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
 }
 
 // Groups WALK_MANIFEST entries (one per chapter) by their text `slug` — `title` is the text-level
@@ -1321,6 +1400,18 @@ function startQuiz(mode, code) {
   walkItemPools = computeItemPools(window.QUIZ_ITEMS); // reset from any leftover chapter-scoped reading pools
   session = { mode, fixedCode: code, batchCount: 0, batchCorrect: 0 };
   newQuestion();
+}
+// A lazy axis card (see AXIS_MANIFEST) needs its data fetched before a node session can start —
+// shows a brief loading state on the clicked card only, matching this codebase's no-framework
+// re-render-the-whole-screen convention elsewhere (a full dashboard re-render mid-fetch would lose
+// the click target and any scroll position for no benefit here).
+function onNodeCardClick(code) {
+  const el = app.querySelector(`.card[data-code="${code}"]`);
+  if (!itemsByCode[code] && el) el.classList.add('loading');
+  ensureAxisLoaded(code).then(() => startQuiz('node', code)).catch(() => {
+    if (el) { el.classList.remove('loading'); }
+    alert('Could not load this content — check your connection and try again.');
+  });
 }
 function nextQuestion() { newQuestion(); }
 // Timer handle for the single-click auto-advance (see AUTO_ADVANCE_DELAY_* above) — cleared

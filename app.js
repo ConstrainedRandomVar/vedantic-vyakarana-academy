@@ -1552,11 +1552,23 @@ function reportTargetData(which) {
 // bhāṣya item back to its own verse's mūlam text); reading-walk items can carry both (the step's
 // own `moola` alongside the item's bhāṣya-clause `context`), so show whichever is available.
 function renderReportBreadcrumb(target) {
-  const { item, verseLabel, moola } = target;
+  const { item, options, correctIndex, answered, picked, verseLabel, moola } = target;
   const ref = verseLabel || item.ref || null;
   const lines = [];
   if (moola && moola !== item.context) lines.push(`<div>mūlam: ${esc(truncateForReport(moola, 200))}</div>`);
   if (item.context) lines.push(`<div>${item.source === 'mula' ? 'mūlam' : 'bhāṣyam'} line: ${esc(truncateForReport(item.context, 200))}</div>`);
+  // Shown for BOTH 'current' and 'previous' targets — a reporter recalling the PREVIOUS question
+  // (already scrolled past by the time they click "flag previous question") otherwise has no way
+  // to see what was actually asked/offered without digging through the pre-filled textarea below;
+  // this makes it visible at a glance, matching what's already going into the report (found via
+  // Harsha's real usage: "the user doesn't know that the full context is being given back").
+  if (options && options.length) {
+    const choices = options.map((o, i) => `${i === correctIndex ? '✓ ' : ''}${esc(displayOption(item, o))}`).join(' | ');
+    lines.push(`<div>choices: ${choices}</div>`);
+    if (answered && picked >= 0 && options[picked] !== undefined) {
+      lines.push(`<div>your answer: ${esc(displayOption(item, options[picked]))}</div>`);
+    }
+  }
   if (!ref && !lines.length) return '<div class="report-breadcrumb">(no located verse/context for this item)</div>';
   return `<div class="report-breadcrumb">${ref ? `<div class="ref">${esc(ref)}</div>` : ''}${lines.join('')}</div>`;
 }

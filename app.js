@@ -1370,6 +1370,14 @@ function renderReadingComplete() {
 // — reportKey()/chapterKey are computed once, up front, not re-derived later from a possibly-stale
 // live `session`).
 let lastQuestion = null;
+// Safety net (Harsha, 2026-08-11, live report of a citation-abbreviation-derived ABT item — "छा +
+// उ" — rendered with only its correct answer and zero distractors): "we shouldn't have questions
+// that have only one option, there is no point." A degenerate item (too little real content to
+// generate any wrong answer from) should never reach the learner regardless of WHICH bug produced
+// it — this is a general backstop, not a fix for any one root cause. Bounded retry count avoids an
+// infinite loop in the theoretical worst case where an entire pool is degenerate; MAX_OPTION_RETRIES
+// attempts is far more than any real (non-buggy) pool should ever need.
+const MAX_OPTION_RETRIES = 20;
 function newQuestion() {
   if (view.screen === 'quiz') {
     lastQuestion = {
@@ -1379,18 +1387,28 @@ function newQuestion() {
     };
   }
   if (session.mode === 'reading') {
-    const picked = pickNextWalkItem();
-    if (!picked) { view = { screen: 'readingComplete' }; renderReadingComplete(); return; }
+    let picked, built;
+    for (let attempt = 0; attempt < MAX_OPTION_RETRIES; attempt++) {
+      picked = pickNextWalkItem();
+      if (!picked) { view = { screen: 'readingComplete' }; renderReadingComplete(); return; }
+      built = buildOptions(picked.item, picked.code);
+      if (built.options && built.options.length >= 2) break;
+    }
     const { item, code, moola, verseLabel } = picked;
-    const { options, correctIndex } = buildOptions(item, code);
+    const { options, correctIndex } = built;
     const key = reportKey(item, code), chapterKeyForReport = session.chapterKey;
     view = { screen: 'quiz', code, item, options, correctIndex, answered: false, picked: -1, justMastered: false, crossingVerse: false, key, chapterKeyForReport, moola, verseLabel, hintRevealed: false };
     renderQuiz();
     return;
   }
   const c = pickNode(session.mode, session.fixedCode);
-  const item = pickItem(c);
-  const { options, correctIndex } = buildOptions(item, c);
+  let item, built;
+  for (let attempt = 0; attempt < MAX_OPTION_RETRIES; attempt++) {
+    item = pickItem(c);
+    built = buildOptions(item, c);
+    if (built.options && built.options.length >= 2) break;
+  }
+  const { options, correctIndex } = built;
   const key = reportKey(item, c);
   view = { screen: 'quiz', code: c, item, options, correctIndex, answered: false, picked: -1, justMastered: false, key, chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false };
   renderQuiz();

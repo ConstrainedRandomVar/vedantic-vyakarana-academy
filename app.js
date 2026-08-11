@@ -179,10 +179,37 @@ let walkPos = { stepIdx: 0, itemIdx: 0 };
 // when one is available; if every axis at a step has already been asked, the default is shown
 // anyway rather than adding step-skipping complexity for what should be a rare edge case.
 let askedSignatures = new Set();
-// Closed value-universes for this axis's distractor generation, recomputed whenever a chapter's
-// walk data loads — same "derive from what's actually in the shipped data" spirit as
-// SAMASA_CATEGORIES, just sourced from the loaded walk instead of a global pool.
-let walkItemPools = {};
+// Closed value-universes for vibhakti/dhātu/kṛdanta/taddhita/kāraka/meaning distractor generation.
+// Chapter-scoped while reading (computeWalkPools(), called from startReading — derives from
+// what's actually in THAT chapter, so a Gita reading-walk doesn't show Brahma-sūtra vocabulary as
+// a wrong answer). Falls back to (and is explicitly reset to, in startQuiz) the CORPUS-WIDE pool
+// computed from window.QUIZ_ITEMS below — without this, starting a node/mixed/adaptive session
+// before ever opening a reading-walk chapter would leave every one of these axes' distractor
+// pools empty, since nothing had populated them yet.
+function computeItemPools(allItems) {
+  const vibItems = allItems.filter(it => it.kind === 'vibhakti');
+  // 'prayoga'-subtype dhātu items don't carry lakara/purusha/vacana/pada at all — scope the
+  // tense-axis pools to the 'tense' subtype only, or Set() would pick up stray `undefined` values.
+  const dhatuTenseItems = allItems.filter(it => it.kind === 'dhatu' && it.subtype === 'tense');
+  const krdantaItems = allItems.filter(it => it.kind === 'krdanta' && it.subtype === 'pratyaya');
+  const taddhitaItems = allItems.filter(it => it.kind === 'taddhita' && it.subtype === 'pratyaya');
+  const karakaItems = allItems.filter(it => it.kind === 'karaka' && it.subtype === 'role');
+  return {
+    krt: [...new Set(krdantaItems.map(it => it.pratyaya))],
+    taddhita: [...new Set(taddhitaItems.map(it => it.pratyaya))],
+    karaka: [...new Set(karakaItems.map(it => it.role))],
+    stem: [...new Set(vibItems.filter(it => it.subtype === 'stem').map(it => it.lemma))],
+    meaning: [...new Set(allItems.filter(it => it.kind === 'meaning').map(it => it.meaning))],
+    vibhakti: [...new Set(vibItems.filter(it => it.subtype === 'caseNumber').map(it => it.vibhakti))],
+    vacana: [...new Set(vibItems.filter(it => it.subtype === 'caseNumber').map(it => it.vacana))],
+    linga: [...new Set(vibItems.filter(it => it.linga).map(it => it.linga))],
+    lakara: [...new Set(dhatuTenseItems.map(it => it.lakara))],
+    purusha: [...new Set(dhatuTenseItems.map(it => it.purusha))],
+    dhatuVacana: [...new Set(dhatuTenseItems.map(it => it.vacana))],
+    pada: [...new Set(dhatuTenseItems.filter(it => it.pada).map(it => it.pada))],
+  };
+}
+let walkItemPools = computeItemPools(window.QUIZ_ITEMS);
 
 const recentByCode = {}; // in-memory only — avoid immediate item repeats within a session
 // Tracks every answer STRING shown recently in a node (as either the correct answer or a
@@ -318,8 +345,21 @@ function buildOptions(item, code) {
 function buildSamasaOptions(item) {
   const correct = item.category;
   let pool = SAMASA_CATEGORIES.filter(c => c !== correct);
-  if (isTPSubtype(correct)) pool = pool.filter(c => c !== TP_GENERAL);
-  else if (correct === TP_GENERAL) pool = pool.filter(c => !isTPSubtype(c));
+  if (isTPSubtype(correct)) {
+    pool = pool.filter(c => c !== TP_GENERAL);
+  } else if (correct === TP_GENERAL) {
+    pool = pool.filter(c => !isTPSubtype(c));
+  } else if (pool.includes(TP_GENERAL) && pool.some(isTPSubtype)) {
+    // correct is unrelated to tatpuruṣa entirely (Bahuvrīhi/Dvandva/etc.) — the two branches above
+    // only guard against TP_GENERAL and a TP subtype BOTH appearing when the correct answer IS one
+    // of them; with an unrelated correct answer neither branch fired, so a random draw could still
+    // show "तत्पुरुष" alongside e.g. "तृतीया-तत्पुरुष" — general vs one of its OWN specific
+    // children, reads as two right-ish answers (found via a real report, 2026-08-11: a Bahuvrīhi
+    // question showed both). Multiple DIFFERENT subtypes together (no general) is fine — they're
+    // genuinely mutually exclusive answers, not a redundant pairing — so only drop one side of the
+    // general/specific divide, at random, not every subtype down to a single survivor.
+    pool = Math.random() < 0.5 ? pool.filter(c => c !== TP_GENERAL) : pool.filter(c => !isTPSubtype(c));
+  }
   const distractors = shuffle(pool).slice(0, 3);
   const options = shuffle([correct, ...distractors]);
   return { options, correctIndex: options.indexOf(correct) };
@@ -813,30 +853,7 @@ function flattenWalk(chapterKey, scope) {
 }
 // Closed value-universes for vibhakti/dhātu distractor generation, sourced from whatever's
 // actually in THIS loaded chapter (mirrors SAMASA_CATEGORIES' "derive from shipped data" spirit).
-function computeWalkPools() {
-  const allItems = walkSteps.flatMap(s => s.items);
-  const vibItems = allItems.filter(it => it.kind === 'vibhakti');
-  // 'prayoga'-subtype dhātu items don't carry lakara/purusha/vacana/pada at all — scope the
-  // tense-axis pools to the 'tense' subtype only, or Set() would pick up stray `undefined` values.
-  const dhatuTenseItems = allItems.filter(it => it.kind === 'dhatu' && it.subtype === 'tense');
-  const krdantaItems = allItems.filter(it => it.kind === 'krdanta' && it.subtype === 'pratyaya');
-  const taddhitaItems = allItems.filter(it => it.kind === 'taddhita' && it.subtype === 'pratyaya');
-  const karakaItems = allItems.filter(it => it.kind === 'karaka' && it.subtype === 'role');
-  walkItemPools = {
-    krt: [...new Set(krdantaItems.map(it => it.pratyaya))],
-    taddhita: [...new Set(taddhitaItems.map(it => it.pratyaya))],
-    karaka: [...new Set(karakaItems.map(it => it.role))],
-    stem: [...new Set(vibItems.filter(it => it.subtype === 'stem').map(it => it.lemma))],
-    meaning: [...new Set(allItems.filter(it => it.kind === 'meaning').map(it => it.meaning))],
-    vibhakti: [...new Set(vibItems.filter(it => it.subtype === 'caseNumber').map(it => it.vibhakti))],
-    vacana: [...new Set(vibItems.filter(it => it.subtype === 'caseNumber').map(it => it.vacana))],
-    linga: [...new Set(vibItems.filter(it => it.linga).map(it => it.linga))],
-    lakara: [...new Set(dhatuTenseItems.map(it => it.lakara))],
-    purusha: [...new Set(dhatuTenseItems.map(it => it.purusha))],
-    dhatuVacana: [...new Set(dhatuTenseItems.map(it => it.vacana))],
-    pada: [...new Set(dhatuTenseItems.filter(it => it.pada).map(it => it.pada))],
-  };
-}
+function computeWalkPools() { walkItemPools = computeItemPools(walkSteps.flatMap(s => s.items)); }
 // A stable key for "the exact question this item asks" — same word + same axis/subtype + same
 // correct answer content, regardless of which sentence/verse the occurrence came from.
 function questionSignature(item) {
@@ -1460,13 +1477,14 @@ function extractPromptText(item) {
   return { word: word ? word.textContent.trim() : '', question: hint ? hint.textContent.trim() : '' };
 }
 // target: {item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked}
-function buildReportIssueUrl(target, name, email, reason) {
+// Shared by both submission paths (Formspree AJAX and the GitHub-issue fallback link) so the two
+// never drift out of sync with each other.
+function buildReportContent(target, name, email, reason) {
   const { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
   const { word: promptWord, question } = extractPromptText(item);
   const wordLabel = item.word || (item.before ? item.before.join(' + ') : promptWord || key);
   const yourAnswer = answered && picked >= 0 && options[picked] !== undefined ? displayOption(item, options[picked]) : '(not answered — flagged before choosing)';
-  const lines = [
-    `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}`,
+  const body = [
     reason ? `Comments: ${reason}` : null,
     '',
     `report-key: ${key}`,
@@ -1486,11 +1504,34 @@ function buildReportIssueUrl(target, name, email, reason) {
     `choices shown: ${options.map((o, i) => `${i === correctIndex ? '✓ ' : ''}${displayOption(item, o)}`).join(' | ')}`,
     `your answer: ${yourAnswer}`,
   ].filter(x => x !== null).join('\n');
-  const title = `Wrong answer: ${code} — ${wordLabel}`;
+  const subject = `Wrong answer: ${code} — ${wordLabel}`;
+  return { subject, body };
+}
+function buildReportIssueUrl(target, name, email, reason) {
+  const { subject, body } = buildReportContent(target, name, email, reason);
+  const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n${body}`;
   const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
-  url.searchParams.set('title', title);
-  url.searchParams.set('body', lines);
+  url.searchParams.set('title', subject);
+  url.searchParams.set('body', fullBody);
   return url.toString();
+}
+// Primary, low-friction report path: a plain fetch() POST straight to Formspree, no SDK/CDN
+// script (this app is offline-capable via a service worker and otherwise has zero runtime
+// dependencies — pulling in @formspree/ajax would silently break offline and break that
+// convention for one feature). Formspree treats `name`/`email`/`_subject` specially; everything
+// else goes in `message`. Returns true/false rather than throwing — callers decide the fallback
+// (the GitHub issue link) themselves.
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mnpadval';
+async function submitReportToFormspree(target, name, email, reason) {
+  const { subject, body } = buildReportContent(target, name, email, reason);
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message: body }),
+    });
+    return res.ok;
+  } catch (e) { return false; } // offline, or Formspree unreachable — caller falls back to the GitHub link
 }
 // Which question a report targets — 'current' (the one on screen right now, answered or not: an
 // expert may spot that the right answer isn't even offered before ever picking one) or 'previous'
@@ -1520,14 +1561,19 @@ function renderReportArea() {
   if (view.reportOpen) {
     const targetLabel = view.reportOpen === 'previous' ? 'the previous question' : 'this question';
     const target = reportTargetData(view.reportOpen);
+    const status = view.reportSubmitError
+      ? `<div class="report-status error">Couldn't send — check your connection and try again, or use the GitHub issue link below.</div>`
+      : '';
     return `<div class="report-area">
       <div class="report-target-label">Reporting ${esc(targetLabel)}:</div>
       ${renderReportBreadcrumb(target)}
       <label>Your name <input type="text" id="reportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
       <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
       <label>Comments <textarea id="reportReason" placeholder="optional — why do you think this is wrong?"></textarea></label>
-      <button class="secondary" id="reportSubmitBtn">Submit report</button>
+      ${status}
+      <button class="secondary" id="reportSubmitBtn" ${view.reportSubmitting ? 'disabled' : ''}>${view.reportSubmitting ? 'Sending…' : 'Submit report'}</button>
       <button class="link" id="reportCancelBtn">cancel</button>
+      <div class="report-fallback"><button class="link" id="reportGithubBtn">or file a GitHub issue instead ↗</button></div>
     </div>`;
   }
   const parts = [];
@@ -1592,13 +1638,13 @@ function renderQuiz() {
   const hintBtn = document.getElementById('hintBtn');
   if (hintBtn) hintBtn.onclick = () => { view = { ...view, hintRevealed: true }; renderQuiz(); };
   const reportCurrentBtn = document.getElementById('reportCurrentBtn');
-  if (reportCurrentBtn) reportCurrentBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'current' }; renderQuiz(); };
+  if (reportCurrentBtn) reportCurrentBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'current', reportSubmitError: false }; renderQuiz(); };
   const reportPreviousBtn = document.getElementById('reportPreviousBtn');
-  if (reportPreviousBtn) reportPreviousBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'previous' }; renderQuiz(); };
+  if (reportPreviousBtn) reportPreviousBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'previous', reportSubmitError: false }; renderQuiz(); };
   const reportCancelBtn = document.getElementById('reportCancelBtn');
-  if (reportCancelBtn) reportCancelBtn.onclick = () => { view = { ...view, reportOpen: null }; renderQuiz(); };
+  if (reportCancelBtn) reportCancelBtn.onclick = () => { view = { ...view, reportOpen: null, reportSubmitError: false }; renderQuiz(); };
   const reportSubmitBtn = document.getElementById('reportSubmitBtn');
-  if (reportSubmitBtn) reportSubmitBtn.onclick = () => {
+  if (reportSubmitBtn) reportSubmitBtn.onclick = async () => {
     const name = document.getElementById('reportName').value.trim();
     const email = document.getElementById('reportEmail').value.trim();
     const reason = document.getElementById('reportReason').value.trim();
@@ -1606,13 +1652,28 @@ function renderQuiz() {
     saveReporterEmail(email);
     const wasCurrentUnanswered = view.reportOpen === 'current' && !answered;
     const target = reportTargetData(view.reportOpen);
+    view = { ...view, reportSubmitting: true, reportSubmitError: false };
+    renderQuiz();
+    const ok = await submitReportToFormspree(target, name, email, reason);
+    if (!ok) { view = { ...view, reportSubmitting: false, reportSubmitError: true }; renderQuiz(); return; }
     hiddenReports.add(target.key);
     saveHiddenReports(hiddenReports);
-    window.open(buildReportIssueUrl(target, name, email, reason), '_blank', 'noopener');
     if (wasCurrentUnanswered) { nextQuestion(); return; } // don't make them answer a question they just flagged as broken
     const flag = view.reportOpen === 'previous' ? 'reportedPrevious' : 'reportedCurrent';
-    view = { ...view, reportOpen: null, [flag]: true };
+    view = { ...view, reportOpen: null, reportSubmitting: false, [flag]: true };
     renderQuiz();
+  };
+  const reportGithubBtn = document.getElementById('reportGithubBtn');
+  if (reportGithubBtn) reportGithubBtn.onclick = () => {
+    const name = document.getElementById('reportName').value.trim();
+    const email = document.getElementById('reportEmail').value.trim();
+    const reason = document.getElementById('reportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const target = reportTargetData(view.reportOpen);
+    window.open(buildReportIssueUrl(target, name, email, reason), '_blank', 'noopener');
+    // Not marked reported/hidden here — opening the pre-filled page doesn't guarantee the visitor
+    // actually has a GitHub account and completes the submission on that tab.
   };
   if (answered && justMastered) {
     document.getElementById('mixBtn2').onclick = () => startQuiz('mixed');

@@ -1997,6 +1997,43 @@ function expectedSetForStep(sentence, step) {
   return new Set();
 }
 
+// Multi-clause verses (Gita 4.1: प्रोक्तवान्/प्राह/अब्रवीत् are three separate clauses strung
+// together with no punctuation between them) show all of a sentence's words for every per-cluster
+// step, with nothing marking which words belong to which clause — found live (Harsha, 2026-08-12)
+// asking about प्राह's remaining relations while looking at all 14 words of the full verse.
+// A cluster whose OWN governor shows up as a MEMBER of another cluster (e.g. 4.1's योगम् cluster —
+// governor idx 2 — is itself the agreement-member of प्रोक्तवान्'s cluster) is a nested sub-phrase,
+// not a sibling clause; folding it into its parent's span is what makes the three clause boxes in
+// 4.1 come out clean and contiguous (0-5 / 6-9 / 10-13) instead of a spurious 4th box for योगम्.
+function computeClauseGroups(sentence) {
+  const clusters = sentence.clusters;
+  const memberIndices = c => [...c.karta, ...c.karma, ...c.agreement, ...c.samuccaya, ...c.modifiers, ...c.remaining.map(r => r.wordIndex)];
+  const byGovernor = new Map(clusters.map((c, ci) => [c.governorWordIndex, ci]));
+  const nestedUnder = new Map(); // child clusterIdx -> parent clusterIdx
+  clusters.forEach((c, ci) => {
+    memberIndices(c).forEach(idx => {
+      const childCi = byGovernor.get(idx);
+      if (childCi !== undefined && childCi !== ci) nestedUnder.set(childCi, ci);
+    });
+  });
+  function topAncestor(ci) {
+    let cur = ci; const seen = new Set();
+    while (nestedUnder.has(cur) && !seen.has(cur)) { seen.add(cur); cur = nestedUnder.get(cur); }
+    return cur;
+  }
+  const groups = new Map(); // topClusterIdx -> {min, max, clusterIdxs}
+  clusters.forEach((c, ci) => {
+    const top = topAncestor(ci);
+    const idxs = [c.governorWordIndex, ...memberIndices(c)];
+    const min = Math.min(...idxs), max = Math.max(...idxs);
+    if (!groups.has(top)) groups.set(top, { min, max, clusterIdxs: [] });
+    const g = groups.get(top);
+    g.min = Math.min(g.min, min); g.max = Math.max(g.max, max);
+    g.clusterIdxs.push(ci);
+  });
+  return [...groups.entries()].map(([topClusterIdx, g]) => ({ ...g, topClusterIdx })).sort((a, b) => a.min - b.min);
+}
+
 // ---- explanatory prose (Harsha, 2026-08-12: conversational tone; draft mine, flagged for review
 // — this is pedagogical framing, not derived from data, per the plan's open question). English
 // prose throughout (Harsha, 2026-08-12), with Sanskrit kāraka/grammar terms kept in Devanāgarī
@@ -2151,9 +2188,14 @@ function wireTutorialReportArea(sentence, step, verse, rerender) {
 // declined noun/pronoun/participle (e.g. "41" = caturthī singular), [puruṣa][vacana] for a finite
 // verb, "Y" for avyaya, or null/undefined when the source data didn't resolve one (left blank
 // rather than guessed — see wordGramCode's header comment in build_karaka_tutorial.js).
+// groups (optional): computeClauseGroups(sentence)'s output — sorted, non-overlapping [min,max]
+// spans. Only meaningful (and only passed by renderTutorial) when a sentence has more than one
+// top-level clause; a single-clause verse renders exactly as before. currentGroupTop marks the
+// group containing the step currently being asked about, for a visually stronger boundary.
 function renderClickableVerse(words, opts) {
   const selected = opts.selected, disabled = opts.disabled, expected = opts.expected, codes = opts.codes;
-  return words.map((w, i) => {
+  const groups = opts.groups, currentGroupTop = opts.currentGroupTop;
+  const wordHtml = (w, i) => {
     const cls = ['tutword'];
     if (disabled) {
       if (expected && expected.has(i) && selected.has(i)) cls.push('correct');
@@ -2162,7 +2204,19 @@ function renderClickableVerse(words, opts) {
     } else if (selected.has(i)) cls.push('selected');
     const code = codes && codes[i] ? `<sub class="tutcode">${esc(codes[i])}</sub>` : '';
     return `<span class="${cls.join(' ')}" data-i="${i}">${esc(w)}${code}</span>`;
-  }).join(' ');
+  };
+  if (!groups || !groups.length) return words.map(wordHtml).join(' ');
+  let html = '', gi = 0, open = null;
+  for (let i = 0; i < words.length; i++) {
+    if (!open && gi < groups.length && i === groups[gi].min) {
+      open = groups[gi];
+      html += `<span class="clause-group${open.topClusterIdx === currentGroupTop ? ' current' : ''}">`;
+    }
+    html += wordHtml(words[i], i);
+    if (i < words.length - 1) html += ' ';
+    if (open && i === open.max) { html += '</span>'; gi++; open = null; }
+  }
+  return html;
 }
 
 function checkTutorialStep() {
@@ -2217,6 +2271,10 @@ function renderTutorial() {
   const verse = tutorialVerses[tutorialVerseIdx];
   const step = currentTutorialStep();
   const words = sentence.words;
+  const clauseGroups = computeClauseGroups(sentence);
+  const showClauseGroups = clauseGroups.length > 1;
+  const currentGroup = step.clusterIdx != null ? clauseGroups.find(g => g.clusterIdxs.includes(step.clusterIdx)) : null;
+  const currentGroupTop = currentGroup ? currentGroup.topClusterIdx : null;
 
   if (step.type === 'voice') {
     const c = sentence.clusters[step.clusterIdx];
@@ -2226,7 +2284,7 @@ function renderTutorial() {
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(verse.ref)}</span></div>
       <div class="question">
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
-        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes })}</div>
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
         <div class="options">
           ${opts.map(o => `<button class="opt ${answered ? (o === c.voice ? 'correct' : (o === view.voicePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
@@ -2253,7 +2311,7 @@ function renderTutorial() {
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;
-  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: checked ? expected : null, codes: sentence.wordCodes });
+  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: checked ? expected : null, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop });
 
   let feedbackHtml = '';
   if (checked) {

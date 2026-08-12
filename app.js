@@ -1998,19 +1998,23 @@ function expectedSetForStep(sentence, step) {
 }
 
 // ---- explanatory prose (Harsha, 2026-08-12: conversational tone; draft mine, flagged for review
-// — this is pedagogical framing, not derived from data, per the plan's open question) ----
+// — this is pedagogical framing, not derived from data, per the plan's open question). English
+// prose throughout (Harsha, 2026-08-12), with Sanskrit kāraka/grammar terms kept in Devanāgarī
+// inline — matches the rest of this app's convention (Devanāgarī verse text + English UI chrome),
+// not the terminal/IAST convention from the sentence-analysis skill (this is a rendered browser
+// page, not a terminal that mangles combining marks). ----
 function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return 'इस वाक्य में क्रिया या कृदन्त (तिङन्त/कृत्) कौन-कौन से हैं? — जो भी शब्द किसी काम या स्थिति को बताता है, उसे चुनें।';
-    case 'voice': return `${gov} — यह कर्तरि है, कर्मणि, या भावे?`;
-    case 'karta': return `${gov} के लिए, कर्ता (करने वाला — "कौन?") कौन है?`;
-    case 'karma': return `${gov} के लिए, कर्म (जिस पर काम हो रहा है — "किसको/क्या?") क्या है? — यदि कोई कर्म नहीं है, तो नीचे "कोई कर्म नहीं" चुनें।`;
-    case 'agreement': return `${gov} से जुड़ा हुआ विशेषण/कृदन्त कौन सा शब्द है, जो कर्ता या कर्म के साथ सामानाधिकरण्य में है (लिङ्ग-वचन-विभक्ति में सहमत)?`;
-    case 'samuccaya': return `${gov} की भूमिका में एक से अधिक शब्द मिलकर भाग ले रहे हैं (समुच्चय) — वे सब कौन से हैं?`;
-    case 'modifiers': return `${gov} से जुड़े विशेषण (adjective) या क्रियाविशेषण (adverb) कौन से हैं?`;
-    case 'remaining': return `${gov} से जुड़े शेष सम्बन्ध (करण, सम्प्रदान, अपादान, हेतु, अधिकरण, आदि) कौन से शब्द हैं?`;
+    case 'verbs': return `Which words in this sentence are verbs or participles (तिङन्त/कृत्)? — select every word that expresses an action or state. (identify ${sentence.verbs.length} तिङन्त/कृत्)`;
+    case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
+    case 'karta': return `For ${gov}, who is the कर्ता (the doer — "who?")?`;
+    case 'karma': return `For ${gov}, what is the कर्म (what the action is done to — "whom/what?")? — if there is no कर्म, choose "None of these" below.`;
+    case 'agreement': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्ता or कर्म of ${gov}?`;
+    case 'samuccaya': return `More than one word together shares the role of ${gov} (समुच्चय — coordination) — which are they?`;
+    case 'modifiers': return `Which words are adjectives (विशेषण) or adverbs (क्रियाविशेषण) modifying ${gov}?`;
+    case 'remaining': return `Which remaining words relate to ${gov} (करण, सम्प्रदान, अपादान, हेतु, अधिकरण, etc.)?`;
     default: return '';
   }
 }
@@ -2018,15 +2022,22 @@ function tutorialStepLabel(step, sentence) {
 // UoHyd p.7's rule: voice decides which kāraka is अभिहित (verbally-agreement-marked) and takes
 // प्रथमा; the other stays in its "unexpressed" (अनुक्त) default case.
 function tutorialVoiceCallout(voice) {
-  if (voice === 'कर्तरि') return 'कर्तरि में क्रिया कर्ता के अनुसार होती है, और कर्ता प्रथमा में रहता है (अभिहित) — कर्म हो तो वह द्वितीया में रहता है (अनुक्त)।';
-  if (voice === 'कर्मणि') return 'कर्मणि में क्रिया कर्म के अनुसार होती है, और कर्म प्रथमा में आ जाता है (अभिहित) — कर्ता अब तृतीया में चला जाता है (अनुक्त)।';
-  if (voice === 'भावे') return 'भावे में क्रिया सदैव प्रथम पुरुष एकवचन रहती है, चाहे कर्ता कोई भी हो — यहाँ न कर्ता, न कर्म, कोई भी प्रथमा में नहीं आता; कर्ता (यदि हो) तृतीया में रहता है।';
+  if (voice === 'कर्तरि') return 'In कर्तरि (active), the verb agrees with the कर्ता, and the कर्ता stays in प्रथमा (nominative — अभिहित/expressed) — if there is a कर्म, it stays in द्वितीया (accusative — अनुक्त/unexpressed).';
+  if (voice === 'कर्मणि') return 'In कर्मणि (passive), the verb agrees with the कर्म, and the कर्म moves to प्रथमा (अभिहित) — the कर्ता now goes to तृतीया (instrumental — अनुक्त).';
+  if (voice === 'भावे') return 'In भावे (impersonal), the verb is always 3rd person singular no matter who the doer is — here neither कर्ता nor कर्म is in प्रथमा; the कर्ता (if expressed) stays in तृतीया.';
   return '';
+}
+// When a participle governor has no explicit तिङ् voice tag (क्तवतु/शतृ/etc. don't carry one), the
+// build script derives voice from the pratyaya's own fixed sense — flag WHY here, so it doesn't
+// look unmotivated to the learner.
+function tutorialVoiceInferredNote(pratyaya, voice) {
+  if (!pratyaya) return '';
+  return `(This word carries no separate तिङ् voice-tag — it's a participle. The affix ${esc(pratyaya)} is by itself always ${voice} in sense, per 3.4.70 and related sūtras.)`;
 }
 // Transitivity aside — folded into step 5's (कर्म) feedback per the plan, not its own step.
 function tutorialTransitivityAside(transitivity) {
-  if (transitivity === 'अकर्मकः') return 'यह क्रिया यहाँ अकर्मक रूप में है — इसीलिए कोई कर्म नहीं मिलता, यह कोई कमी नहीं बल्कि इसी क्रिया के प्रयोग की बात है।';
-  if (transitivity === 'सकर्मकः') return 'यह क्रिया यहाँ सकर्मक है — इसीलिए इसका एक कर्म होना चाहिए।';
+  if (transitivity === 'अकर्मकः') return 'This verb is used intransitively (अकर्मक) here — that\'s why there\'s no कर्म; it\'s not a gap, just how this verb is being used.';
+  if (transitivity === 'सकर्मकः') return 'This verb is transitive (सकर्मक) here — so it should have a कर्म.';
   return '';
 }
 // Override-trigger notes (Harsha's cross-checked frameworks + this session's Anusāraka/corpus
@@ -2034,21 +2045,114 @@ function tutorialTransitivityAside(transitivity) {
 function tutorialOverrideNote(sentence, step, wordIndex) {
   const c = sentence.clusters[step.clusterIdx];
   if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
-    return `${esc(sentence.words[wordIndex])} तृतीया में है, पर यह कर्मणि-प्रयोग की वजह से नहीं — ${esc(c.governorWord)} स्वयं एक कृत्य-प्रत्यय (${esc(c.notes[wordIndex].pratyaya)}) वाला रूप है, और ऐसे रूपों का कर्ता सदैव तृतीया में ही रहता है।`;
+    return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}), and the agent of such forms is always in तृतीया.`;
   }
   if (step.type === 'karma' && c.karmaGovernorIsKrdanta) {
-    return `ध्यान दें — ${esc(c.governorWord)} स्वयं एक कृदन्त है, इसलिए इसका कर्म यहाँ षष्ठी में भी आ सकता है (सामान्य द्वितीया के बदले) — कारक-षष्ठी, 2.3.65।`;
+    return `Note — ${esc(c.governorWord)} is itself a कृदन्त, so its कर्म can also appear in षष्ठी here (instead of the usual द्वितीया) — कारक-षष्ठी, 2.3.65.`;
   }
   if (step.type === 'remaining') {
     const item = c.remaining.find(r => r.wordIndex === wordIndex);
-    if (item && item.upapada) return `${esc(sentence.words[wordIndex])} यहाँ ${item.upapadaCase} में है — ${esc(item.upapada)} के कारण, न कि किसी सामान्य कारक-नियम से।`;
-    if (item && item.role === 'हेतुः') return `हेतु (कारण) तृतीया या पञ्चमी, दोनों में से किसी में भी आ सकता है (2.3.23) — यहाँ ${esc(sentence.words[wordIndex])} का रूप देखकर पहचानें कि यह कौन सा है।`;
+    if (item && item.upapada) return `${esc(sentence.words[wordIndex])} is in ${item.upapadaCase} here — because of ${esc(item.upapada)}, not from any general kāraka rule.`;
+    if (item && item.role === 'हेतुः') return `हेतु (cause/reason) can appear in either तृतीया or पञ्चमी (2.3.23) — look at the form of ${esc(sentence.words[wordIndex])} here to tell which one it is.`;
   }
   return null;
 }
 
+// ---- report/feedback (tutorial-specific; the quiz's own report feature (buildReportDetails etc.,
+// above) is shaped around item/options/correctIndex, which doesn't fit a click-based multi-select
+// step or a per-cluster voice question — reuses the generic pieces (Formspree endpoint, reporter
+// name/email persistence, .report-area styling) but builds its own subject/details from the
+// tutorial's own state shape. No hide-from-pool behavior here (unlike the quiz): the tutorial
+// always walks the same fixed verse list in order, there's no pool to filter a flagged item out of.
+function buildTutorialReportDetails(target) {
+  const { verse, sentence, step, selectedWords, expectedWords, voicePicked, correctVoice, pct } = target;
+  const stepDesc = step.type + (step.clusterIdx != null ? ` (cluster ${step.clusterIdx}${sentence.clusters[step.clusterIdx] ? ', governor ' + sentence.clusters[step.clusterIdx].governorWord : ''})` : '');
+  const details = [
+    `verse: ${verse.ref}`,
+    `step: ${stepDesc}`,
+    `sentence: ${sentence.words.join(' ')}`,
+    step.type === 'voice'
+      ? `correct voice: ${correctVoice || '(unknown)'}\nyour answer: ${voicePicked || '(not answered)'}`
+      : `expected words: ${expectedWords && expectedWords.length ? expectedWords.join(', ') : '(none)'}\nyour selection: ${selectedWords && selectedWords.length ? selectedWords.join(', ') : '(none)'}`,
+    pct != null ? `score: ${pct}%` : null,
+  ].filter(x => x !== null).join('\n');
+  const subject = `Kāraka tutorial issue: ${verse.ref} — ${step.type}`;
+  return { subject, details };
+}
+async function submitTutorialReport(target, name, email, userComment) {
+  const { subject, details } = buildTutorialReportDetails(target);
+  const message = userComment ? `Comments: ${userComment}\n\n${details}` : details;
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message }),
+    });
+    return res.ok;
+  } catch (e) { return false; }
+}
+function tutorialReportTarget(sentence, step, verse) {
+  const expected = expectedSetForStep(sentence, step);
+  const selected = view.selectedIndices || new Set();
+  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
+  return {
+    verse, sentence, step,
+    expectedWords: [...expected].map(i => sentence.words[i]),
+    selectedWords: [...selected].map(i => sentence.words[i]),
+    voicePicked: view.voicePicked,
+    correctVoice: c ? c.voice : null,
+    pct: view.checked ? (expected.size ? Math.round(([...selected].filter(i => expected.has(i)).length / expected.size) * 100) : (selected.size === 0 ? 100 : 0)) : null,
+  };
+}
+function renderTutorialReportArea(sentence, step, verse) {
+  if (view.tutReportOpen) {
+    const target = tutorialReportTarget(sentence, step, verse);
+    const status = view.tutReportSubmitError
+      ? `<div class="report-status error">Couldn't send — check your connection and try again.</div>` : '';
+    return `<div class="report-area">
+      <div class="report-target-label">Reporting this step: <span class="report-autosent-note">(the details above will be auto-sent with your report)</span></div>
+      <label>Your name <input type="text" id="tutReportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
+      <label>Your email <input type="email" id="tutReportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
+      <label>Add your own comments
+        <textarea id="tutReportReason" placeholder="optional — what looks wrong here?"></textarea>
+      </label>
+      ${status}
+      <button class="secondary" id="tutReportSubmitBtn" ${view.tutReportSubmitting ? 'disabled' : ''}>${view.tutReportSubmitting ? 'Sending…' : 'Submit report'}</button>
+      <button class="link" id="tutReportCancelBtn">cancel</button>
+    </div>`;
+  }
+  return view.tutReported
+    ? `<span class="report-area reported">🚩 reported — thank you!</span>`
+    : `<button class="link" id="tutReportBtn">🚩 report this step</button>`;
+}
+function wireTutorialReportArea(sentence, step, verse, rerender) {
+  const openBtn = document.getElementById('tutReportBtn');
+  if (openBtn) openBtn.onclick = () => { view = { ...view, tutReportOpen: true, tutReportSubmitError: false }; rerender(); };
+  const cancelBtn = document.getElementById('tutReportCancelBtn');
+  if (cancelBtn) cancelBtn.onclick = () => { view = { ...view, tutReportOpen: false, tutReportSubmitError: false }; rerender(); };
+  const submitBtn = document.getElementById('tutReportSubmitBtn');
+  if (submitBtn) submitBtn.onclick = async () => {
+    const name = document.getElementById('tutReportName').value.trim();
+    const email = document.getElementById('tutReportEmail').value.trim();
+    const userComment = document.getElementById('tutReportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const target = tutorialReportTarget(sentence, step, verse);
+    view = { ...view, tutReportSubmitting: true, tutReportSubmitError: false };
+    rerender();
+    const ok = await submitTutorialReport(target, name, email, userComment);
+    if (!ok) { view = { ...view, tutReportSubmitting: false, tutReportSubmitError: true }; rerender(); return; }
+    view = { ...view, tutReportOpen: false, tutReportSubmitting: false, tutReported: true };
+    rerender();
+  };
+}
+
+// codes[i] is the sentence-analysis-skill grammatical code for word i — [vibhakti][vacana] for a
+// declined noun/pronoun/participle (e.g. "41" = caturthī singular), [puruṣa][vacana] for a finite
+// verb, "Y" for avyaya, or null/undefined when the source data didn't resolve one (left blank
+// rather than guessed — see wordGramCode's header comment in build_karaka_tutorial.js).
 function renderClickableVerse(words, opts) {
-  const selected = opts.selected, disabled = opts.disabled, expected = opts.expected;
+  const selected = opts.selected, disabled = opts.disabled, expected = opts.expected, codes = opts.codes;
   return words.map((w, i) => {
     const cls = ['tutword'];
     if (disabled) {
@@ -2056,7 +2160,8 @@ function renderClickableVerse(words, opts) {
       else if (expected && expected.has(i)) cls.push('missed');
       else if (selected.has(i)) cls.push('wrong');
     } else if (selected.has(i)) cls.push('selected');
-    return `<span class="${cls.join(' ')}" data-i="${i}">${esc(w)}</span>`;
+    const code = codes && codes[i] ? `<sub class="tutcode">${esc(codes[i])}</sub>` : '';
+    return `<span class="${cls.join(' ')}" data-i="${i}">${esc(w)}${code}</span>`;
   }).join(' ');
 }
 
@@ -2121,12 +2226,14 @@ function renderTutorial() {
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(verse.ref)}</span></div>
       <div class="question">
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
-        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]) })}</div>
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes })}</div>
         <div class="options">
           ${opts.map(o => `<button class="opt ${answered ? (o === c.voice ? 'correct' : (o === view.voicePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
         ${answered ? `<div class="tut-explain">${tutorialVoiceCallout(c.voice)}</div>` : ''}
+        ${answered && c.voiceInferredFrom ? `<div class="tut-explain">${tutorialVoiceInferredNote(c.voiceInferredFrom, c.voice)}</div>` : ''}
         <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
       </div>`;
     document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
     if (!answered) {
@@ -2137,6 +2244,7 @@ function renderTutorial() {
     } else {
       document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
     }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
     return;
   }
 
@@ -2145,7 +2253,7 @@ function renderTutorial() {
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;
-  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: checked ? expected : null });
+  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: checked ? expected : null, codes: sentence.wordCodes });
 
   let feedbackHtml = '';
   if (checked) {
@@ -2165,11 +2273,12 @@ function renderTutorial() {
     <div class="question">
       <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
       <div class="tutorial-verse prompt">${verseHtml}</div>
-      ${showNone ? `<button class="secondary" id="tutNoneBtn">इनमें से कोई नहीं</button>` : ''}
+      ${showNone ? `<button class="secondary" id="tutNoneBtn">None of these</button>` : ''}
       ${feedbackHtml}
       <div class="tutorial-actions">
         ${!checked ? `<button class="primary" id="tutCheckBtn" ${selected.size === 0 ? 'disabled' : ''}>Check answer</button>` : `<button class="primary" id="tutNextBtn">Next →</button>`}
       </div>
+      ${renderTutorialReportArea(sentence, step, verse)}
     </div>`;
   document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   if (!checked) {
@@ -2186,6 +2295,7 @@ function renderTutorial() {
   } else {
     document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
   }
+  wireTutorialReportArea(sentence, step, verse, renderTutorial);
 }
 
 function renderTutorialVerseComplete(avgScore) {
@@ -2193,11 +2303,11 @@ function renderTutorialVerseComplete(avgScore) {
   const verse = tutorialVerses[tutorialVerseIdx];
   app.innerHTML = `
     <div class="celebrate">
-      <h2>✓ ${esc(verse.ref)} पूरा हुआ</h2>
-      <p>${Math.round(avgScore * 100)}% औसत सटीकता इस पद्य के सभी चरणों में</p>
+      <h2>✓ ${esc(verse.ref)} complete</h2>
+      <p>${Math.round(avgScore * 100)}% average accuracy across this verse's steps</p>
       <div class="next-choices">
-        <button class="primary" id="tutNextVerseBtn">अगला पद्य →</button>
-        <button class="secondary" id="tutPickBtn">दूसरा पद्य चुनें</button>
+        <button class="primary" id="tutNextVerseBtn">Next verse →</button>
+        <button class="secondary" id="tutPickBtn">Pick another verse</button>
         <button class="secondary" id="tutDashBtn">Dashboard</button>
       </div>
     </div>`;
@@ -2210,7 +2320,7 @@ function renderTutorialVerseComplete(avgScore) {
 }
 
 function renderTutorialPicker() {
-  app.innerHTML = `<div class="picker-head"><h2>🧩 कारक tutorial</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>लोड हो रहा है…</p>`;
+  app.innerHTML = `<div class="picker-head"><h2>🧩 कारक tutorial</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>Loading…</p>`;
   document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   ensureTutorialDataLoaded().then(() => {
     tutorialVerses = window.TUTORIAL_DATA.Gita.verses;
@@ -2220,7 +2330,7 @@ function renderTutorialPicker() {
     const resumeIdx = saved.lastRef ? tutorialVerses.findIndex(v => v.ref === saved.lastRef) : -1;
     app.innerHTML = `
       <div class="picker-head">
-        <h2>🧩 कारक tutorial — भगवद्गीता</h2>
+        <h2>🧩 कारक tutorial — Bhagavad Gītā</h2>
         <button class="link" id="tutPickerBackBtn">← Dashboard</button>
       </div>
       <p>${completedN} / ${tutorialVerses.length} verses completed</p>
@@ -2237,7 +2347,7 @@ function renderTutorialPicker() {
     document.getElementById('tutStartBtn').onclick = () => startTutorialVerse(0);
     document.getElementById('tutJumpBtn').onclick = () => startTutorialVerse(+document.getElementById('tutVerseSelect').value);
   }).catch(() => {
-    app.innerHTML = `<p>तुला डेटा लोड नहीं हो सका। <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`;
+    app.innerHTML = `<p>Couldn't load tutorial data. <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`;
     document.getElementById('tutPickerBackBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   });
 }

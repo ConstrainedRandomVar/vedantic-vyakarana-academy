@@ -95,12 +95,24 @@
    12%{opacity:1}
    100%{transform:translateY(240px) translateX(var(--drift,0px)) rotate(360deg);opacity:0}
  }
+ .tutorial-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;color:#7a6a55}
+ .tutorial-verse{display:flex;flex-wrap:wrap;gap:4px 2px}
+ .tutword{display:inline-block;padding:4px 6px;border-radius:4px;cursor:pointer;border:1px solid transparent}
+ .tutword:hover{background:#f3efe8}
+ .tutword.selected{background:#e3d9c6;border-color:#c9a35a}
+ .tutword.correct{background:#eafaf0;border-color:#3f9e5f;color:#1e5c34}
+ .tutword.missed{background:#fdecea;border-color:#c0392b;color:#a3372a;text-decoration:underline dotted}
+ .tutword.wrong{background:#fdecea;border-color:#c0392b;color:#a3372a;text-decoration:line-through}
+ .tut-step-label{font-size:16px;margin-bottom:10px;color:#3a2f2a}
+ .tut-explain{font-size:13px;color:#555;background:#f7f5f0;border-radius:6px;padding:8px 10px;margin-top:8px;line-height:1.5}
+ .tutorial-actions{margin-top:14px}
 </style></head><body>
 <header><h1>Vyākaraṇa Quiz <small>— Khan Academy for Vedāntic Sanskrit</small></h1></header>
 <div id="app">loading…</div>
 
 <script src="quiz-items.js"></script>
 <script src="axis-manifest.js"></script>
+<script src="tutorial-manifest.js"></script>
 <script src="walk-manifest.js"></script>
 <script src="pratipadika_endings.js"></script>
 <script src="flagged-wrong.js"></script>

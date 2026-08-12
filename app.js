@@ -1218,6 +1218,7 @@ function renderDashboard() {
         <button class="primary" id="readBtn">📖 Read a verse</button>
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>
         <button class="secondary" id="adaptiveBtn">Practice</button>
+        <button class="secondary" id="tutorialBtn">🧩 कारक tutorial</button>
       </div>
     </div>
     ${categorySections.join('')}
@@ -1227,6 +1228,7 @@ function renderDashboard() {
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
+  document.getElementById('tutorialBtn').onclick = () => { view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
 }
 
@@ -1909,6 +1911,335 @@ function renderQuiz() {
       renderQuiz();
     });
   }
+}
+
+// ==== Guided kāraka tutorial (Gita mūla, one verse at a time) ====
+// Per-verse dependency-cluster walkthrough built from the UoHyd e-reader's own kāraka analysis
+// (searchtool/khan/build_karaka_tutorial.js), NOT the random-draw KAR node above — this teaches
+// the analysis PROCEDURE (find the verb, its voice, its कर्ता/कर्म, agreement, coordination,
+// modifiers, everything else) one verse at a time, click-based rather than multiple-choice, since
+// the answer is always a word already sitting in the sentence. See
+// /Users/hlakshmi/.claude/plans/woolly-orbiting-codd.md for the full design.
+const TUTORIAL_KEY = 'sandhiQuizTutorialProgress'; // { lastRef }
+const TUTORIAL_PROGRESS_KEY = 'sandhiQuizTutorialCompleted'; // { [ref]: {completedAt, correctSteps, totalSteps} }
+
+function loadTutorialProgress() {
+  try { return JSON.parse(localStorage.getItem(TUTORIAL_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveTutorialProgress(p) { localStorage.setItem(TUTORIAL_KEY, JSON.stringify(p)); }
+function loadTutorialCompletion() {
+  try { return JSON.parse(localStorage.getItem(TUTORIAL_PROGRESS_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveTutorialCompletionEntry(ref, correctSteps, totalSteps) {
+  const c = loadTutorialCompletion();
+  c[ref] = { completedAt: Date.now(), correctSteps, totalSteps };
+  localStorage.setItem(TUTORIAL_PROGRESS_KEY, JSON.stringify(c));
+}
+
+// Lazy-loaded exactly like ensureAxisLoaded above — TUTORIAL_DATA lives in its own global
+// namespace entirely, never merged into window.QUIZ_ITEMS/itemsByCode (this is a parallel mode,
+// not one more quiz axis).
+function ensureTutorialDataLoaded() {
+  if (window.TUTORIAL_DATA) return Promise.resolve();
+  const entry = (window.TUTORIAL_MANIFEST || [])[0];
+  if (!entry) return Promise.reject(new Error('no tutorial data available'));
+  if (ensureTutorialDataLoaded._pending) return ensureTutorialDataLoaded._pending;
+  const p = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = entry.file;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('failed to load ' + entry.file));
+    document.head.appendChild(s);
+  });
+  ensureTutorialDataLoaded._pending = p;
+  return p;
+}
+
+let tutorialVerses = [];
+let tutorialVerseIdx = 0;
+let tutorialSentIdx = 0;   // a verse can have >1 sentence — walked in order, independently clustered
+let tutorialSteps = [];    // flattened, cluster-major, for the CURRENT sentence only
+let tutorialStepIdx = 0;
+let tutorialScores = [];   // per-step scores this sentence, folded into per-verse completion
+
+function currentTutorialSentence() {
+  return tutorialVerses[tutorialVerseIdx].sentences[tutorialSentIdx];
+}
+function currentTutorialStep() { return tutorialSteps[tutorialStepIdx]; }
+
+// Cluster-major flattening (Harsha, confirmed): finish one governing verb/participle's full
+// mini-sequence (voice if finite → कर्ता → कर्म → agreement → समुच्चय → modifiers → remaining)
+// before moving to the next cluster, rather than looping step-type-major across all clusters.
+// कर्म always renders even when empty (Harsha's ruling — "no कर्म here" IS the teaching moment for
+// intransitivity); every other step-type is skipped when its cluster has nothing to ask about.
+function buildTutorialSteps(sentence) {
+  const steps = [{ type: 'verbs' }];
+  sentence.clusters.forEach((c, ci) => {
+    if (c.isFiniteVerb) steps.push({ type: 'voice', clusterIdx: ci });
+    if (c.karta.length) steps.push({ type: 'karta', clusterIdx: ci });
+    steps.push({ type: 'karma', clusterIdx: ci });
+    if (c.agreement.length) steps.push({ type: 'agreement', clusterIdx: ci });
+    if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
+    if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
+    if (c.remaining.length) steps.push({ type: 'remaining', clusterIdx: ci });
+  });
+  return steps;
+}
+function expectedSetForStep(sentence, step) {
+  if (step.type === 'verbs') return new Set(sentence.verbs);
+  const c = sentence.clusters[step.clusterIdx];
+  if (step.type === 'karta') return new Set(c.karta);
+  if (step.type === 'karma') return new Set(c.karma);
+  if (step.type === 'agreement') return new Set(c.agreement);
+  if (step.type === 'samuccaya') return new Set(c.samuccaya);
+  if (step.type === 'modifiers') return new Set(c.modifiers);
+  if (step.type === 'remaining') return new Set(c.remaining.map(r => r.wordIndex));
+  return new Set();
+}
+
+// ---- explanatory prose (Harsha, 2026-08-12: conversational tone; draft mine, flagged for review
+// — this is pedagogical framing, not derived from data, per the plan's open question) ----
+function tutorialStepLabel(step, sentence) {
+  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
+  const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
+  switch (step.type) {
+    case 'verbs': return 'इस वाक्य में क्रिया या कृदन्त (तिङन्त/कृत्) कौन-कौन से हैं? — जो भी शब्द किसी काम या स्थिति को बताता है, उसे चुनें।';
+    case 'voice': return `${gov} — यह कर्तरि है, कर्मणि, या भावे?`;
+    case 'karta': return `${gov} के लिए, कर्ता (करने वाला — "कौन?") कौन है?`;
+    case 'karma': return `${gov} के लिए, कर्म (जिस पर काम हो रहा है — "किसको/क्या?") क्या है? — यदि कोई कर्म नहीं है, तो नीचे "कोई कर्म नहीं" चुनें।`;
+    case 'agreement': return `${gov} से जुड़ा हुआ विशेषण/कृदन्त कौन सा शब्द है, जो कर्ता या कर्म के साथ सामानाधिकरण्य में है (लिङ्ग-वचन-विभक्ति में सहमत)?`;
+    case 'samuccaya': return `${gov} की भूमिका में एक से अधिक शब्द मिलकर भाग ले रहे हैं (समुच्चय) — वे सब कौन से हैं?`;
+    case 'modifiers': return `${gov} से जुड़े विशेषण (adjective) या क्रियाविशेषण (adverb) कौन से हैं?`;
+    case 'remaining': return `${gov} से जुड़े शेष सम्बन्ध (करण, सम्प्रदान, अपादान, हेतु, अधिकरण, आदि) कौन से शब्द हैं?`;
+    default: return '';
+  }
+}
+// Voice callout (step 2's fixed teaching text, shown after answering, regardless of correctness) —
+// UoHyd p.7's rule: voice decides which kāraka is अभिहित (verbally-agreement-marked) and takes
+// प्रथमा; the other stays in its "unexpressed" (अनुक्त) default case.
+function tutorialVoiceCallout(voice) {
+  if (voice === 'कर्तरि') return 'कर्तरि में क्रिया कर्ता के अनुसार होती है, और कर्ता प्रथमा में रहता है (अभिहित) — कर्म हो तो वह द्वितीया में रहता है (अनुक्त)।';
+  if (voice === 'कर्मणि') return 'कर्मणि में क्रिया कर्म के अनुसार होती है, और कर्म प्रथमा में आ जाता है (अभिहित) — कर्ता अब तृतीया में चला जाता है (अनुक्त)।';
+  if (voice === 'भावे') return 'भावे में क्रिया सदैव प्रथम पुरुष एकवचन रहती है, चाहे कर्ता कोई भी हो — यहाँ न कर्ता, न कर्म, कोई भी प्रथमा में नहीं आता; कर्ता (यदि हो) तृतीया में रहता है।';
+  return '';
+}
+// Transitivity aside — folded into step 5's (कर्म) feedback per the plan, not its own step.
+function tutorialTransitivityAside(transitivity) {
+  if (transitivity === 'अकर्मकः') return 'यह क्रिया यहाँ अकर्मक रूप में है — इसीलिए कोई कर्म नहीं मिलता, यह कोई कमी नहीं बल्कि इसी क्रिया के प्रयोग की बात है।';
+  if (transitivity === 'सकर्मकः') return 'यह क्रिया यहाँ सकर्मक है — इसीलिए इसका एक कर्म होना चाहिए।';
+  return '';
+}
+// Override-trigger notes (Harsha's cross-checked frameworks + this session's Anusāraka/corpus
+// verification) — "why isn't this the plain default case," attached wherever cheaply detectable.
+function tutorialOverrideNote(sentence, step, wordIndex) {
+  const c = sentence.clusters[step.clusterIdx];
+  if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
+    return `${esc(sentence.words[wordIndex])} तृतीया में है, पर यह कर्मणि-प्रयोग की वजह से नहीं — ${esc(c.governorWord)} स्वयं एक कृत्य-प्रत्यय (${esc(c.notes[wordIndex].pratyaya)}) वाला रूप है, और ऐसे रूपों का कर्ता सदैव तृतीया में ही रहता है।`;
+  }
+  if (step.type === 'karma' && c.karmaGovernorIsKrdanta) {
+    return `ध्यान दें — ${esc(c.governorWord)} स्वयं एक कृदन्त है, इसलिए इसका कर्म यहाँ षष्ठी में भी आ सकता है (सामान्य द्वितीया के बदले) — कारक-षष्ठी, 2.3.65।`;
+  }
+  if (step.type === 'remaining') {
+    const item = c.remaining.find(r => r.wordIndex === wordIndex);
+    if (item && item.upapada) return `${esc(sentence.words[wordIndex])} यहाँ ${item.upapadaCase} में है — ${esc(item.upapada)} के कारण, न कि किसी सामान्य कारक-नियम से।`;
+    if (item && item.role === 'हेतुः') return `हेतु (कारण) तृतीया या पञ्चमी, दोनों में से किसी में भी आ सकता है (2.3.23) — यहाँ ${esc(sentence.words[wordIndex])} का रूप देखकर पहचानें कि यह कौन सा है।`;
+  }
+  return null;
+}
+
+function renderClickableVerse(words, opts) {
+  const selected = opts.selected, disabled = opts.disabled, expected = opts.expected;
+  return words.map((w, i) => {
+    const cls = ['tutword'];
+    if (disabled) {
+      if (expected && expected.has(i) && selected.has(i)) cls.push('correct');
+      else if (expected && expected.has(i)) cls.push('missed');
+      else if (selected.has(i)) cls.push('wrong');
+    } else if (selected.has(i)) cls.push('selected');
+    return `<span class="${cls.join(' ')}" data-i="${i}">${esc(w)}</span>`;
+  }).join(' ');
+}
+
+function checkTutorialStep() {
+  const sentence = currentTutorialSentence();
+  const step = currentTutorialStep();
+  const expected = expectedSetForStep(sentence, step);
+  const selected = view.selectedIndices;
+  const inter = [...selected].filter(i => expected.has(i)).length;
+  const score = expected.size ? inter / expected.size : (selected.size === 0 ? 1 : 0);
+  tutorialScores.push(score);
+  view = { ...view, checked: true, expected };
+  renderTutorial();
+}
+
+function advanceTutorialStep() {
+  tutorialStepIdx++;
+  view = { screen: 'tutorial', selectedIndices: new Set(), checked: false };
+  if (tutorialStepIdx >= tutorialSteps.length) {
+    const verse = tutorialVerses[tutorialVerseIdx];
+    if (tutorialSentIdx < verse.sentences.length - 1) {
+      tutorialSentIdx++;
+      tutorialSteps = buildTutorialSteps(currentTutorialSentence());
+      tutorialStepIdx = 0;
+      renderTutorial();
+    } else {
+      const avg = tutorialScores.length ? tutorialScores.reduce((a, b) => a + b, 0) / tutorialScores.length : 1;
+      saveTutorialCompletionEntry(verse.ref, Math.round(avg * tutorialScores.length * 100) / 100, tutorialScores.length);
+      saveTutorialProgress({ lastRef: verse.ref });
+      renderTutorialVerseComplete(avg);
+    }
+    return;
+  }
+  renderTutorial();
+}
+
+function startTutorialSentence() {
+  tutorialSteps = buildTutorialSteps(currentTutorialSentence());
+  tutorialStepIdx = 0;
+  tutorialScores = [];
+  view = { screen: 'tutorial', selectedIndices: new Set(), checked: false };
+  renderTutorial();
+}
+function startTutorialVerse(verseIdx) {
+  tutorialVerseIdx = verseIdx;
+  tutorialSentIdx = 0;
+  saveTutorialProgress({ lastRef: tutorialVerses[verseIdx].ref });
+  startTutorialSentence();
+}
+
+function renderTutorial() {
+  const sentence = currentTutorialSentence();
+  const verse = tutorialVerses[tutorialVerseIdx];
+  const step = currentTutorialStep();
+  const words = sentence.words;
+
+  if (step.type === 'voice') {
+    const c = sentence.clusters[step.clusterIdx];
+    const answered = view.checked;
+    const opts = ['कर्तरि', 'कर्मणि', 'भावे'];
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(verse.ref)}</span></div>
+      <div class="question">
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]) })}</div>
+        <div class="options">
+          ${opts.map(o => `<button class="opt ${answered ? (o === c.voice ? 'correct' : (o === view.voicePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        ${answered ? `<div class="tut-explain">${tutorialVoiceCallout(c.voice)}</div>` : ''}
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, voicePicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    return;
+  }
+
+  const expected = expectedSetForStep(sentence, step);
+  const multiSelect = ['verbs', 'agreement', 'samuccaya', 'modifiers', 'remaining'].includes(step.type);
+  const selected = view.selectedIndices;
+  const checked = view.checked;
+  const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;
+  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: checked ? expected : null });
+
+  let feedbackHtml = '';
+  if (checked) {
+    const inter = [...selected].filter(i => expected.has(i)).length;
+    const pct = expected.size ? Math.round((inter / expected.size) * 100) : (selected.size === 0 ? 100 : 0);
+    feedbackHtml += `<div class="feedback">${pct}% correct${expected.size ? ` (${inter} / ${expected.size})` : ''}</div>`;
+    if (step.type === 'karma') feedbackHtml += `<div class="tut-explain">${tutorialTransitivityAside(sentence.clusters[step.clusterIdx].transitivity)}</div>`;
+    const noteTargets = [...expected, ...selected];
+    for (const idx of new Set(noteTargets)) {
+      const note = step.clusterIdx != null ? tutorialOverrideNote(sentence, step, idx) : null;
+      if (note) feedbackHtml += `<div class="tut-explain">${note}</div>`;
+    }
+  }
+
+  app.innerHTML = `
+    <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(verse.ref)}</span></div>
+    <div class="question">
+      <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+      <div class="tutorial-verse prompt">${verseHtml}</div>
+      ${showNone ? `<button class="secondary" id="tutNoneBtn">इनमें से कोई नहीं</button>` : ''}
+      ${feedbackHtml}
+      <div class="tutorial-actions">
+        ${!checked ? `<button class="primary" id="tutCheckBtn" ${selected.size === 0 ? 'disabled' : ''}>Check answer</button>` : `<button class="primary" id="tutNextBtn">Next →</button>`}
+      </div>
+    </div>`;
+  document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  if (!checked) {
+    app.querySelectorAll('.tutword').forEach(el => el.onclick = () => {
+      const i = +el.dataset.i;
+      if (multiSelect) { if (selected.has(i)) selected.delete(i); else selected.add(i); }
+      else { selected.clear(); selected.add(i); }
+      renderTutorial();
+    });
+    const noneBtn = document.getElementById('tutNoneBtn');
+    if (noneBtn) noneBtn.onclick = () => { selected.clear(); checkTutorialStep(); };
+    const checkBtn = document.getElementById('tutCheckBtn');
+    if (checkBtn) checkBtn.onclick = () => checkTutorialStep();
+  } else {
+    document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+  }
+}
+
+function renderTutorialVerseComplete(avgScore) {
+  view = { screen: 'tutorialComplete' };
+  const verse = tutorialVerses[tutorialVerseIdx];
+  app.innerHTML = `
+    <div class="celebrate">
+      <h2>✓ ${esc(verse.ref)} पूरा हुआ</h2>
+      <p>${Math.round(avgScore * 100)}% औसत सटीकता इस पद्य के सभी चरणों में</p>
+      <div class="next-choices">
+        <button class="primary" id="tutNextVerseBtn">अगला पद्य →</button>
+        <button class="secondary" id="tutPickBtn">दूसरा पद्य चुनें</button>
+        <button class="secondary" id="tutDashBtn">Dashboard</button>
+      </div>
+    </div>`;
+  document.getElementById('tutNextVerseBtn').onclick = () => {
+    const nextIdx = tutorialVerseIdx + 1 < tutorialVerses.length ? tutorialVerseIdx + 1 : 0;
+    startTutorialVerse(nextIdx);
+  };
+  document.getElementById('tutPickBtn').onclick = () => renderTutorialPicker();
+  document.getElementById('tutDashBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+}
+
+function renderTutorialPicker() {
+  app.innerHTML = `<div class="picker-head"><h2>🧩 कारक tutorial</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>लोड हो रहा है…</p>`;
+  document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  ensureTutorialDataLoaded().then(() => {
+    tutorialVerses = window.TUTORIAL_DATA.Gita.verses;
+    const completion = loadTutorialCompletion();
+    const completedN = Object.keys(completion).filter(ref => tutorialVerses.some(v => v.ref === ref)).length;
+    const saved = loadTutorialProgress();
+    const resumeIdx = saved.lastRef ? tutorialVerses.findIndex(v => v.ref === saved.lastRef) : -1;
+    app.innerHTML = `
+      <div class="picker-head">
+        <h2>🧩 कारक tutorial — भगवद्गीता</h2>
+        <button class="link" id="tutPickerBackBtn">← Dashboard</button>
+      </div>
+      <p>${completedN} / ${tutorialVerses.length} verses completed</p>
+      <div class="reading-actions">
+        ${resumeIdx >= 0 ? `<button class="primary" id="tutResumeBtn">Continue (${esc(saved.lastRef)})</button>` : ''}
+        <button class="secondary" id="tutStartBtn">Start from beginning</button>
+      </div>
+      <div class="verse-jump">
+        <select id="tutVerseSelect">${tutorialVerses.map((v, i) => `<option value="${i}">${esc(v.ref)}</option>`).join('')}</select>
+        <button class="secondary" id="tutJumpBtn">Go</button>
+      </div>`;
+    document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (resumeIdx >= 0) document.getElementById('tutResumeBtn').onclick = () => startTutorialVerse(resumeIdx);
+    document.getElementById('tutStartBtn').onclick = () => startTutorialVerse(0);
+    document.getElementById('tutJumpBtn').onclick = () => startTutorialVerse(+document.getElementById('tutVerseSelect').value);
+  }).catch(() => {
+    app.innerHTML = `<p>तुला डेटा लोड नहीं हो सका। <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`;
+    document.getElementById('tutPickerBackBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  });
 }
 
 renderDashboard();

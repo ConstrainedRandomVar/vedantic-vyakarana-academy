@@ -2026,6 +2026,17 @@ function buildTutorialSteps(sentence) {
     if (c.agreementKarma.length || c.qualifierKarma.length) steps.push({ type: 'agreementKarma', clusterIdx: ci });
     if (c.qualifierKarta.length) steps.push({ type: 'qualifierKarta', clusterIdx: ci });
     if (c.qualifierKarma.length) steps.push({ type: 'qualifierKarma', clusterIdx: ci });
+    // genderCheck: one MCQ per agreement/qualifier word, right after its click-question — only
+    // when BOTH the word's own gender and the qualified argument's gender are extractable (skip
+    // rather than fabricate when either is unknown, e.g. an अस्मद्/युष्मद् pronoun in the mix).
+    for (const side of ['karta', 'karma']) {
+      const qualifiedIdx = coreArgIndices(c, side)[0];
+      if (qualifiedIdx == null || !sentence.wordGenders[qualifiedIdx]) continue;
+      const members = side === 'karta' ? [...c.agreementKarta, ...c.qualifierKarta] : [...c.agreementKarma, ...c.qualifierKarma];
+      for (const wordIndex of members) {
+        if (sentence.wordGenders[wordIndex]) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
+      }
+    }
     if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
     if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
     if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
@@ -2139,9 +2150,26 @@ function computeClauseGroups(sentence) {
 // (Harsha, 2026-08-16: "include the कर्म/कर्ता in the question itself... so the user has context and
 // can give the right answer for that specific question" — "the कर्ता of X" alone forced the learner
 // to already know which word that was from an earlier step, purely from memory).
+function coreArgIndices(c, side) {
+  return side === 'karta' ? [...c.karta, ...c.agreementKarta] : [...c.karma, ...c.agreementKarma];
+}
 function coreArgWords(c, sentence, side) {
-  const idxs = side === 'karta' ? [...c.karta, ...c.agreementKarta] : [...c.karma, ...c.agreementKarma];
-  return idxs.map(i => sentence.words[i]).join('/');
+  return coreArgIndices(c, side).map(i => sentence.words[i]).join('/');
+}
+// Maps the corpus's short गender tag (पुं/स्त्री/नपुं, as extracted by build_karaka_tutorial.js's
+// wordGender) to the same full-form labels the rest of this app already uses for gender MCQs
+// (see GENDER_OPTIONS above, for the VIB node) — keeps the two gender-quiz UIs consistent.
+const GENDER_FULL_LABEL = { 'पुं': 'पुंलिङ्ग', 'स्त्री': 'स्त्रीलिङ्ग', 'नपुं': 'नपुंसकलिङ्ग' };
+// genderCheck MCQ (Harsha, 2026-08-16): a विशेषण/समानाधिकरण word must share GENDER with the word
+// it qualifies/agrees with, same as case/number — but nothing tested that dimension specifically
+// until now (qualifierKarta/Karma and agreementKarta/Karma only tested identifying the word, not
+// confirming what gender it shares). correct = the qualified argument's own gender (sentence's own
+// wordGenders, extracted from morph_in_context at build time).
+function genderCheckOptions(sentence, c, side) {
+  const qualifiedIdx = coreArgIndices(c, side)[0];
+  const rawGender = qualifiedIdx != null ? sentence.wordGenders[qualifiedIdx] : null;
+  const correct = rawGender ? GENDER_FULL_LABEL[rawGender] : null;
+  return { correct, qualifiedIdx, options: GENDER_OPTIONS };
 }
 function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
@@ -2162,6 +2190,16 @@ function tutorialStepLabel(step, sentence) {
     case 'qualifierKarma': {
       const w = coreArgWords(c, sentence, 'karma');
       return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्म of ${gov})` : `the कर्म of ${gov}`}?`;
+    }
+    case 'genderCheck': {
+      const qWord = `<b>${esc(sentence.words[step.wordIndex])}</b>`;
+      // Must reference the SAME word genderCheckOptions actually compares against
+      // (coreArgIndices(...)[0]) — not the full coreArgWords() set, which can include the very
+      // word being asked about itself (e.g. एकस्थम् is in its own cluster's agreementKarma).
+      const qualifiedIdx = coreArgIndices(c, step.side)[0];
+      const argWord = qualifiedIdx != null ? `<b>${esc(sentence.words[qualifiedIdx])}</b>` : '';
+      const argLabel = step.side === 'karta' ? 'कर्ता' : 'कर्म';
+      return `${qWord} must share which लिङ्ग (gender) with ${argWord} (the ${argLabel} of ${gov})?`;
     }
     case 'samuccaya': return `More than one word together shares the role of ${gov} (समुच्चय — coordination) — which are they?`;
     case 'modifiers': return `Which words are adjectives (विशेषण) or adverbs (क्रियाविशेषण) modifying ${gov}?`;
@@ -2534,6 +2572,35 @@ function renderTutorial() {
     if (!answered) {
       app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
         view = { ...view, checked: true, karmaCasePicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
+  if (step.type === 'genderCheck') {
+    const c = sentence.clusters[step.clusterIdx];
+    const { correct, qualifiedIdx, options } = genderCheckOptions(sentence, c, step.side);
+    const answered = view.checked;
+    const highlight = new Set([step.wordIndex, qualifiedIdx].filter(i => i != null));
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: highlight, disabled: true, expected: highlight, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
+        <div class="options">
+          ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.genderCheckPicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, genderCheckPicked: btn.dataset.o };
         renderTutorial();
       });
     } else {

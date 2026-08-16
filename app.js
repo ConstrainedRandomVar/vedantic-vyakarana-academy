@@ -2037,6 +2037,8 @@ function buildTutorialSteps(sentence) {
         if (sentence.wordGenders[wordIndex]) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
       }
     }
+    if (c.samuccayaKarta.length) steps.push({ type: 'samuccayaKarta', clusterIdx: ci });
+    if (c.samuccayaKarma.length) steps.push({ type: 'samuccayaKarma', clusterIdx: ci });
     if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
     if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
     if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
@@ -2067,12 +2069,18 @@ function expectedSetForStep(sentence, step) {
   // prompts — "what/who is X" vs. "what shares case/gender/number with X") but accept the same
   // click-targets; qualifierKarta/Karma stays narrower (just the attributive विशेषणम् members) since
   // that question is specifically about the qualifier-qualified framing, not the full set.
-  const kartaFullSet = () => new Set([...c.karta, ...c.agreementKarta, ...c.qualifierKarta]);
-  const karmaFullSet = () => new Set([...c.karma, ...c.agreementKarma, ...c.qualifierKarma]);
+  // समुच्चयKarta/Karma (JOINT agents/objects, e.g. BG 1.1's "मामकाः पाण्डवाः च" — "my sons AND the
+  // Pāṇḍavas," both genuinely doing the action) join the full set too, by the same logic — a
+  // co-equal coordinated agent is not a "describing" word like a qualifier, it's just as much the
+  // कर्ता/कर्म as the corpus's "primary"-tagged one (Harsha, 2026-08-16).
+  const kartaFullSet = () => new Set([...coreArgIndices(c, 'karta'), ...c.qualifierKarta]);
+  const karmaFullSet = () => new Set([...coreArgIndices(c, 'karma'), ...c.qualifierKarma]);
   if (step.type === 'karta' || step.type === 'agreementKarta') return kartaFullSet();
   if (step.type === 'karma' || step.type === 'agreementKarma') return karmaFullSet();
   if (step.type === 'qualifierKarta') return new Set(c.qualifierKarta);
   if (step.type === 'qualifierKarma') return new Set(c.qualifierKarma);
+  if (step.type === 'samuccayaKarta') return new Set(c.samuccayaKarta);
+  if (step.type === 'samuccayaKarma') return new Set(c.samuccayaKarma);
   if (step.type === 'samuccaya') return new Set(c.samuccaya);
   if (step.type === 'modifiers') return new Set(c.modifiers);
   if (step.type === 'karana') return new Set(c.karana.map(r => r.wordIndex));
@@ -2107,7 +2115,7 @@ function computeClauseGroups(sentence) {
   // read cluster.sambodhana directly, unaffected by this) — only the VISUAL boundary excludes it.
   const memberIndices = c => [
     ...c.karta, ...c.karma, ...c.agreementKarta, ...c.agreementKarma, ...c.qualifierKarta, ...c.qualifierKarma,
-    ...c.samuccaya, ...c.modifiers,
+    ...c.samuccaya, ...c.samuccayaKarta, ...c.samuccayaKarma, ...c.modifiers,
     ...c.karana.map(r => r.wordIndex), ...c.sampradana.map(r => r.wordIndex),
     ...c.apadana.map(r => r.wordIndex), ...c.adhikarana.map(r => r.wordIndex),
     ...c.satisaptami.map(r => r.wordIndex), ...c.nirdharana.map(r => r.wordIndex),
@@ -2151,7 +2159,9 @@ function computeClauseGroups(sentence) {
 // can give the right answer for that specific question" — "the कर्ता of X" alone forced the learner
 // to already know which word that was from an earlier step, purely from memory).
 function coreArgIndices(c, side) {
-  return side === 'karta' ? [...c.karta, ...c.agreementKarta] : [...c.karma, ...c.agreementKarma];
+  return side === 'karta'
+    ? [...c.karta, ...c.agreementKarta, ...c.samuccayaKarta]
+    : [...c.karma, ...c.agreementKarma, ...c.samuccayaKarma];
 }
 function coreArgWords(c, sentence, side) {
   return coreArgIndices(c, side).map(i => sentence.words[i]).join('/');
@@ -2200,6 +2210,17 @@ function tutorialStepLabel(step, sentence) {
       const argWord = qualifiedIdx != null ? `<b>${esc(sentence.words[qualifiedIdx])}</b>` : '';
       const argLabel = step.side === 'karta' ? 'कर्ता' : 'कर्म';
       return `${qWord} must share which लिङ्ग (gender) with ${argWord} (the ${argLabel} of ${gov})?`;
+    }
+    case 'samuccayaKarta':
+    case 'samuccayaKarma': {
+      // Reference word deliberately excludes समुच्चयKarta/Karma itself (unlike coreArgIndices,
+      // which now includes it for grading purposes) — otherwise a cluster with no plain कर्ता/कर्म
+      // tag could self-reference the very word being asked about.
+      const side = step.type === 'samuccayaKarta' ? 'karta' : 'karma';
+      const primaryIdx = (side === 'karta' ? [...c.karta, ...c.agreementKarta] : [...c.karma, ...c.agreementKarma])[0];
+      const argWord = primaryIdx != null ? `<b>${esc(sentence.words[primaryIdx])}</b>` : '';
+      const argLabel = side === 'karta' ? 'कर्ता' : 'कर्म';
+      return `Which other word(s) join ${argWord} as a joint ${argLabel} of ${gov} (समुच्चय — coordination, e.g. "X and Y")?`;
     }
     case 'samuccaya': return `More than one word together shares the role of ${gov} (समुच्चय — coordination) — which are they?`;
     case 'modifiers': return `Which words are adjectives (विशेषण) or adverbs (क्रियाविशेषण) modifying ${gov}?`;
@@ -2611,7 +2632,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'].includes(step.type);
+  const multiSelect = ['verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;

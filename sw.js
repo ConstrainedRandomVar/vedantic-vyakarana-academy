@@ -1,6 +1,6 @@
 // Minimal cache-first service worker — makes the quiz fully usable offline after first load.
 // Bump CACHE_NAME whenever a shipped file changes so clients pick up the new version.
-const CACHE_NAME = 'sandhi-quiz-v62';
+const CACHE_NAME = 'sandhi-quiz-v63';
 // axis-data-*.js (vibhakti/kāraka/meaning/ABT lazy pools) are deliberately NOT precached here —
 // same lazy-fetched-on-demand treatment as walk-data-<chapter>.js below; the generic fetch handler
 // caches them reactively the first time a learner actually opens that node. axis-manifest.js IS

@@ -1968,31 +1968,109 @@ function currentTutorialSentence() {
 function currentTutorialStep() { return tutorialSteps[tutorialStepIdx]; }
 
 // Cluster-major flattening (Harsha, confirmed): finish one governing verb/participle's full
-// mini-sequence (voice if finite → कर्ता → कर्म → agreement → समुच्चय → modifiers → remaining)
+// mini-sequence (voice if finite → कर्ता → कर्म → कर्तृ/कर्म-सामानाधिकरण्य → समुच्चय → modifiers → remaining)
 // before moving to the next cluster, rather than looping step-type-major across all clusters.
 // कर्म always renders even when empty (Harsha's ruling — "no कर्म here" IS the teaching moment for
 // intransitivity); every other step-type is skipped when its cluster has nothing to ask about.
+// कर्ता-case sub-question (Harsha, 2026-08-17): before letting the learner CLICK the कर्ता, first
+// ask which case it should even be in, given the voice already identified — प्रथमा for कर्तरि,
+// तृतीया for कर्मणि/भावे. षष्ठी (2.3.65 कारक-षष्ठी) is only offered as a distractor when the
+// governor is genuinely a कृदन्त — offering it for a plain finite verb would be a fake trap, since
+// षष्ठी is never actually live there.
+const VOICE_TO_KARTA_CASE = { 'कर्तरि': 'प्रथमा', 'कर्मणि': 'तृतीया', 'भावे': 'तृतीया' };
+function kartaCaseOptions(c) {
+  const correct = VOICE_TO_KARTA_CASE[c.voice] || 'प्रथमा';
+  const options = c.karmaGovernorIsKrdanta ? ['प्रथमा', 'तृतीया', 'षष्ठी'] : ['प्रथमा', 'तृतीया'];
+  return { correct, options };
+}
+// कर्म-case sub-question (Harsha, 2026-08-16), mirroring कर्ता-case above — कर्तरि leaves कर्म in its
+// plain द्वितीया (अनुक्त); कर्मणि promotes it to प्रथमा (अभिहित). No भावे entry: भावे प्रयोग is only
+// used with अकर्मक roots by definition, so there's never a real कर्म to ask about in भावे — this
+// step is gated on c.karma.length (a real object exists) same as kartaCaseOptions is gated on
+// c.karta.length, so भावे clusters simply never reach here. षष्ठी distractor rule is identical to
+// कर्ता's (2.3.65 कर्तृकर्मणोः कृति applies to BOTH कर्ता and कर्म of a कृदन्त governor, not just कर्ता).
+const VOICE_TO_KARMA_CASE = { 'कर्तरि': 'द्वितीया', 'कर्मणि': 'प्रथमा' };
+function karmaCaseOptions(c) {
+  const correct = VOICE_TO_KARMA_CASE[c.voice] || 'द्वितीया';
+  const options = c.karmaGovernorIsKrdanta ? ['द्वितीया', 'प्रथमा', 'षष्ठी'] : ['द्वितीया', 'प्रथमा'];
+  return { correct, options };
+}
 function buildTutorialSteps(sentence) {
   const steps = [{ type: 'verbs' }];
   sentence.clusters.forEach((c, ci) => {
     if (c.isFiniteVerb) steps.push({ type: 'voice', clusterIdx: ci });
-    if (c.karta.length) steps.push({ type: 'karta', clusterIdx: ci });
+    const canKartaCase = c.voice && c.karta.length;
+    const canKarmaCase = c.voice && c.karma.length;
+    let showKartaCase = canKartaCase, showKarmaCase = canKarmaCase;
+    if (canKartaCase && canKarmaCase) {
+      // Alternate instead of asking both every time (Harsha, 2026-08-16: "we can alternate them in
+      // case it becomes repetitive"). Deterministic per-cluster, based on the governor's own word
+      // position — NOT a running session counter (tried that first; it starts at 0 on every page
+      // load/verse-jump, so the FIRST both-eligible cluster in any fresh session always resolved to
+      // kartaCase, and jumping straight to a specific verse from the picker each time never
+      // accumulated enough occurrences within one session to ever reach karmaCase — found live,
+      // 2026-08-16, via Harsha's own spot-checking never once hitting it). This is reload-
+      // independent and naturally varies across verses since governor positions vary.
+      if (c.governorWordIndex % 2 === 0) showKarmaCase = false; else showKartaCase = false;
+    }
+    if (c.karta.length) {
+      if (showKartaCase) steps.push({ type: 'kartaCase', clusterIdx: ci });
+      steps.push({ type: 'karta', clusterIdx: ci });
+    }
+    if (showKarmaCase) steps.push({ type: 'karmaCase', clusterIdx: ci });
     steps.push({ type: 'karma', clusterIdx: ci });
-    if (c.agreement.length) steps.push({ type: 'agreement', clusterIdx: ci });
+    // Fires whenever EITHER bucket has a member — expectedSetForStep unions agreementKarta/Karma
+    // with qualifierKarta/Karma (सामानाधिकरण्य is "generous and open"), so a cluster with only a
+    // qualifier-type member (no corpus-tagged predicative agreement) still needs to ask this.
+    if (c.agreementKarta.length || c.qualifierKarta.length) steps.push({ type: 'agreementKarta', clusterIdx: ci });
+    if (c.agreementKarma.length || c.qualifierKarma.length) steps.push({ type: 'agreementKarma', clusterIdx: ci });
+    if (c.qualifierKarta.length) steps.push({ type: 'qualifierKarta', clusterIdx: ci });
+    if (c.qualifierKarma.length) steps.push({ type: 'qualifierKarma', clusterIdx: ci });
     if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
     if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
+    if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
+    if (c.sampradana.length) steps.push({ type: 'sampradana', clusterIdx: ci });
+    if (c.apadana.length) steps.push({ type: 'apadana', clusterIdx: ci });
+    if (c.adhikarana.length) steps.push({ type: 'adhikarana', clusterIdx: ci });
+    if (c.satisaptami.length) steps.push({ type: 'satisaptami', clusterIdx: ci });
+    if (c.sambodhana.length) steps.push({ type: 'sambodhana', clusterIdx: ci });
+    if (c.nirdharana.length) steps.push({ type: 'nirdharana', clusterIdx: ci });
     if (c.remaining.length) steps.push({ type: 'remaining', clusterIdx: ci });
   });
   return steps;
 }
+// Sweep-role arrays (करण/सम्प्रदान/अपादान/अधिकरण/सतिसप्तमी/remaining) hold {wordIndex, role,
+// upapada, upapadaCase} objects, same shape as `remaining` always had — not plain indices.
 function expectedSetForStep(sentence, step) {
   if (step.type === 'verbs') return new Set(sentence.verbs);
   const c = sentence.clusters[step.clusterIdx];
-  if (step.type === 'karta') return new Set(c.karta);
-  if (step.type === 'karma') return new Set(c.karma);
-  if (step.type === 'agreement') return new Set(c.agreement);
+  // करता/कर्म and their agreementKarta/Karma questions all share ONE full accepted-answer set per
+  // argument (Harsha, 2026-08-16, found live via BG 4.1: इमम् is tagged कर्म; योगम् — तagged
+  // कर्मसमानाधिकरणम्, target=the verb — names the EXACT SAME referent, "this yoga"; अव्ययम् —
+  // विशेषणम् targeting योगम् — qualifies that same referent too). Which one the corpus calls the
+  // "primary" कर्म vs. an "agreeing"/"qualifying" word is largely an artifact of annotation
+  // convention (often just which word got there first), not a real grammatical difference the
+  // learner should be quizzed on — marking इमम् wrong on "what agrees with कर्म" (or योगम्/अव्ययम्
+  // wrong on "what is the कर्म") would be relying on that arbitrary tag choice rather than the
+  // underlying grammar. करता/कर्म and agreementKarta/Karma stay separate QUESTIONS (different
+  // prompts — "what/who is X" vs. "what shares case/gender/number with X") but accept the same
+  // click-targets; qualifierKarta/Karma stays narrower (just the attributive विशेषणम् members) since
+  // that question is specifically about the qualifier-qualified framing, not the full set.
+  const kartaFullSet = () => new Set([...c.karta, ...c.agreementKarta, ...c.qualifierKarta]);
+  const karmaFullSet = () => new Set([...c.karma, ...c.agreementKarma, ...c.qualifierKarma]);
+  if (step.type === 'karta' || step.type === 'agreementKarta') return kartaFullSet();
+  if (step.type === 'karma' || step.type === 'agreementKarma') return karmaFullSet();
+  if (step.type === 'qualifierKarta') return new Set(c.qualifierKarta);
+  if (step.type === 'qualifierKarma') return new Set(c.qualifierKarma);
   if (step.type === 'samuccaya') return new Set(c.samuccaya);
   if (step.type === 'modifiers') return new Set(c.modifiers);
+  if (step.type === 'karana') return new Set(c.karana.map(r => r.wordIndex));
+  if (step.type === 'sampradana') return new Set(c.sampradana.map(r => r.wordIndex));
+  if (step.type === 'apadana') return new Set(c.apadana.map(r => r.wordIndex));
+  if (step.type === 'adhikarana') return new Set(c.adhikarana.map(r => r.wordIndex));
+  if (step.type === 'satisaptami') return new Set(c.satisaptami.map(r => r.wordIndex));
+  if (step.type === 'sambodhana') return new Set(c.sambodhana.map(r => r.wordIndex));
+  if (step.type === 'nirdharana') return new Set(c.nirdharana.map(r => r.wordIndex));
   if (step.type === 'remaining') return new Set(c.remaining.map(r => r.wordIndex));
   return new Set();
 }
@@ -2007,7 +2085,23 @@ function expectedSetForStep(sentence, step) {
 // 4.1 come out clean and contiguous (0-5 / 6-9 / 10-13) instead of a spurious 4th box for योगम्.
 function computeClauseGroups(sentence) {
   const clusters = sentence.clusters;
-  const memberIndices = c => [...c.karta, ...c.karma, ...c.agreement, ...c.samuccaya, ...c.modifiers, ...c.remaining.map(r => r.wordIndex)];
+  // सम्बोधन (vocative address, e.g. परन्तप) is deliberately EXCLUDED here (Harsha, 2026-08-16,
+  // found live via BG 4.2): a vocative is a discourse-level address, not clause-internal — it
+  // commonly sits at the very end of a sentence regardless of which clause it's grammatically
+  // tagged to. 4.2 tags परन्तप (idx 12, the sentence's last word) as सम्बोधन of विदुः (cluster 0,
+  // whose own natural members only span idx 0-5) — including it in the span calculation stretched
+  // cluster 0 all the way to idx 12, completely swallowing cluster 1's own span (idx 6-11, सः...
+  // नष्टः) inside it, so the two clauses could never render as separate, non-overlapping boxes.
+  // सम्बोधन is still fully graded via its own dedicated step (buildTutorialSteps/expectedSetForStep
+  // read cluster.sambodhana directly, unaffected by this) — only the VISUAL boundary excludes it.
+  const memberIndices = c => [
+    ...c.karta, ...c.karma, ...c.agreementKarta, ...c.agreementKarma, ...c.qualifierKarta, ...c.qualifierKarma,
+    ...c.samuccaya, ...c.modifiers,
+    ...c.karana.map(r => r.wordIndex), ...c.sampradana.map(r => r.wordIndex),
+    ...c.apadana.map(r => r.wordIndex), ...c.adhikarana.map(r => r.wordIndex),
+    ...c.satisaptami.map(r => r.wordIndex), ...c.nirdharana.map(r => r.wordIndex),
+    ...c.remaining.map(r => r.wordIndex),
+  ];
   const byGovernor = new Map(clusters.map((c, ci) => [c.governorWordIndex, ci]));
   const nestedUnder = new Map(); // child clusterIdx -> parent clusterIdx
   clusters.forEach((c, ci) => {
@@ -2040,18 +2134,45 @@ function computeClauseGroups(sentence) {
 // inline — matches the rest of this app's convention (Devanāgarī verse text + English UI chrome),
 // not the terminal/IAST convention from the sentence-analysis skill (this is a rendered browser
 // page, not a terminal that mangles combining marks). ----
+// The actual कर्ता/कर्म word(s) for this cluster (own tag + agreementKarta/Karma, but NOT
+// qualifierKarta/Karma itself) — used to name them directly in the qualifierKarta/Karma question
+// (Harsha, 2026-08-16: "include the कर्म/कर्ता in the question itself... so the user has context and
+// can give the right answer for that specific question" — "the कर्ता of X" alone forced the learner
+// to already know which word that was from an earlier step, purely from memory).
+function coreArgWords(c, sentence, side) {
+  const idxs = side === 'karta' ? [...c.karta, ...c.agreementKarta] : [...c.karma, ...c.agreementKarma];
+  return idxs.map(i => sentence.words[i]).join('/');
+}
 function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
     case 'verbs': return `Which words in this sentence are verbs or participles (तिङन्त/कृत्)? — select every word that expresses an action or state. (identify ${sentence.verbs.length} तिङन्त/कृत्)`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
+    case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
+    case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
     case 'karta': return `For ${gov}, who is the कर्ता (the doer — "who?")?`;
     case 'karma': return `For ${gov}, what is the कर्म (what the action is done to — "whom/what?")? — if there is no कर्म, choose "None of these" below.`;
-    case 'agreement': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्ता or कर्म of ${gov}?`;
+    case 'agreementKarta': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्ता of ${gov}?`;
+    case 'agreementKarma': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्म of ${gov}?`;
+    case 'qualifierKarta': {
+      const w = coreArgWords(c, sentence, 'karta');
+      return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्ता of ${gov})` : `the कर्ता of ${gov}`}?`;
+    }
+    case 'qualifierKarma': {
+      const w = coreArgWords(c, sentence, 'karma');
+      return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्म of ${gov})` : `the कर्म of ${gov}`}?`;
+    }
     case 'samuccaya': return `More than one word together shares the role of ${gov} (समुच्चय — coordination) — which are they?`;
     case 'modifiers': return `Which words are adjectives (विशेषण) or adverbs (क्रियाविशेषण) modifying ${gov}?`;
-    case 'remaining': return `Which remaining words relate to ${gov} (करण, सम्प्रदान, अपादान, हेतु, अधिकरण, etc.)?`;
+    case 'karana': return `For ${gov}, which word is the करण — "by what means/instrument" is this action done?`;
+    case 'sampradana': return `For ${gov}, which word is the सम्प्रदान — "for whom" or "for what purpose" (तादर्थ्य) is this कर्म/क्रिया being done?`;
+    case 'apadana': return `For ${gov}, which word is the अपादान — "from what" or "from where" does this action originate?`;
+    case 'adhikarana': return `For ${gov}, which word is the अधिकरण — "where" or "when" is this action happening?`;
+    case 'satisaptami': return `For ${gov}, which word names the circumstance under which this action happens (सति-सप्तमी — a locative-absolute clause, distinct from ordinary अधिकरण)?`;
+    case 'sambodhana': return `For ${gov}, which word is being directly addressed or called out to (सम्बोधन)?`;
+    case 'nirdharana': return `For ${gov}, compared to/singled out from which group is this true (निर्धारण)?`;
+    case 'remaining': return `Which remaining words relate to ${gov} (हेतु, षष्ठीसम्बन्ध, etc.)?`;
     default: return '';
   }
 }
@@ -2077,6 +2198,20 @@ function tutorialTransitivityAside(transitivity) {
   if (transitivity === 'सकर्मकः') return 'This verb is transitive (सकर्मक) here — so it should have a कर्म.';
   return '';
 }
+// qualifierKarta/qualifierKarma teaching callout (Harsha, 2026-08-16) — "be generous and open" about
+// सामानाधिकरण्य: general Pāṇinian grammar (2.1.49 विशेषणं विशेष्येण बहुलम् and the standard
+// treatment of case-agreement-via-shared-reference) treats a qualifier/qualified pair as sharing
+// case/gender/number for the same reason a predicate word does (both denote the same referent) —
+// i.e. this step and agreementKarta/Karma are the same underlying phenomenon. NOTE: this "same
+// phenomenon" framing is NOT itself asserted by the UoHyd tagging-guidelines PDF (§5.4, ex. 51-56,
+// confirmed by grepping the extracted text — "सामानाधिकरण्य" only ever appears baked into the
+// compound labels कर्तृ/कर्मसमानाधिकरणम्, never as a standalone umbrella term); the PDF only
+// documents THAT विशेषणम् vs. कर्तृ/कर्मसमानाधिकरणम् are distinguished by उद्देश्य/विधेय function,
+// not that they're grammatically the same phenomenon underneath. Keep these attributions separate
+// if this callout is ever revised.
+function tutorialQualifierCallout() {
+  return 'This is also a form of सामानाधिकरण्य — a qualifier (विशेषण) shares the same case/gender/number as the word it qualifies, for the same reason a predicate word does (both refer to the same thing). It gets its own question here because it directly describes the word itself, rather than being predicated through the verb.';
+}
 // Override-trigger notes (Harsha's cross-checked frameworks + this session's Anusāraka/corpus
 // verification) — "why isn't this the plain default case," attached wherever cheaply detectable.
 function tutorialOverrideNote(sentence, step, wordIndex) {
@@ -2087,8 +2222,9 @@ function tutorialOverrideNote(sentence, step, wordIndex) {
   if (step.type === 'karma' && c.karmaGovernorIsKrdanta) {
     return `Note — ${esc(c.governorWord)} is itself a कृदन्त, so its कर्म can also appear in षष्ठी here (instead of the usual द्वितीया) — कारक-षष्ठी, 2.3.65.`;
   }
-  if (step.type === 'remaining') {
-    const item = c.remaining.find(r => r.wordIndex === wordIndex);
+  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'];
+  if (SWEEP_ARRAYS.includes(step.type)) {
+    const item = c[step.type].find(r => r.wordIndex === wordIndex);
     if (item && item.upapada) return `${esc(sentence.words[wordIndex])} is in ${item.upapadaCase} here — because of ${esc(item.upapada)}, not from any general kāraka rule.`;
     if (item && item.role === 'हेतुः') return `हेतु (cause/reason) can appear in either तृतीया or पञ्चमी (2.3.23) — look at the form of ${esc(sentence.words[wordIndex])} here to tell which one it is.`;
   }
@@ -2116,6 +2252,19 @@ function buildTutorialReportDetails(target) {
   const subject = `Kāraka tutorial issue: ${verse.ref} — ${step.type}`;
   return { subject, details };
 }
+// GitHub-issue fallback (Harsha, 2026-08-16: "there doesn't appear to be a way to file a ticket
+// through github directly (that we support elsewhere)") — the tutorial's report form only ever
+// posted to Formspree, unlike the quiz's own report area (buildReportIssueUrl above) which also
+// offers a pre-filled GitHub issue link for when Formspree is unreachable or someone just prefers
+// filing directly. Same target repo/URL shape, just built from the tutorial's own target fields.
+function buildTutorialReportIssueUrl(target, name, email, message) {
+  const { subject } = buildTutorialReportDetails(target);
+  const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n\n${message}`;
+  const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
+  url.searchParams.set('title', subject);
+  url.searchParams.set('body', fullBody);
+  return url.toString();
+}
 async function submitTutorialReport(target, name, email, userComment) {
   const { subject, details } = buildTutorialReportDetails(target);
   const message = userComment ? `Comments: ${userComment}\n\n${details}` : details;
@@ -2138,7 +2287,7 @@ function tutorialReportTarget(sentence, step, verse) {
     selectedWords: [...selected].map(i => sentence.words[i]),
     voicePicked: view.voicePicked,
     correctVoice: c ? c.voice : null,
-    pct: view.checked ? (expected.size ? Math.round(([...selected].filter(i => expected.has(i)).length / expected.size) * 100) : (selected.size === 0 ? 100 : 0)) : null,
+    pct: view.checked ? Math.round(tutorialStepScore(selected, expected, ANY_VALID_STEP_TYPES.has(step.type)) * 100) : null,
   };
 }
 function renderTutorialReportArea(sentence, step, verse) {
@@ -2156,6 +2305,7 @@ function renderTutorialReportArea(sentence, step, verse) {
       ${status}
       <button class="secondary" id="tutReportSubmitBtn" ${view.tutReportSubmitting ? 'disabled' : ''}>${view.tutReportSubmitting ? 'Sending…' : 'Submit report'}</button>
       <button class="link" id="tutReportCancelBtn">cancel</button>
+      <div class="report-fallback"><button class="link" id="tutReportGithubBtn">or file a GitHub issue instead ↗</button></div>
     </div>`;
   }
   return view.tutReported
@@ -2181,6 +2331,18 @@ function wireTutorialReportArea(sentence, step, verse, rerender) {
     if (!ok) { view = { ...view, tutReportSubmitting: false, tutReportSubmitError: true }; rerender(); return; }
     view = { ...view, tutReportOpen: false, tutReportSubmitting: false, tutReported: true };
     rerender();
+  };
+  const githubBtn = document.getElementById('tutReportGithubBtn');
+  if (githubBtn) githubBtn.onclick = () => {
+    const name = document.getElementById('tutReportName').value.trim();
+    const email = document.getElementById('tutReportEmail').value.trim();
+    const userComment = document.getElementById('tutReportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const target = tutorialReportTarget(sentence, step, verse);
+    const { details } = buildTutorialReportDetails(target);
+    const message = userComment ? `Comments: ${userComment}\n\n${details}` : details;
+    window.open(buildTutorialReportIssueUrl(target, name, email, message), '_blank', 'noopener');
   };
 }
 
@@ -2219,14 +2381,33 @@ function renderClickableVerse(words, opts) {
   return html;
 }
 
+// Jaccard similarity (|selected ∩ expected| / |selected ∪ expected|), not plain recall
+// (|intersection| / |expected|) — recall alone rewards over-selecting: clicking every word in the
+// sentence would score 100% as long as the true answers were included among them, since it never
+// counts against you for picking things you shouldn't have (found live, 2026-08-16: Harsha selected
+// एकस्थम्+कृत्स्नम्+प्रविभक्तम् for a question expecting only एकस्थम्, and got "100% correct (1/1)"
+// despite the extra two being marked wrong on the words themselves — a real contradiction between
+// the visual feedback and the score). Jaccard only reaches 100% on an exact match.
+// करता/कर्म/agreementKarta/agreementKarma are "any valid" buckets: their expected set holds
+// MULTIPLE co-referential names for the SAME underlying argument (e.g. BG 4.1's इमम्+योगम् both
+// name "this yoga") — finding ANY ONE of them, with no wrong picks, is a complete answer, not a
+// partial one (Harsha, 2026-08-16: selecting only योगम् out of {इमम्,योगम्} should score 100%, not
+// 50%). This is unlike modifiers/samuccaya/sweep buckets, where the task genuinely is to find
+// EVERY member (e.g. both कृत्स्नम् AND प्रविभक्तम् in qualifierKarma) — those keep plain Jaccard.
+const ANY_VALID_STEP_TYPES = new Set(['karta', 'karma', 'agreementKarta', 'agreementKarma']);
+function tutorialStepScore(selected, expected, anyValid) {
+  if (!expected.size && !selected.size) return 1;
+  const inter = [...selected].filter(i => expected.has(i)).length;
+  if (anyValid && selected.size > 0 && inter === selected.size) return 1; // non-empty, no wrong picks
+  const union = new Set([...selected, ...expected]).size;
+  return union ? inter / union : 0;
+}
 function checkTutorialStep() {
   const sentence = currentTutorialSentence();
   const step = currentTutorialStep();
   const expected = expectedSetForStep(sentence, step);
   const selected = view.selectedIndices;
-  const inter = [...selected].filter(i => expected.has(i)).length;
-  const score = expected.size ? inter / expected.size : (selected.size === 0 ? 1 : 0);
-  tutorialScores.push(score);
+  tutorialScores.push(tutorialStepScore(selected, expected, ANY_VALID_STEP_TYPES.has(step.type)));
   view = { ...view, checked: true, expected };
   renderTutorial();
 }
@@ -2281,7 +2462,7 @@ function renderTutorial() {
     const answered = view.checked;
     const opts = ['कर्तरि', 'कर्मणि', 'भावे'];
     app.innerHTML = `
-      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(verse.ref)}</span></div>
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
       <div class="question">
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
         <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
@@ -2306,19 +2487,82 @@ function renderTutorial() {
     return;
   }
 
+  if (step.type === 'kartaCase') {
+    const c = sentence.clusters[step.clusterIdx];
+    const { correct, options } = kartaCaseOptions(c);
+    const answered = view.checked;
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
+        <div class="options">
+          ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.kartaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, kartaCasePicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
+  if (step.type === 'karmaCase') {
+    const c = sentence.clusters[step.clusterIdx];
+    const { correct, options } = karmaCaseOptions(c);
+    const answered = view.checked;
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
+        <div class="options">
+          ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.karmaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, karmaCasePicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['verbs', 'agreement', 'samuccaya', 'modifiers', 'remaining'].includes(step.type);
+  const multiSelect = ['verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;
-  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: checked ? expected : null, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop });
+  const anyValid = ANY_VALID_STEP_TYPES.has(step.type);
+  const inter = [...selected].filter(i => expected.has(i)).length;
+  // A fully-valid subset (any-valid buckets only, e.g. picking just योगम् out of {इमम्,योगम्})
+  // scores 100% — don't then mark the OTHER valid alternatives as "missed" (misleading next to a
+  // 100% score); show only what was actually picked as correct instead.
+  const fullyValidSubset = anyValid && selected.size > 0 && inter === selected.size;
+  const displayExpected = checked ? (fullyValidSubset ? selected : expected) : null;
+  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: displayExpected, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop });
 
   let feedbackHtml = '';
   if (checked) {
-    const inter = [...selected].filter(i => expected.has(i)).length;
-    const pct = expected.size ? Math.round((inter / expected.size) * 100) : (selected.size === 0 ? 100 : 0);
-    feedbackHtml += `<div class="feedback">${pct}% correct${expected.size ? ` (${inter} / ${expected.size})` : ''}</div>`;
+    const pct = Math.round(tutorialStepScore(selected, expected, anyValid) * 100);
+    feedbackHtml += `<div class="feedback">${pct}% correct${expected.size && !fullyValidSubset ? ` (${inter} / ${expected.size})` : ''}</div>`;
     if (step.type === 'karma') feedbackHtml += `<div class="tut-explain">${tutorialTransitivityAside(sentence.clusters[step.clusterIdx].transitivity)}</div>`;
+    if (step.type === 'qualifierKarta' || step.type === 'qualifierKarma') feedbackHtml += `<div class="tut-explain">${tutorialQualifierCallout()}</div>`;
     const noteTargets = [...expected, ...selected];
     for (const idx of new Set(noteTargets)) {
       const note = step.clusterIdx != null ? tutorialOverrideNote(sentence, step, idx) : null;
@@ -2327,7 +2571,7 @@ function renderTutorial() {
   }
 
   app.innerHTML = `
-    <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(verse.ref)}</span></div>
+    <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
     <div class="question">
       <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
       <div class="tutorial-verse prompt">${verseHtml}</div>
@@ -2361,7 +2605,7 @@ function renderTutorialVerseComplete(avgScore) {
   const verse = tutorialVerses[tutorialVerseIdx];
   app.innerHTML = `
     <div class="celebrate">
-      <h2>✓ ${esc(verse.ref)} complete</h2>
+      <h2>✓ ${esc(formatVerseRef(verse.ref))} complete</h2>
       <p>${Math.round(avgScore * 100)}% average accuracy across this verse's steps</p>
       <div class="next-choices">
         <button class="primary" id="tutNextVerseBtn">Next verse →</button>
@@ -2377,6 +2621,27 @@ function renderTutorialVerseComplete(avgScore) {
   document.getElementById('tutDashBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
 }
 
+// The source data's own chpatno/slokano fields are zero-padded ("01.001") so plain string sort/
+// grouping (see groupTutorialVersesByChapter below) gives correct chapter order — but BG never
+// exceeds 18 chapters or 78 verses, so that padding is only useful internally. Strip it for
+// anything actually shown to the learner (Harsha, 2026-08-16: "do we need 3 digits for verses").
+function formatVerseRef(ref) { return ref.split('.').map(p => String(+p)).join('.'); }
+
+// Groups the flat tutorialVerses array by chapter (the part of `ref` before the '.', e.g. "01.001"
+// -> chapter "01"), preserving each verse's original index into tutorialVerses so startTutorialVerse
+// (which takes that index) still works after filtering.
+function groupTutorialVersesByChapter(verses) {
+  const chapters = new Map();
+  verses.forEach((v, idx) => {
+    const chapterKey = v.ref.split('.')[0];
+    if (!chapters.has(chapterKey)) chapters.set(chapterKey, []);
+    chapters.get(chapterKey).push({ idx, ref: v.ref });
+  });
+  return [...chapters.entries()]
+    .map(([chapterKey, verseList]) => ({ chapterKey, verses: verseList }))
+    .sort((a, b) => a.chapterKey.localeCompare(b.chapterKey));
+}
+
 function renderTutorialPicker() {
   app.innerHTML = `<div class="picker-head"><h2>🧩 कारक tutorial</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>Loading…</p>`;
   document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
@@ -2386,6 +2651,12 @@ function renderTutorialPicker() {
     const completedN = Object.keys(completion).filter(ref => tutorialVerses.some(v => v.ref === ref)).length;
     const saved = loadTutorialProgress();
     const resumeIdx = saved.lastRef ? tutorialVerses.findIndex(v => v.ref === saved.lastRef) : -1;
+    const chapters = groupTutorialVersesByChapter(tutorialVerses);
+    // BG-only for now, so no "Text" level (see renderReadingPicker's 3-level version) — just
+    // Chapter -> Verse, mirroring the same drillable-filter pattern used there (Harsha, 2026-08-15:
+    // "the chapter and verse can be made filters" rather than one long flat dropdown).
+    const p = view.picker || (view.picker = { chapterKey: null });
+    const selectedChapter = chapters.find(c => c.chapterKey === p.chapterKey) || null;
     app.innerHTML = `
       <div class="picker-head">
         <h2>🧩 कारक tutorial — Bhagavad Gītā</h2>
@@ -2393,17 +2664,26 @@ function renderTutorialPicker() {
       </div>
       <p>${completedN} / ${tutorialVerses.length} verses completed</p>
       <div class="reading-actions">
-        ${resumeIdx >= 0 ? `<button class="primary" id="tutResumeBtn">Continue (${esc(saved.lastRef)})</button>` : ''}
+        ${resumeIdx >= 0 ? `<button class="primary" id="tutResumeBtn">Continue (${esc(formatVerseRef(saved.lastRef))})</button>` : ''}
         <button class="secondary" id="tutStartBtn">Start from beginning</button>
       </div>
-      <div class="verse-jump">
-        <select id="tutVerseSelect">${tutorialVerses.map((v, i) => `<option value="${i}">${esc(v.ref)}</option>`).join('')}</select>
+      <div class="picker-level">
+        <label>Chapter</label>
+        <select id="tutChapterSelect">
+          <option value="">Choose a chapter…</option>
+          ${chapters.map(c => `<option value="${esc(c.chapterKey)}"${c.chapterKey === p.chapterKey ? ' selected' : ''}>Chapter ${esc(formatVerseRef(c.chapterKey))}</option>`).join('')}
+        </select>
+      </div>
+      ${selectedChapter ? `<div class="picker-level verse-jump">
+        <select id="tutVerseSelect">${selectedChapter.verses.map(v => `<option value="${v.idx}">${esc(formatVerseRef(v.ref))}</option>`).join('')}</select>
         <button class="secondary" id="tutJumpBtn">Go</button>
-      </div>`;
+      </div>` : ''}`;
     document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
     if (resumeIdx >= 0) document.getElementById('tutResumeBtn').onclick = () => startTutorialVerse(resumeIdx);
     document.getElementById('tutStartBtn').onclick = () => startTutorialVerse(0);
-    document.getElementById('tutJumpBtn').onclick = () => startTutorialVerse(+document.getElementById('tutVerseSelect').value);
+    document.getElementById('tutChapterSelect').onchange = e => { p.chapterKey = e.target.value || null; renderTutorialPicker(); };
+    const jumpBtn = document.getElementById('tutJumpBtn');
+    if (jumpBtn) jumpBtn.onclick = () => startTutorialVerse(+document.getElementById('tutVerseSelect').value);
   }).catch(() => {
     app.innerHTML = `<p>Couldn't load tutorial data. <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`;
     document.getElementById('tutPickerBackBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };

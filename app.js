@@ -154,6 +154,7 @@ const KIND_LABELS = {
   dhatu: 'धातु · Verb tense/voice', samasa: 'समास · Compound classification',
   krdanta: 'कृदन्त · Participles', taddhita: 'तद्धित · Secondary derivation',
   karaka: 'कारक · Syntactic role', meaning: 'अर्थ · Word meaning',
+  verbvoice: 'क्रिया · Verb & voice (overview)',
 };
 const CODES_BY_KIND = {};
 const CODE_KIND = {};
@@ -215,6 +216,7 @@ const READING_KEY = 'sandhiQuizReadingProgress';
 // unchanged until a user actively narrows it. Scoped to reading-walk only, per how it was asked
 // for — Mix it up/Practice use a different code-keyed pool with no equivalent kind-level concept.
 const SKILL_KINDS = [
+  { kind: 'verbvoice', label: 'क्रिया · verb & voice overview (leads each verse)' },
   { kind: 'sandhi', label: 'सन्धि (sandhi)' },
   { kind: 'samasa', label: 'समास (samāsa)' },
   { kind: 'vibhakti', label: 'विभक्ति (case, gender, stem)' },
@@ -400,6 +402,7 @@ function junctionDistractors(item) {
 // Dispatches to the right option-builder for this item's question type: samāsa classification,
 // no-sandhi word-boundary splits (ABT), or the default "produce the joined form" sandhi question.
 function buildOptions(item, code) {
+  if (item.kind === 'verbvoice') return buildVerbVoiceOptions(item);
   if (item.kind === 'samasa') return buildSamasaOptions(item);
   if (item.kind === 'vibhakti') return buildVibhaktiOptions(item);
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
@@ -787,6 +790,13 @@ function karakaConflictsWith(role) {
   const group = KARAKA_MUTUALLY_EXCLUSIVE_GROUPS.find(g => g.includes(role));
   return group ? new Set(group.filter(r => r !== role)) : new Set();
 }
+// Verb/voice "broader view" opener (Phase 2 step 4): a fixed 3-way choice — कर्तरि / कर्मणि / भावे.
+// Fixed universe (not a corpus-derived pool), same spirit as the dhātu-prayoga voice question; the
+// correct value is Zenodo's own voice tag baked in at build time (build_reading_walk.js's opener).
+function buildVerbVoiceOptions(item) {
+  const options = ['कर्तरि', 'कर्मणि', 'भावे'];
+  return { options, correctIndex: options.indexOf(item.voice) };
+}
 function buildKarakaOptions(item) {
   const correct = item.role;
   const recentAnswers = recentAnswersByCode.KAR || [];
@@ -967,6 +977,7 @@ function questionSignature(item) {
   // non-repeating case, so `|| 1` there changes nothing about existing signatures.
   if (item.kind === 'karaka') return `kar:${item.ref}:${item.word}:${item.role}:${item.occurrenceIndex || 1}`;
   if (item.kind === 'spot') return `spot:${item.subtype}:${item.ref}:${item.targetWord}`;
+  if (item.kind === 'verbvoice') return `vvc:${item.ref}:${item.verb}:${item.voice}`;
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
   if (item.subtype === 'spotlopa') return `spotlopa:${item.ref}:${item.targetWord}`;
@@ -1004,11 +1015,11 @@ function pickNextWalkItem() {
       // the queue ahead of other kinds' facets (see the matching stepHasMoreKaraka gate in
       // advanceWalk/peekNextVerseCrossing that keeps the walk on this step until they're asked).
       const rest = eligible.filter(i => i !== step.defaultItemIndex);
-      const karakaFirst = rest.filter(i => step.items[i].kind === 'karaka');
-      const others = rest.filter(i => step.items[i].kind !== 'karaka');
+      const leadFirst = rest.filter(i => LEAD_KINDS.has(step.items[i].kind));
+      const others = rest.filter(i => !LEAD_KINDS.has(step.items[i].kind));
       const order = eligible.includes(step.defaultItemIndex)
-        ? [step.defaultItemIndex, ...karakaFirst, ...others]
-        : [...karakaFirst, ...others];
+        ? [step.defaultItemIndex, ...leadFirst, ...others]
+        : [...leadFirst, ...others];
       const itemIdx = order.find(i => !askedSignatures.has(questionSignature(step.items[i])));
       if (itemIdx !== undefined) {
         const item = step.items[itemIdx];
@@ -1027,12 +1038,16 @@ function pickNextWalkItem() {
   }
   return null; // chapter complete
 }
-// See the comment in pickNextWalkItem: a step can hold kāraka items for several distinct
-// sub-words (fused corpus tokens), and none of them should be skipped just because the step
-// already yielded its one default-rotation question — so the step isn't "done", even outside
-// deep mode, while an eligible kāraka item here hasn't been asked yet.
-function stepHasMoreKaraka(step) {
-  return eligibleIndices(step).some(i => step.items[i].kind === 'karaka' && !askedSignatures.has(questionSignature(step.items[i])));
+// "Lead" kinds jump the per-step queue and keep the walk on a step until all of them are asked
+// (even outside deep mode): kāraka items, because each names a DIFFERENT sub-word of a fused token
+// (see pickNextWalkItem); and verbvoice items, because the synthetic verse-opener step (Phase 2
+// step 4) can hold one per finite verb and every verse's verb(s) should be asked, not just the first.
+const LEAD_KINDS = new Set(['karaka', 'verbvoice']);
+// See the comment in pickNextWalkItem: a step can hold several lead-kind items and none should be
+// skipped just because the step already yielded its one default-rotation question — so the step
+// isn't "done", even outside deep mode, while an eligible lead-kind item here hasn't been asked yet.
+function stepHasMoreLead(step) {
+  return eligibleIndices(step).some(i => LEAD_KINDS.has(step.items[i].kind) && !askedSignatures.has(questionSignature(step.items[i])));
 }
 // True if advancing past the CURRENT (not-yet-advanced) step/item would move into a different
 // verse, or run off the end of the chapter — decided BEFORE advancing so the answer-feedback
@@ -1041,7 +1056,7 @@ function peekNextVerseCrossing() {
   const curStep = walkSteps[walkPos.stepIdx];
   if (!curStep) return true;
   if (session.deep && eligibleIndices(curStep).some(i => i > walkPos.itemIdx)) return false;
-  if (!session.deep && stepHasMoreKaraka(curStep)) return false;
+  if (!session.deep && stepHasMoreLead(curStep)) return false;
   const nextStep = walkSteps[walkPos.stepIdx + 1];
   return !nextStep || nextStep.verseRef !== curStep.verseRef;
 }
@@ -1049,7 +1064,7 @@ function advanceWalk() {
   const step = walkSteps[walkPos.stepIdx];
   const nextEligible = step && session.deep ? eligibleIndices(step).find(i => i > walkPos.itemIdx) : undefined;
   if (nextEligible !== undefined) walkPos.itemIdx = nextEligible;
-  else if (step && !session.deep && stepHasMoreKaraka(step)) { /* stay put — more distinct-word kāraka facts remain at this step */ }
+  else if (step && !session.deep && stepHasMoreLead(step)) { /* stay put — more lead-kind (kāraka/verbvoice) items remain at this step */ }
   else { walkPos.stepIdx++; walkPos.itemIdx = 0; }
   saveReadingProgress(session.chapterKey, session.scope, walkPos);
 }
@@ -1542,6 +1557,13 @@ function renderVerseComplete() {
 function renderPrompt(item) {
   const srcLine = `<div class="src">${item.source === 'mula' ? 'mūla' : 'bhāṣya'}${item.ref ? ' · ' + esc(item.ref) : ''}</div>`;
   const ctxLine = item.context ? `<div class="context">${esc(item.context)}</div>` : '';
+  if (item.kind === 'verbvoice') {
+    // The verse-opener "broader view first" question: identify the verb's voice before diving into
+    // the word-by-word questions. Naming the root orients the learner to WHICH verb governs the line.
+    const rootBit = item.root ? ` (√${esc(item.root)})` : '';
+    return `<div class="prompt">${esc(item.verb)}${rootBit}</div>
+      <div class="prompt-hint">This is the verse's verb. Is it कर्तरि (active), कर्मणि (passive), or भावे (impersonal)? — this fixes which word will be the कर्ता/कर्म and in which case.</div>${ctxLine}${srcLine}`;
+  }
   if (item.kind === 'samasa') {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">What type of samāsa is this?</div>${ctxLine}${srcLine}`;
@@ -1647,6 +1669,24 @@ function extractPromptText(item) {
 // this is what PRE-FILLS the report textarea (same spirit as the GitHub issue link's own
 // pre-filled body: the reporter sees exactly what's about to be sent and can edit/add to it,
 // rather than it being assembled invisibly only at submit time).
+// Device/OS/browser summary for issue reports (Harsha, 2026-08-17) — this whole session turned on
+// "Android phone vs desktop", and reports carried nothing to tell them apart. Parsed from
+// navigator.userAgent (crude but enough to triage phone/tablet/laptop + OS + browser), plus the raw
+// UA and viewport for the awkward cases. Best-effort: never throws, degrades to 'unknown'.
+function deviceInfoLine() {
+  try {
+    const ua = (navigator && navigator.userAgent) || '';
+    const os = /Android/i.test(ua) ? 'Android'
+      : /iPhone|iPod/i.test(ua) ? 'iOS' : /iPad/i.test(ua) ? 'iPadOS'
+      : /Windows/i.test(ua) ? 'Windows' : /Mac OS X|Macintosh/i.test(ua) ? 'macOS'
+      : /CrOS/i.test(ua) ? 'ChromeOS' : /Linux/i.test(ua) ? 'Linux' : 'unknown OS';
+    const device = /iPad|Tablet/i.test(ua) ? 'tablet' : /Mobi|Android|iPhone|iPod/i.test(ua) ? 'phone' : 'desktop/laptop';
+    const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome'
+      : /Firefox\//.test(ua) ? 'Firefox' : /Version\/.*Safari/.test(ua) ? 'Safari' : 'unknown browser';
+    const vp = `${window.innerWidth || 0}×${window.innerHeight || 0}`;
+    return `device: ${device} · ${os} · ${browser} · viewport ${vp}\nuser-agent: ${ua}`;
+  } catch (e) { return 'device: (unavailable)'; }
+}
 function buildReportDetails(target) {
   const { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
   const { word: promptWord, question } = extractPromptText(item);
@@ -1669,6 +1709,8 @@ function buildReportDetails(target) {
     '',
     `choices shown: ${options.map((o, i) => `${i === correctIndex ? '✓ ' : ''}${displayOption(item, o)}`).join(' | ')}`,
     `your answer: ${yourAnswer}`,
+    '',
+    deviceInfoLine(),
   ].filter(x => x !== null).join('\n');
   const subject = `Wrong answer: ${code} — ${wordLabel}`;
   return { subject, details };
@@ -1752,6 +1794,9 @@ function renderReportArea() {
     return `<div class="report-area">
       <div class="report-target-label">Reporting ${esc(targetLabel)}: <span class="report-autosent-note">(the details below will be auto-sent with your report)</span></div>
       ${renderReportBreadcrumb(target)}
+      <label>Report details (auto-sent; select-all &amp; copy to paste elsewhere)
+        <textarea class="report-copy" readonly rows="10" onclick="this.select()">${esc(buildReportDetails(target).details)}</textarea>
+      </label>
       <label>Your name <input type="text" id="reportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
       <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
       <label>Add your own comments
@@ -1820,7 +1865,10 @@ function renderQuiz() {
         return `<button class="opt ${cls}" data-i="${i}" ${answered ? 'disabled' : ''}>${esc(displayOption(item, opt))}</button>`;
       }).join('')}
     </div>
-    <div class="feedback">${answered ? (picked === correctIndex
+    ${!answered ? `<div class="reveal-row"><button class="link" id="revealBtn">🔑 I don't know — reveal the answer</button></div>` : ''}
+    <div class="feedback">${answered ? (view.revealed
+        ? `🔑 revealed — the correct answer is highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`
+        : picked === correctIndex
         ? `correct! ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`
         : `not quite — correct answer highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`) : ''}</div>
     ${renderReportArea()}
@@ -1888,11 +1936,26 @@ function renderQuiz() {
     document.getElementById('dashBtn3').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   } else if (answered) {
     document.getElementById('nextBtn').onclick = () => goToNextQuestion(mode); // manual override, skips the auto-advance wait
-    // Don't auto-advance out from under someone mid-report — they cancel or submit to move on.
-    if (!view.reportOpen) {
+    // Don't auto-advance out from under someone mid-report — they cancel or submit to move on. Also
+    // don't auto-advance when the answer was REVEALED (Harsha, 2026-08-17): they chose not to guess
+    // precisely so they could read the answer, so let them move on with an explicit Next click.
+    if (!view.reportOpen && !view.revealed) {
       pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), picked === correctIndex ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
     }
   } else {
+    const revealBtn = document.getElementById('revealBtn');
+    if (revealBtn) revealBtn.onclick = () => {
+      // Reveal the answer without guessing (all MCQ modes: reading / node / mixed / adaptive). Counts
+      // as a miss for mastery (streak resets — honest: they didn't know it), advances the batch
+      // counter, but never auto-advances (handled above) so they can read the answer at their pace.
+      playAnswerSound(false);
+      recordAnswer(code, false);
+      session.batchCount++;
+      if (session.batchCount === BATCH_SIZE) setTimeout(playBatchCompleteSound, 400);
+      const crossing = mode === 'reading' ? peekNextVerseCrossing() : false;
+      view = { ...view, answered: true, picked: -1, revealed: true, justMastered: false, crossingVerse: crossing };
+      renderQuiz();
+    };
     app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
       const i = +btn.dataset.i;
       const correct = i === correctIndex;
@@ -2328,6 +2391,8 @@ function buildTutorialReportDetails(target) {
       ? `correct voice: ${correctVoice || '(unknown)'}\nyour answer: ${voicePicked || '(not answered)'}`
       : `expected words: ${expectedWords && expectedWords.length ? expectedWords.join(', ') : '(none)'}\nyour selection: ${selectedWords && selectedWords.length ? selectedWords.join(', ') : '(none)'}`,
     pct != null ? `score: ${pct}%` : null,
+    '',
+    deviceInfoLine(),
   ].filter(x => x !== null).join('\n');
   const subject = `Kāraka tutorial issue: ${verse.ref} — ${step.type}`;
   return { subject, details };
@@ -2376,7 +2441,10 @@ function renderTutorialReportArea(sentence, step, verse) {
     const status = view.tutReportSubmitError
       ? `<div class="report-status error">Couldn't send — check your connection and try again.</div>` : '';
     return `<div class="report-area">
-      <div class="report-target-label">Reporting this step: <span class="report-autosent-note">(the details above will be auto-sent with your report)</span></div>
+      <div class="report-target-label">Reporting this step: <span class="report-autosent-note">(the details below will be auto-sent with your report)</span></div>
+      <label>Report details (auto-sent; select-all &amp; copy to paste elsewhere)
+        <textarea class="report-copy" readonly rows="9" onclick="this.select()">${esc(buildTutorialReportDetails(target).details)}</textarea>
+      </label>
       <label>Your name <input type="text" id="tutReportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
       <label>Your email <input type="email" id="tutReportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
       <label>Add your own comments

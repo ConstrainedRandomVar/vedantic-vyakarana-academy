@@ -2185,7 +2185,7 @@ function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return `Which words in this sentence are verbs or participles (तिङन्त/कृत्)? — select every word that expresses an action or state. (identify ${sentence.verbs.length} तिङन्त/कृत्)`;
+    case 'verbs': return `Which words in this sentence are verbs or participles (तिङन्त/कृत्) that make their own assertion — i.e. govern their own कर्ता/कर्म (विधेय) — rather than merely qualifying another word like an ordinary adjective (उद्देश्य, e.g. a क्त-participle used attributively)? (identify ${sentence.verbs.length} तिङन्त/कृत्)`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;

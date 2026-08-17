@@ -2037,8 +2037,14 @@ function buildTutorialSteps(sentence) {
         if (sentence.wordGenders[wordIndex]) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
       }
     }
-    if (c.samuccayaKarta.length) steps.push({ type: 'samuccayaKarta', clusterIdx: ci });
-    if (c.samuccayaKarma.length) steps.push({ type: 'samuccayaKarma', clusterIdx: ci });
+    // समुच्चयKarta/Karma no longer get their OWN step (Harsha, 2026-08-17, "Option A"): coordinated
+    // co-agents/objects are now selected together IN the कर्ता/कर्म step itself (which is multi-select
+    // and whose accepted set already unions समुच्चयKarta/Karma via coreArgIndices) — grammatically a
+    // समुच्चय is one collective कारक realized by several coordinated words, not several separate
+    // कारकs, so asking "which OTHER words join X" after the learner has already picked them was a
+    // redundant, artificial split. The concept is instead taught passively via tutorialSamuccayaCallout
+    // shown in that step's feedback. The GENERIC `samuccaya` step (the च coordinator / non-कर्ता/कर्म
+    // coordinated items) is unrelated and stays.
     if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
     if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
     if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
@@ -2189,8 +2195,8 @@ function tutorialStepLabel(step, sentence) {
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
-    case 'karta': return `For ${gov}, who is the कर्ता (the doer — "who?")?`;
-    case 'karma': return `For ${gov}, what is the कर्म (what the action is done to — "whom/what?")? — if there is no कर्म, choose "None of these" below.`;
+    case 'karta': return `For ${gov}, which word(s) together are the कर्ता (the doer — "who?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is none, choose "None of these" below.`;
+    case 'karma': return `For ${gov}, which word(s) together are the कर्म (what the action is done to — "whom/what?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is no कर्म, choose "None of these" below.`;
     case 'agreementKarta': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्ता of ${gov}?`;
     case 'agreementKarma': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्म of ${gov}?`;
     case 'qualifierKarta': {
@@ -2270,6 +2276,21 @@ function tutorialTransitivityAside(transitivity) {
 // if this callout is ever revised.
 function tutorialQualifierCallout() {
   return 'This is also a form of सामानाधिकरण्य — a qualifier (विशेषण) shares the same case/gender/number as the word it qualifies, for the same reason a predicate word does (both refer to the same thing). It gets its own question here because it directly describes the word itself, rather than being predicated through the verb.';
+}
+// समुच्चय callout (Harsha, 2026-08-17, "Option A") — shown in the कर्ता/कर्म step's feedback whenever
+// that role's members include समुच्चय-coordinated words (मामकाः + पाण्डवाः च in BG 1.1). Names what
+// the learner just multi-selected and drives home the grammar established in that discussion: a
+// single finite verb has ONE कर्ता/कर्म role (in कर्तरि the abhihita agent takes प्रथमा), but that
+// one role can be borne by several words joined by च — they are a single collective कारक, not several
+// rival कारकs, and each stands in the same vibhakti. Returns '' when there's no समुच्चय member.
+function tutorialSamuccayaCallout(sentence, c, side) {
+  const samu = side === 'karta' ? c.samuccayaKarta : c.samuccayaKarma;
+  if (!samu || !samu.length) return '';
+  const roleLabel = side === 'karta' ? 'कर्ता' : 'कर्म';
+  const coreArg = side === 'karta' ? c.karta : c.karma;
+  const idxs = [...coreArg, ...samu];
+  const joined = idxs.map(i => `<b>${esc(sentence.words[i])}</b>`).join(' + ');
+  return `${joined} are joined by च (समुच्चय) — together they form a single collective ${roleLabel}, not separate ${roleLabel}s. Coordinated words share the one ${roleLabel} role, each standing in the same vibhakti.`;
 }
 // Override-trigger notes (Harsha's cross-checked frameworks + this session's Anusāraka/corpus
 // verification) — "why isn't this the plain default case," attached wherever cheaply detectable.
@@ -2632,7 +2653,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'].includes(step.type);
+  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;
@@ -2650,6 +2671,10 @@ function renderTutorial() {
     const pct = Math.round(tutorialStepScore(selected, expected, anyValid) * 100);
     feedbackHtml += `<div class="feedback">${pct}% correct${expected.size && !fullyValidSubset ? ` (${inter} / ${expected.size})` : ''}</div>`;
     if (step.type === 'karma') feedbackHtml += `<div class="tut-explain">${tutorialTransitivityAside(sentence.clusters[step.clusterIdx].transitivity)}</div>`;
+    if (step.type === 'karta' || step.type === 'karma') {
+      const sc = tutorialSamuccayaCallout(sentence, sentence.clusters[step.clusterIdx], step.type);
+      if (sc) feedbackHtml += `<div class="tut-explain">${sc}</div>`;
+    }
     if (step.type === 'qualifierKarta' || step.type === 'qualifierKarma') feedbackHtml += `<div class="tut-explain">${tutorialQualifierCallout()}</div>`;
     const noteTargets = [...expected, ...selected];
     for (const idx of new Set(noteTargets)) {

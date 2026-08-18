@@ -2146,6 +2146,7 @@ function buildTutorialSteps(sentence) {
     if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
     if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
     if ((c.hetu || []).length) steps.push({ type: 'hetu', clusterIdx: ci });
+    if ((c.sequence || []).length) steps.push({ type: 'sequence', clusterIdx: ci });
     if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
     if (c.sampradana.length) steps.push({ type: 'sampradana', clusterIdx: ci });
     if (c.apadana.length) steps.push({ type: 'apadana', clusterIdx: ci });
@@ -2157,6 +2158,10 @@ function buildTutorialSteps(sentence) {
     for (const ti of [...new Set((c.peripheralQualifiers || []).map(q => q.targetIndex))]) {
       const q0 = c.peripheralQualifiers.find(q => q.targetIndex === ti);
       steps.push({ type: 'qualifierOf', clusterIdx: ci, targetIndex: ti, targetRole: q0.targetRole });
+    }
+    // genitive (षष्ठी) possessor — one step per possessed noun (मे → वचः).
+    for (const ti of [...new Set((c.genitives || []).map(g => g.targetIndex))]) {
+      steps.push({ type: 'genitiveOf', clusterIdx: ci, targetIndex: ti });
     }
     if (c.remaining.length) steps.push({ type: 'remaining', clusterIdx: ci });
   });
@@ -2201,7 +2206,9 @@ function expectedSetForStep(sentence, step) {
   if (step.type === 'sambodhana') return new Set(c.sambodhana.map(r => r.wordIndex));
   if (step.type === 'nirdharana') return new Set(c.nirdharana.map(r => r.wordIndex));
   if (step.type === 'hetu') return new Set((c.hetu || []).map(r => r.wordIndex));
+  if (step.type === 'sequence') return new Set((c.sequence || []).map(r => r.wordIndex));
   if (step.type === 'qualifierOf') return new Set((c.peripheralQualifiers || []).filter(q => q.targetIndex === step.targetIndex).map(q => q.wordIndex));
+  if (step.type === 'genitiveOf') return new Set((c.genitives || []).filter(g => g.targetIndex === step.targetIndex).map(g => g.wordIndex));
   if (step.type === 'remaining') return new Set(c.remaining.map(r => r.wordIndex));
   return new Set();
 }
@@ -2337,6 +2344,11 @@ function tutorialStepLabel(step, sentence) {
     case 'samuccaya': return `More than one word together shares the role of ${gov} (समुच्चय — coordination) — which are they?`;
     case 'modifiers': return `Which words are adjectives (विशेषण) or adverbs (क्रियाविशेषण) modifying ${gov}?`;
     case 'hetu': return `For ${gov}, which word is the हेतु — "due to what cause/reason" does this happen? (case: तृतीया or पञ्चमी, 2.3.23)`;
+    case 'sequence': return `For ${gov}, which word denotes the action done just before (पूर्वकाल) or alongside (समानकाल) it — a gerund/absolutive (e.g. -त्वा, -य, -शतृ)?`;
+    case 'genitiveOf': {
+      const t = sentence.words[step.targetIndex];
+      return `Which word is the possessor (षष्ठीसम्बन्ध — genitive "of X") of <b>${esc(t)}</b>?`;
+    }
     case 'qualifierOf': {
       const t = sentence.words[step.targetIndex];
       const lbl = { 'हेतुः': 'हेतु', 'करणम्': 'करण', 'अधिकरणम्': 'अधिकरण', 'सम्प्रदानम्': 'सम्प्रदान', 'अपादानम्': 'अपादान' }[step.targetRole] || step.targetRole;
@@ -2426,11 +2438,15 @@ function tutorialOverrideNote(sentence, step, wordIndex) {
   if (step.type === 'karma' && c.karmaGovernorIsKrdanta) {
     return `Note — ${esc(c.governorWord)} is itself a कृदन्त, so its कर्म can also appear in षष्ठी here (instead of the usual द्वितीया) — कारक-षष्ठी, 2.3.65.`;
   }
-  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'remaining'];
+  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'remaining'];
   if (SWEEP_ARRAYS.includes(step.type)) {
     const item = c[step.type].find(r => r.wordIndex === wordIndex);
     if (item && item.upapada) return `${esc(sentence.words[wordIndex])} is in ${item.upapadaCase} here — because of ${esc(item.upapada)}, not from any general kāraka rule.`;
     if (item && item.role === 'हेतुः') return `हेतु (cause/reason) can appear in either तृतीया or पञ्चमी (2.3.23) — look at the form of ${esc(sentence.words[wordIndex])} here to tell which one it is.`;
+    if (item && (item.role === 'कालाधिकरणम्' || item.role === 'देशाधिकरणम्' || item.role === 'विषयाधिकरणम्')) {
+      const kind = { 'कालाधिकरणम्': 'time (काल)', 'देशाधिकरणम्': 'place (देश)', 'विषयाधिकरणम्': 'topic/domain (विषय)' }[item.role];
+      return `Here the अधिकरण is specifically one of ${kind}.`;
+    }
   }
   return null;
 }
@@ -2802,7 +2818,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'qualifierOf', 'remaining'].includes(step.type);
+  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;

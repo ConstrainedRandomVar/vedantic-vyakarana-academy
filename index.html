@@ -123,6 +123,9 @@
 <script src="flagged-wrong.js"></script>
 <script src="app.js"></script>
 <script>
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// updateViaCache:'none' → the browser always network-fetches sw.js (never its HTTP cache), so a new
+// deploy is picked up on the next reload instead of waiting out GitHub Pages' ~10-min sw.js cache.
+// reg.update() also proactively checks on load.
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(() => {});
 </script>
 </body></html>

@@ -2642,6 +2642,26 @@ function startTutorialVerse(verseIdx) {
   startTutorialSentence();
 }
 
+// Testing back-gate — jump straight to a verse's step instead of clicking through the whole
+// sequence. Use ?tut=<ref>[&step=<stepType>][&cluster=<n>] in the URL, or call jumpToTutorial()
+// from the console (exposed on window). ref accepts either the stored form "04.002" or "4.2". If the
+// requested step doesn't exist (e.g. it was removed by a fix — an empty modifiers step is skipped),
+// it lands on step 0 and reports that — itself a useful confirmation. Sentence 0 only.
+function jumpToTutorial(ref, stepType, clusterIdx) {
+  ensureTutorialDataLoaded().then(() => {
+    tutorialVerses = window.TUTORIAL_DATA.Gita.verses;
+    const idx = tutorialVerses.findIndex(v => v.ref === ref || formatVerseRef(v.ref) === ref || formatVerseRef(v.ref) === formatVerseRef(ref));
+    if (idx < 0) { alert('tutorial jump: verse not found: ' + ref); view = { screen: 'dashboard' }; renderDashboard(); return; }
+    startTutorialVerse(idx);   // builds tutorialSteps, resets to step 0, renders
+    if (stepType) {
+      const si = tutorialSteps.findIndex(s => s.type === stepType && (clusterIdx == null || s.clusterIdx === clusterIdx));
+      if (si >= 0) { tutorialStepIdx = si; renderTutorial(); }
+      else console.warn(`tutorial jump: step "${stepType}"${clusterIdx != null ? ' (cluster ' + clusterIdx + ')' : ''} not present in ${ref} — likely skipped/empty (steps: ${tutorialSteps.map(s => s.type + (s.clusterIdx != null ? ':' + s.clusterIdx : '')).join(', ')})`);
+    }
+  }).catch(() => { view = { screen: 'dashboard' }; renderDashboard(); });
+}
+window.jumpToTutorial = jumpToTutorial;
+
 function renderTutorial() {
   const sentence = currentTutorialSentence();
   const verse = tutorialVerses[tutorialVerseIdx];
@@ -2918,4 +2938,15 @@ function renderTutorialPicker() {
   });
 }
 
-renderDashboard();
+// Boot: honor a ?tut=<ref>[&step=<type>][&cluster=<n>] testing back-gate (see jumpToTutorial), else
+// the normal dashboard.
+(function boot() {
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.get('tut')) {
+      jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null);
+      return;
+    }
+  } catch (e) {}
+  renderDashboard();
+})();

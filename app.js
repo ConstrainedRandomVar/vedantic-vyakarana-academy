@@ -2117,11 +2117,14 @@ function buildTutorialSteps(sentence) {
     }
     if (showKarmaCase) steps.push({ type: 'karmaCase', clusterIdx: ci });
     steps.push({ type: 'karma', clusterIdx: ci });
-    // Fires whenever EITHER bucket has a member — expectedSetForStep unions agreementKarta/Karma
-    // with qualifierKarta/Karma (सामानाधिकरण्य is "generous and open"), so a cluster with only a
-    // qualifier-type member (no corpus-tagged predicative agreement) still needs to ask this.
-    if (c.agreementKarta.length || c.qualifierKarta.length) steps.push({ type: 'agreementKarta', clusterIdx: ci });
-    if (c.agreementKarma.length || c.qualifierKarma.length) steps.push({ type: 'agreementKarma', clusterIdx: ci });
+    // Fire the सामानाधिकरण्य (predicative-agreement) question ONLY when there's a genuinely
+    // corpus-tagged agreement member. A qualifier-ONLY cluster is already asked "which word qualifies
+    // X?" (qualifierKarta step below), and since expectedSetForStep unions agreement+qualifier, the
+    // agreement question would resolve to the SAME word with only a reworded prompt — a dup (Harsha,
+    // 2026-08-18, BG 4.2: agreementKarta=[] but qualifierKarta=[सः] made both ask about सः). When real
+    // agreement IS tagged, this still fires (and accepts qualifiers too, being "generous and open").
+    if (c.agreementKarta.length) steps.push({ type: 'agreementKarta', clusterIdx: ci });
+    if (c.agreementKarma.length) steps.push({ type: 'agreementKarma', clusterIdx: ci });
     if (c.qualifierKarta.length) steps.push({ type: 'qualifierKarta', clusterIdx: ci });
     if (c.qualifierKarma.length) steps.push({ type: 'qualifierKarma', clusterIdx: ci });
     // genderCheck: one MCQ per agreement/qualifier word, right after its click-question — only

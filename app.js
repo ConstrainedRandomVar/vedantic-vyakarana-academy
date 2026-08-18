@@ -2338,7 +2338,19 @@ function tutorialVoiceCallout(voice) {
 // look unmotivated to the learner.
 function tutorialVoiceInferredNote(pratyaya, voice) {
   if (!pratyaya) return '';
-  return `(This word carries no separate तिङ् voice-tag — it's a participle. The affix ${esc(pratyaya)} is by itself always ${voice} in sense, per 3.4.70 and related sūtras.)`;
+  const p = esc(pratyaya);
+  // क्त (निष्ठा) is the one affix whose voice depends on the ROOT, not the affix — so the note must
+  // match which way it resolved (3.4.72 कर्तरि for अकर्मक/गत्यर्थ vs 3.4.70 कर्मणि for सकर्मक). Every
+  // other kṛt affix has a fixed voice-sense.
+  if (pratyaya === 'क्त') {
+    return voice === 'कर्तरि'
+      ? `(No separate तिङ् voice-tag — it's a क्त participle of an intransitive/motion (अकर्मक/गत्यर्थ) root, which by 3.4.72 (गत्यर्थाकर्मक…) denotes the agent: कर्तरि. The word it agrees with stays in प्रथमा.)`
+      : `(No separate तिङ् voice-tag — it's a क्त participle of a transitive (सकर्मक) root, which by 3.4.70 (तयोरेव कृत्यक्तखलर्थाः) denotes the object: कर्मणि. Its agent takes तृतीया.)`;
+  }
+  if (pratyaya === 'क्तवतु') return `(No separate तिङ् voice-tag — क्तवतु is a past active participle: always कर्तरि, whatever the root.)`;
+  if (pratyaya === 'शतृ' || pratyaya === 'शानच्') return `(No separate तिङ् voice-tag — ${p} is a present participle: कर्तरि.)`;
+  // कृत्य affixes (यत्/ण्यत्/तव्य(त्)/अनीयर्/क्यप्/केलिमर्) + खल्.
+  return `(No separate तिङ् voice-tag — the कृत्य affix ${p} is inherently ${esc(voice)} in sense (3.4.70, तयोरेव कृत्यक्तखलर्थाः); its agent takes तृतीया.)`;
 }
 // Transitivity aside — folded into step 5's (कर्म) feedback per the plan, not its own step.
 function tutorialTransitivityAside(transitivity) {

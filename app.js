@@ -2073,7 +2073,7 @@ function currentTutorialStep() { return tutorialSteps[tutorialStepIdx]; }
 // कर्ता-case sub-question (Harsha, 2026-08-17): before letting the learner CLICK the कर्ता, first
 // ask which case it should even be in, given the voice already identified — प्रथमा for कर्तरि,
 // तृतीया for कर्मणि/भावे. षष्ठी (2.3.65 कारक-षष्ठी) is only offered as a distractor when the
-// governor is genuinely a कृदन्त — offering it for a plain finite verb would be a fake trap, since
+// governor is genuinely a कृदन्त — offering it for a plain finite verb would be a fake distractor, since
 // षष्ठी is never actually live there.
 const VOICE_TO_KARTA_CASE = { 'कर्तरि': 'प्रथमा', 'कर्मणि': 'तृतीया', 'भावे': 'तृतीया' };
 function kartaCaseOptions(c) {
@@ -2417,20 +2417,19 @@ function tutorialQualifierCallout() {
   return 'This is also a form of सामानाधिकरण्य — a qualifier (विशेषण) shares the same case/gender/number as the word it qualifies, for the same reason a predicate word does (both refer to the same thing). It gets its own question here because it directly describes the word itself, rather than being predicated through the verb.';
 }
 // "Honour + explain" callout for step 1 (verbs) — fired when a learner picks a word listed in
-// sentence.step1Traps: a word that ISN'T a verb here but is easy to mistake for one. The classic
+// sentence.step1Hints: a word that ISN'T a verb here but is easy to mistake for one. The classic
 // case is भक्तः in BG 4.3 ("you ARE a devotee"): a क्त-कृदन्त, yes, but a PREDICATE noun completing
 // the copula असि — असि is the verb, भक्तः just names the कर्ता. Rather than a silent ding, name the
 // affix (when it is a participle), explain the role, and point to the step where the word IS the
-// answer. `trap` = {kind:'predicate'|'attributive', pratyaya, side, govIdx} from the build.
-function step1TrapCallout(sentence, trap) {
-  const word = `<b>${esc(sentence.words[trap.wordIndex])}</b>`;
-  const lead = trap.pratyaya
-    ? `${word} is indeed a ${esc(trap.pratyaya)}-कृदन्त, but here it does not govern its own कर्ता/कर्म`
-    : `${word} is not a verb here`;
-  if (trap.kind === 'predicate') {
-    const gov = `<b>${esc(sentence.words[trap.govIdx])}</b>`;
-    const side = trap.side === 'karma' ? 'कर्म' : 'कर्ता';
-    return `${lead} — it is a <b>predicate noun/adjective</b> completing the copula ${gov} ("… ${gov} …", i.e. "is a ${esc(sentence.words[trap.wordIndex])}"). ${gov} is the verb; ${word} simply names/describes the ${side}. You'll pick ${word} in the "agrees with (समानाधिकरण्य) the ${side} of ${gov}" step — not here.`;
+// answer. `hint` = {kind:'predicate'|'attributive', pratyaya, side, govIdx} from the build.
+function step1HintCallout(sentence, hint) {
+  const word = `<b>${esc(sentence.words[hint.wordIndex])}</b>`;
+  // hint.pratyaya is always set (the build only lists genuine कृदन्त here).
+  const lead = `${word} is indeed a ${esc(hint.pratyaya)}-कृदन्त, but here it does not govern its own कर्ता/कर्म`;
+  if (hint.kind === 'predicate') {
+    const gov = `<b>${esc(sentence.words[hint.govIdx])}</b>`;
+    const side = hint.side === 'karma' ? 'कर्म' : 'कर्ता';
+    return `${lead} — it is a <b>predicate noun/adjective</b> completing the copula ${gov} ("… ${gov} …", i.e. "is a ${esc(sentence.words[hint.wordIndex])}"). ${gov} is the verb; ${word} simply names/describes the ${side}. You'll pick ${word} in the "agrees with (समानाधिकरण्य) the ${side} of ${gov}" step — not here.`;
   }
   return `${lead} — it is an attributive adjective (विशेषण) describing another word, not the verb of a clause. You'll pick ${word} in the matching "which word(s) qualify …" step — not here.`;
 }
@@ -2878,11 +2877,11 @@ function renderTutorial() {
     if (step.type === 'qualifierKarta' || step.type === 'qualifierKarma') feedbackHtml += `<div class="tut-explain">${tutorialQualifierCallout()}</div>`;
     // Step 1 "honour + explain": if the learner picked a word that isn't a verb here but is easy to
     // mistake for one (e.g. भक्तः in BG 4.3, a predicate noun after असि), explain why + where to pick.
-    if (step.type === 'verbs' && sentence.step1Traps) {
+    if (step.type === 'verbs' && sentence.step1Hints) {
       for (const i of selected) {
         if (expected.has(i)) continue;
-        const trap = sentence.step1Traps.find(t => t.wordIndex === i);
-        if (trap) feedbackHtml += `<div class="tut-explain">${step1TrapCallout(sentence, trap)}</div>`;
+        const hint = sentence.step1Hints.find(t => t.wordIndex === i);
+        if (hint) feedbackHtml += `<div class="tut-explain">${step1HintCallout(sentence, hint)}</div>`;
       }
     }
     const noteTargets = [...expected, ...selected];

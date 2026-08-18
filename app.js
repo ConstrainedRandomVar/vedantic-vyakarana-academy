@@ -2307,7 +2307,7 @@ function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle that acts as <b>the verb of its clause</b> (it states an action, e.g. "was proclaimed", and takes its own कर्ता/कर्म)? Do <b>not</b> pick a word that merely <b>names or describes</b> someone — a noun or adjective, including a क्त-word used as a noun/adjective, such as a <b>predicate noun after "is"</b> (e.g. भक्तः = "a devotee" in "you <i>are</i> a devotee" — असि is the verb there, not भक्तः). Quick test: on its own, is the word the <i>doing/being</i> word, or a <i>thing the verb is about</i>? (identify ${sentence.verbs.length})`;
+    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle acting as its clause's verb (governing its own कर्ता/कर्म)? Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${sentence.verbs.length})`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;

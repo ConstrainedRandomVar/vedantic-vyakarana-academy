@@ -2145,6 +2145,7 @@ function buildTutorialSteps(sentence) {
     // coordinated items) is unrelated and stays.
     if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
     if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
+    if ((c.hetu || []).length) steps.push({ type: 'hetu', clusterIdx: ci });
     if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
     if (c.sampradana.length) steps.push({ type: 'sampradana', clusterIdx: ci });
     if (c.apadana.length) steps.push({ type: 'apadana', clusterIdx: ci });
@@ -2152,6 +2153,11 @@ function buildTutorialSteps(sentence) {
     if (c.satisaptami.length) steps.push({ type: 'satisaptami', clusterIdx: ci });
     if (c.sambodhana.length) steps.push({ type: 'sambodhana', clusterIdx: ci });
     if (c.nirdharana.length) steps.push({ type: 'nirdharana', clusterIdx: ci });
+    // qualifier-of-peripheral: one step per qualified peripheral word (e.g. महता → कालेन/हेतु).
+    for (const ti of [...new Set((c.peripheralQualifiers || []).map(q => q.targetIndex))]) {
+      const q0 = c.peripheralQualifiers.find(q => q.targetIndex === ti);
+      steps.push({ type: 'qualifierOf', clusterIdx: ci, targetIndex: ti, targetRole: q0.targetRole });
+    }
     if (c.remaining.length) steps.push({ type: 'remaining', clusterIdx: ci });
   });
   return steps;
@@ -2194,6 +2200,8 @@ function expectedSetForStep(sentence, step) {
   if (step.type === 'satisaptami') return new Set(c.satisaptami.map(r => r.wordIndex));
   if (step.type === 'sambodhana') return new Set(c.sambodhana.map(r => r.wordIndex));
   if (step.type === 'nirdharana') return new Set(c.nirdharana.map(r => r.wordIndex));
+  if (step.type === 'hetu') return new Set((c.hetu || []).map(r => r.wordIndex));
+  if (step.type === 'qualifierOf') return new Set((c.peripheralQualifiers || []).filter(q => q.targetIndex === step.targetIndex).map(q => q.wordIndex));
   if (step.type === 'remaining') return new Set(c.remaining.map(r => r.wordIndex));
   return new Set();
 }
@@ -2328,6 +2336,12 @@ function tutorialStepLabel(step, sentence) {
     }
     case 'samuccaya': return `More than one word together shares the role of ${gov} (समुच्चय — coordination) — which are they?`;
     case 'modifiers': return `Which words are adjectives (विशेषण) or adverbs (क्रियाविशेषण) modifying ${gov}?`;
+    case 'hetu': return `For ${gov}, which word is the हेतु — "due to what cause/reason" does this happen? (case: तृतीया or पञ्चमी, 2.3.23)`;
+    case 'qualifierOf': {
+      const t = sentence.words[step.targetIndex];
+      const lbl = { 'हेतुः': 'हेतु', 'करणम्': 'करण', 'अधिकरणम्': 'अधिकरण', 'सम्प्रदानम्': 'सम्प्रदान', 'अपादानम्': 'अपादान' }[step.targetRole] || step.targetRole;
+      return `Which word(s) qualify (विशेषण) <b>${esc(t)}</b> (the ${esc(lbl)} of ${gov})?`;
+    }
     case 'karana': return `For ${gov}, which word is the करण — "by what means/instrument" is this action done?`;
     case 'sampradana': return `For ${gov}, which word is the सम्प्रदान — "for whom" or "for what purpose" (तादर्थ्य) is this कर्म/क्रिया being done?`;
     case 'apadana': return `For ${gov}, which word is the अपादान — "from what" or "from where" does this action originate?`;
@@ -2335,7 +2349,7 @@ function tutorialStepLabel(step, sentence) {
     case 'satisaptami': return `For ${gov}, which word names the circumstance under which this action happens (सति-सप्तमी — a locative-absolute clause, distinct from ordinary अधिकरण)?`;
     case 'sambodhana': return `For ${gov}, which word is being directly addressed or called out to (सम्बोधन)?`;
     case 'nirdharana': return `For ${gov}, compared to/singled out from which group is this true (निर्धारण)?`;
-    case 'remaining': return `Which remaining words relate to ${gov} (हेतु, षष्ठीसम्बन्ध, etc.)?`;
+    case 'remaining': return `Which remaining words relate to ${gov} (षष्ठीसम्बन्ध, etc.)?`;
     default: return '';
   }
 }
@@ -2412,7 +2426,7 @@ function tutorialOverrideNote(sentence, step, wordIndex) {
   if (step.type === 'karma' && c.karmaGovernorIsKrdanta) {
     return `Note — ${esc(c.governorWord)} is itself a कृदन्त, so its कर्म can also appear in षष्ठी here (instead of the usual द्वितीया) — कारक-षष्ठी, 2.3.65.`;
   }
-  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'];
+  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'remaining'];
   if (SWEEP_ARRAYS.includes(step.type)) {
     const item = c[step.type].find(r => r.wordIndex === wordIndex);
     if (item && item.upapada) return `${esc(sentence.words[wordIndex])} is in ${item.upapadaCase} here — because of ${esc(item.upapada)}, not from any general kāraka rule.`;
@@ -2788,7 +2802,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'remaining'].includes(step.type);
+  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'qualifierOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;

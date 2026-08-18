@@ -2307,7 +2307,7 @@ function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return `Which words in this sentence are verbs or participles (तिङन्त/कृत्) that make their own assertion — i.e. govern their own कर्ता/कर्म (विधेय) — rather than merely qualifying another word like an ordinary adjective (उद्देश्य, e.g. a क्त-participle used attributively)? (identify ${sentence.verbs.length} तिङन्त/कृत्)`;
+    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle that acts as <b>the verb of its clause</b> (it states an action, e.g. "was proclaimed", and takes its own कर्ता/कर्म)? Do <b>not</b> pick a word that merely <b>names or describes</b> someone — a noun or adjective, including a क्त-word used as a noun/adjective, such as a <b>predicate noun after "is"</b> (e.g. भक्तः = "a devotee" in "you <i>are</i> a devotee" — असि is the verb there, not भक्तः). Quick test: on its own, is the word the <i>doing/being</i> word, or a <i>thing the verb is about</i>? (identify ${sentence.verbs.length})`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
@@ -2415,6 +2415,24 @@ function tutorialTransitivityAside(transitivity) {
 // if this callout is ever revised.
 function tutorialQualifierCallout() {
   return 'This is also a form of सामानाधिकरण्य — a qualifier (विशेषण) shares the same case/gender/number as the word it qualifies, for the same reason a predicate word does (both refer to the same thing). It gets its own question here because it directly describes the word itself, rather than being predicated through the verb.';
+}
+// "Honour + explain" callout for step 1 (verbs) — fired when a learner picks a word listed in
+// sentence.step1Traps: a word that ISN'T a verb here but is easy to mistake for one. The classic
+// case is भक्तः in BG 4.3 ("you ARE a devotee"): a क्त-कृदन्त, yes, but a PREDICATE noun completing
+// the copula असि — असि is the verb, भक्तः just names the कर्ता. Rather than a silent ding, name the
+// affix (when it is a participle), explain the role, and point to the step where the word IS the
+// answer. `trap` = {kind:'predicate'|'attributive', pratyaya, side, govIdx} from the build.
+function step1TrapCallout(sentence, trap) {
+  const word = `<b>${esc(sentence.words[trap.wordIndex])}</b>`;
+  const lead = trap.pratyaya
+    ? `${word} is indeed a ${esc(trap.pratyaya)}-कृदन्त, but here it does not govern its own कर्ता/कर्म`
+    : `${word} is not a verb here`;
+  if (trap.kind === 'predicate') {
+    const gov = `<b>${esc(sentence.words[trap.govIdx])}</b>`;
+    const side = trap.side === 'karma' ? 'कर्म' : 'कर्ता';
+    return `${lead} — it is a <b>predicate noun/adjective</b> completing the copula ${gov} ("… ${gov} …", i.e. "is a ${esc(sentence.words[trap.wordIndex])}"). ${gov} is the verb; ${word} simply names/describes the ${side}. You'll pick ${word} in the "agrees with (समानाधिकरण्य) the ${side} of ${gov}" step — not here.`;
+  }
+  return `${lead} — it is an attributive adjective (विशेषण) describing another word, not the verb of a clause. You'll pick ${word} in the matching "which word(s) qualify …" step — not here.`;
 }
 // समुच्चय callout (Harsha, 2026-08-17, "Option A") — shown in the कर्ता/कर्म step's feedback whenever
 // that role's members include समुच्चय-coordinated words (मामकाः + पाण्डवाः च in BG 1.1). Names what
@@ -2858,6 +2876,15 @@ function renderTutorial() {
       if (sc) feedbackHtml += `<div class="tut-explain">${sc}</div>`;
     }
     if (step.type === 'qualifierKarta' || step.type === 'qualifierKarma') feedbackHtml += `<div class="tut-explain">${tutorialQualifierCallout()}</div>`;
+    // Step 1 "honour + explain": if the learner picked a word that isn't a verb here but is easy to
+    // mistake for one (e.g. भक्तः in BG 4.3, a predicate noun after असि), explain why + where to pick.
+    if (step.type === 'verbs' && sentence.step1Traps) {
+      for (const i of selected) {
+        if (expected.has(i)) continue;
+        const trap = sentence.step1Traps.find(t => t.wordIndex === i);
+        if (trap) feedbackHtml += `<div class="tut-explain">${step1TrapCallout(sentence, trap)}</div>`;
+      }
+    }
     const noteTargets = [...expected, ...selected];
     for (const idx of new Set(noteTargets)) {
       const note = step.clusterIdx != null ? tutorialOverrideNote(sentence, step, idx) : null;

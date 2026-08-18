@@ -797,6 +797,21 @@ function buildVerbVoiceOptions(item) {
   const options = ['कर्तरि', 'कर्मणि', 'भावे'];
   return { options, correctIndex: options.indexOf(item.voice) };
 }
+// A समानाधिकरण word (कर्तृ-/कर्मसमानाधिकरणम्, or the merged समानाधिकरणम्) genuinely IS the core kāraka
+// it agrees with — the corpus's "primary कर्म vs. agreeing कर्म" split is largely an annotation
+// artifact, not a grammatical difference worth marking wrong (see expectedSetForStep's note, Harsha
+// 2026-08-16, found live via BG 4.1: इमम् tagged कर्म, योगम् tagged कर्मसमानाधिकरणम् — same referent,
+// "this yoga"). The tutorial neutralizes this by pooling both into one accepted set; read-a-verse's
+// per-word role question can't pool (it quizzes each word separately), so instead a role question on
+// a समानाधिकरण word ALSO accepts its base kāraka as correct — carrying the tutorial's fix across
+// (Harsha, 2026-08-18). The merged समानाधिकरणम् label (emitted when only one of कर्तृ/कर्म agreement
+// occurs in the verse — see build_karaka_data.js) has lost which base it was, so it accepts either.
+function karakaAlsoAcceptedRoles(role) {
+  if (role === 'कर्मसमानाधिकरणम्') return ['कर्म'];
+  if (role === 'कर्तृसमानाधिकरणम्') return ['कर्ता'];
+  if (role === 'समानाधिकरणम्') return ['कर्म', 'कर्ता'];
+  return [];
+}
 function buildKarakaOptions(item) {
   const correct = item.role;
   const recentAnswers = recentAnswersByCode.KAR || [];
@@ -808,7 +823,9 @@ function buildKarakaOptions(item) {
   const shown = [correct, ...distractors];
   recentAnswersByCode.KAR = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
   const options = shuffle(shown);
-  return { options, correctIndex: options.indexOf(correct) };
+  const also = new Set(karakaAlsoAcceptedRoles(correct));
+  const acceptIndices = also.size ? options.map((o, i) => (also.has(o) ? i : -1)).filter(i => i >= 0) : [];
+  return { options, correctIndex: options.indexOf(correct), acceptIndices };
 }
 // सुप्_समुच्चितम् ("which word does this go with?") — options are real words from the SAME verse,
 // baked in at build time (build_karaka_data.js), same shape as buildSpotOptions: no chapter-wide
@@ -1398,7 +1415,7 @@ const MAX_OPTION_RETRIES = 20;
 function newQuestion() {
   if (view.screen === 'quiz') {
     lastQuestion = {
-      item: view.item, code: view.code, options: view.options, correctIndex: view.correctIndex,
+      item: view.item, code: view.code, options: view.options, correctIndex: view.correctIndex, acceptIndices: view.acceptIndices,
       key: view.key, chapterKeyForReport: view.chapterKeyForReport, moola: view.moola, verseLabel: view.verseLabel,
       answered: view.answered, picked: view.picked,
     };
@@ -1412,9 +1429,9 @@ function newQuestion() {
       if (built.options && built.options.length >= 2) break;
     }
     const { item, code, moola, verseLabel } = picked;
-    const { options, correctIndex } = built;
+    const { options, correctIndex, acceptIndices = [] } = built;
     const key = reportKey(item, code), chapterKeyForReport = session.chapterKey;
-    view = { screen: 'quiz', code, item, options, correctIndex, answered: false, picked: -1, justMastered: false, crossingVerse: false, key, chapterKeyForReport, moola, verseLabel, hintRevealed: false };
+    view = { screen: 'quiz', code, item, options, correctIndex, acceptIndices, answered: false, picked: -1, justMastered: false, crossingVerse: false, key, chapterKeyForReport, moola, verseLabel, hintRevealed: false };
     renderQuiz();
     return;
   }
@@ -1425,9 +1442,9 @@ function newQuestion() {
     built = buildOptions(item, c);
     if (built.options && built.options.length >= 2) break;
   }
-  const { options, correctIndex } = built;
+  const { options, correctIndex, acceptIndices = [] } = built;
   const key = reportKey(item, c);
-  view = { screen: 'quiz', code: c, item, options, correctIndex, answered: false, picked: -1, justMastered: false, key, chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false };
+  view = { screen: 'quiz', code: c, item, options, correctIndex, acceptIndices, answered: false, picked: -1, justMastered: false, key, chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false };
   renderQuiz();
 }
 
@@ -1688,7 +1705,7 @@ function deviceInfoLine() {
   } catch (e) { return 'device: (unavailable)'; }
 }
 function buildReportDetails(target) {
-  const { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
+  const { item, code, options, correctIndex, acceptIndices = [], key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
   const { word: promptWord, question } = extractPromptText(item);
   const wordLabel = item.word || (item.before ? item.before.join(' + ') : promptWord || key);
   const yourAnswer = answered && picked >= 0 && options[picked] !== undefined ? displayOption(item, options[picked]) : '(not answered — flagged before choosing)';
@@ -1707,7 +1724,7 @@ function buildReportDetails(target) {
     moola && moola !== item.context ? `mūlam: ${truncateForReport(moola, 400)}` : null,
     item.context ? `${item.source === 'mula' ? 'mūlam' : 'bhāṣyam'} line: ${truncateForReport(item.context, 400)}` : null,
     '',
-    `choices shown: ${options.map((o, i) => `${i === correctIndex ? '✓ ' : ''}${displayOption(item, o)}`).join(' | ')}`,
+    `choices shown: ${options.map((o, i) => `${i === correctIndex ? '✓ ' : acceptIndices.includes(i) ? '(✓) ' : ''}${displayOption(item, o)}`).join(' | ')}`,
     `your answer: ${yourAnswer}`,
     '',
     deviceInfoLine(),
@@ -1754,8 +1771,8 @@ async function submitReportToFormspree(target, name, email, message) {
 // flag it). Both shapes match buildReportIssueUrl's expected `target`.
 function reportTargetData(which) {
   if (which === 'previous') return lastQuestion;
-  const { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked } = view;
-  return { item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked };
+  const { item, code, options, correctIndex, acceptIndices, key, chapterKeyForReport, moola, verseLabel, answered, picked } = view;
+  return { item, code, options, correctIndex, acceptIndices, key, chapterKeyForReport, moola, verseLabel, answered, picked };
 }
 // Shows the located mūlam/bhāṣyam line(s) + verse ref right in the report form, so the reporter
 // can confirm what they're actually flagging before submitting — not just baked invisibly into
@@ -1764,7 +1781,7 @@ function reportTargetData(which) {
 // bhāṣya item back to its own verse's mūlam text); reading-walk items can carry both (the step's
 // own `moola` alongside the item's bhāṣya-clause `context`), so show whichever is available.
 function renderReportBreadcrumb(target) {
-  const { item, options, correctIndex, answered, picked, verseLabel, moola } = target;
+  const { item, options, correctIndex, acceptIndices = [], answered, picked, verseLabel, moola } = target;
   const ref = verseLabel || item.ref || null;
   const lines = [];
   if (moola && moola !== item.context) lines.push(`<div>mūlam: ${esc(truncateForReport(moola, 200))}</div>`);
@@ -1775,7 +1792,7 @@ function renderReportBreadcrumb(target) {
   // this makes it visible at a glance, matching what's already going into the report (found via
   // Harsha's real usage: "the user doesn't know that the full context is being given back").
   if (options && options.length) {
-    const choices = options.map((o, i) => `${i === correctIndex ? '✓ ' : ''}${esc(displayOption(item, o))}`).join(' | ');
+    const choices = options.map((o, i) => `${i === correctIndex ? '✓ ' : acceptIndices.includes(i) ? '(✓) ' : ''}${esc(displayOption(item, o))}`).join(' | ');
     lines.push(`<div>choices: ${choices}</div>`);
     if (answered && picked >= 0 && options[picked] !== undefined) {
       lines.push(`<div>your answer: ${esc(displayOption(item, options[picked]))}</div>`);
@@ -1821,7 +1838,8 @@ function renderReportArea() {
 }
 
 function renderQuiz() {
-  const { code, item, options, correctIndex, answered, picked, justMastered, crossingVerse } = view;
+  const { code, item, options, correctIndex, acceptIndices = [], answered, picked, justMastered, crossingVerse } = view;
+  const isCorrectIdx = (i) => i === correctIndex || acceptIndices.includes(i);
   const { mode, batchCount } = session;
   const p = ensureProgress(code);
   const modeTag = mode === 'mixed' ? ' · 🔀 mixed' : mode === 'adaptive' ? ' · adaptive'
@@ -1859,7 +1877,9 @@ function renderQuiz() {
       ${options.map((opt, i) => {
         let cls = '';
         if (answered) {
-          if (i === correctIndex) cls = 'correct';
+          // Highlight the canonical correct AND any accepted alternate (e.g. कर्म for a योगम् tagged
+          // समानाधिकरणम्) as green; a genuinely wrong pick stays red.
+          if (isCorrectIdx(i)) cls = 'correct';
           else if (i === picked) cls = 'wrong';
         }
         return `<button class="opt ${cls}" data-i="${i}" ${answered ? 'disabled' : ''}>${esc(displayOption(item, opt))}</button>`;
@@ -1868,7 +1888,7 @@ function renderQuiz() {
     ${!answered ? `<div class="reveal-row"><button class="link" id="revealBtn">🔑 I don't know — reveal the answer</button></div>` : ''}
     <div class="feedback">${answered ? (view.revealed
         ? `🔑 revealed — the correct answer is highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`
-        : picked === correctIndex
+        : isCorrectIdx(picked)
         ? `correct! ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`
         : `not quite — correct answer highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`) : ''}</div>
     ${renderReportArea()}
@@ -1940,7 +1960,7 @@ function renderQuiz() {
     // don't auto-advance when the answer was REVEALED (Harsha, 2026-08-17): they chose not to guess
     // precisely so they could read the answer, so let them move on with an explicit Next click.
     if (!view.reportOpen && !view.revealed) {
-      pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), picked === correctIndex ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
+      pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), isCorrectIdx(picked) ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
     }
   } else {
     const revealBtn = document.getElementById('revealBtn');
@@ -1958,7 +1978,7 @@ function renderQuiz() {
     };
     app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
       const i = +btn.dataset.i;
-      const correct = i === correctIndex;
+      const correct = isCorrectIdx(i);
       playAnswerSound(correct);
       const { justMastered } = recordAnswer(code, correct);
       // A 'spot' item built from a real kṛdanta+taddhita co-occurrence (creditBoth) tests telling

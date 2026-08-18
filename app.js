@@ -1686,6 +1686,20 @@ function extractPromptText(item) {
 // this is what PRE-FILLS the report textarea (same spirit as the GitHub issue link's own
 // pre-filled body: the reporter sees exactly what's about to be sent and can edit/add to it,
 // rather than it being assembled invisibly only at submit time).
+// The service-worker cache actually serving THIS client — surfaced in reports so a stale cache (a
+// report expecting an answer already fixed in a newer deploy) is instantly obvious (Harsha,
+// 2026-08-18). Populated async on load; after activate the SW keeps exactly one 'sandhi-quiz-v*'
+// cache (older ones are deleted), so this normally reads a single version.
+let ACTIVE_CACHE = 'pending';
+try {
+  if (typeof caches !== 'undefined' && caches.keys) {
+    caches.keys().then(ks => {
+      const c = ks.filter(k => /sandhi-quiz/.test(k));
+      ACTIVE_CACHE = c.length ? c.join(',') : 'none';
+    }).catch(() => { ACTIVE_CACHE = 'unknown'; });
+  } else { ACTIVE_CACHE = 'no-sw'; }
+} catch (e) { ACTIVE_CACHE = 'unknown'; }
+
 // Device/OS/browser summary for issue reports (Harsha, 2026-08-17) — this whole session turned on
 // "Android phone vs desktop", and reports carried nothing to tell them apart. Parsed from
 // navigator.userAgent (crude but enough to triage phone/tablet/laptop + OS + browser), plus the raw
@@ -1701,8 +1715,9 @@ function deviceInfoLine() {
     const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome'
       : /Firefox\//.test(ua) ? 'Firefox' : /Version\/.*Safari/.test(ua) ? 'Safari' : 'unknown browser';
     const vp = `${window.innerWidth || 0}×${window.innerHeight || 0}`;
-    return `device: ${device} · ${os} · ${browser} · viewport ${vp}\nuser-agent: ${ua}`;
-  } catch (e) { return 'device: (unavailable)'; }
+    const ctrl = (navigator.serviceWorker && navigator.serviceWorker.controller) ? 'sw-controlled' : 'no-controller';
+    return `device: ${device} · ${os} · ${browser} · viewport ${vp}\napp cache: ${ACTIVE_CACHE} (${ctrl})\nuser-agent: ${ua}`;
+  } catch (e) { return `app cache: ${ACTIVE_CACHE}\ndevice: (unavailable)`; }
 }
 function buildReportDetails(target) {
   const { item, code, options, correctIndex, acceptIndices = [], key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;

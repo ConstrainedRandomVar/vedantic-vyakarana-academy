@@ -2433,8 +2433,22 @@ function tutorialSamuccayaCallout(sentence, c, side) {
 }
 // Override-trigger notes (Harsha's cross-checked frameworks + this session's Anusāraka/corpus
 // verification) — "why isn't this the plain default case," attached wherever cheaply detectable.
+// प्राग्दिशीय (5.3.x) pronominal adverbs — तद्धित-formed indeclinables (अव्यय) for place, from a
+// pronoun base + a locative suffix. Shown as a derivation tip when one appears (Harsha, 2026-08-18).
+const PRAGDISHIYA_TIP = {
+  'इह': 'इह ("here") = इदम् + the तद्धित suffix ह — इदमो हः (5.3.11), a special substitute (for the base इदम्) of the general locative suffix त्रल् (सप्तम्यास्त्रल्, 5.3.10, which gives तत्र/यत्र/कुत्र). इदम् reduces to इ (इदम इश्, 5.3.3): i + ha → इह. It is an अव्यय; its किम्-counterpart is क्व.',
+  'अत्र': 'अत्र ("here / in this") = इदम् + त्रल् (सप्तम्यास्त्रल्, 5.3.10; इदम् → अ) — an अव्यय.',
+  'तत्र': 'तत्र ("there / in that") = तद् + त्रल् (सप्तम्यास्त्रल्, 5.3.10) — an अव्यय.',
+  'यत्र': 'यत्र ("where / in which") = यद् + त्रल् (5.3.10) — an अव्यय.',
+  'सर्वत्र': 'सर्वत्र ("everywhere") = सर्व + त्रल् (5.3.10) — an अव्यय.',
+  'कुत्र': 'कुत्र ("where?") = किम् + त्रल् (5.3.10; किम् → कु) — an अव्यय.',
+  'क्व': 'क्व ("where?") = किम् + अत् (किमोऽत्, 5.3.12; किम् → कु) — the किम्-counterpart of इदम् → इह.',
+  'एकत्र': 'एकत्र ("in one place") = एक + त्रल् (5.3.10) — an अव्यय.',
+};
 function tutorialOverrideNote(sentence, step, wordIndex) {
   const c = sentence.clusters[step.clusterIdx];
+  const tip = PRAGDISHIYA_TIP[sentence.words[wordIndex]];
+  if (tip) return tip;   // derivation of the pronominal place-adverb (इह etc.) takes precedence
   if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
     return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}), and the agent of such forms is always in तृतीया.`;
   }

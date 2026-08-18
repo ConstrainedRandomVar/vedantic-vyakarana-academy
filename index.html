@@ -123,9 +123,19 @@
 <script src="flagged-wrong.js"></script>
 <script src="app.js"></script>
 <script>
-// updateViaCache:'none' → the browser always network-fetches sw.js (never its HTTP cache), so a new
-// deploy is picked up on the next reload instead of waiting out GitHub Pages' ~10-min sw.js cache.
-// reg.update() also proactively checks on load.
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(() => {});
+// Freshness during churn: updateViaCache:'none' → the browser always network-fetches sw.js (never
+// its HTTP cache); reg.update() proactively checks on load; and when a NEW sw version takes control
+// (a deploy landed), controllerchange auto-reloads the page once so the latest app/data is picked up
+// with zero manual cache-clearing. Guarded on hadController so the first-ever install (which also
+// fires controllerchange when it claims) doesn't trigger a spurious reload. (Paired with the
+// network-first sw.js, online loads are always fresh anyway; this just swaps in the new shell/app.js.)
+if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !reloaded) { reloaded = true; location.reload(); }
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(() => {});
+}
 </script>
 </body></html>

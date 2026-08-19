@@ -2472,10 +2472,27 @@ const PRAGDISHIYA_TIP = {
   'क्व': 'क्व ("where?") = किम् + अत् (किमोऽत्, 5.3.12; किम् → कु) — the किम्-counterpart of इदम् → इह.',
   'एकत्र': 'एकत्र ("in one place") = एक + त्रल् (5.3.10) — an अव्यय.',
 };
+// कालवाचि निपात — irregularly-formed time-adverbs (अव्यय); कालाधिकरण (the "when" of the action), not a
+// declined सप्तमी. निपातन: काले अभिधेये स्वार्थे these words are निपात्यन्ते (Harsha, 2026-08-19, BG 4.3 अद्य).
+const KALA_NIPATA = {
+  'अद्य': 'today', 'सद्यः': 'this very day / at once', 'परुत्': 'last year', 'परारि': 'the year before last',
+  'ऐषमः': 'this year', 'परेद्यवि': 'on the following day', 'पूर्वेद्युः': 'on the previous day',
+  'अन्येद्युः': 'on another day', 'अन्यतरेद्युः': 'on one of the two days', 'इतरेद्युः': 'on the other day',
+  'अपरेद्युः': 'on a later day', 'अधरेद्युः': 'on an earlier day', 'उभयेद्युः': 'on both days',
+  'उत्तरेद्युः': 'on the following day',
+};
+const KALA_NIPATA_LIST = 'सद्यः, परुत्, परारि, ऐषमः, परेद्यवि, अद्य, पूर्वेद्युः, अन्येद्युः, अन्यतरेद्युः, इतरेद्युः, अपरेद्युः, अधरेद्युः, उभयेद्युः, उत्तरेद्युः';
+function kalaNipataTip(word) {
+  const gloss = KALA_NIPATA[word];
+  if (!gloss) return null;
+  return `${word} ("${gloss}") is an अव्यय — a निपातित (irregularly-formed) time-word, so its role is कालाधिकरण (the "when" of the action), not a declined सप्तमी. काले अभिधेये स्वार्थे "${KALA_NIPATA_LIST}" — एते शब्दाः निपात्यन्ते: when time is the thing denoted, these words are irregularly formed in their own meaning.`;
+}
 function tutorialOverrideNote(sentence, step, wordIndex) {
   const c = sentence.clusters[step.clusterIdx];
   const tip = PRAGDISHIYA_TIP[sentence.words[wordIndex]];
   if (tip) return tip;   // derivation of the pronominal place-adverb (इह etc.) takes precedence
+  const kt = kalaNipataTip(sentence.words[wordIndex]);
+  if (kt) return kt;     // कालवाचि निपात (अद्य etc.) — explains why it is कालाधिकरण, not a सप्तमी
   if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
     return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}), and the agent of such forms is always in तृतीया.`;
   }

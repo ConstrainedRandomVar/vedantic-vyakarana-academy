@@ -4,7 +4,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Aitareya-1",
   "label": "ऐतरेयोपनिषद् (Aitareya Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Aitareya-1.js",
+  "file": "walk-data-Aitareya-1.9614dbf9ff.js",
   "verses": [
    {
     "ref": "1.1.1",
@@ -105,7 +105,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Aitareya-2",
   "label": "ऐतरेयोपनिषद् (Aitareya Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Aitareya-2.js",
+  "file": "walk-data-Aitareya-2.fd34b0173e.js",
   "verses": [
    {
     "ref": "2.1.1",
@@ -138,7 +138,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Aitareya-3",
   "label": "ऐतरेयोपनिषद् (Aitareya Upaniṣad) · अध्याय 3",
-  "file": "walk-data-Aitareya-3.js",
+  "file": "walk-data-Aitareya-3.7f16974fcd.js",
   "verses": [
    {
     "ref": "3.1.1",
@@ -163,7 +163,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Brha-1",
   "label": "बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Brha-1.js",
+  "file": "walk-data-Brha-1.bf0658fb4a.js",
   "verses": [
    {
     "ref": "1.1.1",
@@ -492,7 +492,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Brha-2",
   "label": "बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Brha-2.js",
+  "file": "walk-data-Brha-2.2a2136e66a.js",
   "verses": [
    {
     "ref": "2.1.1",
@@ -765,7 +765,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Brha-3",
   "label": "बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 3",
-  "file": "walk-data-Brha-3.js",
+  "file": "walk-data-Brha-3.ad81bd6738.js",
   "verses": [
    {
     "ref": "3.1.1",
@@ -1138,7 +1138,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "Brha-4",
   "label": "बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 4",
-  "file": "walk-data-Brha-4.js",
+  "file": "walk-data-Brha-4.30a3aa8cb3.js",
   "verses": [
    {
     "ref": "4.1.1",
@@ -1515,7 +1515,7 @@ window.WALK_MANIFEST=[
   "chapter": 5,
   "chapterKey": "Brha-5",
   "label": "बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 5",
-  "file": "walk-data-Brha-5.js",
+  "file": "walk-data-Brha-5.b0de576616.js",
   "verses": [
    {
     "ref": "5.1.1",
@@ -1644,7 +1644,7 @@ window.WALK_MANIFEST=[
   "chapter": 6,
   "chapterKey": "Brha-6",
   "label": "बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 6",
-  "file": "walk-data-Brha-6.js",
+  "file": "walk-data-Brha-6.0017289a3b.js",
   "verses": [
    {
     "ref": "6.1.1",
@@ -1953,7 +1953,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "BS-1",
   "label": "ब्रह्मसूत्रम् (Brahma-sūtra) · अध्याय 1",
-  "file": "walk-data-BS-1.js",
+  "file": "walk-data-BS-1.1afe9b1e9f.js",
   "verses": [
    {
     "ref": "1.1.1",
@@ -2498,7 +2498,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "BS-2",
   "label": "ब्रह्मसूत्रम् (Brahma-sūtra) · अध्याय 2",
-  "file": "walk-data-BS-2.js",
+  "file": "walk-data-BS-2.c1af6cd310.js",
   "verses": [
    {
     "ref": "2.1.1",
@@ -3135,7 +3135,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "BS-3",
   "label": "ब्रह्मसूत्रम् (Brahma-sūtra) · अध्याय 3",
-  "file": "walk-data-BS-3.js",
+  "file": "walk-data-BS-3.e9ad8a9cb4.js",
   "verses": [
    {
     "ref": "3.1.1",
@@ -3888,7 +3888,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "BS-4",
   "label": "ब्रह्मसूत्रम् (Brahma-sūtra) · अध्याय 4",
-  "file": "walk-data-BS-4.js",
+  "file": "walk-data-BS-4.de4ff2bbdd.js",
   "verses": [
    {
     "ref": "4.1.1",
@@ -4209,7 +4209,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Chandogya-1",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Chandogya-1.js",
+  "file": "walk-data-Chandogya-1.e0095f7bc2.js",
   "verses": [
    {
     "ref": "1.1.1",
@@ -4634,7 +4634,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Chandogya-2",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Chandogya-2.js",
+  "file": "walk-data-Chandogya-2.8348ff383a.js",
   "verses": [
    {
     "ref": "2.1.1",
@@ -4971,7 +4971,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Chandogya-3",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 3",
-  "file": "walk-data-Chandogya-3.js",
+  "file": "walk-data-Chandogya-3.0366e87d53.js",
   "verses": [
    {
     "ref": "3.1.1",
@@ -5360,7 +5360,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "Chandogya-4",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 4",
-  "file": "walk-data-Chandogya-4.js",
+  "file": "walk-data-Chandogya-4.15adb2c895.js",
   "verses": [
    {
     "ref": "4.1.1",
@@ -5681,7 +5681,7 @@ window.WALK_MANIFEST=[
   "chapter": 5,
   "chapterKey": "Chandogya-5",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 5",
-  "file": "walk-data-Chandogya-5.js",
+  "file": "walk-data-Chandogya-5.8c81a3f9ec.js",
   "verses": [
    {
     "ref": "5.1.1",
@@ -6042,7 +6042,7 @@ window.WALK_MANIFEST=[
   "chapter": 6,
   "chapterKey": "Chandogya-6",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 6",
-  "file": "walk-data-Chandogya-6.js",
+  "file": "walk-data-Chandogya-6.ccf674bfe6.js",
   "verses": [
    {
     "ref": "6.1.1",
@@ -6327,7 +6327,7 @@ window.WALK_MANIFEST=[
   "chapter": 7,
   "chapterKey": "Chandogya-7",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 7",
-  "file": "walk-data-Chandogya-7.js",
+  "file": "walk-data-Chandogya-7.79aa462eaf.js",
   "verses": [
    {
     "ref": "7.1.1",
@@ -6540,7 +6540,7 @@ window.WALK_MANIFEST=[
   "chapter": 8,
   "chapterKey": "Chandogya-8",
   "label": "छान्दोग्योपनिषद् (Chāndogya Upaniṣad) · अध्याय 8",
-  "file": "walk-data-Chandogya-8.js",
+  "file": "walk-data-Chandogya-8.955d1e723f.js",
   "verses": [
    {
     "ref": "8.1.1",
@@ -6797,7 +6797,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Gita-1",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 1",
-  "file": "walk-data-Gita-1.js",
+  "file": "walk-data-Gita-1.d5c2625d05.js",
   "verses": [
    {
     "ref": "1.1",
@@ -6994,7 +6994,7 @@ window.WALK_MANIFEST=[
   "chapter": 10,
   "chapterKey": "Gita-10",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 10",
-  "file": "walk-data-Gita-10.js",
+  "file": "walk-data-Gita-10.c2ac7cce90.js",
   "verses": [
    {
     "ref": "10.1",
@@ -7171,7 +7171,7 @@ window.WALK_MANIFEST=[
   "chapter": 11,
   "chapterKey": "Gita-11",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 11",
-  "file": "walk-data-Gita-11.js",
+  "file": "walk-data-Gita-11.10b54af4b7.js",
   "verses": [
    {
     "ref": "11.1",
@@ -7400,7 +7400,7 @@ window.WALK_MANIFEST=[
   "chapter": 12,
   "chapterKey": "Gita-12",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 12",
-  "file": "walk-data-Gita-12.js",
+  "file": "walk-data-Gita-12.4713e8e081.js",
   "verses": [
    {
     "ref": "12.1",
@@ -7489,7 +7489,7 @@ window.WALK_MANIFEST=[
   "chapter": 13,
   "chapterKey": "Gita-13",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 13",
-  "file": "walk-data-Gita-13.js",
+  "file": "walk-data-Gita-13.894b44ff1f.js",
   "verses": [
    {
     "ref": "13.1",
@@ -7634,7 +7634,7 @@ window.WALK_MANIFEST=[
   "chapter": 14,
   "chapterKey": "Gita-14",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 14",
-  "file": "walk-data-Gita-14.js",
+  "file": "walk-data-Gita-14.fa3d4008ca.js",
   "verses": [
    {
     "ref": "14.1",
@@ -7751,7 +7751,7 @@ window.WALK_MANIFEST=[
   "chapter": 15,
   "chapterKey": "Gita-15",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 15",
-  "file": "walk-data-Gita-15.js",
+  "file": "walk-data-Gita-15.57318efd70.js",
   "verses": [
    {
     "ref": "15.1",
@@ -7840,7 +7840,7 @@ window.WALK_MANIFEST=[
   "chapter": 16,
   "chapterKey": "Gita-16",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 16",
-  "file": "walk-data-Gita-16.js",
+  "file": "walk-data-Gita-16.db4e1809cc.js",
   "verses": [
    {
     "ref": "16.1",
@@ -7945,7 +7945,7 @@ window.WALK_MANIFEST=[
   "chapter": 17,
   "chapterKey": "Gita-17",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 17",
-  "file": "walk-data-Gita-17.js",
+  "file": "walk-data-Gita-17.aa4750019a.js",
   "verses": [
    {
     "ref": "17.1",
@@ -8066,7 +8066,7 @@ window.WALK_MANIFEST=[
   "chapter": 18,
   "chapterKey": "Gita-18",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 18",
-  "file": "walk-data-Gita-18.js",
+  "file": "walk-data-Gita-18.2f218fe289.js",
   "verses": [
    {
     "ref": "18.1",
@@ -8387,7 +8387,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Gita-2",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 2",
-  "file": "walk-data-Gita-2.js",
+  "file": "walk-data-Gita-2.07d5a270e1.js",
   "verses": [
    {
     "ref": "2.1",
@@ -8684,7 +8684,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Gita-3",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 3",
-  "file": "walk-data-Gita-3.js",
+  "file": "walk-data-Gita-3.966d272c92.js",
   "verses": [
    {
     "ref": "3.1",
@@ -8865,7 +8865,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "Gita-4",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 4",
-  "file": "walk-data-Gita-4.js",
+  "file": "walk-data-Gita-4.aba8baf238.js",
   "verses": [
    {
     "ref": "4.1",
@@ -9042,7 +9042,7 @@ window.WALK_MANIFEST=[
   "chapter": 5,
   "chapterKey": "Gita-5",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 5",
-  "file": "walk-data-Gita-5.js",
+  "file": "walk-data-Gita-5.2e0800f67f.js",
   "verses": [
    {
     "ref": "5.1",
@@ -9167,7 +9167,7 @@ window.WALK_MANIFEST=[
   "chapter": 6,
   "chapterKey": "Gita-6",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 6",
-  "file": "walk-data-Gita-6.js",
+  "file": "walk-data-Gita-6.46ad78b023.js",
   "verses": [
    {
     "ref": "6.1",
@@ -9364,7 +9364,7 @@ window.WALK_MANIFEST=[
   "chapter": 7,
   "chapterKey": "Gita-7",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 7",
-  "file": "walk-data-Gita-7.js",
+  "file": "walk-data-Gita-7.1fa7558c6c.js",
   "verses": [
    {
     "ref": "7.1",
@@ -9493,7 +9493,7 @@ window.WALK_MANIFEST=[
   "chapter": 8,
   "chapterKey": "Gita-8",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 8",
-  "file": "walk-data-Gita-8.js",
+  "file": "walk-data-Gita-8.a859c16988.js",
   "verses": [
    {
     "ref": "8.1",
@@ -9614,7 +9614,7 @@ window.WALK_MANIFEST=[
   "chapter": 9,
   "chapterKey": "Gita-9",
   "label": "भगवद्गीता (Bhagavad Gītā) · अध्याय 9",
-  "file": "walk-data-Gita-9.js",
+  "file": "walk-data-Gita-9.52afa28557.js",
   "verses": [
    {
     "ref": "9.1",
@@ -9759,7 +9759,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Isha-1",
   "label": "ईशावास्योपनिषद् (Īśāvāsya Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Isha-1.js",
+  "file": "walk-data-Isha-1.644e1ca98d.js",
   "verses": [
    {
     "ref": "1.1",
@@ -9840,7 +9840,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Kathaka-1",
   "label": "कठोपनिषद् (Kaṭha Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Kathaka-1.js",
+  "file": "walk-data-Kathaka-1.ee29851851.js",
   "verses": [
    {
     "ref": "1.1.1",
@@ -10133,7 +10133,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Kathaka-2",
   "label": "कठोपनिषद् (Kaṭha Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Kathaka-2.js",
+  "file": "walk-data-Kathaka-2.295355bdf6.js",
   "verses": [
    {
     "ref": "2.1.1",
@@ -10338,7 +10338,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Kena_pada-1",
   "label": "केनोपनिषद्-पदभागः (Kena Upaniṣad, pada portion) · अध्याय 1",
-  "file": "walk-data-Kena_pada-1.js",
+  "file": "walk-data-Kena_pada-1.de817a9ba6.js",
   "verses": [
    {
     "ref": "1.1",
@@ -10383,7 +10383,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Kena_pada-2",
   "label": "केनोपनिषद्-पदभागः (Kena Upaniṣad, pada portion) · अध्याय 2",
-  "file": "walk-data-Kena_pada-2.js",
+  "file": "walk-data-Kena_pada-2.22795b1524.js",
   "verses": [
    {
     "ref": "2.1",
@@ -10412,7 +10412,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Kena_pada-3",
   "label": "केनोपनिषद्-पदभागः (Kena Upaniṣad, pada portion) · अध्याय 3",
-  "file": "walk-data-Kena_pada-3.js",
+  "file": "walk-data-Kena_pada-3.3b8b2cc609.js",
   "verses": [
    {
     "ref": "3.1",
@@ -10469,7 +10469,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "Kena_pada-4",
   "label": "केनोपनिषद्-पदभागः (Kena Upaniṣad, pada portion) · अध्याय 4",
-  "file": "walk-data-Kena_pada-4.js",
+  "file": "walk-data-Kena_pada-4.cf61c4f109.js",
   "verses": [
    {
     "ref": "4.1",
@@ -10514,7 +10514,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Kena_vakya-1",
   "label": "केनोपनिषद्-वाक्यभागः (Kena Upaniṣad, vākya portion) · अध्याय 1",
-  "file": "walk-data-Kena_vakya-1.js",
+  "file": "walk-data-Kena_vakya-1.e547430429.js",
   "verses": [
    {
     "ref": "1.1",
@@ -10559,7 +10559,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Kena_vakya-2",
   "label": "केनोपनिषद्-वाक्यभागः (Kena Upaniṣad, vākya portion) · अध्याय 2",
-  "file": "walk-data-Kena_vakya-2.js",
+  "file": "walk-data-Kena_vakya-2.5eea3ee826.js",
   "verses": [
    {
     "ref": "2.1",
@@ -10588,7 +10588,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Kena_vakya-3",
   "label": "केनोपनिषद्-वाक्यभागः (Kena Upaniṣad, vākya portion) · अध्याय 3",
-  "file": "walk-data-Kena_vakya-3.js",
+  "file": "walk-data-Kena_vakya-3.d0520b0f26.js",
   "verses": [
    {
     "ref": "3.1",
@@ -10645,7 +10645,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "Kena_vakya-4",
   "label": "केनोपनिषद्-वाक्यभागः (Kena Upaniṣad, vākya portion) · अध्याय 4",
-  "file": "walk-data-Kena_vakya-4.js",
+  "file": "walk-data-Kena_vakya-4.74bee3b008.js",
   "verses": [
    {
     "ref": "4.1",
@@ -10690,7 +10690,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Mandukya-1",
   "label": "माण्डूक्योपनिषद् (Māṇḍūkya Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Mandukya-1.js",
+  "file": "walk-data-Mandukya-1.922ad68b89.js",
   "verses": [
    {
     "ref": "1.1",
@@ -10863,7 +10863,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Mandukya-2",
   "label": "माण्डूक्योपनिषद् (Māṇḍūkya Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Mandukya-2.js",
+  "file": "walk-data-Mandukya-2.1c73171715.js",
   "verses": [
    {
     "ref": "2.1 · kārikā",
@@ -11024,7 +11024,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Mandukya-3",
   "label": "माण्डूक्योपनिषद् (Māṇḍūkya Upaniṣad) · अध्याय 3",
-  "file": "walk-data-Mandukya-3.js",
+  "file": "walk-data-Mandukya-3.144cea8f4d.js",
   "verses": [
    {
     "ref": "3.1 · kārikā",
@@ -11225,7 +11225,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "Mandukya-4",
   "label": "माण्डूक्योपनिषद् (Māṇḍūkya Upaniṣad) · अध्याय 4",
-  "file": "walk-data-Mandukya-4.js",
+  "file": "walk-data-Mandukya-4.0f173e048f.js",
   "verses": [
    {
     "ref": "4.1 · kārikā",
@@ -11634,7 +11634,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Mundaka-1",
   "label": "मुण्डकोपनिषद् (Muṇḍaka Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Mundaka-1.js",
+  "file": "walk-data-Mundaka-1.c32d7e7318.js",
   "verses": [
    {
     "ref": "1.1.1",
@@ -11731,7 +11731,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Mundaka-2",
   "label": "मुण्डकोपनिषद् (Muṇḍaka Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Mundaka-2.js",
+  "file": "walk-data-Mundaka-2.5cbc6742e5.js",
   "verses": [
    {
     "ref": "2.1.1",
@@ -11828,7 +11828,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Mundaka-3",
   "label": "मुण्डकोपनिषद् (Muṇḍaka Upaniṣad) · अध्याय 3",
-  "file": "walk-data-Mundaka-3.js",
+  "file": "walk-data-Mundaka-3.ee1e89e3f9.js",
   "verses": [
    {
     "ref": "3.1.1",
@@ -11921,7 +11921,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Prashna-1",
   "label": "प्रश्नोपनिषद् (Praśna Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Prashna-1.js",
+  "file": "walk-data-Prashna-1.74170425e8.js",
   "verses": [
    {
     "ref": "1.1",
@@ -11994,7 +11994,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Prashna-2",
   "label": "प्रश्नोपनिषद् (Praśna Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Prashna-2.js",
+  "file": "walk-data-Prashna-2.5edc015266.js",
   "verses": [
    {
     "ref": "2.1",
@@ -12055,7 +12055,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Prashna-3",
   "label": "प्रश्नोपनिषद् (Praśna Upaniṣad) · अध्याय 3",
-  "file": "walk-data-Prashna-3.js",
+  "file": "walk-data-Prashna-3.8da15159c7.js",
   "verses": [
    {
     "ref": "3.1",
@@ -12112,7 +12112,7 @@ window.WALK_MANIFEST=[
   "chapter": 4,
   "chapterKey": "Prashna-4",
   "label": "प्रश्नोपनिषद् (Praśna Upaniṣad) · अध्याय 4",
-  "file": "walk-data-Prashna-4.js",
+  "file": "walk-data-Prashna-4.a44d2ebbf8.js",
   "verses": [
    {
     "ref": "4.1",
@@ -12165,7 +12165,7 @@ window.WALK_MANIFEST=[
   "chapter": 5,
   "chapterKey": "Prashna-5",
   "label": "प्रश्नोपनिषद् (Praśna Upaniṣad) · अध्याय 5",
-  "file": "walk-data-Prashna-5.js",
+  "file": "walk-data-Prashna-5.9c71919040.js",
   "verses": [
    {
     "ref": "5.1",
@@ -12202,7 +12202,7 @@ window.WALK_MANIFEST=[
   "chapter": 6,
   "chapterKey": "Prashna-6",
   "label": "प्रश्नोपनिषद् (Praśna Upaniṣad) · अध्याय 6",
-  "file": "walk-data-Prashna-6.js",
+  "file": "walk-data-Prashna-6.c06ed96f8b.js",
   "verses": [
    {
     "ref": "6.1",
@@ -12243,7 +12243,7 @@ window.WALK_MANIFEST=[
   "chapter": 1,
   "chapterKey": "Taitiriya-1",
   "label": "तैत्तिरीयोपनिषद् (Taittirīya Upaniṣad) · अध्याय 1",
-  "file": "walk-data-Taitiriya-1.js",
+  "file": "walk-data-Taitiriya-1.9cd6909470.js",
   "verses": [
    {
     "ref": "1.1.1",
@@ -12344,7 +12344,7 @@ window.WALK_MANIFEST=[
   "chapter": 2,
   "chapterKey": "Taitiriya-2",
   "label": "तैत्तिरीयोपनिषद् (Taittirīya Upaniṣad) · अध्याय 2",
-  "file": "walk-data-Taitiriya-2.js",
+  "file": "walk-data-Taitiriya-2.2fd0d7e810.js",
   "verses": [
    {
     "ref": "2.1.0",
@@ -12409,7 +12409,7 @@ window.WALK_MANIFEST=[
   "chapter": 3,
   "chapterKey": "Taitiriya-3",
   "label": "तैत्तिरीयोपनिषद् (Taittirīya Upaniṣad) · अध्याय 3",
-  "file": "walk-data-Taitiriya-3.js",
+  "file": "walk-data-Taitiriya-3.f3e9e6c1cf.js",
   "verses": [
    {
     "ref": "3.1.0",

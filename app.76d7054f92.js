@@ -2296,9 +2296,14 @@ function computeClauseGroups(sentence) {
 // can give the right answer for that specific question" — "the कर्ता of X" alone forced the learner
 // to already know which word that was from an earlier step, purely from memory).
 function coreArgIndices(c, side) {
-  return side === 'karta'
-    ? [...c.karta, ...c.agreementKarta, ...c.samuccayaKarta]
-    : [...c.karma, ...c.agreementKarma, ...c.samuccayaKarma];
+  if (side === 'karta') {
+    const base = [...c.karta, ...c.agreementKarta, ...c.samuccayaKarta];
+    // a verbless nominal-predication head IS the कर्ता (subject); its agreement/gender members compare
+    // against IT, not against each other. Prepend the head so coreArgIndices[0] is the real subject.
+    if (c.subjectIsHead && !base.includes(c.governorWordIndex)) return [c.governorWordIndex, ...base];
+    return base;
+  }
+  return [...c.karma, ...c.agreementKarma, ...c.samuccayaKarma];
 }
 function coreArgWords(c, sentence, side) {
   return coreArgIndices(c, side).map(i => sentence.words[i]).join('/');
@@ -2346,6 +2351,9 @@ function tutorialStepLabel(step, sentence) {
       const qualifiedIdx = coreArgIndices(c, step.side)[0];
       const argWord = qualifiedIdx != null ? `<b>${esc(sentence.words[qualifiedIdx])}</b>` : '';
       const argLabel = step.side === 'karta' ? 'कर्ता' : 'कर्म';
+      // when the compared arg IS the cluster head (a nominal-predication subject), gov and argWord are
+      // the same word — don't tack on the redundant "(the कर्ता of X)" clause.
+      if (qualifiedIdx === c.governorWordIndex) return `${qWord} must share which लिङ्ग (gender) with ${argWord}?`;
       return `${qWord} must share which लिङ्ग (gender) with ${argWord} (the ${argLabel} of ${gov})?`;
     }
     case 'samuccayaKarta':

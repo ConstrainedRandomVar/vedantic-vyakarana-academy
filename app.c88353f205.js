@@ -2148,9 +2148,13 @@ function buildTutorialSteps(sentence) {
     for (const side of ['karta', 'karma']) {
       const qualifiedIdx = coreArgIndices(c, side)[0];
       if (qualifiedIdx == null || !sentence.wordGenders[qualifiedIdx]) continue;
+      const argGender = sentence.wordGenders[qualifiedIdx];
       const members = side === 'karta' ? [...c.agreementKarta, ...c.qualifierKarta] : [...c.agreementKarma, ...c.qualifierKarma];
       for (const wordIndex of members) {
-        if (sentence.wordGenders[wordIndex]) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
+        // Only ask "shares which लिङ्ग" when the member's gender is known AND actually matches the arg's.
+        // A predicate-identity समानाधिकरणम् can equate unlike-gender nouns (e.g. नियता-अवस्था f ≡ शमः m),
+        // where gender need NOT agree — a genderCheck there is unanswerable (e-reader audit, Class 4).
+        if (sentence.wordGenders[wordIndex] && sentence.wordGenders[wordIndex] === argGender) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
       }
     }
     // समुच्चयKarta/Karma no longer get their OWN step (Harsha, 2026-08-17, "Option A"): coordinated

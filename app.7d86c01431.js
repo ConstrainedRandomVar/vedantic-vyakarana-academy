@@ -2481,11 +2481,13 @@ const KALA_NIPATA = {
   'अपरेद्युः': 'on a later day', 'अधरेद्युः': 'on an earlier day', 'उभयेद्युः': 'on both days',
   'उत्तरेद्युः': 'on the following day',
 };
-const KALA_NIPATA_LIST = 'सद्यः, परुत्, परारि, ऐषमः, परेद्यवि, अद्य, पूर्वेद्युः, अन्येद्युः, अन्यतरेद्युः, इतरेद्युः, अपरेद्युः, अधरेद्युः, उभयेद्युः, उत्तरेद्युः';
+// The सूत्र (a निपातन listing every कालवाचि word) — Aṣṭādhyāyī 5.3.22, verified against the
+// ashtadhyayi-com/data clone (see reference-ashtadhyayi-data-repo memory).
+const KALA_NIPATA_SUTRA = 'सद्यःपरुत्परार्यैषमःपरेद्यव्यद्यपूर्वेद्युरन्येद्युरन्यतरेद्युरितरेद्युरपरेद्युरधरेद्युरुभयेद्युरुत्तरेद्युः';
 function kalaNipataTip(word) {
   const gloss = KALA_NIPATA[word];
   if (!gloss) return null;
-  return `${word} ("${gloss}") is an अव्यय — a निपातित (irregularly-formed) time-word, so its role is कालाधिकरण (the "when" of the action), not a declined सप्तमी. काले अभिधेये स्वार्थे "${KALA_NIPATA_LIST}" — एते शब्दाः निपात्यन्ते: when time is the thing denoted, these words are irregularly formed in their own meaning.`;
+  return `${word} ("${gloss}") is an अव्यय — a निपातित (irregularly-formed) time-word, so its role is कालाधिकरण (the "when" of the action), not a declined सप्तमी. It is one of the कालवाचि words निपातित by ${KALA_NIPATA_SUTRA} (अष्टाध्यायी 5.3.22); वृत्ति — काले अभिधेये स्वार्थे एते शब्दाः निपात्यन्ते: when time is the thing denoted, these words are irregularly formed in their own meaning.`;
 }
 function tutorialOverrideNote(sentence, step, wordIndex) {
   const c = sentence.clusters[step.clusterIdx];

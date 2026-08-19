@@ -2138,8 +2138,13 @@ function buildTutorialSteps(sentence) {
     // agreement question would resolve to the SAME word with only a reworded prompt — a dup (Harsha,
     // 2026-08-18, BG 4.2: agreementKarta=[] but qualifierKarta=[सः] made both ask about सः). When real
     // agreement IS tagged, this still fires (and accepts qualifiers too, being "generous and open").
-    if (c.agreementKarta.length) steps.push({ type: 'agreementKarta', clusterIdx: ci });
-    if (c.agreementKarma.length) steps.push({ type: 'agreementKarma', clusterIdx: ci });
+    // ...and only when there is a REAL कर्ता/कर्म for it to agree WITH (an explicit कर्ता/कर्म, a
+    // समुच्चय co-argument, or — for a verbless predication — the head subject). Without one, "which word
+    // agrees with the कर्ता of X?" references a कर्ता the learner can't see (VC 2 लभ्यते, कर्ता elided).
+    const hasKartaRef = c.karta.length || c.samuccayaKarta.length || c.subjectIsHead;
+    const hasKarmaRef = c.karma.length || c.samuccayaKarma.length;
+    if (c.agreementKarta.length && hasKartaRef) steps.push({ type: 'agreementKarta', clusterIdx: ci });
+    if (c.agreementKarma.length && hasKarmaRef) steps.push({ type: 'agreementKarma', clusterIdx: ci });
     if (c.qualifierKarta.length) steps.push({ type: 'qualifierKarta', clusterIdx: ci });
     if (c.qualifierKarma.length) steps.push({ type: 'qualifierKarma', clusterIdx: ci });
     // genderCheck: one MCQ per agreement/qualifier word, right after its click-question — only
@@ -2154,7 +2159,9 @@ function buildTutorialSteps(sentence) {
         // Only ask "shares which लिङ्ग" when the member's gender is known AND actually matches the arg's.
         // A predicate-identity समानाधिकरणम् can equate unlike-gender nouns (e.g. नियता-अवस्था f ≡ शमः m),
         // where gender need NOT agree — a genderCheck there is unanswerable (e-reader audit, Class 4).
-        if (sentence.wordGenders[wordIndex] && sentence.wordGenders[wordIndex] === argGender) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
+        // never compare a word to ITSELF (guards the case where coreArgIndices[0] resolved to this very
+        // agreement member — an elided-कर्ता cluster whose only "core" is the agreement word).
+        if (wordIndex !== qualifiedIdx && sentence.wordGenders[wordIndex] && sentence.wordGenders[wordIndex] === argGender) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
       }
     }
     // समुच्चयKarta/Karma no longer get their OWN step (Harsha, 2026-08-17, "Option A"): coordinated

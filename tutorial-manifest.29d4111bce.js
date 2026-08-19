@@ -1,0 +1,1 @@
+window.TUTORIAL_MANIFEST=[{"slug":"Gita","file":"tutorial-data-Gita.8ec0acb728.js","verseCount":586,"title":"Bhagavad Gītā"},{"slug":"vivekacudamani","file":"tutorial-data-vivekacudamani.f3bce1a8a4.js","verseCount":44,"title":"Vivekacūḍāmaṇi"}];

@@ -2489,6 +2489,15 @@ const PRAGDISHIYA_TIP = {
   'क्व': 'क्व ("where?") = किम् + अत् (किमोऽत्, 5.3.12; किम् → कु) — the किम्-counterpart of इदम् → इह.',
   'एकत्र': 'एकत्र ("in one place") = एक + त्रल् (5.3.10) — an अव्यय.',
 };
+// तसिल् pronominal ablatives — the पञ्चमी analogue of the त्रल् locatives above: तद्धित तसिल् added to a
+// pronoun base in पञ्चमी (ablative) sense → role अपादान, an अव्यय (Harsha, 2026-08-19). Shown in the अपादान step.
+const TASIL_ABLATIVE_TIP = {
+  'अतः': 'अतः ("hence / from this") = इदम् + the तद्धित suffix तसिल् (पञ्चम्यास्तसिल्, 5.3.7; इदम् → अ) — added to a pronominal base in पञ्चमी (ablative) sense, so its role is अपादान ("from"); an अव्यय. Its declined पञ्चमी counterpart is अस्मात्.',
+  'ततः': 'ततः ("thence / from that") = तद् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7) — पञ्चमी (ablative) sense → अपादान, an अव्यय. Declined पञ्चमी counterpart: तस्मात्.',
+  'यतः': 'यतः ("whence / from which") = यद् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7) — पञ्चमी sense → अपादान, an अव्यय. Counterpart: यस्मात्.',
+  'कुतः': 'कुतः ("whence? / from where?") = किम् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7; किम् → कु) — पञ्चमी sense → अपादान, an अव्यय. Counterpart: कस्मात्.',
+  'इतः': 'इतः ("from here / hence") = इदम् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7; इदम् → इ) — पञ्चमी sense → अपादान, an अव्यय. Counterpart: अस्मात्.',
+};
 // कालवाचि निपात — irregularly-formed time-adverbs (अव्यय); कालाधिकरण (the "when" of the action), not a
 // declined सप्तमी. निपातन: काले अभिधेये स्वार्थे these words are निपात्यन्ते (Harsha, 2026-08-19, BG 4.3 अद्य).
 const KALA_NIPATA = {
@@ -2512,6 +2521,8 @@ function tutorialOverrideNote(sentence, step, wordIndex) {
   if (tip) return tip;   // derivation of the pronominal place-adverb (इह etc.) takes precedence
   const kt = kalaNipataTip(sentence.words[wordIndex]);
   if (kt) return kt;     // कालवाचि निपात (अद्य etc.) — explains why it is कालाधिकरण, not a सप्तमी
+  const at = TASIL_ABLATIVE_TIP[sentence.words[wordIndex]];
+  if (at) return at;     // तसिल् ablative (अतः/ततः …) — explains पञ्चम्यास्तसिल् → अपादान
   if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
     return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}), and the agent of such forms is always in तृतीया.`;
   }

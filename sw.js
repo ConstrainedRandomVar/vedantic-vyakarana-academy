@@ -4,7 +4,7 @@
 // fallback. Combined with index.html's controllerchange auto-reload + updateViaCache:'none'
 // registration, a new deploy is picked up automatically on the next load with no manual cache-clear.
 // (Trade-off: every online load waits on the network — accepted for now.) Bump CACHE_NAME on deploy.
-const CACHE_NAME = 'sandhi-quiz-v85';
+const CACHE_NAME = 'sandhi-quiz-v86';
 const SHELL = ['./', './index.html'];   // minimal offline shell; everything else caches reactively
 
 self.addEventListener('install', event => {

@@ -2884,10 +2884,15 @@ function renderTutorial() {
         if (hint) feedbackHtml += `<div class="tut-explain">${step1HintCallout(sentence, hint)}</div>`;
       }
     }
+    // Notes can be per-WORD (PRAGDISHIYA_TIP, krtyaKarmani, sweep-upapada) or CLUSTER-level (the
+    // कारक-षष्ठी kṛdanta-कर्म note doesn't depend on wordIndex) — so iterating the accepted words
+    // would print a cluster-level note once PER accepted word (4× for a कर्म cluster of 4 words,
+    // Harsha 2026-08-19, BG 4.3 प्रोक्तः). Dedupe on the note text so each distinct tip shows once.
     const noteTargets = [...expected, ...selected];
+    const seenNotes = new Set();
     for (const idx of new Set(noteTargets)) {
       const note = step.clusterIdx != null ? tutorialOverrideNote(sentence, step, idx) : null;
-      if (note) feedbackHtml += `<div class="tut-explain">${note}</div>`;
+      if (note && !seenNotes.has(note)) { seenNotes.add(note); feedbackHtml += `<div class="tut-explain">${note}</div>`; }
     }
   }
 

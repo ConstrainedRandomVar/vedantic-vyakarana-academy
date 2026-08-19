@@ -2125,8 +2125,13 @@ function buildTutorialSteps(sentence) {
       if (showKartaCase) steps.push({ type: 'kartaCase', clusterIdx: ci });
       steps.push({ type: 'karta', clusterIdx: ci });
     }
-    if (showKarmaCase) steps.push({ type: 'karmaCase', clusterIdx: ci });
-    steps.push({ type: 'karma', clusterIdx: ci });
+    // कर्म step only when a कर्म is actually tagged (symmetric with कर्ता above). Was unconditional, so a
+    // nominal-predication head (a noun subject, e.g. VC 2 नरजन्म) or an अकर्मक copula (VC 1 अस्मि) got a
+    // spurious "which is the कर्म? — (none)" step (Harsha, 2026-08-19). An अकर्मक/nominal head governs no कर्म.
+    if (c.karma.length) {
+      if (showKarmaCase) steps.push({ type: 'karmaCase', clusterIdx: ci });
+      steps.push({ type: 'karma', clusterIdx: ci });
+    }
     // Fire the सामानाधिकरण्य (predicative-agreement) question ONLY when there's a genuinely
     // corpus-tagged agreement member. A qualifier-ONLY cluster is already asked "which word qualifies
     // X?" (qualifierKarta step below), and since expectedSetForStep unions agreement+qualifier, the

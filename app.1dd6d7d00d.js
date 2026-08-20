@@ -2130,7 +2130,11 @@ function karmaCaseOptions(c) {
 // word). The VC/Gemini adapter already buckets these into `nipata`, but texts built by the older pipeline
 // (BG/Gita) leave them in `remaining`/`modifiers`, so they'd sit un-quizzed (BG 4.3 एव). Reclassify them
 // into `nipata` at the shared layer so every text poses the correct निपात question (Harsha, 2026-08-20).
-const NIPATA_WORDS = new Set(['एव', 'हि', 'तु', 'वै', 'खलु', 'उ', 'इति', 'स्म', 'नु', 'इव', 'अपि']);
+// Emphatic/asseverative/quotative particles the model routinely mis-tags as क्रियाविशेषणम् (its catch-all
+// for particles it can't place) → they land in `modifiers` and get asked as adverbs (Kaṭha 1.1 ह/नाम under
+// आस — Harsha, 2026-08-21). These are all निपात, never manner-adverbs; safe to reclassify since we only
+// move words ALREADY sitting in modifiers/remaining.
+const NIPATA_WORDS = new Set(['एव', 'हि', 'तु', 'वै', 'खलु', 'उ', 'इति', 'स्म', 'नु', 'इव', 'अपि', 'ह', 'नाम', 'किल', 'नूनम्', 'वत', 'बत', 'हन्त', 'अङ्ग', 'स्विद्', 'चन', 'चेत्']);
 function normalizeNipata(sentence) {
   for (const c of (sentence.clusters || [])) {
     if (!Array.isArray(c.nipata)) c.nipata = [];

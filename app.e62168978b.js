@@ -404,8 +404,8 @@ function junctionDistractors(item) {
 function buildOptions(item, code) {
   if (item.kind === 'verbvoice') return buildVerbVoiceOptions(item);
   if (item.kind === 'samasa') return buildSamasaOptions(item);
-  if (item.kind === 'samasaType') return samasaTypeOptions(item.correctType);
-  if (item.kind === 'samasaVigraha') return { correct: item.vigrahaOptions[0], options: seedRotate([...new Set(item.vigrahaOptions)], item.vigrahaOptions[0] + 'v') };
+  if (item.kind === 'samasaType') { const { correct, options } = samasaTypeOptions(item.correctType); return { options, correctIndex: options.indexOf(correct) }; }
+  if (item.kind === 'samasaVigraha') { const options = seedRotate([...new Set(item.vigrahaOptions)], item.vigrahaOptions[0] + 'v'); return { options, correctIndex: options.indexOf(item.vigrahaOptions[0]) }; }
   if (item.kind === 'vibhakti') return buildVibhaktiOptions(item);
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
   if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);
@@ -955,7 +955,22 @@ function flattenWalk(chapterKey, scope) {
   for (const v of ch.verses) {
     for (const section of sections) {
       for (const s of v.sections[section].steps) {
-        out.push({ verseRef: v.ref, verseLabel: v.label, moola: v.moola, section, ...s });
+        const step = { verseRef: v.ref, verseLabel: v.label, moola: v.moola, section, ...s };
+        // Read-a-verse recursive samāsa: a flat `samasa` item whose compound is in the shared PEEL index
+        // (VC + analysed texts) becomes the guided vigraha→type peel sequence; others stay flat (Harsha, 2026-08-21).
+        if (Array.isArray(step.items) && window.SAMASA_PEEL) {
+          const exp = [];
+          for (const it of step.items) {
+            if (it.kind === 'samasa') {
+              const layers = window.SAMASA_PEEL[normW(it.word)];
+              const peel = layers ? samasaPeelItems(layers, { ref: it.ref, source: it.source, context: it.context, slug: it.slug }) : null;
+              if (peel && peel.length) { exp.push(...peel); continue; }
+            }
+            exp.push(it);
+          }
+          step.items = exp;
+        }
+        out.push(step);
       }
     }
   }
@@ -999,6 +1014,8 @@ function questionSignature(item) {
   if (item.kind === 'verbvoice') return `vvc:${item.ref}:${item.verb}:${item.voice}`;
   if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
+  if (item.kind === 'samasaVigraha') return `samv:${item.word}:${item.vigrahaOptions[0]}`;
+  if (item.kind === 'samasaType') return `samt:${item.word}:${item.correctType}`;
   if (item.subtype === 'spotlopa') return `spotlopa:${item.ref}:${item.targetWord}`;
   if (item.subtype === 'lopa') return `lopa:${item.code}:${item.before.join('+')}`;
   if (item.subtype === 'fullsplit') return `pch:${item.ref}:${item.surface}`;
@@ -1584,6 +1601,14 @@ function renderPrompt(item) {
       <div class="prompt-hint">This is the verse's verb. Is it कर्तरि (active), कर्मणि (passive), or भावे (impersonal)? — this fixes which word will be the कर्ता/कर्म and in which case.</div>${ctxLine}${srcLine}`;
   }
   if (item.kind === 'samasa') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">What type of samāsa is this?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'samasaVigraha') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">How does this compound split (विग्रह)? Pick the correct relation.</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'samasaType') {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">What type of samāsa is this?</div>${ctxLine}${srcLine}`;
   }
@@ -2436,6 +2461,21 @@ function samasaTypeOptions(correct) {
   else if (correct === 'तत्पुरुष') pool = pool.filter(t => !isTPSubtypeDeva(t));
   const distract = pool.slice(0, 3);
   return { correct, options: seedRotate([correct, ...distract], correct) };
+}
+// Recursive-samāsa PEEL items — expand a compound's layers into a back-to-back vigraha→type MCQ sequence,
+// one per COMPOUND layer (kṛt/taddhita/prātipadika leaves skipped). Used by Read-a-verse (a matched
+// `samasa` item becomes this sequence) and Practise (recursive node). Options come from buildOptions via
+// the samasaType/samasaVigraha branches. ctx carries ref/source/context/slug (Harsha, 2026-08-21).
+function normW(w) { return (w || '').replace(/[-\s‌‍]/g, ''); }
+function samasaPeelItems(layers, ctx) {
+  const items = [], seen = new Set();
+  for (const L of (layers || [])) {
+    if (!isCompoundSamasaType(L.type)) continue;
+    const key = `${L.c}|${L.vigraha}|${L.type}`; if (seen.has(key)) continue; seen.add(key);
+    if (Array.isArray(L.vigrahaOptions) && L.vigrahaOptions.length >= 3) items.push({ kind: 'samasaVigraha', word: L.c, vigrahaOptions: L.vigrahaOptions, code: 'SAMASA', ...(ctx || {}) });
+    items.push({ kind: 'samasaType', word: L.c, correctType: L.type, code: 'SAMASA', ...(ctx || {}) });
+  }
+  return items;
 }
 // vigraha MCQ — options are PRECOMPUTED at build time (adapter.js buildVigrahaOpts, using the śabda
 // declension tables): same-member re-analyses of THIS compound under different समास relations

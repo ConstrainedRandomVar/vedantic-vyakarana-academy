@@ -404,6 +404,8 @@ function junctionDistractors(item) {
 function buildOptions(item, code) {
   if (item.kind === 'verbvoice') return buildVerbVoiceOptions(item);
   if (item.kind === 'samasa') return buildSamasaOptions(item);
+  if (item.kind === 'samasaType') return samasaTypeOptions(item.correctType);
+  if (item.kind === 'samasaVigraha') return { correct: item.vigrahaOptions[0], options: seedRotate([...new Set(item.vigrahaOptions)], item.vigrahaOptions[0] + 'v') };
   if (item.kind === 'vibhakti') return buildVibhaktiOptions(item);
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
   if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);

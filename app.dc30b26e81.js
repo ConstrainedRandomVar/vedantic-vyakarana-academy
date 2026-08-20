@@ -1250,7 +1250,7 @@ function renderDashboard() {
         <button class="primary" id="readBtn">📖 Read a verse</button>
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>
         <button class="secondary" id="adaptiveBtn">Practice</button>
-        <button class="secondary" id="tutorialBtn">🧩 कारक tutorial</button>
+        <button class="secondary" id="tutorialBtn">🧩 वाक्य-विग्रह</button>
       </div>
     </div>
     ${categorySections.join('')}
@@ -2099,7 +2099,43 @@ function karmaCaseOptions(c) {
   const options = c.karmaGovernorIsKrdanta ? ['द्वितीया', 'प्रथमा', 'षष्ठी'] : ['द्वितीया', 'प्रथमा'];
   return { correct, options };
 }
+// Emphatic/quotative/simile निपात particles — never a कारक of the verb (अवधारण: they qualify the preceding
+// word). The VC/Gemini adapter already buckets these into `nipata`, but texts built by the older pipeline
+// (BG/Gita) leave them in `remaining`/`modifiers`, so they'd sit un-quizzed (BG 4.3 एव). Reclassify them
+// into `nipata` at the shared layer so every text poses the correct निपात question (Harsha, 2026-08-20).
+const NIPATA_WORDS = new Set(['एव', 'हि', 'तु', 'वै', 'खलु', 'उ', 'इति', 'स्म', 'नु', 'इव', 'अपि']);
+function normalizeNipata(sentence) {
+  for (const c of (sentence.clusters || [])) {
+    if (!Array.isArray(c.nipata)) c.nipata = [];
+    const add = wi => { if (!c.nipata.includes(wi)) c.nipata.push(wi); };
+    if (Array.isArray(c.remaining)) {   // objects {wordIndex,...}
+      const keep = [];
+      for (const o of c.remaining) { const wi = (o && typeof o === 'object') ? o.wordIndex : o; if (NIPATA_WORDS.has(sentence.words[wi])) add(wi); else keep.push(o); }
+      c.remaining = keep;
+    }
+    if (Array.isArray(c.modifiers)) {   // plain indices
+      const keep = [];
+      for (const i of c.modifiers) { if (NIPATA_WORDS.has(sentence.words[i])) add(i); else keep.push(i); }
+      c.modifiers = keep;
+    }
+  }
+}
+// A word in the `genitives` bucket is a षष्ठीसम्बन्ध (possessor) by definition, so its case is षष्ठी. Some
+// stems are syncretic in पञ्चमी/षष्ठी singular (त-stems भवत्→भवतः, विवस्वत्→विवस्वतः; ऋ-stems पितुः) and the
+// morph picks पञ्चमी — showing "51" for a genitive (BG 4.4 भवतः/विवस्वतः, Harsha). Resolve 5x→6x for such
+// words at the shared layer (idempotent; no-op for VC, whose genitives are already 6x). vacana preserved.
+function normalizeGenitiveCase(sentence) {
+  if (!Array.isArray(sentence.wordCodes)) return;
+  for (const c of (sentence.clusters || [])) {
+    for (const g of (c.genitives || [])) {
+      const code = sentence.wordCodes[g.wordIndex];
+      if (/^5[0-9]$/.test(code || '')) sentence.wordCodes[g.wordIndex] = '6' + code[1];
+    }
+  }
+}
 function buildTutorialSteps(sentence) {
+  normalizeNipata(sentence);   // ensure निपात particles are quizzed as निपात in every text (idempotent)
+  normalizeGenitiveCase(sentence);   // possessor coded पञ्चमी (त/ऋ-stem syncretism) → षष्ठी
   const steps = [{ type: 'verbs' }];
   sentence.clusters.forEach((c, ci) => {
     // Only ask the voice (कर्तरि/कर्मणि/भावे) step when the voice is actually known. Finite तिङन्त
@@ -2174,6 +2210,8 @@ function buildTutorialSteps(sentence) {
     // coordinated items) is unrelated and stays.
     if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
     if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
+    if ((c.pratishedha || []).length) steps.push({ type: 'pratishedha', clusterIdx: ci });
+    if ((c.nipata || []).length) steps.push({ type: 'nipata', clusterIdx: ci });
     if ((c.hetu || []).length) steps.push({ type: 'hetu', clusterIdx: ci });
     if ((c.sequence || []).length) steps.push({ type: 'sequence', clusterIdx: ci });
     if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
@@ -2181,6 +2219,9 @@ function buildTutorialSteps(sentence) {
     if (c.apadana.length) steps.push({ type: 'apadana', clusterIdx: ci });
     if (c.adhikarana.length) steps.push({ type: 'adhikarana', clusterIdx: ci });
     if (c.satisaptami.length) steps.push({ type: 'satisaptami', clusterIdx: ci });
+    if ((c.itthambhuta || []).length) steps.push({ type: 'itthambhuta', clusterIdx: ci });
+    if ((c.upamana || []).length) steps.push({ type: 'upamana', clusterIdx: ci });
+    if ((c.upameya || []).length) steps.push({ type: 'upameya', clusterIdx: ci });
     if (c.sambodhana.length) steps.push({ type: 'sambodhana', clusterIdx: ci });
     if (c.nirdharana.length) steps.push({ type: 'nirdharana', clusterIdx: ci });
     // qualifier-of-peripheral: one step per qualified peripheral word (e.g. महता → कालेन/हेतु).
@@ -2192,7 +2233,38 @@ function buildTutorialSteps(sentence) {
     for (const ti of [...new Set((c.genitives || []).map(g => g.targetIndex))]) {
       steps.push({ type: 'genitiveOf', clusterIdx: ci, targetIndex: ti });
     }
-    if (c.remaining.length) steps.push({ type: 'remaining', clusterIdx: ci });
+    // `remaining` is the catch-all for roles we don't yet bucket properly — do NOT quiz it (asking
+    // "which words relate to X" / an adverbial question on a non-verb produces a wrong question). Such
+    // words fall through silently; fallthrough_report.js tags them so we can add real buckets over time
+    // (Harsha, 2026-08-20). The remaining[] data is still carried for that report.
+  });
+  // ---- clause-structure questions (verse-level; only for multi-clause verses) — type, subordination,
+  // elided predicate. Guarded on the option-builders so degenerate MCQs (too few options) are skipped. ----
+  if ((sentence.clauses || []).length > 1) {
+    // Dedup so a list-verse (e.g. VC 2's 10 nominal clauses all eliding "दुर्लभम् अस्ति") doesn't ask the
+    // same clauseType/clauseElided 10× — one question per DISTINCT type / DISTINCT elided predicate.
+    // Subordination IS per-clause (each subordinate relationship is individually informative).
+    const seenType = new Set(), seenElided = new Set();
+    sentence.clauses.forEach((cl, i) => {
+      if (!seenType.has(cl.type)) { seenType.add(cl.type); steps.push({ type: 'clauseType', clauseIdx: i }); }
+      if (cl.subordinateTo && clauseSubordinateOptions(sentence, i)) steps.push({ type: 'clauseSubordinate', clauseIdx: i });
+      const el = (cl.elided || []).join(' ');
+      if (el && !seenElided.has(el) && clauseElidedOptions(sentence, i)) { seenElided.add(el); steps.push({ type: 'clauseElided', clauseIdx: i }); }
+    });
+  }
+  // ---- guided recursive samāsa peel (verse-level; per compound word, layers outermost-first = the peel
+  // order). Ask vigraha (split) then type for each COMPOUND layer; kṛt/taddhita/प्रातिपदिक leaves are not
+  // quizzed (their derivation shows only as a tip). vigraha is skipped when there aren't enough distractors. ----
+  const seenLayer = new Set();   // don't peel the same sub-compound twice (e.g. गोचर under both गोचरम् and अगोचरम्)
+  (sentence.samasa || []).forEach((sm, si) => {
+    (sm.layers || []).forEach((L, li) => {
+      if (!isCompoundSamasaType(L.type)) return;
+      const key = `${L.c}|${L.vigraha}|${L.type}`;
+      if (seenLayer.has(key)) return;
+      seenLayer.add(key);
+      if (buildVigrahaOptions(sentence, si, li)) steps.push({ type: 'samasaVigraha', samasaIdx: si, layerIdx: li });
+      steps.push({ type: 'samasaType', samasaIdx: si, layerIdx: li });
+    });
   });
   return steps;
 }
@@ -2227,11 +2299,16 @@ function expectedSetForStep(sentence, step) {
   if (step.type === 'samuccayaKarma') return new Set(c.samuccayaKarma);
   if (step.type === 'samuccaya') return new Set(c.samuccaya);
   if (step.type === 'modifiers') return new Set(c.modifiers);
+  if (step.type === 'pratishedha') return new Set(c.pratishedha || []);
+  if (step.type === 'nipata') return new Set(c.nipata || []);
   if (step.type === 'karana') return new Set(c.karana.map(r => r.wordIndex));
   if (step.type === 'sampradana') return new Set(c.sampradana.map(r => r.wordIndex));
   if (step.type === 'apadana') return new Set(c.apadana.map(r => r.wordIndex));
   if (step.type === 'adhikarana') return new Set(c.adhikarana.map(r => r.wordIndex));
   if (step.type === 'satisaptami') return new Set(c.satisaptami.map(r => r.wordIndex));
+  if (step.type === 'itthambhuta') return new Set((c.itthambhuta || []).map(r => r.wordIndex));
+  if (step.type === 'upamana') return new Set((c.upamana || []).map(r => r.wordIndex));
+  if (step.type === 'upameya') return new Set((c.upameya || []).map(r => r.wordIndex));
   if (step.type === 'sambodhana') return new Set(c.sambodhana.map(r => r.wordIndex));
   if (step.type === 'nirdharana') return new Set(c.nirdharana.map(r => r.wordIndex));
   if (step.type === 'hetu') return new Set((c.hetu || []).map(r => r.wordIndex));
@@ -2334,6 +2411,124 @@ function genderCheckOptions(sentence, c, side) {
   const correct = rawGender ? GENDER_FULL_LABEL[rawGender] : null;
   return { correct, qualifiedIdx, options: GENDER_OPTIONS };
 }
+// ---- New question types (2026-08-20): guided recursive samāsa peel + clause-structure questions,
+// leveraging the Gemini morph/kāraka data (words[].samasa, clauses[]) the adapter now threads through.
+// All are single-select MCQ, rendered by the shared block in renderTutorial (view.mcqPicked). ----
+
+// deterministic option ordering (so the correct answer isn't always first, without Math.random)
+function seedRotate(arr, seedStr) {
+  if (arr.length <= 1) return arr;
+  let s = 0; for (const ch of String(seedStr || '')) s = (s + ch.charCodeAt(0)) % 100003;
+  const k = s % arr.length;
+  return arr.slice(k).concat(arr.slice(0, k));
+}
+// a samāsa layer is an actual COMPOUND split (worth a type/vigraha question) vs a kṛt/taddhita/प्रातिपदिक leaf
+const isCompoundSamasaType = t => /तत्पुरुष|कर्मधारय|बहुव्रीहि|द्वन्द्व|अव्ययीभाव|द्विगु/.test(t || '');
+const isTPSubtypeDeva = t => /तत्पुरुष$/.test(t || '') && t !== 'तत्पुरुष';
+// distractor pool, priority-ordered by real corpus frequency (keep distractors common — not rare forms)
+const SAMASA_TYPE_POOL = ['षष्ठी-तत्पुरुष', 'कर्मधारय', 'बहुव्रीहि', 'तृतीया-तत्पुरुष', 'नञ्-तत्पुरुष', 'द्वन्द्व', 'अव्ययीभाव', 'सप्तमी-तत्पुरुष', 'उपपद-तत्पुरुष', 'द्विगु'];
+function samasaTypeOptions(correct) {
+  let pool = SAMASA_TYPE_POOL.filter(t => t !== correct);
+  // don't pair a TP subtype with the bare parent "तत्पुरुष" (a subtype genuinely IS a तत्पुरुष — misleading)
+  if (isTPSubtypeDeva(correct)) pool = pool.filter(t => t !== 'तत्पुरुष');
+  else if (correct === 'तत्पुरुष') pool = pool.filter(t => !isTPSubtypeDeva(t));
+  const distract = pool.slice(0, 3);
+  return { correct, options: seedRotate([correct, ...distract], correct) };
+}
+// vigraha MCQ — options are PRECOMPUTED at build time (adapter.js buildVigrahaOpts, using the śabda
+// declension tables): same-member re-analyses of THIS compound under different समास relations
+// (बाह्यार्थसुखस्य / -ेन / -ात् स्पृहा …), so every option starts with the same members and the question
+// tests the relation, not "spot the unrelated phrase" (Harsha, 2026-08-20). Skipped (→ type-only) when
+// the adapter couldn't generate ≥2 distractors (unknown stem / too shallow), i.e. no L.vigrahaOptions.
+function buildVigrahaOptions(sentence, samasaIdx, layerIdx) {
+  const sm = sentence.samasa[samasaIdx];
+  const L = sm && sm.layers && sm.layers[layerIdx];
+  const vo = L && L.vigrahaOptions;
+  if (!vo || vo.length < 3) return null;
+  const correct = vo[0];
+  return { correct, options: seedRotate([...new Set(vo)], correct + 'v') };
+}
+const CLAUSE_TYPE_LABELS = {
+  main: 'मुख्य वाक्य', nominal: 'नाम-वाक्य (क्रियारहित)', relative: 'यद्-वाक्य (सापेक्ष)',
+  correlative: 'तद्-वाक्य (नित्यसम्बन्धी)', subordinate: 'आश्रित वाक्य', quotation: 'उद्धरण-वाक्य (इति)',
+};
+const clauseTypeLabel = t => CLAUSE_TYPE_LABELS[t] || t || 'वाक्य';
+function clauseTypeOptions(correctType) {
+  const correct = clauseTypeLabel(correctType);
+  const pool = Object.values(CLAUSE_TYPE_LABELS).filter(l => l !== correct);
+  const distract = seedRotate(pool, correct).slice(0, 3);
+  return { correct, options: seedRotate([correct, ...distract], correct) };
+}
+// name a clause to the learner by its type + head word (so options are self-describing)
+function clauseHandle(sentence, cl) {
+  const h = cl.headWordIndex != null ? sentence.words[cl.headWordIndex]
+    : (cl.words && cl.words[0] != null ? sentence.words[cl.words[0]] : '?');
+  return `the ${clauseTypeLabel(cl.type)} (${h})`;
+}
+function clauseSubordinateOptions(sentence, clauseIdx) {
+  const cl = sentence.clauses[clauseIdx];
+  const target = (sentence.clauses || []).find(x => x.id === cl.subordinateTo);
+  if (!target) return null;
+  const correct = clauseHandle(sentence, target);
+  const others = (sentence.clauses || []).filter(x => x.id !== cl.id && x.id !== target.id).map(x => clauseHandle(sentence, x));
+  const distract = seedRotate([...new Set(others)], correct).slice(0, 3);
+  const options = [...new Set([correct, ...distract])];
+  if (options.length < 2) return null;   // degenerate MCQ (2-clause verse) — skip
+  return { correct, options: seedRotate(options, correct) };
+}
+const ELIDED_FALLBACK = ['अस्ति', 'भवति', 'सन्ति', 'दुर्लभम् अस्ति'];
+function clauseElidedOptions(sentence, clauseIdx) {
+  const cl = sentence.clauses[clauseIdx];
+  const correct = (cl.elided || []).join(' ');
+  if (!correct) return null;
+  const sibs = [];
+  (sentence.clauses || []).forEach(x => { const e = (x.elided || []).join(' '); if (e && e !== correct && !sibs.includes(e)) sibs.push(e); });
+  const pool = [...new Set([...sibs, ...ELIDED_FALLBACK.filter(e => e !== correct)])];
+  const distract = seedRotate(pool, correct).slice(0, 3);
+  if (!distract.length) return null;
+  return { correct, options: seedRotate([...new Set([correct, ...distract])], correct) };
+}
+// teaching tips shown after answering
+function samasaTip(L) {
+  let s = `<b>${esc(L.c)}</b> = ${esc(L.vigraha)} — <b>${esc(L.type)}</b>`;
+  if (L.sutra) s += ` <span class="muted">(${esc(L.sutra.num)} — ${esc(L.sutra.text)})</span>`;
+  if (L.pratyaya) s += ` <span class="muted">[प्रत्यय ${esc(L.pratyaya)}]</span>`;
+  return s;
+}
+function clauseElidedTip(cl) {
+  let s = `The words <b>${esc((cl.elided || []).join(' '))}</b> are understood here though not stated.`;
+  if (cl.anuktaKarta) s += ` Unexpressed agent (अनुक्त-कर्ता): <b>${esc(cl.anuktaKarta)}</b>.`;
+  return s;
+}
+// per-step MCQ spec (options/correct/highlight/explain) for the new samāsa + clause question types
+function tutorialMcqSpec(step, sentence) {
+  if (step.type === 'samasaType') {
+    const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
+    return { ...samasaTypeOptions(L.type), highlight: new Set([sm.wordIndex]), explainHtml: samasaTip(L) };
+  }
+  if (step.type === 'samasaVigraha') {
+    const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
+    const r = buildVigrahaOptions(sentence, step.samasaIdx, step.layerIdx) || { correct: L.vigraha, options: [L.vigraha] };
+    return { ...r, highlight: new Set([sm.wordIndex]), explainHtml: '' };
+  }
+  if (step.type === 'clauseType') {
+    const cl = sentence.clauses[step.clauseIdx];
+    return { ...clauseTypeOptions(cl.type), highlight: new Set(cl.words), explainHtml: cl.gloss ? `“${esc(cl.gloss)}”` : '' };
+  }
+  if (step.type === 'clauseSubordinate') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const r = clauseSubordinateOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
+    return { ...r, highlight: new Set(cl.words), explainHtml: cl.gloss ? `“${esc(cl.gloss)}”` : '' };
+  }
+  if (step.type === 'clauseElided') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const r = clauseElidedOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
+    return { ...r, highlight: new Set(cl.words), explainHtml: clauseElidedTip(cl) };
+  }
+  return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
+}
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'clauseType', 'clauseSubordinate', 'clauseElided']);
+
 function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
@@ -2348,10 +2543,14 @@ function tutorialStepLabel(step, sentence) {
     case 'agreementKarma': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्म of ${gov}?`;
     case 'qualifierKarta': {
       const w = coreArgWords(c, sentence, 'karta');
+      // when the कर्ता IS the governor (a verbless nominal-predication head, e.g. VC 2), don't append the
+      // self-referential "(the कर्ता of X)" — just ask "qualify X?" (Harsha #1, 2026-08-20).
+      if (w && w === c.governorWord) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
       return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्ता of ${gov})` : `the कर्ता of ${gov}`}?`;
     }
     case 'qualifierKarma': {
       const w = coreArgWords(c, sentence, 'karma');
+      if (w && w === c.governorWord) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
       return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्म of ${gov})` : `the कर्म of ${gov}`}?`;
     }
     case 'genderCheck': {
@@ -2378,8 +2577,15 @@ function tutorialStepLabel(step, sentence) {
       const argLabel = side === 'karta' ? 'कर्ता' : 'कर्म';
       return `Which other word(s) join ${argWord} as a joint ${argLabel} of ${gov} (समुच्चय — coordination, e.g. "X and Y")?`;
     }
-    case 'samuccaya': return `More than one word together shares the role of ${gov} (समुच्चय — coordination) — which are they?`;
-    case 'modifiers': return `Which words are adjectives (विशेषण) or adverbs (क्रियाविशेषण) modifying ${gov}?`;
+    case 'samuccaya': return `Which word is the coordinating particle (समुच्चयद्योतक — च "and", अपि "also/even", वा "or") that joins the words sharing ${gov}'s role? (Pick the connector, not the joined words.)`;
+    case 'modifiers':
+      // a verbless nominal-predication head has no action verb — the adverb qualifies the implied copula
+      if (c.subjectIsHead) return `In the predication about ${gov} (with an implied अस्ति/भवति), which word(s) adverbially qualify it (क्रियाविशेषण — where / when / how much)?`;
+      return `Which word(s) adverbially modify (क्रियाविशेषण) ${gov} — describing how/where/when the action happens? (A verb takes no विशेषण; those describe nouns.)`;
+    case 'pratishedha':
+      if (c.subjectIsHead) return `Which word negates the predication about ${gov} (प्रतिषेध — the न / नो / मा attaches to the implied अस्ति: "${esc(c.governorWord)} is NOT …")?`;
+      return `Which word negates ${gov} (प्रतिषेध — a negation particle such as न / नो / मा)?`;
+    case 'nipata': return `Which word(s) are particles (निपात) here — emphatic (एव, हि) or quotative (इति) — rather than a कारक of ${gov}?`;
     case 'hetu': return `For ${gov}, which word is the हेतु — "due to what cause/reason" does this happen? (case: तृतीया or पञ्चमी, 2.3.23)`;
     case 'sequence': return `For ${gov}, which word denotes the action done just before (पूर्वकाल) or alongside (समानकाल) it — a gerund/absolutive (e.g. -त्वा, -य, -शतृ)?`;
     case 'genitiveOf': {
@@ -2396,9 +2602,35 @@ function tutorialStepLabel(step, sentence) {
     case 'apadana': return `For ${gov}, which word is the अपादान — "from what" or "from where" does this action originate?`;
     case 'adhikarana': return `For ${gov}, which word is the अधिकरण — "where" or "when" is this action happening?`;
     case 'satisaptami': return `For ${gov}, which word names the circumstance under which this action happens (सति-सप्तमी — a locative-absolute clause, distinct from ordinary अधिकरण)?`;
+    case 'itthambhuta': return `For ${gov}, which word tells by what characteristic/mark the agent is recognized (इत्थम्भूतलक्षणे — तृतीया, 2.3.21 — "by virtue of being …")?`;
+    case 'upamana': return `Which word is the उपमान — the standard of comparison ("like / as ___", e.g. the moon in "face like the moon")?`;
+    case 'upameya': return `Which word is the उपमेय — the thing being compared (to the उपमान)?`;
     case 'sambodhana': return `For ${gov}, which word is being directly addressed or called out to (सम्बोधन)?`;
     case 'nirdharana': return `For ${gov}, compared to/singled out from which group is this true (निर्धारण)?`;
-    case 'remaining': return `Which remaining words relate to ${gov} (षष्ठीसम्बन्ध, etc.)?`;
+    case 'remaining': return `Which remaining word(s) relate to ${gov} — a particle (निपात) or a connection not covered above? (Not necessarily षष्ठी — a true possessor is asked separately.)`;
+    case 'samasaVigraha': {
+      const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
+      return `Peel the compound <b>${esc(L.c)}</b> — how does it break apart (its विग्रह)?`;
+    }
+    case 'samasaType': {
+      const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
+      return `What type of समास is <b>${esc(L.c)}</b>?`;
+    }
+    case 'clauseType': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this group';
+      return `This verse has more than one clause (वाक्य). What TYPE is the clause headed by ${h} (highlighted)?`;
+    }
+    case 'clauseSubordinate': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
+      return `The clause headed by ${h} (highlighted) is subordinate to — depends on — which clause?`;
+    }
+    case 'clauseElided': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
+      return `Which word(s) are elided (left unstated but understood) in the clause headed by ${h} (highlighted)?`;
+    }
     default: return '';
   }
 }
@@ -2522,21 +2754,69 @@ function kalaNipataTip(word) {
   if (!gloss) return null;
   return `${word} ("${gloss}") is an अव्यय — a निपातित (irregularly-formed) time-word, so its role is कालाधिकरण (the "when" of the action), not a declined सप्तमी. It is one of the कालवाचि words निपातित by ${KALA_NIPATA_SUTRA} (अष्टाध्यायी 5.3.22); वृत्ति — काले अभिधेये स्वार्थे एते शब्दाः निपात्यन्ते: when time is the thing denoted, these words are irregularly formed in their own meaning.`;
 }
+// दा-affix time-adverbs: दा is added "in the sense of time" to सर्व/एक/अन्य/किम्/यत्/तद् (5.3.15). These
+// are कालाधिकरण (the "when"), not a declined सप्तमी. (सदा = सर्व+दा by 5.3.15 with सर्व→स.)
+const DA_KALA = {
+  'सदा': 'always (सर्व + दा)', 'सर्वदा': 'always (सर्व + दा)', 'यदा': 'when (यत् + दा)',
+  'तदा': 'then (तद् + दा)', 'कदा': 'when? (किम् + दा)', 'एकदा': 'once (एक + दा)', 'अन्यदा': 'at another time (अन्य + दा)',
+};
+const DA_KALA_SUTRA = 'सर्वैकान्यकिंयत्तदः काले दा';
+function daKalaTip(word) {
+  const gloss = DA_KALA[word];
+  if (!gloss) return null;
+  return `${word} — ${gloss} — is a कालवाचि अव्यय: the affix दा is added "in the sense of time" to a सर्व/एक/अन्य/किम्/यत्/तद् stem, by ${DA_KALA_SUTRA} (अष्टाध्यायी 5.3.15). So its role is कालाधिकरण (the "when" of the action), not a declined सप्तमी.`;
+}
+// चित्/चन indefinite particles: किम्-word + चित्/चन (निपात, चादयोऽसत्त्वे 1.4.57) → अनिर्दिष्ट (indefinite)
+// "some-/any-". With न they mean "no-/never". e.g. कदा→कदाचित्, कुत्र→क्वचित्, कः→कश्चित्.
+const CHIT_INDEF = {
+  'कदाचित्': ['कदा (when?)', 'sometime / ever'], 'कदाचन': ['कदा (when?)', 'ever'],
+  'क्वचित्': ['क्व/कुत्र (where?)', 'somewhere / anywhere'], 'कुत्रचित्': ['कुत्र (where?)', 'somewhere'], 'कुत्रचन': ['कुत्र (where?)', 'anywhere'],
+  'कश्चित्': ['कः (who?)', 'someone / a certain one'], 'कश्चन': ['कः (who?)', 'anyone'],
+  'काचित्': ['का (who? f.)', 'some woman'], 'काचन': ['का (who? f.)', 'any woman'],
+  'किञ्चित्': ['किम् (what?)', 'something / a little'], 'किञ्चन': ['किम् (what?)', 'anything'],
+  'कथञ्चित्': ['कथम् (how?)', 'somehow / with difficulty'], 'कथञ्चन': ['कथम् (how?)', 'somehow'],
+  'कतिचित्': ['कति (how many?)', 'a few'], 'कतिचन': ['कति (how many?)', 'some'],
+};
+function chitIndefTip(word) {
+  const e = CHIT_INDEF[word];
+  if (!e) return null;
+  return `${word} is ${e[0]} + the particle चित्/चन — a निपात (चादयोऽसत्त्वे 1.4.57) that turns a किम्-word into an INDEFINITE (अनिर्दिष्ट): "${e[1]}". So it doesn't ask a question — it means "some-/any-". (With न it flips to "no-/never".)`;
+}
+// Emphatic/connective निपात particles — they qualify the PRECEDING word (अवधारण), they are NOT a
+// कारक/षष्ठी relation to the verb. So when one lands in a "remaining"/"modifiers" question (e.g. BG 4.3
+// एव under प्रोक्तः), explain what it actually is instead of implying a relation (Harsha, 2026-08-20).
+const AVADHARANA = {
+  'एव': 'restriction / emphasis ("only, exactly, indeed")', 'हि': 'assurance or reason ("indeed, for")',
+  'तु': 'contrast ("but, however")', 'वै': 'emphasis ("truly, verily")', 'खलु': 'emphasis ("surely")',
+  'उ': 'emphasis / verse-filler (पादपूरण)',
+};
+function avadharanaTip(word) {
+  const g = AVADHARANA[word];
+  if (!g) return null;
+  return `${word} is an अव्यय निपात — ${g}. It is अवधारण: it emphasizes the word just before it, and does NOT itself take a कारक/षष्ठी relation to the verb.`;
+}
 function tutorialOverrideNote(sentence, step, wordIndex) {
   const c = sentence.clusters[step.clusterIdx];
   const tip = PRAGDISHIYA_TIP[sentence.words[wordIndex]];
   if (tip) return tip;   // derivation of the pronominal place-adverb (इह etc.) takes precedence
   const kt = kalaNipataTip(sentence.words[wordIndex]);
   if (kt) return kt;     // कालवाचि निपात (अद्य etc.) — explains why it is कालाधिकरण, not a सप्तमी
+  const dk = daKalaTip(sentence.words[wordIndex]);
+  if (dk) return dk;     // दा-affix time-adverb (सदा/यदा/तदा/कदा …) → कालाधिकरण (5.3.15)
+  const ci = chitIndefTip(sentence.words[wordIndex]);
+  if (ci) return ci;     // चित्/चन indefinite (कदाचित्/क्वचित्/कश्चित् …) — किम् + चित् (1.4.57)
   const at = TASIL_ABLATIVE_TIP[sentence.words[wordIndex]];
   if (at) return at;     // तसिल् ablative (अतः/ततः …) — explains पञ्चम्यास्तसिल् → अपादान
+  const av = avadharanaTip(sentence.words[wordIndex]);
+  if (av) return av;     // एव/हि/तु … — emphatic निपात, not a कारक relation
+  if (sentence.words[wordIndex] === 'इति') return `इति is a quotative particle (निपात) — it closes the preceding quoted statement/idea ("… — thus"), marking an उद्धरण (quotation); it is not a कारक of the verb.`;
   if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
     return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}), and the agent of such forms is always in तृतीया.`;
   }
   if (step.type === 'karma' && c.karmaGovernorIsKrdanta) {
     return `Note — ${esc(c.governorWord)} is itself a कृदन्त, so its कर्म can also appear in षष्ठी here (instead of the usual द्वितीया) — कारक-षष्ठी, 2.3.65.`;
   }
-  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'remaining'];
+  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'remaining'];
   if (SWEEP_ARRAYS.includes(step.type)) {
     const item = c[step.type].find(r => r.wordIndex === wordIndex);
     if (item && item.upapada) return `${esc(sentence.words[wordIndex])} is in ${item.upapadaCase} here — because of ${esc(item.upapada)}, not from any general kāraka rule.`;
@@ -2556,20 +2836,23 @@ function tutorialOverrideNote(sentence, step, wordIndex) {
 // tutorial's own state shape. No hide-from-pool behavior here (unlike the quiz): the tutorial
 // always walks the same fixed verse list in order, there's no pool to filter a flagged item out of.
 function buildTutorialReportDetails(target) {
-  const { verse, sentence, step, selectedWords, expectedWords, voicePicked, correctVoice, pct } = target;
+  const { verse, sentence, step, selectedWords, expectedWords, voicePicked, correctVoice, pct, mcqLabel, mcqCorrect, mcqPicked } = target;
   const stepDesc = step.type + (step.clusterIdx != null ? ` (cluster ${step.clusterIdx}${sentence.clusters[step.clusterIdx] ? ', governor ' + sentence.clusters[step.clusterIdx].governorWord : ''})` : '');
   const details = [
+    `text: ${verse.slug || '(unknown)'}`,
     `verse: ${verse.ref}`,
     `step: ${stepDesc}`,
     `sentence: ${sentence.words.join(' ')}`,
-    step.type === 'voice'
-      ? `correct voice: ${correctVoice || '(unknown)'}\nyour answer: ${voicePicked || '(not answered)'}`
-      : `expected words: ${expectedWords && expectedWords.length ? expectedWords.join(', ') : '(none)'}\nyour selection: ${selectedWords && selectedWords.length ? selectedWords.join(', ') : '(none)'}`,
+    NEW_MCQ_TYPES.has(step.type)
+      ? `question: ${mcqLabel || step.type}\ncorrect: ${mcqCorrect || '(?)'}\nyour answer: ${mcqPicked || '(not answered)'}`
+      : step.type === 'voice'
+        ? `correct voice: ${correctVoice || '(unknown)'}\nyour answer: ${voicePicked || '(not answered)'}`
+        : `expected words: ${expectedWords && expectedWords.length ? expectedWords.join(', ') : '(none)'}\nyour selection: ${selectedWords && selectedWords.length ? selectedWords.join(', ') : '(none)'}`,
     pct != null ? `score: ${pct}%` : null,
     '',
     deviceInfoLine(),
   ].filter(x => x !== null).join('\n');
-  const subject = `Kāraka tutorial issue: ${verse.ref} — ${step.type}`;
+  const subject = `वाक्य-विग्रह issue: ${verse.slug || ''} ${verse.ref} — ${step.type}`;
   return { subject, details };
 }
 // GitHub-issue fallback (Harsha, 2026-08-16: "there doesn't appear to be a way to file a ticket
@@ -2598,9 +2881,19 @@ async function submitTutorialReport(target, name, email, userComment) {
   } catch (e) { return false; }
 }
 function tutorialReportTarget(sentence, step, verse) {
+  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
+  // New samāsa/clause MCQ steps carry no cluster/selectedIndices — capture the actual pick + correct
+  // + the (HTML-stripped) question so a report isn't content-free (review finding, 2026-08-20).
+  if (NEW_MCQ_TYPES.has(step.type)) {
+    const spec = tutorialMcqSpec(step, sentence);
+    return {
+      verse, sentence, step,
+      mcqLabel: tutorialStepLabel(step, sentence).replace(/<[^>]+>/g, ''),
+      mcqCorrect: spec.correct, mcqPicked: view.mcqPicked || null, pct: null,
+    };
+  }
   const expected = expectedSetForStep(sentence, step);
   const selected = view.selectedIndices || new Set();
-  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   return {
     verse, sentence, step,
     expectedWords: [...expected].map(i => sentence.words[i]),
@@ -2680,6 +2973,7 @@ function wireTutorialReportArea(sentence, step, verse, rerender) {
 function renderClickableVerse(words, opts) {
   const selected = opts.selected, disabled = opts.disabled, expected = opts.expected, codes = opts.codes;
   const groups = opts.groups, currentGroupTop = opts.currentGroupTop;
+  const elidedAfter = opts.elidedAfter || {};   // wordIndex → [elided/understood words] shown bracketed after it
   const wordHtml = (w, i) => {
     const cls = ['tutword'];
     if (disabled) {
@@ -2690,14 +2984,17 @@ function renderClickableVerse(words, opts) {
     const code = codes && codes[i] ? `<sub class="tutcode">${esc(codes[i])}</sub>` : '';
     return `<span class="${cls.join(' ')}" data-i="${i}">${esc(w)}${code}</span>`;
   };
-  if (!groups || !groups.length) return words.map(wordHtml).join(' ');
+  // elided/understood words for a clause are shown as a non-clickable bracketed span after the clause's
+  // last word — e.g. "अतः पुंस्त्वम् [दुर्लभम् अस्ति]" (Harsha, 2026-08-20).
+  const elid = i => (elidedAfter[i] && elidedAfter[i].length) ? ` <span class="tut-elided">[${esc(elidedAfter[i].join(' '))}]</span>` : '';
+  if (!groups || !groups.length) return words.map((w, i) => wordHtml(w, i) + elid(i)).join(' ');
   let html = '', gi = 0, open = null;
   for (let i = 0; i < words.length; i++) {
     if (!open && gi < groups.length && i === groups[gi].min) {
       open = groups[gi];
       html += `<span class="clause-group${open.topClusterIdx === currentGroupTop ? ' current' : ''}">`;
     }
-    html += wordHtml(words[i], i);
+    html += wordHtml(words[i], i) + elid(i);
     if (i < words.length - 1) html += ' ';
     if (open && i === open.max) { html += '</span>'; gi++; open = null; }
   }
@@ -2775,9 +3072,10 @@ function startTutorialVerse(verseIdx) {
 // from the console (exposed on window). ref accepts either the stored form "04.002" or "4.2". If the
 // requested step doesn't exist (e.g. it was removed by a fix — an empty modifiers step is skipped),
 // it lands on step 0 and reports that — itself a useful confirmation. Sentence 0 only.
-function jumpToTutorial(ref, stepType, clusterIdx) {
-  ensureTutorialDataLoaded().then(() => {
-    tutorialVerses = window.TUTORIAL_DATA.Gita.verses;
+function jumpToTutorial(ref, stepType, clusterIdx, slug) {
+  slug = slug || 'Gita';
+  ensureTutorialDataLoaded(slug).then(() => {
+    tutorialVerses = window.TUTORIAL_DATA[slug].verses;
     const idx = tutorialVerses.findIndex(v => v.ref === ref || formatVerseRef(v.ref) === ref || formatVerseRef(v.ref) === formatVerseRef(ref));
     if (idx < 0) { alert('tutorial jump: verse not found: ' + ref); view = { screen: 'dashboard' }; renderDashboard(); return; }
     startTutorialVerse(idx);   // builds tutorialSteps, resets to step 0, renders
@@ -2799,6 +3097,20 @@ function renderTutorial() {
   const showClauseGroups = clauseGroups.length > 1;
   const currentGroup = step.clusterIdx != null ? clauseGroups.find(g => g.clusterIdxs.includes(step.clusterIdx)) : null;
   const currentGroupTop = currentGroup ? currentGroup.topClusterIdx : null;
+  // supplied/elided words per clause → shown bracketed after the clause's last word in the verse display.
+  // The pipeline sometimes records an implied copula in `anuktaKarta` as "(copula अस्ति implied)" rather
+  // than in `elided` (e.g. VC 85 देहः परार्थः [अस्ति]) — pull that out too so it's shown.
+  const elidedAfter = {};
+  (sentence.clauses || []).forEach(cl => {
+    const supplied = [...(cl.elided || [])];
+    const m = (cl.anuktaKarta || '').match(/copula\s+([^\s)]+)\s+implied/i);
+    if (m && !supplied.includes(m[1])) supplied.push(m[1]);   // don't double when elided already has the copula
+    if (supplied.length && cl.words && cl.words.length) {
+      const last = Math.max(...cl.words);
+      const arr = (elidedAfter[last] = elidedAfter[last] || []);
+      for (const w of supplied) if (!arr.includes(w)) arr.push(w);   // dedup across clauses sharing a position too
+    }
+  });
 
   if (step.type === 'voice') {
     const c = sentence.clusters[step.clusterIdx];
@@ -2807,8 +3119,8 @@ function renderTutorial() {
     app.innerHTML = `
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
       <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
-        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
         <div class="options">
           ${opts.map(o => `<button class="opt ${answered ? (o === c.voice ? 'correct' : (o === view.voicePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
@@ -2837,8 +3149,8 @@ function renderTutorial() {
     app.innerHTML = `
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
       <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
-        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
         <div class="options">
           ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.kartaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
@@ -2865,8 +3177,8 @@ function renderTutorial() {
     app.innerHTML = `
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
       <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
-        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
         <div class="options">
           ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.karmaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
@@ -2894,8 +3206,8 @@ function renderTutorial() {
     app.innerHTML = `
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
       <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: highlight, disabled: true, expected: highlight, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
-        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: highlight, disabled: true, expected: highlight, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop })}</div>
         <div class="options">
           ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.genderCheckPicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
@@ -2915,8 +3227,36 @@ function renderTutorial() {
     return;
   }
 
+  // New samāsa/clause MCQ types — single-select, rendered generically (mirrors the voice/genderCheck path).
+  if (NEW_MCQ_TYPES.has(step.type)) {
+    const spec = tutorialMcqSpec(step, sentence);
+    const answered = view.checked;
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: spec.highlight, disabled: true, expected: spec.highlight, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="options">
+          ${spec.options.map((o, oi) => `<button class="opt ${answered ? (o === spec.correct ? 'correct' : (o === view.mcqPicked ? 'wrong' : '')) : ''}" data-oi="${oi}" ${answered ? 'disabled' : ''}>${esc(o)}</button>`).join('')}
+        </div>
+        ${answered && spec.explainHtml ? `<div class="tut-explain">${spec.explainHtml}</div>` : ''}
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      // encode the chosen option by INDEX (data-oi) not value — option strings hold Devanāgarī/spaces and
+      // esc() doesn't escape quotes, so a value attribute could truncate; index round-trips cleanly.
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => { view = { ...view, checked: true, mcqPicked: spec.options[+btn.dataset.oi] }; renderTutorial(); });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
+  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;
@@ -2927,7 +3267,7 @@ function renderTutorial() {
   // 100% score); show only what was actually picked as correct instead.
   const fullyValidSubset = anyValid && selected.size > 0 && inter === selected.size;
   const displayExpected = checked ? (fullyValidSubset ? selected : expected) : null;
-  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: displayExpected, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop });
+  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: displayExpected, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter });
 
   let feedbackHtml = '';
   if (checked) {
@@ -2963,8 +3303,8 @@ function renderTutorial() {
   app.innerHTML = `
     <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
     <div class="question">
-      <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
       <div class="tutorial-verse prompt">${verseHtml}</div>
+      <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
       ${showNone ? `<button class="secondary" id="tutNoneBtn">None of these</button>` : ''}
       ${feedbackHtml}
       <div class="tutorial-actions">
@@ -3108,7 +3448,7 @@ function renderTutorialPicker() {
   try {
     const q = new URLSearchParams(location.search);
     if (q.get('tut')) {
-      jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null);
+      jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null, q.get('slug') || null);
       return;
     }
   } catch (e) {}

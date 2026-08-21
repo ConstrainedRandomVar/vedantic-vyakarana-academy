@@ -1078,9 +1078,11 @@ function pickNextWalkItem() {
 }
 // "Lead" kinds jump the per-step queue and keep the walk on a step until all of them are asked
 // (even outside deep mode): kāraka items, because each names a DIFFERENT sub-word of a fused token
-// (see pickNextWalkItem); and verbvoice items, because the synthetic verse-opener step (Phase 2
-// step 4) can hold one per finite verb and every verse's verb(s) should be asked, not just the first.
-const LEAD_KINDS = new Set(['karaka', 'verbvoice']);
+// (see pickNextWalkItem); verbvoice items, because the synthetic verse-opener step (Phase 2 step 4)
+// can hold one per finite verb and every verse's verb(s) should be asked, not just the first; and the
+// samāsa PEEL items (vigraha/type/leaf), because a compound must peel top-down back-to-back as a UNIT —
+// stopping after the outermost split defeats the peel (Harsha, 2026-08-22: "it doesn't peel").
+const LEAD_KINDS = new Set(['karaka', 'verbvoice', 'samasaVigraha', 'samasaType', 'samasaLeaf']);
 // See the comment in pickNextWalkItem: a step can hold several lead-kind items and none should be
 // skipped just because the step already yielded its one default-rotation question — so the step
 // isn't "done", even outside deep mode, while an eligible lead-kind item here hasn't been asked yet.

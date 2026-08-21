@@ -406,6 +406,7 @@ function buildOptions(item, code) {
   if (item.kind === 'samasa') return buildSamasaOptions(item);
   if (item.kind === 'samasaType') { const { correct, options } = samasaTypeOptions(item.correctType); return { options, correctIndex: options.indexOf(correct) }; }
   if (item.kind === 'samasaVigraha') { const options = seedRotate([...new Set(item.vigrahaOptions)], item.vigrahaOptions[0] + 'v'); return { options, correctIndex: options.indexOf(item.vigrahaOptions[0]) }; }
+  if (item.kind === 'samasaLeaf') { const options = seedRotate(['कृदन्त', 'तद्धित', 'मूल-प्रातिपदिक'], item.word); return { options, correctIndex: options.indexOf(item.leafType) }; }
   if (item.kind === 'vibhakti') return buildVibhaktiOptions(item);
   if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
   if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);
@@ -1016,6 +1017,7 @@ function questionSignature(item) {
   if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
   if (item.kind === 'samasaVigraha') return `samv:${item.word}:${item.vigrahaOptions[0]}`;
   if (item.kind === 'samasaType') return `samt:${item.word}:${item.correctType}`;
+  if (item.kind === 'samasaLeaf') return `saml:${item.word}:${item.leafType}`;
   if (item.subtype === 'spotlopa') return `spotlopa:${item.ref}:${item.targetWord}`;
   if (item.subtype === 'lopa') return `lopa:${item.code}:${item.before.join('+')}`;
   if (item.subtype === 'fullsplit') return `pch:${item.ref}:${item.surface}`;
@@ -1611,6 +1613,10 @@ function renderPrompt(item) {
   if (item.kind === 'samasaType') {
     return `<div class="prompt">${esc(item.word)}</div>
       <div class="prompt-hint">What type of samāsa is this?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'samasaLeaf') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">This is the प्रातिपदिक (base stem). How is it derived — कृदन्त (from a verb root) or तद्धित (from a nominal)?</div>${ctxLine}${srcLine}`;
   }
   if (item.kind === 'vibhakti') {
     const hint = item.subtype === 'stem' ? 'What is this word’s prātipadika (stem)?'
@@ -2474,10 +2480,14 @@ function normW(w) { return (w || '').replace(/[-\s‌‍]/g, ''); }
 function samasaPeelItems(layers, ctx) {
   const items = [], seen = new Set();
   for (const L of (layers || [])) {
-    if (!isCompoundSamasaType(L.type)) continue;
     const key = `${L.c}|${L.vigraha}|${L.type}`; if (seen.has(key)) continue; seen.add(key);
-    if (Array.isArray(L.vigrahaOptions) && L.vigrahaOptions.length >= 3) items.push({ kind: 'samasaVigraha', word: L.c, vigrahaOptions: L.vigrahaOptions, code: 'SAMASA', ...(ctx || {}) });
-    items.push({ kind: 'samasaType', word: L.c, correctType: L.type, code: 'SAMASA', ...(ctx || {}) });
+    if (isCompoundSamasaType(L.type)) {
+      if (Array.isArray(L.vigrahaOptions) && L.vigrahaOptions.length >= 3) items.push({ kind: 'samasaVigraha', word: L.c, vigrahaOptions: L.vigrahaOptions, code: 'SAMASA', ...(ctx || {}) });
+      items.push({ kind: 'samasaType', word: L.c, correctType: L.type, code: 'SAMASA', ...(ctx || {}) });
+    } else if (/कृत्|कृदन्त|तद्धित/.test(L.type || '')) {
+      // go all the way down to the प्रातिपदिक: identify the leaf's derivation कृदन्त vs तद्धित (Harsha, 2026-08-21)
+      items.push({ kind: 'samasaLeaf', word: L.c, leafType: /तद्धित/.test(L.type) ? 'तद्धित' : 'कृदन्त', pratyaya: L.pratyaya || '', vigraha: L.vigraha || '', code: 'SAMASA', ...(ctx || {}) });
+    }
   }
   return items;
 }

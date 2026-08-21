@@ -1272,6 +1272,7 @@ function renderDashboard() {
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>
         <button class="secondary" id="adaptiveBtn">Practice</button>
         <button class="secondary" id="tutorialBtn">🧩 वाक्य-विग्रह</button>
+        <button class="secondary" id="samasaBtn">🧅 समास-विच्छेद</button>
       </div>
     </div>
     ${categorySections.join('')}
@@ -1282,6 +1283,8 @@ function renderDashboard() {
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
   document.getElementById('tutorialBtn').onclick = () => { view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
+  const samasaBtn = document.getElementById('samasaBtn');
+  if (samasaBtn) samasaBtn.onclick = () => { if (window.SAMASA_PEEL && Object.keys(window.SAMASA_PEEL).length) startQuiz('samasa', 'SAMR'); else alert('Samāsa-peel data not loaded.'); };
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
 }
 
@@ -1456,6 +1459,24 @@ function newQuestion() {
     renderQuiz();
     return;
   }
+  if (session.mode === 'samasa') {
+    let item, built, compoundDone;
+    for (let guard = 0; guard < 5000; guard++) {
+      if (!session.peel || session.peelIdx >= session.peel.length) {
+        if (!session.queue.length) session.queue = shuffle(Object.keys(window.SAMASA_PEEL || {})); // wrap around
+        session.peel = samasaPeelItems(window.SAMASA_PEEL[session.queue.pop()], {});
+        session.peelIdx = 0;
+        if (!session.peel.length) { session.peel = null; continue; }   // compound with no quizzable layer
+      }
+      item = session.peel[session.peelIdx++];
+      compoundDone = session.peelIdx >= session.peel.length;   // this item is the LAST of its compound
+      built = buildOptions(item, item.code);
+      if (built.options && built.options.length >= 2) break;
+    }
+    view = { screen: 'quiz', code: 'SAMR', item, options: built.options, correctIndex: built.correctIndex, acceptIndices: built.acceptIndices || [], answered: false, picked: -1, justMastered: false, crossingVerse: false, key: reportKey(item, 'SAMR'), chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false, compoundDone };
+    renderQuiz();
+    return;
+  }
   const c = pickNode(session.mode, session.fixedCode);
   let item, built;
   for (let attempt = 0; attempt < MAX_OPTION_RETRIES; attempt++) {
@@ -1472,6 +1493,9 @@ function newQuestion() {
 function startQuiz(mode, code) {
   walkItemPools = computeItemPools(window.QUIZ_ITEMS); // reset from any leftover chapter-scoped reading pools
   session = { mode, fixedCode: code, batchCount: 0, batchCorrect: 0 };
+  // recursive-samāsa Practise: a shuffled queue of ALL analyzed compounds; each is peeled fully,
+  // back-to-back, until a batch crosses BATCH_SIZE questions AND the current compound is done.
+  if (mode === 'samasa') { session.queue = shuffle(Object.keys(window.SAMASA_PEEL || {})); session.peel = null; session.peelIdx = 0; }
   newQuestion();
 }
 // A lazy axis card (see AXIS_MANIFEST) needs its data fetched before a node session can start —
@@ -1892,7 +1916,8 @@ function renderQuiz() {
   const p = ensureProgress(code);
   const modeTag = mode === 'mixed' ? ' · 🔀 mixed' : mode === 'adaptive' ? ' · adaptive'
     : mode === 'reading' ? ` · 📖 ${esc(item.ref || '')}` : '';
-  const batchDone = answered && batchCount >= BATCH_SIZE;
+  // recursive-samāsa: never end a batch mid-compound — require ≥ BATCH_SIZE AND the compound is finished.
+  const batchDone = answered && batchCount >= BATCH_SIZE && (mode !== 'samasa' || view.compoundDone);
   const verseComplete = answered && mode === 'reading' && crossingVerse;
   const bottom = !answered ? '' : justMastered
     ? renderCelebration(code)
@@ -1915,7 +1940,7 @@ function renderQuiz() {
     <div class="quiz-head">
       <button class="link" id="backBtn">← dashboard</button>
       ${nodeLabelHtml}<span class="mode-tag">${modeTag}</span>
-      <span class="batch">Q${Math.min(batchCount + (answered ? 0 : 1), BATCH_SIZE)}/${BATCH_SIZE}</span>
+      <span class="batch">${mode === 'samasa' ? `Q${batchCount + (answered ? 0 : 1)}` : `Q${Math.min(batchCount + (answered ? 0 : 1), BATCH_SIZE)}/${BATCH_SIZE}`}</span>
       <span class="streak">streak ${p.streak} · best ${p.best}${p.mastered ? ' · ✓ mastered' : ''}</span>
     </div>
     <div class="question">
@@ -2491,6 +2516,7 @@ function samasaPeelItems(layers, ctx) {
   }
   return items;
 }
+LABELS.SAMR = 'समास-विच्छेद (recursive peel)';
 // vigraha MCQ — options are PRECOMPUTED at build time (adapter.js buildVigrahaOpts, using the śabda
 // declension tables): same-member re-analyses of THIS compound under different समास relations
 // (बाह्यार्थसुखस्य / -ेन / -ात् स्पृहा …), so every option starts with the same members and the question

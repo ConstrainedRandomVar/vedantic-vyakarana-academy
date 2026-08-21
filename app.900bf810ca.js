@@ -1753,7 +1753,7 @@ let ACTIVE_CACHE = 'pending';
 try {
   if (typeof caches !== 'undefined' && caches.keys) {
     caches.keys().then(ks => {
-      const c = ks.filter(k => /sandhi-quiz/.test(k));
+      const c = ks.filter(k => /vyakarana|sandhi-quiz/.test(k));   // cache prefix is now 'vyakarana-<hash>'
       ACTIVE_CACHE = c.length ? c.join(',') : 'none';
     }).catch(() => { ACTIVE_CACHE = 'unknown'; });
   } else { ACTIVE_CACHE = 'no-sw'; }
@@ -1763,6 +1763,19 @@ try {
 // "Android phone vs desktop", and reports carried nothing to tell them apart. Parsed from
 // navigator.userAgent (crude but enough to triage phone/tablet/laptop + OS + browser), plus the raw
 // UA and viewport for the awkward cases. Best-effort: never throws, degrades to 'unknown'.
+// The actually-running app bundle hash, read from its own <script src="app.<hash>.js"> — the DEFINITIVE
+// "which code is executing" signal for bug reports. A stale service-worker/CDN copy reports an OLD hash
+// even when the deploy is current, so this instantly separates "stale cache" from "real bug" (Harsha,
+// 2026-08-22). Compare against the live bundle hash to tell if the reporter is up to date.
+function appBuildId() {
+  try {
+    for (const s of document.getElementsByTagName('script')) {
+      const m = (s.src || '').match(/app\.([0-9a-f]{10})\.js/);
+      if (m) return m[1];
+    }
+  } catch (e) {}
+  return 'unknown';
+}
 function deviceInfoLine() {
   try {
     const ua = (navigator && navigator.userAgent) || '';
@@ -1775,8 +1788,8 @@ function deviceInfoLine() {
       : /Firefox\//.test(ua) ? 'Firefox' : /Version\/.*Safari/.test(ua) ? 'Safari' : 'unknown browser';
     const vp = `${window.innerWidth || 0}×${window.innerHeight || 0}`;
     const ctrl = (navigator.serviceWorker && navigator.serviceWorker.controller) ? 'sw-controlled' : 'no-controller';
-    return `device: ${device} · ${os} · ${browser} · viewport ${vp}\napp cache: ${ACTIVE_CACHE} (${ctrl})\nuser-agent: ${ua}`;
-  } catch (e) { return `app cache: ${ACTIVE_CACHE}\ndevice: (unavailable)`; }
+    return `build: app.${appBuildId()}\ndevice: ${device} · ${os} · ${browser} · viewport ${vp}\napp cache: ${ACTIVE_CACHE} (${ctrl})\nuser-agent: ${ua}`;
+  } catch (e) { return `build: app.${appBuildId()}\napp cache: ${ACTIVE_CACHE}\ndevice: (unavailable)`; }
 }
 function buildReportDetails(target) {
   const { item, code, options, correctIndex, acceptIndices = [], key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;

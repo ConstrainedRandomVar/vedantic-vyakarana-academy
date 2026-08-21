@@ -3341,7 +3341,11 @@ function renderTutorial() {
   const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
-  const showNone = (step.type === 'karta' || step.type === 'karma') && !checked;
+  // "None of these" is offered for EVERY multi-select word step (not just kartā/karma) so a question
+  // whose valid answer is the empty set is answerable — e.g. step-1 verbs on a verbless नमः-invocation
+  // (PD 1.1), or an absent kāraka. Shown ALWAYS (independent of whether the answer is actually none),
+  // else its mere presence would leak the answer (Harsha, 2026-08-21).
+  const showNone = multiSelect && !checked;
   const anyValid = ANY_VALID_STEP_TYPES.has(step.type);
   const inter = [...selected].filter(i => expected.has(i)).length;
   // A fully-valid subset (any-valid buckets only, e.g. picking just योगम् out of {इमम्,योगम्})

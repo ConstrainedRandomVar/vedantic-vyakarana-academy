@@ -2319,12 +2319,18 @@ function buildTutorialSteps(sentence) {
   // quizzed (their derivation shows only as a tip). vigraha is skipped when there aren't enough distractors. ----
   const seenLayer = new Set();   // don't peel the same sub-compound twice (e.g. गोचर under both गोचरम् and अगोचरम्)
   (sentence.samasa || []).forEach((sm, si) => {
+    // "Always start at the top": only pose vigraha (peel/split) questions if the OUTERMOST compound layer
+    // itself can be quizzed — otherwise the first peel question would begin MIDWAY on an inner layer
+    // (e.g. PD 1.1 श्रीशङ्करानन्द…जन्मने: the top बहुव्रीहि has no same-member distractors, so we must NOT
+    // jump to peeling the inner गुरुपाद). Type questions still peel top-down regardless. (Harsha, 2026-08-21)
+    const topIdx = (sm.layers || []).findIndex(L => isCompoundSamasaType(L.type));
+    const allowVigraha = topIdx >= 0 && !!buildVigrahaOptions(sentence, si, topIdx);
     (sm.layers || []).forEach((L, li) => {
       if (!isCompoundSamasaType(L.type)) return;
       const key = `${L.c}|${L.vigraha}|${L.type}`;
       if (seenLayer.has(key)) return;
       seenLayer.add(key);
-      if (buildVigrahaOptions(sentence, si, li)) steps.push({ type: 'samasaVigraha', samasaIdx: si, layerIdx: li });
+      if (allowVigraha && buildVigrahaOptions(sentence, si, li)) steps.push({ type: 'samasaVigraha', samasaIdx: si, layerIdx: li });
       steps.push({ type: 'samasaType', samasaIdx: si, layerIdx: li });
     });
   });
@@ -2504,10 +2510,15 @@ function samasaTypeOptions(correct) {
 function normW(w) { return (w || '').replace(/[-\s‌‍]/g, ''); }
 function samasaPeelItems(layers, ctx) {
   const items = [], seen = new Set();
+  // "Always start at the top" (Harsha, 2026-08-21): only quiz vigraha if the OUTERMOST compound layer can
+  // be quizzed — else the peel would begin midway on an inner layer. Types still peel top-down. Shared by
+  // read-a-verse (flattenWalk) AND the समास-विच्छेद Practise node, so both honour the invariant.
+  const top = (layers || []).find(L => isCompoundSamasaType(L.type));
+  const allowVigraha = !!(top && Array.isArray(top.vigrahaOptions) && top.vigrahaOptions.length >= 3);
   for (const L of (layers || [])) {
     const key = `${L.c}|${L.vigraha}|${L.type}`; if (seen.has(key)) continue; seen.add(key);
     if (isCompoundSamasaType(L.type)) {
-      if (Array.isArray(L.vigrahaOptions) && L.vigrahaOptions.length >= 3) items.push({ kind: 'samasaVigraha', word: L.c, vigrahaOptions: L.vigrahaOptions, code: 'SAMASA', ...(ctx || {}) });
+      if (allowVigraha && Array.isArray(L.vigrahaOptions) && L.vigrahaOptions.length >= 3) items.push({ kind: 'samasaVigraha', word: L.c, vigrahaOptions: L.vigrahaOptions, code: 'SAMASA', ...(ctx || {}) });
       items.push({ kind: 'samasaType', word: L.c, correctType: L.type, code: 'SAMASA', ...(ctx || {}) });
     } else if (/कृत्|कृदन्त|तद्धित/.test(L.type || '')) {
       // go all the way down to the प्रातिपदिक: identify the leaf's derivation कृदन्त vs तद्धित (Harsha, 2026-08-21)

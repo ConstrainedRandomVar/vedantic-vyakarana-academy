@@ -2886,6 +2886,15 @@ function tutorialTransitivityAside(transitivity) {
 function tutorialQualifierCallout() {
   return 'This is also a form of सामानाधिकरण्य — a qualifier (विशेषण) shares the same case/gender/number as the word it qualifies, for the same reason a predicate word does (both refer to the same thing). It gets its own question here because it directly describes the word itself, rather than being predicated through the verb.';
 }
+// नमः/स्वस्ति/स्वाहा/स्वधा/अलम्/वषट् take चतुर्थी by 2.3.16 (नमःस्वस्तिस्वाहास्वधालंवषड्योगाच्च). When a
+// सम्प्रदान question fires on a verse containing one of these, cite the trigger so the caturthī isn't read
+// as an ordinary "recipient" but as this specific योग-चतुर्थी (Harsha, 2026-08-22).
+const NAMAS_YOGA = /^(नमः|नमस्|अलम्|स्वस्ति|स्वाहा|स्वधा|वषट्)$/;
+function sampradanaYogaNote(sentence) {
+  const trigger = (sentence.words || []).find(w => NAMAS_YOGA.test(w));
+  if (!trigger) return '';
+  return `Note — the चतुर्थी here is governed by the indeclinable <b>${esc(trigger)}</b>, not an ordinary recipient: <b>नमःस्वस्तिस्वाहास्वधालंवषड्योगाच्च</b> (2.3.16) — नमस्/स्वस्ति/स्वाहा/स्वधा/अलम्/वषट् take चतुर्थी.`;
+}
 // "Honour + explain" callout for step 1 (verbs) — fired when a learner picks a word listed in
 // sentence.step1Hints: a word that ISN'T a verb here but is easy to mistake for one. The classic
 // case is भक्तः in BG 4.3 ("you ARE a devotee"): a क्त-कृदन्त, yes, but a PREDICATE noun completing
@@ -3482,6 +3491,7 @@ function renderTutorial() {
     const pct = Math.round(tutorialStepScore(selected, expected, anyValid) * 100);
     feedbackHtml += `<div class="feedback">${pct}% correct${expected.size && !fullyValidSubset ? ` (${inter} / ${expected.size})` : ''}</div>`;
     if (step.type === 'karma') feedbackHtml += `<div class="tut-explain">${tutorialTransitivityAside(sentence.clusters[step.clusterIdx].transitivity)}</div>`;
+    if (step.type === 'sampradana') { const yn = sampradanaYogaNote(sentence); if (yn) feedbackHtml += `<div class="tut-explain">${yn}</div>`; }
     if (step.type === 'karta' || step.type === 'karma') {
       const sc = tutorialSamuccayaCallout(sentence, sentence.clusters[step.clusterIdx], step.type);
       if (sc) feedbackHtml += `<div class="tut-explain">${sc}</div>`;

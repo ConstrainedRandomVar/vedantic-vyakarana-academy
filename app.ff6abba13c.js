@@ -2685,7 +2685,20 @@ function tutorialMcqSpec(step, sentence) {
 }
 const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided']);
 
+// Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
+// negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
+// step, so this is excluded there (and on nipata) to avoid leaking that answer (Harsha, 2026-08-22).
+const VERB_NEG_STEP = new Set(['voice', 'kartaCase', 'karmaCase', 'karta', 'karma']);
 function tutorialStepLabel(step, sentence) {
+  const base = tutorialStepLabelBase(step, sentence);
+  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
+  if (c && VERB_NEG_STEP.has(step.type) && (c.pratishedha || []).length) {
+    const negs = c.pratishedha.map(i => sentence.words[i]).filter(Boolean);
+    if (negs.length) return `${base}<div class="tut-explain">⚠ Note: this clause is negated (प्रतिषेध) by <b>${esc(negs.join(' '))}</b> — read the verb as negated.</div>`;
+  }
+  return base;
+}
+function tutorialStepLabelBase(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {

@@ -2665,6 +2665,14 @@ function samasaTip(L) {
   let s = `<b>${esc(L.c)}</b> = ${esc(L.vigraha)} — <b>${esc(L.type)}</b>`;
   if (L.sutra) s += ` <span class="muted">(${esc(L.sutra.num)} — ${esc(L.sutra.text)})</span>`;
   if (L.pratyaya) s += ` <span class="muted">[प्रत्यय ${esc(L.pratyaya)}]</span>`;
+  // तदर्थ (nitya-samāsa) चतुर्थी: keyed on Gemini's OWN signal — a चतुर्थी-तत्पुरुष type, or a vigraha of
+  // the specific "X-आय इदम्" (dative + इदम्) shape — the "for the sake of / made-for" compound (e.g.
+  // दर्शनार्थम् = दर्शनाय इदम्). NOT plain इदम् (that also appears in taddhita "X-नः/याः इदम्" possessives)
+  // and NOT generic नित्य (मात्र-compounds मृत् एव are नित्यसमास but not तदर्थ). Display note only. (Harsha, 2026-08-22)
+  const tadarthaVigraha = /(आय|यै|ने|वे|भ्यः|भ्याम्|अस्मै|तस्मै|यस्मै)\s*इदम्/.test(L.vigraha || '');
+  if ((/चतुर्थी-तत्पुरुष/.test(L.type || '') || tadarthaVigraha) && !/तद्धित|कृत्|कृदन्त/.test(L.type || '')) {
+    s += `<div class="muted" style="margin-top:4px">तदर्थ (नित्य-समास) — “for the sake of / made for”: the vigraha <b>X-आय इदम्</b> shows the purpose चतुर्थी — चतुर्थी तदर्थार्थबलिहितसुखरक्षितैः (2.1.36).</div>`;
+  }
   return s;
 }
 function samasaLeafTip(L) {

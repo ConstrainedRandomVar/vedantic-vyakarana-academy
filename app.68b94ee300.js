@@ -2340,14 +2340,18 @@ function buildTutorialSteps(sentence) {
     // jump to peeling the inner गुरुपाद). Type questions still peel top-down regardless. (Harsha, 2026-08-21)
     const topIdx = (sm.layers || []).findIndex(L => isCompoundSamasaType(L.type));
     const allowVigraha = topIdx >= 0 && !!buildVigrahaOptions(sentence, si, topIdx);
-    (sm.layers || []).forEach((L, li) => {
-      if (!isCompoundSamasaType(L.type)) return;
+    // Peel order: compound (vigraha→type), then each terminal member THAT split exposes — so a
+    // taddhita/kṛt leaf (e.g. परता in वैदिकधर्ममार्गपरता) is classified right after the split that
+    // reveals it. Leaves are quizzed here too, keeping read-a-verse in sync with the SAMR Practise
+    // node (samasaPeelItems), which already drilled them (Harsha, 2026-08-22).
+    for (const { layer: L, idx: li, leaf } of orderedPeelLayers(sm.layers)) {
       const key = `${L.c}|${L.vigraha}|${L.type}`;
-      if (seenLayer.has(key)) return;
+      if (seenLayer.has(key)) continue;
       seenLayer.add(key);
+      if (leaf) { steps.push({ type: 'samasaLeaf', samasaIdx: si, layerIdx: li }); continue; }
       if (allowVigraha && buildVigrahaOptions(sentence, si, li)) steps.push({ type: 'samasaVigraha', samasaIdx: si, layerIdx: li });
       steps.push({ type: 'samasaType', samasaIdx: si, layerIdx: li });
-    });
+    }
   });
   return steps;
 }
@@ -2523,6 +2527,35 @@ function samasaTypeOptions(correct) {
 // `samasa` item becomes this sequence) and Practise (recursive node). Options come from buildOptions via
 // the samasaType/samasaVigraha branches. ctx carries ref/source/context/slug (Harsha, 2026-08-21).
 function normW(w) { return (w || '').replace(/[-\s‌‍]/g, ''); }
+const isLeafSamasaType = t => /कृत्|कृदन्त|तद्धित/.test(t || '');
+// Reorder a compound's flat `layers` (stored as a pre-order DFS down the LEFT spine, with right-side
+// leaves appended LAST) into true PEEL order: each compound layer, immediately followed by the
+// leaf-classification of any terminal member THAT split exposes — so a taddhita/kṛt member like परता
+// (the right member of the top split of वैदिकधर्ममार्गपरता) is classified right after the split that
+// reveals it, not deferred to the very end (Harsha, 2026-08-22). A leaf attaches to the DEEPEST
+// compound whose `c` contains it (its nearest ancestor split); leaves under the same compound keep
+// reading order (by position in that compound's `c`). Returns [{layer, idx, leaf}] in peel order.
+function orderedPeelLayers(layers) {
+  const arr = layers || [];
+  const compounds = arr.filter(L => isCompoundSamasaType(L.type));
+  const leaves = arr.filter(L => isLeafSamasaType(L.type));
+  const parentOf = Lf => {
+    const containing = compounds.filter(K => (K.c || '').includes(Lf.c || ''));
+    // deepest ancestor = shortest containing `c`; if none contain it, no parent (append at end)
+    return containing.sort((a, b) => (a.c || '').length - (b.c || '').length)[0] || null;
+  };
+  const out = [];
+  const placed = new Set();
+  for (const C of compounds) {
+    out.push({ layer: C, idx: arr.indexOf(C), leaf: false });
+    leaves
+      .filter(Lf => parentOf(Lf) === C)
+      .sort((a, b) => (C.c || '').indexOf(a.c || '') - (C.c || '').indexOf(b.c || ''))
+      .forEach(Lf => { out.push({ layer: Lf, idx: arr.indexOf(Lf), leaf: true }); placed.add(Lf); });
+  }
+  for (const Lf of leaves) if (!placed.has(Lf)) out.push({ layer: Lf, idx: arr.indexOf(Lf), leaf: true });
+  return out;
+}
 function samasaPeelItems(layers, ctx) {
   const items = [], seen = new Set();
   // "Always start at the top" (Harsha, 2026-08-21): only quiz vigraha if the OUTERMOST compound layer can
@@ -2530,12 +2563,12 @@ function samasaPeelItems(layers, ctx) {
   // read-a-verse (flattenWalk) AND the समास-विच्छेद Practise node, so both honour the invariant.
   const top = (layers || []).find(L => isCompoundSamasaType(L.type));
   const allowVigraha = !!(top && Array.isArray(top.vigrahaOptions) && top.vigrahaOptions.length >= 3);
-  for (const L of (layers || [])) {
+  for (const { layer: L, leaf } of orderedPeelLayers(layers)) {
     const key = `${L.c}|${L.vigraha}|${L.type}`; if (seen.has(key)) continue; seen.add(key);
-    if (isCompoundSamasaType(L.type)) {
+    if (!leaf) {
       if (allowVigraha && Array.isArray(L.vigrahaOptions) && L.vigrahaOptions.length >= 3) items.push({ kind: 'samasaVigraha', word: L.c, vigrahaOptions: L.vigrahaOptions, code: 'SAMASA', ...(ctx || {}) });
       items.push({ kind: 'samasaType', word: L.c, correctType: L.type, code: 'SAMASA', ...(ctx || {}) });
-    } else if (/कृत्|कृदन्त|तद्धित/.test(L.type || '')) {
+    } else {
       // go all the way down to the प्रातिपदिक: identify the leaf's derivation कृदन्त vs तद्धित (Harsha, 2026-08-21)
       items.push({ kind: 'samasaLeaf', word: L.c, leafType: /तद्धित/.test(L.type) ? 'तद्धित' : 'कृदन्त', pratyaya: L.pratyaya || '', vigraha: L.vigraha || '', code: 'SAMASA', ...(ctx || {}) });
     }
@@ -2603,8 +2636,18 @@ function samasaTip(L) {
   if (L.pratyaya) s += ` <span class="muted">[प्रत्यय ${esc(L.pratyaya)}]</span>`;
   return s;
 }
+function samasaLeafTip(L) {
+  const kind = /तद्धित/.test(L.type)
+    ? 'a <b>तद्धित</b> (secondary derivation — formed from a nominal stem)'
+    : 'a <b>कृदन्त</b> (primary derivation — formed from a verb root)';
+  let s = `<b>${esc(L.c)}</b> is not a compound — it is a प्रातिपदिक derived as ${kind}`;
+  if (L.pratyaya) s += ` by the प्रत्यय <b>${esc(L.pratyaya)}</b>`;
+  if (L.vigraha) s += ` <span class="muted">(${esc(L.vigraha)})</span>`;
+  if (L.sutra) s += ` <span class="muted">[${esc(L.sutra.num)} — ${esc(L.sutra.text)}]</span>`;
+  return s + '.';
+}
 function clauseElidedTip(cl) {
-  let s = `The words <b>${esc((cl.elided || []).join(' '))}</b> are understood here though not stated.`;
+  let s = `The words <b>${esc((cl.elided || []).join(' '))}</b> are supplied by <b>अध्याहार</b> — understood here though left unstated.`;
   if (cl.anuktaKarta) s += ` Unexpressed agent (अनुक्त-कर्ता): <b>${esc(cl.anuktaKarta)}</b>.`;
   return s;
 }
@@ -2618,6 +2661,11 @@ function tutorialMcqSpec(step, sentence) {
     const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
     const r = buildVigrahaOptions(sentence, step.samasaIdx, step.layerIdx) || { correct: L.vigraha, options: [L.vigraha] };
     return { ...r, highlight: new Set([sm.wordIndex]), explainHtml: '' };
+  }
+  if (step.type === 'samasaLeaf') {
+    const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
+    const correct = /तद्धित/.test(L.type) ? 'तद्धित' : 'कृदन्त';
+    return { correct, options: seedRotate(['कृदन्त', 'तद्धित', 'मूल-प्रातिपदिक'], L.c), highlight: new Set([sm.wordIndex]), explainHtml: samasaLeafTip(L) };
   }
   if (step.type === 'clauseType') {
     const cl = sentence.clauses[step.clauseIdx];
@@ -2635,7 +2683,7 @@ function tutorialMcqSpec(step, sentence) {
   }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'clauseType', 'clauseSubordinate', 'clauseElided']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided']);
 
 function tutorialStepLabel(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
@@ -2724,6 +2772,10 @@ function tutorialStepLabel(step, sentence) {
       const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
       return `What type of समास is <b>${esc(L.c)}</b>?`;
     }
+    case 'samasaLeaf': {
+      const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
+      return `<b>${esc(L.c)}</b> is a leaf of the peel — no longer a compound, but a प्रातिपदिक (base stem). How is it derived — <b>कृदन्त</b> (from a verb root), <b>तद्धित</b> (from a nominal), or a <b>मूल-प्रातिपदिक</b> (underived)?`;
+    }
     case 'clauseType': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this group';
@@ -2737,7 +2789,7 @@ function tutorialStepLabel(step, sentence) {
     case 'clauseElided': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
-      return `Which word(s) are elided (left unstated but understood) in the clause headed by ${h} (highlighted)?`;
+      return `Which word(s) must be supplied by अध्याहार — left unstated but understood — in the clause headed by ${h} (highlighted)?`;
     }
     default: return '';
   }

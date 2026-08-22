@@ -91,6 +91,11 @@ function isReportHidden(key) { return hiddenReports.has(key) || SHIPPED_FLAGGED.
 // manual override for anyone who wants to skip the wait.
 const AUTO_ADVANCE_DELAY_CORRECT = 450;
 const AUTO_ADVANCE_DELAY_WRONG = 1100;
+// User setting (dashboard): auto-advance to the next drill question after answering, or wait for a
+// manual "Next" click. Default ON (preserves prior behaviour). (Harsha, 2026-08-22)
+const AUTO_ADVANCE_KEY = 'vyakarana_auto_advance';
+function autoAdvanceOn() { return localStorage.getItem(AUTO_ADVANCE_KEY) !== '0'; }
+function setAutoAdvance(on) { localStorage.setItem(AUTO_ADVANCE_KEY, on ? '1' : '0'); }
 const RECENT_ANSWER_WINDOW = 12; // ~3 questions' worth of shown strings (correct + distractors)
 
 // ---- sound feedback (per-answer ding/buzz + a batch-of-10-complete fanfare, à la Khan Academy) ----
@@ -1252,6 +1257,17 @@ function renderCategorySection(kind, codes) {
     </details>`;
 }
 function renderDashboard() {
+  // Fold समास-विच्छेद (SAMR peel) into the समास node as a child card, so समास becomes a PARENT (like
+  // sandhi) with two children — SAMASA (classify) + SAMR (peel). Peel also runs inside वाक्य-विग्रह;
+  // this card is the standalone back-to-back drill. Not added to CODES, so it never inflates the
+  // "N nodes mastered" count (peel has no finite mastery pool). (Harsha, 2026-08-22)
+  if (window.SAMASA_PEEL && Object.keys(window.SAMASA_PEEL).length) {
+    CODE_KIND.SAMR = 'samasa';
+    CODE_LABEL_OVERRIDES.SAMR = '🧅 समास-विच्छेद · peel';
+    ensureProgress('SAMR');
+    CODES_BY_KIND.samasa = CODES_BY_KIND.samasa || [];
+    if (!CODES_BY_KIND.samasa.includes('SAMR')) CODES_BY_KIND.samasa.push('SAMR');
+  }
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   // sandhi always first (dwarfs every other kind, most-visited by far), rest alphabetical.
   const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
@@ -1266,16 +1282,24 @@ function renderDashboard() {
     if (codes.length > 1) categorySections.push(renderCategorySection(kind, codes));
     else flatCodes.push(...codes);
   }
+  // Two lanes: guided full-verse work (Read / वाक्य-विग्रह) vs MCQ drills (Mix / Practice + the topic
+  // nodes below). Separates the two paradigms that used to sit in one flat button row (Harsha, 2026-08-22).
   app.innerHTML = `
-    <div class="dash-head">
-      <div>${masteredN} / ${CODES.length} nodes mastered</div>
+    <div class="dash-head"><div>${masteredN} / ${CODES.length} nodes mastered</div></div>
+    <div class="dash-lane">
+      <div class="lane-label">📖 पठन · Read &amp; learn a full verse</div>
       <div class="dash-actions">
         <button class="primary" id="readBtn">📖 Read a verse</button>
+        <button class="secondary" id="tutorialBtn">🧩 वाक्य-विग्रह</button>
+      </div>
+    </div>
+    <div class="dash-lane">
+      <div class="lane-label">🎯 अभ्यास · Drill</div>
+      <div class="dash-actions">
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>
         <button class="secondary" id="adaptiveBtn">Practice</button>
-        <button class="secondary" id="tutorialBtn">🧩 वाक्य-विग्रह</button>
-        <button class="secondary" id="samasaBtn">🧅 समास-विच्छेद</button>
       </div>
+      <label class="dash-setting"><input type="checkbox" id="autoAdvChk" ${autoAdvanceOn() ? 'checked' : ''}> auto-advance to the next question after answering</label>
     </div>
     ${categorySections.join('')}
     <div class="grid">
@@ -1285,8 +1309,8 @@ function renderDashboard() {
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
   document.getElementById('tutorialBtn').onclick = () => { view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
-  const samasaBtn = document.getElementById('samasaBtn');
-  if (samasaBtn) samasaBtn.onclick = () => { if (window.SAMASA_PEEL && Object.keys(window.SAMASA_PEEL).length) startQuiz('samasa', 'SAMR'); else alert('Samāsa-peel data not loaded.'); };
+  const autoAdvChk = document.getElementById('autoAdvChk');
+  if (autoAdvChk) autoAdvChk.onchange = () => setAutoAdvance(autoAdvChk.checked);
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
 }
 
@@ -1505,6 +1529,9 @@ function startQuiz(mode, code) {
 // re-render-the-whole-screen convention elsewhere (a full dashboard re-render mid-fetch would lose
 // the click target and any scroll position for no benefit here).
 function onNodeCardClick(code) {
+  // समास-विच्छेद peel is folded in as a child card of the समास node; it runs the SAMASA_PEEL-driven
+  // session, not the standard node pool (Harsha, 2026-08-22).
+  if (code === 'SAMR') { if (window.SAMASA_PEEL && Object.keys(window.SAMASA_PEEL).length) startQuiz('samasa', 'SAMR'); else alert('Samāsa-peel data not loaded.'); return; }
   const el = app.querySelector(`.card[data-code="${code}"]`);
   if (!itemsByCode[code] && el) el.classList.add('loading');
   ensureAxisLoaded(code).then(() => startQuiz('node', code)).catch(() => {
@@ -2047,7 +2074,7 @@ function renderQuiz() {
     // Don't auto-advance out from under someone mid-report — they cancel or submit to move on. Also
     // don't auto-advance when the answer was REVEALED (Harsha, 2026-08-17): they chose not to guess
     // precisely so they could read the answer, so let them move on with an explicit Next click.
-    if (!view.reportOpen && !view.revealed) {
+    if (!view.reportOpen && !view.revealed && autoAdvanceOn()) {
       pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), isCorrectIdx(picked) ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
     }
   } else {
@@ -2589,9 +2616,13 @@ function buildVigrahaOptions(sentence, samasaIdx, layerIdx) {
   const correct = vo[0];
   return { correct, options: seedRotate([...new Set(vo)], correct + 'v') };
 }
+// Each label pairs the Sanskrit term with a short English gloss (· separator) so learners unfamiliar
+// with the technical vocabulary can still answer (Harsha, 2026-08-22). Used as MCQ options AND in
+// clauseHandle for the subordination question, so both stay bilingual.
 const CLAUSE_TYPE_LABELS = {
-  main: 'मुख्य वाक्य', nominal: 'नाम-वाक्य (क्रियारहित)', relative: 'यद्-वाक्य (सापेक्ष)',
-  correlative: 'तद्-वाक्य (नित्यसम्बन्धी)', subordinate: 'आश्रित वाक्य', quotation: 'उद्धरण-वाक्य (इति)',
+  main: 'मुख्य वाक्य · main clause', nominal: 'नाम-वाक्य · nominal (verbless) clause',
+  relative: 'यद्-वाक्य · relative clause', correlative: 'तद्-वाक्य · correlative clause',
+  subordinate: 'आश्रित वाक्य · subordinate clause', quotation: 'उद्धरण-वाक्य · quotation clause',
 };
 const clauseTypeLabel = t => CLAUSE_TYPE_LABELS[t] || t || 'वाक्य';
 function clauseTypeOptions(correctType) {
@@ -3558,7 +3589,7 @@ function renderTutorialPicker() {
   if (!p.tutSlug) p.tutSlug = manifest.length ? manifest[0].slug : null;
   const textEntry = manifest.find(m => m.slug === p.tutSlug) || manifest[0] || null;
   const slug = textEntry ? textEntry.slug : null;
-  app.innerHTML = `<div class="picker-head"><h2>🧩 कारक tutorial</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>Loading…</p>`;
+  app.innerHTML = `<div class="picker-head"><h2>🧩 वाक्य-विग्रह</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>Loading…</p>`;
   document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   if (!slug) { app.innerHTML = `<p>No tutorial texts available. <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`; document.getElementById('tutPickerBackBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); }; return; }
   ensureTutorialDataLoaded(slug).then(() => {
@@ -3576,9 +3607,10 @@ function renderTutorialPicker() {
     const textTitle = textEntry.title || slug;
     app.innerHTML = `
       <div class="picker-head">
-        <h2>🧩 कारक tutorial — ${esc(textTitle)}</h2>
+        <h2>🧩 वाक्य-विग्रह — ${esc(textTitle)}</h2>
         <button class="link" id="tutPickerBackBtn">← Dashboard</button>
       </div>
+      <p class="picker-sub muted">Full-verse analysis: कारक (syntactic roles) · समास-विच्छेद (compound peeling) · वाक्य-भेद (clause structure)</p>
       <div class="picker-level">
         <label>Text</label>
         <select id="tutTextSelect">

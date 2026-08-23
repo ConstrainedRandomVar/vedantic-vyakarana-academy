@@ -1278,7 +1278,10 @@ function renderDashboard() {
     { label: 'प्रश्न · Praśna', file: 'reading-prashna.html' },
     { label: 'मुण्डक · Muṇḍaka', file: 'reading-mundaka.html' },
     { label: 'माण्डूक्य · Māṇḍūkya', file: 'reading-mandukya.html' },
+    { label: 'तैत्तिरीय · Taittirīya', file: 'reading-taitiriya.html' },
     { label: 'ऐतरेय · Aitareya', file: 'reading-aitareya.html' },
+    { label: 'छान्दोग्य · Chāndogya', file: 'reading-chandogya.html' },
+    { label: 'गीता · Bhagavad-gītā', file: 'reading-gita.html' },
   ];
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   // sandhi always first (dwarfs every other kind, most-visited by far), rest alphabetical.

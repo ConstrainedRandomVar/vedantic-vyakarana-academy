@@ -1285,6 +1285,7 @@ function renderDashboard() {
     { label: 'छान्दोग्य · Chāndogya', file: 'reading-chandogya.html' },
     { label: 'बृहदारण्यक · Bṛhadāraṇyaka', file: 'reading-brha.html' },
     { label: 'गीता · Bhagavad-gītā', file: 'reading-gita.html' },
+    { label: 'ब्रह्मसूत्र · Brahma-sūtra', file: 'reading-bs.html' },
   ];
   const MULA_TEXTS = [
     { label: 'ईशा · Īśā', file: 'reading-isha-mula.html' },

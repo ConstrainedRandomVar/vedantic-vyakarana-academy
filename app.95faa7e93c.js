@@ -1268,8 +1268,9 @@ function renderDashboard() {
     CODES_BY_KIND.samasa = CODES_BY_KIND.samasa || [];
     if (!CODES_BY_KIND.samasa.includes('SAMR')) CODES_BY_KIND.samasa.push('SAMR');
   }
-  // मनन · Reflect on the bhāṣya — standalone annotated reading pages (see build_reading_view.js).
-  // Daśopaniṣad order; add a line here when a new text's reading page ships.
+  // मनन · Reflect — standalone reading pages. Two kinds: annotated Śāṅkara-bhāṣya (build_reading_view.js,
+  // daśopaniṣad + Gītā) and word-by-word mūla reading with hover analysis (build_vc_reading_view.js, VC/PD).
+  // Add a line here when a new text's reading page ships.
   const READING_TEXTS = [
     { label: 'ईशा · Īśā', file: 'reading-isha.html' },
     { label: 'केन · Kena (pada)', file: 'reading-kena_pada.html' },
@@ -1282,6 +1283,8 @@ function renderDashboard() {
     { label: 'ऐतरेय · Aitareya', file: 'reading-aitareya.html' },
     { label: 'छान्दोग्य · Chāndogya', file: 'reading-chandogya.html' },
     { label: 'गीता · Bhagavad-gītā', file: 'reading-gita.html' },
+    { label: 'विवेकचूडामणि · VC (padārtha)', file: 'reading-vc.html' },
+    { label: 'पञ्चदशी · Pañcadaśī (padārtha)', file: 'reading-pd.html' },
   ];
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   // sandhi always first (dwarfs every other kind, most-visited by far), rest alphabetical.
@@ -1309,7 +1312,7 @@ function renderDashboard() {
       </div>
     </div>
     <div class="dash-lane">
-      <div class="lane-label">🪷 मनन · Reflect on the bhāṣya</div>
+      <div class="lane-label">🪷 मनन · Reflect — bhāṣya &amp; word-by-word reading</div>
       <div class="dash-actions">
         ${READING_TEXTS.map(t => `<button class="secondary" data-reflect="${t.file}">${t.label}</button>`).join('')}
       </div>

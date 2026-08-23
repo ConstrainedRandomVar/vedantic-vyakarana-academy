@@ -1,0 +1,29 @@
+<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bṛhadāraṇyaka Upaniṣad (mūla)</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9}
+@media(prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:26px 22px 90px}h1{font-size:22px;margin:0 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.legend{padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
+.v{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
+.rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
+.moola{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
+.en{color:var(--muted);font-size:14px;font-style:italic;margin-top:8px}
+.w{cursor:help;border-bottom:1.5px dotted var(--morph)}.w:hover{background:rgba(120,120,120,.14);border-radius:3px}
+#tip{position:fixed;z-index:99;max-width:340px;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
+#tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
+#tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
+#tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
+.chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}</style></head><body><div class="wrap">
+<button id="tog">◐ theme</button>
+<h1>Bṛhadāraṇyaka Upaniṣad (mūla) — reading (मनन)</h1><p class="sub">hover-to-read · analysis from the Gemini kāraka dataset</p>
+<div class="legend"><b style="color:var(--moola)">mūla</b> · hover any <span style="border-bottom:1.5px dotted var(--morph)">dotted word</span> for its Gemini analysis — <span style="color:var(--mng)">meaning</span>, vibhakti (case·vacana·liṅga), <span style="color:var(--role)">kāraka role</span>, and recursive <span style="color:var(--sam)">samāsa vigraha</span>. Generated (not hand-curated).</div><div class="chapgrid"><a href="reading-brha-mula-1.html">बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 1</a><a href="reading-brha-mula-2.html">बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 2</a><a href="reading-brha-mula-3.html">बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 3</a><a href="reading-brha-mula-4.html">बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 4</a><a href="reading-brha-mula-5.html">बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 5</a><a href="reading-brha-mula-6.html">बृहदारण्यकोपनिषद् (Bṛhadāraṇyaka Upaniṣad) · अध्याय 6</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
+function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
+if(d.morph)h+='<div class="row"><span class="lb">vibhakti</span> '+d.morph+'</div>';
+if(d.role)h+='<div class="row"><span class="lb">kāraka</span> '+d.role+'</div>';
+if(d.sam)h+='<div class="row"><span class="lb">samāsa</span> '+d.sam+'</div>';
+if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';return h;}
+document.addEventListener('mouseover',e=>{const t=e.target.closest('.w');if(!t)return;const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d);tip.style.opacity=1;});
+document.addEventListener('mousemove',e=>{if(tip.style.opacity=='1'){tip.style.left=Math.min(e.clientX+14,innerWidth-350)+'px';tip.style.top=(e.clientY+16)+'px';}});
+document.addEventListener('mouseout',e=>{if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',e=>{const t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d);tip.style.opacity=1;tip.style.left=Math.min(e.clientX+14,innerWidth-350)+'px';tip.style.top=(e.clientY+16)+'px';});
+const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script></body></html>

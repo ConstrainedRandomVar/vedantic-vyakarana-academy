@@ -13,13 +13,21 @@
 .mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}.import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
 .purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}.sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}.quote{color:var(--quote)}
 .w{cursor:help}.w:hover{background:rgba(120,120,120,.16);border-radius:3px}
-#tip{position:fixed;z-index:99;max-width:320px;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.45;padding:9px 12px;border-radius:9px;box-shadow:0 10px 30px rgba(0,0,0,.3);pointer-events:none;opacity:0;transition:opacity .1s}
+#tip{position:fixed;z-index:99;max-width:min(320px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.45;padding:9px 12px;border-radius:9px;box-shadow:0 10px 30px rgba(0,0,0,.3);pointer-events:none;opacity:0;transition:opacity .1s}
 a{color:var(--mula)}button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
 .chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600}</style></head><body><div class="wrap">
 <a href="index.html" style="float:right;margin:6px 0 0 10px;color:var(--muted);font-size:13px;text-decoration:none">← back</a><button id="tog">◐ theme</button>
 <h1>Chāndogya Upaniṣad — Śāṅkara-bhāṣya (मनन)</h1><p class="sub">re-anchored to source (100% fidelity) · colour = role · underline = saṅgraha · intro + verse-preambles included</p>
 <div class="legend"><span><span class="sw" style="background:var(--spine)"></span> <b>mūla verse</b></span><span><span class="sw" style="background:var(--mula)"></span> mūlam</span><span>= gloss</span><span style="color:var(--import)">→ import</span><span style="color:var(--vyak)"><i>vyākaraṇa</i></span><span style="color:var(--purva)">pūrvapakṣa</span><span style="color:var(--sid)">siddhānta (<u>saṅgraha</u>)</span><span style="color:var(--quote)">quote</span><span style="color:var(--muted)">· dashed = preamble · hover any word for its Zenodo gloss</span></div><div class="chapgrid"><a href="reading-chandogya-1.html">अध्याय 1</a><a href="reading-chandogya-2.html">अध्याय 2</a><a href="reading-chandogya-3.html">अध्याय 3</a><a href="reading-chandogya-4.html">अध्याय 4</a><a href="reading-chandogya-5.html">अध्याय 5</a><a href="reading-chandogya-6.html">अध्याय 6</a><a href="reading-chandogya-7.html">अध्याय 7</a><a href="reading-chandogya-8.html">अध्याय 8</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
-document.addEventListener('mouseover',e=>{const t=e.target.closest('.w');if(!t)return;const d=G[t.dataset.w];if(!d)return;tip.textContent=t.dataset.w+' — '+d;tip.style.opacity=1;});
-document.addEventListener('mousemove',e=>{if(tip.style.opacity=='1'){tip.style.left=Math.min(e.clientX+14,innerWidth-330)+'px';tip.style.top=(e.clientY+16)+'px';}});
-document.addEventListener('mouseout',e=>{if(e.target.closest('.w'))tip.style.opacity=0;});
+// anchor the tip to the tapped word: centred below it, flipped above near the viewport bottom, clamped
+// to screen width — never off-screen / needing scroll (esp. mobile, right column). Tap toggles on touch.
+function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||280,th=tip.offsetHeight||60,m=8;
+  let left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
+  let top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
+  tip.style.left=left+'px';tip.style.top=top+'px';}
+function show(t){const d=G[t.dataset.w];if(!d)return;tip.textContent=t.dataset.w+' — '+d;tip.style.opacity=1;place(t);}
+const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
+document.addEventListener('mouseover',e=>{if(touch)return;const t=e.target.closest('.w');if(t)show(t);});
+document.addEventListener('mouseout',e=>{if(touch)return;if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',e=>{const t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}e.stopPropagation();show(t);});
 const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script></body></html>

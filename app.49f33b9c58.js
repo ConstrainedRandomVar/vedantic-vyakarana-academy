@@ -2772,8 +2772,17 @@ function tutorialStepLabelBase(step, sentence) {
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
     case 'karta': return `For ${gov}, which word(s) together are the कर्ता (the doer — "who?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is none, choose "None of these" below.`;
     case 'karma': return `For ${gov}, which word(s) together are the कर्म (what the action is done to — "whom/what?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is no कर्म, choose "None of these" below.`;
-    case 'agreementKarta': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्ता of ${gov}?`;
-    case 'agreementKarma': return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) the कर्म of ${gov}?`;
+    // Name the word being agreed with DIRECTLY ("agrees with <नर-जन्म>?") rather than "the कर्ता/कर्म of
+    // <governor>" — the latter mis-frames a verbless nominal predication (VC 2: नर-जन्म IS the subject
+    // head, has no separate कर्ता) and needlessly abstracts the concrete referent (Harsha, 2026-08-23).
+    // The reference is the कर्ता/कर्म core EXCLUDING the agreement members themselves (those are the
+    // answer — coreArgWords would fold them in and leak दुर्लभम्); subjectIsHead → the governor is it.
+    case 'agreementKarta': { const idx = [...(c.subjectIsHead ? [c.governorWordIndex] : []), ...c.karta, ...c.samuccayaKarta];
+      const w = [...new Set(idx)].map(i => sentence.words[i]).join('/');
+      return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) ${w ? `<b>${esc(w)}</b>` : 'the कर्ता'}?`; }
+    case 'agreementKarma': { const idx = [...c.karma, ...c.samuccayaKarma];
+      const w = [...new Set(idx)].map(i => sentence.words[i]).join('/');
+      return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) ${w ? `<b>${esc(w)}</b>` : 'the कर्म'}?`; }
     case 'qualifierKarta': {
       const w = coreArgWords(c, sentence, 'karta');
       // when the कर्ता IS the governor (a verbless nominal-predication head, e.g. VC 2), don't append the

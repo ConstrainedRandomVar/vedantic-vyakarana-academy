@@ -1268,6 +1268,18 @@ function renderDashboard() {
     CODES_BY_KIND.samasa = CODES_BY_KIND.samasa || [];
     if (!CODES_BY_KIND.samasa.includes('SAMR')) CODES_BY_KIND.samasa.push('SAMR');
   }
+  // मनन · Reflect on the bhāṣya — standalone annotated reading pages (see build_reading_view.js).
+  // Daśopaniṣad order; add a line here when a new text's reading page ships.
+  const READING_TEXTS = [
+    { label: 'ईशा · Īśā', file: 'reading-isha.html' },
+    { label: 'केन · Kena (pada)', file: 'reading-kena_pada.html' },
+    { label: 'केन · Kena (vākya)', file: 'reading-kena_vakya.html' },
+    { label: 'कठ · Kaṭha', file: 'reading-kathaka.html' },
+    { label: 'प्रश्न · Praśna', file: 'reading-prashna.html' },
+    { label: 'मुण्डक · Muṇḍaka', file: 'reading-mundaka.html' },
+    { label: 'माण्डूक्य · Māṇḍūkya', file: 'reading-mandukya.html' },
+    { label: 'ऐतरेय · Aitareya', file: 'reading-aitareya.html' },
+  ];
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   // sandhi always first (dwarfs every other kind, most-visited by far), rest alphabetical.
   const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
@@ -1294,6 +1306,12 @@ function renderDashboard() {
       </div>
     </div>
     <div class="dash-lane">
+      <div class="lane-label">🪷 मनन · Reflect on the bhāṣya</div>
+      <div class="dash-actions">
+        ${READING_TEXTS.map(t => `<button class="secondary" data-reflect="${t.file}">${t.label}</button>`).join('')}
+      </div>
+    </div>
+    <div class="dash-lane">
       <div class="lane-label">🎯 अभ्यास · Drill</div>
       <div class="dash-actions">
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>
@@ -1309,6 +1327,7 @@ function renderDashboard() {
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
   document.getElementById('tutorialBtn').onclick = () => { view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
+  app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
   const autoAdvChk = document.getElementById('autoAdvChk');
   if (autoAdvChk) autoAdvChk.onchange = () => setAutoAdvance(autoAdvChk.checked);
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));

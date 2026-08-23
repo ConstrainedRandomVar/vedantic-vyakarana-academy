@@ -1283,6 +1283,7 @@ function renderDashboard() {
     { label: 'तैत्तिरीय · Taittirīya', file: 'reading-taitiriya.html' },
     { label: 'ऐतरेय · Aitareya', file: 'reading-aitareya.html' },
     { label: 'छान्दोग्य · Chāndogya', file: 'reading-chandogya.html' },
+    { label: 'बृहदारण्यक · Bṛhadāraṇyaka', file: 'reading-brha.html' },
     { label: 'गीता · Bhagavad-gītā', file: 'reading-gita.html' },
   ];
   const MULA_TEXTS = [

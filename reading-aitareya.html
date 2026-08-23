@@ -18,7 +18,41 @@ a{color:var(--mula)}button{font:inherit;font-size:13px;color:var(--ink);backgrou
 .chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600}</style></head><body><div class="wrap">
 <a href="index.html" style="float:right;margin:6px 0 0 10px;color:var(--muted);font-size:13px;text-decoration:none">← back</a><button id="tog">◐ theme</button>
 <h1>Aitareya Upaniṣad — Śāṅkara-bhāṣya (मनन)</h1><p class="sub">re-anchored to source (100% fidelity) · colour = role · underline = saṅgraha · intro + verse-preambles included</p>
-<div class="legend"><span><span class="sw" style="background:var(--spine)"></span> <b>mūla verse</b></span><span><span class="sw" style="background:var(--mula)"></span> mūlam</span><span>= gloss</span><span style="color:var(--import)">→ import</span><span style="color:var(--vyak)"><i>vyākaraṇa</i></span><span style="color:var(--purva)">pūrvapakṣa</span><span style="color:var(--sid)">siddhānta (<u>saṅgraha</u>)</span><span style="color:var(--quote)">quote</span><span style="color:var(--muted)">· dashed = preamble · hover any word for its Zenodo gloss</span></div><div class="chapgrid"><a href="reading-aitareya-1.html">अध्यायः 1</a><a href="reading-aitareya-2.html">अध्यायः 2</a><a href="reading-aitareya-3.html">अध्यायः 3</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
+<style>
+#navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;
+  box-shadow:0 2px 10px rgba(0,0,0,.04)}
+#navbar .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted)}
+#navbar select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
+  border-radius:8px;padding:5px 9px;min-width:64px}
+#navbar .navgo{margin-left:auto;align-self:center;font-size:12px;color:var(--muted)}
+.v{scroll-margin-top:78px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.v.navhit{animation:navflash 1.6s ease-out}
+</style>
+<div id="navbar"><label class="navlvl"><span>अध्याय</span><select data-lvl="0"></select></label><label class="navlvl"><span>खण्ड</span><select data-lvl="1"></select></label><label class="navlvl"><span>मन्त्र</span><select data-lvl="2"></select></label><span class="navgo">जा →</span></div>
+<script>(function(){var N={"refs":["1.1.1","1.1.2","1.1.3","1.1.4","1.2.1","1.2.2","1.2.3","1.2.4","1.2.5","1.3.1","1.3.2","1.3.10","1.3.11","1.3.12","1.3.13","1.3.14","2.1.1","2.1.2","2.1.3","2.1.4","2.1.5","2.1.6","3.1.1","3.1.2","3.1.3","3.1.4"],"levels":["अध्याय","खण्ड","मन्त्र"],"files":["reading-aitareya-1.html","reading-aitareya-2.html","reading-aitareya-3.html"],"pageIdx":{"1.1.1":0,"1.1.2":0,"1.1.3":0,"1.1.4":0,"1.2.1":0,"1.2.2":0,"1.2.3":0,"1.2.4":0,"1.2.5":0,"1.3.1":0,"1.3.2":0,"1.3.10":0,"1.3.11":0,"1.3.12":0,"1.3.13":0,"1.3.14":0,"2.1.1":1,"2.1.2":1,"2.1.3":1,"2.1.4":1,"2.1.5":1,"2.1.6":1,"3.1.1":2,"3.1.2":2,"3.1.3":2,"3.1.4":2},"cur":-1};
+var bar=document.getElementById('navbar');var sels=[].slice.call(bar.querySelectorAll('select'));
+function comps(r){return r.split('.');}
+function optsFor(level,prefix){var out=[],seen={};N.refs.forEach(function(r){var p=comps(r);if(p.length<=level)return;
+  for(var i=0;i<level;i++)if(p[i]!==prefix[i])return;if(!seen[p[level]]){seen[p[level]]=1;out.push(p[level]);}});return out;}
+function fill(sel,opts,val){sel.innerHTML=opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+o+'</option>';}).join('');}
+function chosen(uptolevel){var a=[];for(var i=0;i<=uptolevel;i++)a.push(sels[i].value);return a;}
+function rebuild(from){for(var L=from;L<sels.length;L++){var opts=optsFor(L,chosen(L-1));fill(sels[L],opts,opts[0]);}}
+function target(){return sels.map(function(s){return s.value;}).join('.');}
+function jump(ref){var i=N.pageIdx[ref];if(i==null)return;
+  if(i===N.cur){var el=document.getElementById('v-'+ref);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});
+    el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');}}
+  else location.href=N.files[i]+'#v-'+ref;}
+sels.forEach(function(s,L){s.addEventListener('change',function(){rebuild(L+1);jump(target());});});
+function setTo(ref){var p=comps(ref);rebuild(0);for(var L=0;L<sels.length&&L<p.length;L++){var opts=optsFor(L,p.slice(0,L));
+  fill(sels[L],opts,p[L]);}}
+// init: reflect #v-<ref> if present, else first verse on this page, else first ref overall
+var h=location.hash.replace(/^#v-/,'');
+if(h&&N.pageIdx[h]!=null){setTo(h);var el=document.getElementById('v-'+h);if(el){el.classList.add('navhit');}}
+else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.refs[k]]===N.cur){first=N.refs[k];break;}}
+  setTo(first||N.refs[0]);}
+})();</script><div class="legend"><span><span class="sw" style="background:var(--spine)"></span> <b>mūla verse</b></span><span><span class="sw" style="background:var(--mula)"></span> mūlam</span><span>= gloss</span><span style="color:var(--import)">→ import</span><span style="color:var(--vyak)"><i>vyākaraṇa</i></span><span style="color:var(--purva)">pūrvapakṣa</span><span style="color:var(--sid)">siddhānta (<u>saṅgraha</u>)</span><span style="color:var(--quote)">quote</span><span style="color:var(--muted)">· dashed = preamble · hover any word for its Zenodo gloss</span></div><div class="chapgrid"><a href="reading-aitareya-1.html">अध्यायः 1</a><a href="reading-aitareya-2.html">अध्यायः 2</a><a href="reading-aitareya-3.html">अध्यायः 3</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
 // anchor the tip to the tapped word: centred below it, flipped above near the viewport bottom, clamped
 // to screen width — never off-screen / needing scroll (esp. mobile, right column). Tap toggles on touch.
 function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||280,th=tip.offsetHeight||60,m=8;

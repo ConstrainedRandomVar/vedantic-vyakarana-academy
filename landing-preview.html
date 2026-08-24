@@ -28,7 +28,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
 .dv{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif}
 a{color:var(--mula);text-decoration:none}
 
@@ -82,6 +82,13 @@ button:hover{border-color:var(--moola)}
 .pill.bhasya{color:var(--mula);border-color:var(--mula);background:transparent}
 .rnote{font-size:10px;color:var(--muted);font-style:italic}
 
+/* study-mode cards (same rcard aesthetic, roomier) */
+.modegrid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.modecard{padding:13px 15px;gap:5px}
+.modecard .rtitle{font-size:16px}
+.modetag{font-size:12px;font-weight:600;color:var(--moola);font-style:italic}
+.modedesc{font-size:12px;color:var(--muted);line-height:1.5}
+
 /* setting */
 .dash-setting{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);
   margin-top:12px;cursor:pointer;user-select:none}
@@ -119,14 +126,21 @@ button:hover{border-color:var(--moola)}
     <div class="count"><b>34</b> / 41 nodes mastered</div>
   </div>
 
-  <!-- STUDY MODES: guided full-verse work -->
+  <!-- STUDY MODES: two orthogonal skills (not merging) -->
   <div class="dash-lane">
-    <div class="lane-label">📖 पठन · Read &amp; learn a full verse</div>
-    <div class="dash-actions">
-      <button class="primary" id="readBtn">📖 Read a verse</button>
-      <button class="secondary" id="tutorialBtn">🧩 वाक्य-विग्रह</button>
+    <div class="lane-label">🧠 अभ्यास-मार्गौ · Two ways to study</div>
+    <div class="readgrid modegrid">
+      <a class="rcard modecard" id="readBtn" href="#read">
+        <div class="rtitle">📖 Read a verse</div>
+        <div class="modetag">know each word</div>
+        <div class="modedesc">Walk each word &mdash; recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the spaced Drill pool.</div>
+      </a>
+      <a class="rcard modecard" id="tutorialBtn" href="#vv">
+        <div class="rtitle dv">🧩 वाक्य-विग्रह<span class="rlat" style="display:inline;margin-left:6px">Vākya-vigraha</span></div>
+        <div class="modetag">parse the sentence</div>
+        <div class="modedesc">How the words hang together &mdash; kāraka relations, which word qualifies which, genitive-of, samuccaya, agreement, clause subordination/elision, uddeśya&ndash;vidheya, samāsa vigraha.</div>
+      </a>
     </div>
-    <div class="lane-sub">वाक्य-विग्रह = whole-sentence kāraka analysis · Read-a-verse = guided word-by-word walk</div>
   </div>
 
   <!-- CONSOLIDATED READING LIST: one entry per text -->
@@ -252,9 +266,9 @@ document.getElementById('nodes').innerHTML =
   + '</div>';
 
 // ---- interactions (placeholders for the mockup) ----
-function stub(name){ return function(){ alert('['+name+'] — wired in app.js'); }; }
-document.getElementById('readBtn').onclick     = stub('Read a verse');
-document.getElementById('tutorialBtn').onclick = stub('वाक्य-विग्रह');
+function stub(name){ return function(e){ if(e)e.preventDefault(); alert('['+name+'] — wired in app.js'); }; }
+document.getElementById('readBtn').onclick     = stub('Read a verse — know each word');
+document.getElementById('tutorialBtn').onclick = stub('वाक्य-विग्रह — parse the sentence');
 document.getElementById('mixBtn').onclick      = stub('Mix it up');
 document.getElementById('adaptiveBtn').onclick = stub('Practice');
 

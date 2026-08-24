@@ -63,4 +63,73 @@ const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
 document.addEventListener('mouseover',e=>{if(touch)return;const t=e.target.closest('.w');if(t)show(t);});
 document.addEventListener('mouseout',e=>{if(touch)return;if(e.target.closest('.w'))tip.style.opacity=0;});
 document.addEventListener('click',e=>{const t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}e.stopPropagation();show(t);});
-const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script></body></html>
+const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script><style>
+#rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;
+  padding:8px 14px;box-shadow:0 3px 12px rgba(0,0,0,.18);cursor:pointer}
+#rpt-btn:hover{background:var(--bg)}
+#rpt-ov{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
+#rpt-ov.on{display:flex}
+#rpt-box{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;
+  max-width:440px;width:100%;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+#rpt-box h3{margin:0 0 4px;font-size:16px}
+#rpt-box .rpt-sub{margin:0 0 12px;font-size:12px;color:var(--muted)}
+#rpt-box textarea{width:100%;min-height:90px;font:inherit;font-size:14px;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px;resize:vertical;box-sizing:border-box}
+#rpt-box .rpt-ctx{margin:10px 0 0;font-size:11px;color:var(--muted);line-height:1.5;
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;white-space:pre-wrap;max-height:120px;overflow:auto}
+#rpt-box .rpt-row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+#rpt-box button{font:inherit;font-size:13px;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--line)}
+#rpt-send{background:var(--ink);color:var(--bg)}
+#rpt-cancel{background:var(--card);color:var(--ink)}
+</style>
+<button id="rpt-btn" title="Report an issue on this page">⚑ report an issue</button>
+<div id="rpt-ov"><div id="rpt-box">
+  <h3>Report an issue</h3>
+  <p class="rpt-sub">Noticed a wrong meaning, kāraka role, or bhāṣya marking? Tell us — this opens your mail app.</p>
+  <textarea id="rpt-txt" placeholder="What looks wrong? (e.g. the kāraka role on a word, a wrong meaning, a mis-coloured bhāṣya span…)"></textarea>
+  <div class="rpt-ctx" id="rpt-ctx"></div>
+  <div class="rpt-row"><button id="rpt-cancel">Cancel</button><button id="rpt-send">Send email</button></div>
+</div></div>
+<script>(function(){
+  var EMAIL="narayanamurthy.sharma@gmail.com";
+  function ua(){try{
+    var u=navigator.userAgent||'';
+    var os=/Android/i.test(u)?'Android':/iPhone|iPod/i.test(u)?'iOS':/iPad/i.test(u)?'iPadOS':/Windows/i.test(u)?'Windows':/Mac OS X|Macintosh/i.test(u)?'macOS':/CrOS/i.test(u)?'ChromeOS':/Linux/i.test(u)?'Linux':'unknown OS';
+    var dev=/iPad|Tablet/i.test(u)?'tablet':/Mobi|Android|iPhone|iPod/i.test(u)?'phone':'desktop/laptop';
+    var br=/Edg\//.test(u)?'Edge':/OPR\//.test(u)?'Opera':/Chrome\//.test(u)?'Chrome':/Firefox\//.test(u)?'Firefox':/Version\/.*Safari/.test(u)?'Safari':'unknown browser';
+    return {line:dev+' · '+os+' · '+br+' · viewport '+(window.innerWidth||0)+'×'+(window.innerHeight||0),raw:u};
+  }catch(e){return {line:'(device unavailable)',raw:''};}}
+  function mode(){var p=(location.pathname||'').toLowerCase();
+    return (/-mula|reading-(vc|pd|ab)([.-]|$)/.test(p))?'mūla (padārtha)':'bhāṣya (manana)';}
+  function curVerse(){try{
+    var els=document.querySelectorAll('[id^="v-"]');var best=null,bestTop=-1e9;
+    for(var i=0;i<els.length;i++){var t=els[i].getBoundingClientRect().top;
+      if(t<=120&&t>bestTop){bestTop=t;best=els[i];}}
+    if(!best&&els.length)best=els[0];
+    return best?best.id.replace(/^v-/,''):'(n/a)';
+  }catch(e){return '(n/a)';}}
+  function ctxBlock(){var d=ua();var ctrl=(navigator.serviceWorker&&navigator.serviceWorker.controller)?'sw-controlled':'no-controller';
+    return 'page: '+(location.pathname.split('/').pop()||location.pathname)+'\n'
+      +'text: '+(document.title||'')+'\n'
+      +'mode: '+mode()+'\n'
+      +'verse in view: '+curVerse()+'\n'
+      +'url: '+location.href+'\n'
+      +'device: '+d.line+'\n'
+      +'sw: '+ctrl+'\n'
+      +'user-agent: '+d.raw;}
+  var btn=document.getElementById('rpt-btn'),ov=document.getElementById('rpt-ov'),
+      txt=document.getElementById('rpt-txt'),ctx=document.getElementById('rpt-ctx');
+  if(!btn||!ov)return;
+  function open(){ctx.textContent=ctxBlock();ov.classList.add('on');txt.focus();}
+  function close(){ov.classList.remove('on');}
+  btn.addEventListener('click',open);
+  document.getElementById('rpt-cancel').addEventListener('click',close);
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  document.getElementById('rpt-send').addEventListener('click',function(){
+    var body=(txt.value.trim()||'(no description)')+'\n\n--- context (auto-captured) ---\n'+ctxBlock();
+    var subj='Issue: '+(document.title||'reading')+' — '+curVerse()+' ('+mode()+')';
+    location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+    close();
+  });
+})();</script></body></html>

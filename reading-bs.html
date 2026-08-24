@@ -1,24 +1,128 @@
-<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brahma-sūtra</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--mula:#1a56db;--gloss:#3f4653;--import:#6d28d9;--vyak:#6b6255;--purva:#b91c1c;--eka:#c2410c;--sid:#15803d;--quote:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--introbg:#f2ede2}
-@media(prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;--eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
-.wrap{max-width:860px;margin:0 auto;padding:26px 22px 90px}h1{font-size:22px;margin:0 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
-.legend{display:flex;flex-wrap:wrap;gap:7px 15px;padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px}
-.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
-.v,.introbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
-.introbox{background:var(--introbg)}.rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
-.spine{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:21px;color:var(--spine);font-weight:600;line-height:1.9;border-left:3px solid var(--spine);padding-left:12px;margin-bottom:6px}
-.en{color:var(--muted);font-size:14px;font-style:italic;margin-bottom:10px}
-.pre{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:18px;line-height:1.95;color:var(--muted);border-left:2px dashed var(--conn);padding-left:10px;margin-bottom:8px}
-.bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:20px;line-height:2.05}
-.mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}.import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
-.purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}.sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}.quote{color:var(--quote)}
-.w{cursor:help}.w:hover{background:rgba(120,120,120,.16);border-radius:3px}
-#tip{position:fixed;z-index:99;max-width:min(320px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.45;padding:9px 12px;border-radius:9px;box-shadow:0 10px 30px rgba(0,0,0,.3);pointer-events:none;opacity:0;transition:opacity .1s}
-a{color:var(--mula)}button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
-.chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600}</style></head><body><div class="wrap">
-<a href="index.html" style="float:right;margin:6px 0 0 10px;color:var(--muted);font-size:13px;text-decoration:none">← back</a><button id="tog">◐ theme</button>
-<h1>Brahma-sūtra — Śāṅkara-bhāṣya (मनन)</h1><p class="sub">re-anchored to source (100% fidelity) · colour = role · underline = saṅgraha · intro + verse-preambles included</p>
-<style>
+<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ब्रह्मसूत्राणि — एकीकृत-पाठः</title><style>
+:root{
+  /* shared shell */
+  --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;
+  /* पदार्थ (mula hover analysis) */
+  --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
+  /* मनन (bhasya roles) */
+  --mula:#1a56db;--gloss:#3f4653;--import:#6d28d9;--vyak:#6b6255;--purva:#b91c1c;
+  --eka:#c2410c;--sid:#15803d;--quote:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--introbg:#f2ede2;
+  --mulatint:rgba(124,90,30,.05);
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;
+  --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
+  --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
+  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --mulatint:rgba(217,184,119,.07);
+}}
+:root[data-theme=dark]{
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;
+  --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
+  --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
+  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --mulatint:rgba(217,184,119,.07);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.wrap{max-width:820px;margin:0 auto;padding:22px 18px 90px}
+h1{font-size:21px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+a{color:var(--mula);text-decoration:none}
+.dv{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif}
+
+/* top controls */
+.topbar{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+.topbar .grow{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--line);border-radius:0;background:var(--card);
+  color:var(--muted);padding:6px 11px;font-size:12.5px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--moola);color:var(--bg);font-weight:600}
+/* mūlam-only view: hide all bhāṣya prose (intro, preambles, bhāṣya zones) */
+body.moola-only .introbox,body.moola-only .pre-zone,body.moola-only .bh-zone{display:none}
+body.moola-only .mula-zone{margin-bottom:14px}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
+  border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+
+/* nav (from nav.js) */
+#navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 16px;
+  box-shadow:0 2px 10px rgba(0,0,0,.04)}
+#navbar .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted)}
+#navbar select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
+  border-radius:8px;padding:5px 9px;min-width:64px}
+#navbar .navgo{margin-left:auto;align-self:center;font-size:12px;color:var(--muted)}
+
+/* consolidated legend */
+.legend{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 18px;font-size:12.5px}
+.legend>summary{list-style:none;cursor:pointer;padding:10px 14px;color:var(--muted);
+  display:flex;align-items:center;gap:8px;font-weight:600}
+.legend>summary::-webkit-details-marker{display:none}
+.legend>summary .tw{margin-left:auto;font-weight:400;font-size:11.5px}
+.legbody{padding:2px 14px 13px}
+.leggrp{padding:8px 0 2px}
+.leghd{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.legnote{color:var(--muted);font-size:12.5px;line-height:1.55}
+.legrow{display:flex;flex-wrap:wrap;gap:7px 14px}
+.legrow span.item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.sw{width:11px;height:11px;border-radius:3px;display:inline-block;flex:0 0 auto}
+.legdiv{height:1px;background:var(--line);margin:9px 0 2px}
+
+/* intro */
+.introbox{background:var(--introbg);border:1px solid var(--line);border-radius:14px;padding:15px 18px;margin:0 0 22px}
+.introbox .rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:7px}
+
+/* mantra group = one card holding both voices */
+.mantra{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  margin:0 0 20px;overflow:hidden;scroll-margin-top:80px}
+.mantra-hd{display:flex;align-items:center;gap:9px;padding:11px 16px 0}
+.refbadge{font-family:"Noto Serif Devanagari",serif;font-weight:700;font-size:15px;color:var(--moola);
+  background:var(--mulatint);border:1px solid var(--line);border-radius:8px;padding:2px 10px;letter-spacing:.03em}
+.refbadge .lat{font-family:-apple-system,sans-serif;font-weight:500;font-size:11px;color:var(--muted);margin-left:4px}
+
+/* mula zone */
+.mula-zone{padding:9px 16px 14px;background:var(--mulatint);border-left:3px solid var(--moola);
+  margin:9px 13px 0;border-radius:0 10px 10px 0}
+.zlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+.mula-zone .zlabel{color:var(--moola)}
+.moola{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;
+  font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
+.en{color:var(--muted);font-size:13.5px;font-style:italic;margin-top:8px}
+
+/* bhasya zone */
+.bh-zone{padding:12px 16px 16px;margin:12px 13px 14px;border-left:3px solid var(--conn);border-radius:0 10px 10px 0}
+.bh-zone .zlabel{color:var(--spine)}
+.pre-zone{padding:11px 16px 6px;margin:9px 13px 0;border-left:3px dashed var(--conn);border-radius:0 10px 10px 0}
+.pre{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;
+  line-height:1.95;color:var(--muted);margin:0}
+.pre::before{content:"उपोद्घातः";display:block;font-family:-apple-system,sans-serif;font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
+.bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:19px;line-height:2.05}
+
+/* bhasya role colours */
+.mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
+.import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
+.purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}
+.sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.quote{color:var(--quote)}
+
+/* hover words: NO dotted underline, just subtle bg + help cursor */
+.w{cursor:help}.w:hover{background:rgba(120,120,120,.15);border-radius:3px}
+
+/* tooltip (rich for mula, plain for bhasya) */
+#tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);
+  font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
+#tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
+#tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}
+#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
+#tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
+#tip.plain{font-family:"Noto Serif Devanagari",serif;font-size:14.5px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.mantra.navhit{animation:navflash 1.6s ease-out}
+</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><button id="tog">◐ theme</button></div></div><h1>ब्रह्मसूत्राणि — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
 #navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
   background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;
   box-shadow:0 2px 10px rgba(0,0,0,.04)}
@@ -52,19 +156,50 @@ var h=location.hash.replace(/^#v-/,'');
 if(h&&N.pageIdx[h]!=null){setTo(h);var el=document.getElementById('v-'+h);if(el){el.classList.add('navhit');}}
 else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.refs[k]]===N.cur){first=N.refs[k];break;}}
   setTo(first||N.refs[0]);}
-})();</script><div class="legend"><span><span class="sw" style="background:var(--spine)"></span> <b>mūla verse</b></span><span><span class="sw" style="background:var(--mula)"></span> mūlam</span><span>= gloss</span><span style="color:var(--import)">→ import</span><span style="color:var(--vyak)"><i>vyākaraṇa</i></span><span style="color:var(--purva)">pūrvapakṣa</span><span style="color:var(--sid)">siddhānta (<u>saṅgraha</u>)</span><span style="color:var(--quote)">quote</span><span style="color:var(--muted)">· dashed = preamble · hover any word for its Zenodo gloss</span></div><div class="chapgrid"><a href="reading-bs-1.html">अध्यायः 1</a><a href="reading-bs-2.html">अध्यायः 2</a><a href="reading-bs-3.html">अध्यायः 3</a><a href="reading-bs-4.html">अध्यायः 4</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
-// anchor the tip to the tapped word: centred below it, flipped above near the viewport bottom, clamped
-// to screen width — never off-screen / needing scroll (esp. mobile, right column). Tap toggles on touch.
-function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||280,th=tip.offsetHeight||60,m=8;
-  let left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
-  let top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
+})();</script><details class="legend" open><summary>॥ सङ्केत-सूची · legend <span class="tw">▲ tap to fold</span></summary>
+<div class="legbody">
+  <div class="leggrp"><div class="leghd">पदार्थ · hover-analysis</div>
+    <div class="legnote">Hover or tap any word — in the mūla or the bhāṣya — for its analysis — meaning, vibhakti (case·vacana·liṅga), kāraka role, and recursive samāsa vigraha.</div>
+  </div>
+  <div class="legdiv"></div>
+  <div class="leggrp"><div class="leghd">मनन · Śāṅkara-bhāṣya roles</div>
+    <div class="legrow">
+      <span class="item"><span class="sw" style="background:var(--mula)"></span>मूल-प्रतीकम्</span>
+      <span class="item"><span class="sw" style="background:var(--gloss)"></span>व्याख्या · gloss</span>
+      <span class="item"><span class="sw" style="background:var(--import)"></span>तात्पर्यम् · import</span>
+      <span class="item"><span class="sw" style="background:var(--vyak)"></span>व्याकरणम्</span>
+      <span class="item"><span class="sw" style="background:var(--purva)"></span>पूर्वपक्षः</span>
+      <span class="item"><span class="sw" style="background:var(--sid)"></span>सिद्धान्तः</span>
+      <span class="item"><span class="sw" style="background:var(--quote)"></span>प्रमाण-वाक्यम्</span>
+      <span class="item"><u style="text-underline-offset:3px;text-decoration-thickness:1.5px">सङ्ग्रहः</u> · summary-thread</span>
+    </div>
+  </div>
+</div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-bs-1.html">अध्यायः 1</a><a class="refbadge" style="text-decoration:none" href="reading-bs-2.html">अध्यायः 2</a><a class="refbadge" style="text-decoration:none" href="reading-bs-3.html">अध्यायः 3</a><a class="refbadge" style="text-decoration:none" href="reading-bs-4.html">अध्यायः 4</a></div><div id="tip"></div><script>var GM={};var GB={};
+var tip=document.getElementById('tip');
+function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
+function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
+  if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
+  h+=mrow('vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('samāsa',d.sam)+mrow('व्याकरण',d.g);
+  if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';
+  if(d.p)h+='<div class="peel">'+d.p+'</div>';return h;}
+function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
+  var left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
+  var top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
   tip.style.left=left+'px';tip.style.top=top+'px';}
-function show(t){const d=G[t.dataset.w];if(!d)return;tip.textContent=t.dataset.w+' — '+d;tip.style.opacity=1;place(t);}
-const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
-document.addEventListener('mouseover',e=>{if(touch)return;const t=e.target.closest('.w');if(t)show(t);});
-document.addEventListener('mouseout',e=>{if(touch)return;if(e.target.closest('.w'))tip.style.opacity=0;});
-document.addEventListener('click',e=>{const t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}e.stopPropagation();show(t);});
-const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script><style>
+function show(t){
+  if(t.dataset.k){var d=GM[t.dataset.k];if(!d)return;tip.className='';tip.innerHTML=mulaHtml(d);}
+  else if(t.dataset.w){var g=GB[t.dataset.w];if(!g)return;tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
+  else return;
+  tip.style.opacity=1;place(t);}
+var touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
+document.addEventListener('mouseover',function(e){if(touch)return;var t=e.target.closest('.w');if(t)show(t);});
+document.addEventListener('mouseout',function(e){if(touch)return;if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',function(e){var t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}e.stopPropagation();show(t);});
+var root=document.documentElement;
+document.getElementById('tog').onclick=function(){
+  var c=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  root.setAttribute('data-theme',c=='dark'?'light':'dark');};
+</script></div><style>
 #rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
   background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;
   padding:8px 14px;box-shadow:0 3px 12px rgba(0,0,0,.18);cursor:pointer}
@@ -133,4 +268,16 @@ const r=document.documentElement;document.getElementById('tog').onclick=()=>{con
     location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
     close();
   });
+})();</script><script>(function(){
+  var KEY='vv_reading_moolaonly';
+  var seg=document.getElementById('viewseg');if(!seg)return;
+  var btns=[].slice.call(seg.querySelectorAll('button'));
+  function apply(mo){document.body.classList.toggle('moola-only',mo);
+    btns.forEach(function(b){b.classList.toggle('on',(b.dataset.v==='moola')===mo);});}
+  var saved='0';try{saved=localStorage.getItem(KEY)||'0';}catch(e){}
+  apply(saved==='1');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    var mo=b.dataset.v==='moola';apply(mo);
+    try{localStorage.setItem(KEY,mo?'1':'0');}catch(e){}
+  });});
 })();</script></body></html>

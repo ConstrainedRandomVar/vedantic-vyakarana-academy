@@ -1282,10 +1282,10 @@ function renderDashboard() {
     { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['bhasya'], note: 'मूलम् soon' },
+    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['bhasya'], note: 'मूलम् soon' },
-    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['bhasya'], note: 'मूलम् soon' },
+    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula'] },
     { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula'] },
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula'] },
@@ -1325,7 +1325,7 @@ function renderDashboard() {
       <div class="lane-label">🪷 स्वाध्यायः · Read the texts</div>
       <div class="lane-sub">Each text opens its reading page. <span class="mulahue">मूलम्</span> = word-by-word hover (kāraka · vibhakti · samāsa) · <span class="bhasyahue">भाष्यम्</span> = Śāṅkara-bhāṣya.</div>
       <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 texts</span></div>
+        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 · मूलम् + भाष्यम्</span></div>
         <div class="readgrid">${readGroup('prasthana')}</div>
       </div>
       <div class="readgroup">

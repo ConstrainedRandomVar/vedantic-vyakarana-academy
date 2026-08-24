@@ -1298,6 +1298,7 @@ function renderDashboard() {
     { label: 'ऐतरेय · Aitareya', file: 'reading-aitareya-mula.html' },
     { label: 'छान्दोग्य · Chāndogya', file: 'reading-chandogya-mula.html' },
     { label: 'बृहदारण्यक · Bṛhadāraṇyaka', file: 'reading-brha-mula.html' },
+    { label: 'गीता · Bhagavad-gītā', file: 'reading-gita-mula.html' },
     { label: 'ब्रह्मसूत्र · Brahma-sūtra', file: 'reading-bs-mula.html' },
     { label: 'विवेकचूडामणि · VC', file: 'reading-vc.html' },
     { label: 'पञ्चदशी · Pañcadaśī', file: 'reading-pd.html' },

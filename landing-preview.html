@@ -1,0 +1,272 @@
+<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vyākaraṇa Academy — dashboard (landing preview)</title><style>
+:root{
+  /* shared shell — reused from reading-unified-preview.html */
+  --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;
+  /* पदार्थ (mula hover analysis) */
+  --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
+  /* मनन (bhasya roles) */
+  --mula:#1a56db;--gloss:#3f4653;--import:#6d28d9;--vyak:#6b6255;--purva:#b91c1c;
+  --eka:#c2410c;--sid:#15803d;--quote:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--introbg:#f2ede2;
+  --mulatint:rgba(124,90,30,.05);
+  --ok:#15803d;--okbg:#eafaf0;--okline:#bfe3c8;--fill:#c9a35a;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;
+  --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
+  --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
+  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --mulatint:rgba(217,184,119,.07);
+  --ok:#83e0a0;--okbg:#173026;--okline:#2f5a44;--fill:#c9a35a;
+}}
+:root[data-theme=dark]{
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;
+  --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
+  --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
+  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --mulatint:rgba(217,184,119,.07);
+  --ok:#83e0a0;--okbg:#173026;--okline:#2f5a44;--fill:#c9a35a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+.dv{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif}
+a{color:var(--mula);text-decoration:none}
+
+/* top app bar */
+.appbar{position:sticky;top:0;z-index:5;background:var(--introbg);border-bottom:1px solid var(--line);
+  padding:11px 16px;display:flex;align-items:center;gap:10px}
+.appbar h1{margin:0;font-size:16px;font-weight:600}
+.appbar small{color:var(--muted);font-weight:400;font-size:12px}
+.appbar .grow{margin-left:auto}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
+  border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--moola)}
+#tog{white-space:nowrap}
+
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px 90px}
+
+/* dashboard head */
+.dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;
+  font-size:14px;color:var(--muted);flex-wrap:wrap;gap:10px}
+.dash-head .count{font-variant-numeric:tabular-nums}
+.dash-head .count b{color:var(--ink)}
+
+/* lanes */
+.dash-lane{margin-bottom:20px}
+.lane-label{font-size:12px;font-weight:700;color:var(--moola);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:9px}
+.lane-sub{font-size:12px;color:var(--muted);margin:-4px 0 10px}
+.dash-actions{display:flex;gap:8px;flex-wrap:wrap}
+.primary{font-size:14px;padding:9px 15px;border:1px solid var(--moola);border-radius:8px;
+  background:var(--moola);color:var(--bg);cursor:pointer;font-weight:600}
+.primary:hover{filter:brightness(1.08)}
+.secondary{font-size:14px;padding:9px 15px}
+
+/* reading groups */
+.readgroup{margin-bottom:14px}
+.readgroup-head{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;flex-wrap:wrap}
+.readgroup-head .gtitle{font-size:14px;font-weight:600;color:var(--ink)}
+.readgroup-head .gtitle .lat{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
+.readgroup-head .gcount{font-size:11px;color:var(--muted);margin-left:auto}
+.readgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.rcard{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);
+  border-radius:9px;padding:10px 12px;cursor:pointer;transition:box-shadow .1s,border-color .1s;
+  color:inherit}
+.rcard:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);border-color:var(--moola)}
+.rcard .rtitle{font-size:15px;font-weight:600}
+.rcard .rlat{font-size:11px;color:var(--muted);margin-top:-3px}
+/* quiet offering indicator */
+.offers{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto}
+.pill{font-size:10px;line-height:1.5;padding:0 7px;border-radius:999px;border:1px solid;white-space:nowrap}
+.pill.mula{color:var(--moola);border-color:var(--moola);background:var(--mulatint)}
+.pill.bhasya{color:var(--mula);border-color:var(--mula);background:transparent}
+.rnote{font-size:10px;color:var(--muted);font-style:italic}
+
+/* setting */
+.dash-setting{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);
+  margin-top:12px;cursor:pointer;user-select:none}
+.dash-setting input{accent-color:var(--moola)}
+
+/* node cards / categories (from index.html, palette-mapped) */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.category{margin-bottom:12px;border:1px solid var(--line);border-radius:9px;background:var(--card);padding:2px 14px}
+.category summary{cursor:pointer;padding:12px 0;font-size:15px;font-weight:600;color:var(--ink);list-style:revert}
+.category-head-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.category-stats{font-size:12px;font-weight:400;color:var(--muted)}
+.category .grid{padding-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:12px 14px;cursor:pointer;transition:box-shadow .1s}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card.mastered{border-color:var(--okline);background:var(--okbg)}
+.card-top{display:flex;justify-content:space-between;align-items:center}
+.card .code{font-weight:700;color:var(--ink)}
+.card .label{font-size:12px;color:var(--muted);margin:2px 0 0}
+.badge{font-size:11px;color:var(--ok);background:var(--okbg);border:1px solid var(--okline);border-radius:4px;padding:0 6px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:8px}
+.fill{height:100%;background:var(--fill)}
+.card.mastered .fill{background:var(--ok)}
+.stats{font-size:11px;color:var(--muted);margin-top:6px}
+.mocknote{font-size:11px;color:var(--muted);text-align:center;margin-top:26px;opacity:.8}
+</style></head><body>
+<div class="appbar">
+  <h1>Vyākaraṇa Academy <small>— Vedāntic Sanskrit</small></h1>
+  <div class="grow"></div>
+  <button id="tog">◐ theme</button>
+</div>
+
+<div class="wrap">
+
+  <div class="dash-head">
+    <div class="count"><b>34</b> / 41 nodes mastered</div>
+  </div>
+
+  <!-- STUDY MODES: guided full-verse work -->
+  <div class="dash-lane">
+    <div class="lane-label">📖 पठन · Read &amp; learn a full verse</div>
+    <div class="dash-actions">
+      <button class="primary" id="readBtn">📖 Read a verse</button>
+      <button class="secondary" id="tutorialBtn">🧩 वाक्य-विग्रह</button>
+    </div>
+    <div class="lane-sub">वाक्य-विग्रह = whole-sentence kāraka analysis · Read-a-verse = guided word-by-word walk</div>
+  </div>
+
+  <!-- CONSOLIDATED READING LIST: one entry per text -->
+  <div class="dash-lane">
+    <div class="lane-label">🪷 स्वाध्यायः · Read the texts</div>
+    <div class="lane-sub">Each text opens its reading page.
+      <span style="color:var(--moola)">मूलम्</span> = word-by-word hover (kāraka · vibhakti · samāsa) ·
+      <span style="color:var(--mula)">भाष्यम्</span> = Śāṅkara-bhāṣya reflection</div>
+
+    <div class="readgroup">
+      <div class="readgroup-head">
+        <span class="gtitle dv">प्रस्थानत्रयी<span class="lat">· Prasthāna-trayī</span></span>
+        <span class="gcount">12 texts · मूलम् + भाष्यम्</span>
+      </div>
+      <div class="readgrid" id="prasthanatrayi"></div>
+    </div>
+
+    <div class="readgroup">
+      <div class="readgroup-head">
+        <span class="gtitle dv">प्रकरण-ग्रन्थाः<span class="lat">· Prakaraṇa texts</span></span>
+        <span class="gcount">3 texts · मूलम्</span>
+      </div>
+      <div class="readgrid" id="prakarana"></div>
+    </div>
+  </div>
+
+  <!-- DRILL -->
+  <div class="dash-lane">
+    <div class="lane-label">🎯 अभ्यास · Drill</div>
+    <div class="dash-actions">
+      <button class="secondary" id="mixBtn">🔀 Mix it up</button>
+      <button class="secondary" id="adaptiveBtn">Practice</button>
+    </div>
+    <label class="dash-setting"><input type="checkbox" id="autoAdvChk" checked> auto-advance to the next question after answering</label>
+  </div>
+
+  <!-- TOPIC NODES (representative) -->
+  <div id="nodes"></div>
+
+  <p class="mocknote">Static landing preview · links are placeholders (reading-&lt;slug&gt;.html) · not wired to app.js</p>
+</div>
+
+<script>
+// ---- consolidated reading data (one entry per text) ----
+// Overlapping set → unified reading+manana page (मूलम् + भाष्यम्). Kena is ONE entry that offers
+// both pada- and vākya-bhāṣya. Prakaraṇa set → mūla-only padārtha hover reading.
+var PRASTHANATRAYI = [
+  { dv:'गीता',        lat:'Bhagavad-gītā',  file:'reading-gita.html' },
+  { dv:'ईशा',         lat:'Īśā',            file:'reading-isha.html' },
+  { dv:'केन',         lat:'Kena',           file:'reading-kena.html', note:'भाष्यम्: pada + vākya' },
+  { dv:'कठ',          lat:'Kaṭha',          file:'reading-kathaka.html' },
+  { dv:'प्रश्न',       lat:'Praśna',         file:'reading-prashna.html' },
+  { dv:'मुण्डक',      lat:'Muṇḍaka',        file:'reading-mundaka.html' },
+  { dv:'माण्डूक्य',    lat:'Māṇḍūkya',       file:'reading-mandukya.html' },
+  { dv:'तैत्तिरीय',    lat:'Taittirīya',     file:'reading-taitiriya.html' },
+  { dv:'ऐतरेय',       lat:'Aitareya',       file:'reading-aitareya.html' },
+  { dv:'छान्दोग्य',    lat:'Chāndogya',      file:'reading-chandogya.html' },
+  { dv:'बृहदारण्यक',  lat:'Bṛhadāraṇyaka',  file:'reading-brha.html' },
+  { dv:'ब्रह्मसूत्र',    lat:'Brahma-sūtra',   file:'reading-bs.html' },
+];
+var PRAKARANA = [
+  { dv:'विवेकचूडामणि', lat:'Vivekacūḍāmaṇi', file:'reading-vc.html' },
+  { dv:'पञ्चदशी',      lat:'Pañcadaśī',      file:'reading-pd.html' },
+  { dv:'आत्मबोधः',     lat:'Ātmabodha',      file:'reading-ab.html' },
+];
+
+function offersHTML(bhasya, note){
+  var h = '<span class="pill mula dv">मूलम्</span>';
+  if (bhasya) h += '<span class="pill bhasya dv">भाष्यम्</span>';
+  if (note) h += '<span class="rnote">'+note+'</span>';
+  return '<div class="offers">'+h+'</div>';
+}
+function rcard(t, bhasya){
+  return '<a class="rcard" href="'+t.file+'">'
+    + '<div class="rtitle dv">'+t.dv+'</div>'
+    + '<div class="rlat">'+t.lat+'</div>'
+    + offersHTML(bhasya, t.note)
+    + '</a>';
+}
+document.getElementById('prasthanatrayi').innerHTML = PRASTHANATRAYI.map(function(t){return rcard(t,true);}).join('');
+document.getElementById('prakarana').innerHTML     = PRAKARANA.map(function(t){return rcard(t,false);}).join('');
+
+// ---- representative topic nodes (mock progress) ----
+function nodeCard(code, label, streak, target, mastered){
+  var pct = Math.min(100, Math.round(streak/target*100));
+  return '<div class="card'+(mastered?' mastered':'')+'">'
+    + '<div class="card-top"><span class="code">'+code+'</span>'+(mastered?'<span class="badge">✓ mastered</span>':'')+'</div>'
+    + (label?'<div class="label">'+label+'</div>':'')
+    + '<div class="bar"><div class="fill" style="width:'+pct+'%"></div></div>'
+    + '<div class="stats">streak '+streak+' · best '+Math.max(streak,target)+'</div>'
+    + '</div>';
+}
+function categorySection(title, mastered, total, cards){
+  var pct = total?Math.round(mastered/total*100):0;
+  return '<details class="category">'
+    + '<summary><div class="category-head-row"><span class="dv">'+title+'</span>'
+    +   '<span class="category-stats">'+mastered+'/'+total+' mastered</span></div>'
+    +   '<div class="bar"><div class="fill" style="width:'+pct+'%"></div></div></summary>'
+    + '<div class="grid">'+cards+'</div></details>';
+}
+var sandhiCards = [
+  nodeCard('6.1.77','इको यणचि', 5,5,true),
+  nodeCard('6.1.87','आद्गुणः', 5,5,true),
+  nodeCard('6.1.101','अकः सवर्णे दीर्घः', 3,5,false),
+  nodeCard('8.4.62','झरो झरि सवर्णे', 2,5,false),
+].join('');
+var samasaCards = [
+  nodeCard('समासः','classify the compound',5,5,true),
+  nodeCard('🧅 समास-विच्छेद · peel','back-to-back split',4,5,false),
+].join('');
+var vibhaktiCards = [
+  nodeCard('VIB1','vibhakti — kāraka',5,5,true),
+  nodeCard('VIB2','vibhakti — upapada',3,5,false),
+].join('');
+document.getElementById('nodes').innerHTML =
+    categorySection('सन्धिः · sandhi', 2, 4, sandhiCards)
+  + categorySection('समासः · samāsa', 1, 2, samasaCards)
+  + categorySection('विभक्तिः · vibhakti', 1, 2, vibhaktiCards)
+  + '<div class="grid">'
+  +   nodeCard('कारकम्','kāraka role',5,5,true)
+  +   nodeCard('तद्धितः','taddhita',4,5,false)
+  +   nodeCard('कृदन्तः','kṛdanta',5,5,true)
+  + '</div>';
+
+// ---- interactions (placeholders for the mockup) ----
+function stub(name){ return function(){ alert('['+name+'] — wired in app.js'); }; }
+document.getElementById('readBtn').onclick     = stub('Read a verse');
+document.getElementById('tutorialBtn').onclick = stub('वाक्य-विग्रह');
+document.getElementById('mixBtn').onclick      = stub('Mix it up');
+document.getElementById('adaptiveBtn').onclick = stub('Practice');
+
+// ---- ◐ theme toggle (matches reading-unified-preview.html, + persistence) ----
+var root = document.documentElement;
+var saved = localStorage.getItem('theme');
+if (saved) root.setAttribute('data-theme', saved);
+document.getElementById('tog').onclick = function(){
+  var c = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  var next = (c=='dark')?'light':'dark';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+};
+</script>
+</body></html>

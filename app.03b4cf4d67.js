@@ -1268,42 +1268,34 @@ function renderDashboard() {
     CODES_BY_KIND.samasa = CODES_BY_KIND.samasa || [];
     if (!CODES_BY_KIND.samasa.includes('SAMR')) CODES_BY_KIND.samasa.push('SAMR');
   }
-  // मनन · Reflect — standalone reading pages. Two kinds, shown as two rows:
-  //  (1) BHASYA_TEXTS: annotated Śāṅkara-bhāṣya reading (build_reading_view.js, daśopaniṣad + Gītā).
-  //  (2) MULA_TEXTS: word-by-word mūla padārtha with hover analysis (build_vc_reading_view.js) — the
-  //      10 daśopaniṣad mūla (Gemini 3.7 batch) + VC + Pañcadaśī. Add a line when a reading page ships.
-  const BHASYA_TEXTS = [
-    { label: 'ईशा · Īśā', file: 'reading-isha.html' },
-    { label: 'केन · Kena (pada)', file: 'reading-kena_pada.html' },
-    { label: 'केन · Kena (vākya)', file: 'reading-kena_vakya.html' },
-    { label: 'कठ · Kaṭha', file: 'reading-kathaka.html' },
-    { label: 'प्रश्न · Praśna', file: 'reading-prashna.html' },
-    { label: 'मुण्डक · Muṇḍaka', file: 'reading-mundaka.html' },
-    { label: 'माण्डूक्य · Māṇḍūkya', file: 'reading-mandukya.html' },
-    { label: 'तैत्तिरीय · Taittirīya', file: 'reading-taitiriya.html' },
-    { label: 'ऐतरेय · Aitareya', file: 'reading-aitareya.html' },
-    { label: 'छान्दोग्य · Chāndogya', file: 'reading-chandogya.html' },
-    { label: 'बृहदारण्यक · Bṛhadāraṇyaka', file: 'reading-brha.html' },
-    { label: 'गीता · Bhagavad-gītā', file: 'reading-gita.html' },
-    { label: 'ब्रह्मसूत्र · Brahma-sūtra', file: 'reading-bs.html' },
+  // स्वाध्यायः · Read the texts — ONE entry per text (consolidated 2026-08-24; replaces the old
+  // duplicated मनन-bhāṣya + पदार्थ-mūla rows). Overlapping set (group 'prasthana') → the unified
+  // reading+manana page (मूलम् + भाष्यम्, build_unified_reading_view.js → reading-<slug>.html);
+  // prakaraṇa set → mūla-only padārtha hover (build_vc_reading_view.js). Kena is ONE entry — its
+  // pada + vākya bhāṣya are merged into reading-kena.html by the unified builder.
+  const READING_TEXTS = [
+    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya'], note: 'भाष्यम्: pada + vākya' },
+    { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'प्रश्न', lat: 'Praśna', file: 'reading-prashna.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['bhasya'], note: 'मूलम् soon' },
+    { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['bhasya'], note: 'मूलम् soon' },
+    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['bhasya'], note: 'मूलम् soon' },
+    { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula'] },
   ];
-  const MULA_TEXTS = [
-    { label: 'ईशा · Īśā', file: 'reading-isha-mula.html' },
-    { label: 'केन · Kena', file: 'reading-kena-mula.html' },
-    { label: 'कठ · Kaṭha', file: 'reading-kathaka-mula.html' },
-    { label: 'प्रश्न · Praśna', file: 'reading-prashna-mula.html' },
-    { label: 'मुण्डक · Muṇḍaka', file: 'reading-mundaka-mula.html' },
-    { label: 'माण्डूक्य · Māṇḍūkya', file: 'reading-mandukya-mula.html' },
-    { label: 'तैत्तिरीय · Taittirīya', file: 'reading-taitiriya-mula.html' },
-    { label: 'ऐतरेय · Aitareya', file: 'reading-aitareya-mula.html' },
-    { label: 'छान्दोग्य · Chāndogya', file: 'reading-chandogya-mula.html' },
-    { label: 'बृहदारण्यक · Bṛhadāraṇyaka', file: 'reading-brha-mula.html' },
-    { label: 'गीता · Bhagavad-gītā', file: 'reading-gita-mula.html' },
-    { label: 'ब्रह्मसूत्र · Brahma-sūtra', file: 'reading-bs-mula.html' },
-    { label: 'विवेकचूडामणि · VC', file: 'reading-vc.html' },
-    { label: 'पञ्चदशी · Pañcadaśī', file: 'reading-pd.html' },
-    { label: 'आत्मबोधः · Ātmabodha', file: 'reading-ab.html' },
-  ];
+  const readOffers = t => '<div class="offers">'
+    + (t.offers.includes('mula') ? '<span class="pill mula">मूलम्</span>' : '')
+    + (t.offers.includes('bhasya') ? '<span class="pill bhasya">भाष्यम्</span>' : '')
+    + (t.note ? '<span class="rnote">' + t.note + '</span>' : '') + '</div>';
+  const readCard = t => `<a class="rcard" data-reflect="${t.file}"><div class="rtitle">${t.dv}</div><div class="rlat">${t.lat}</div>${readOffers(t)}</a>`;
+  const readGroup = g => READING_TEXTS.filter(t => t.group === g).map(readCard).join('');
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   // sandhi always first (dwarfs every other kind, most-visited by far), rest alphabetical.
   const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
@@ -1323,20 +1315,22 @@ function renderDashboard() {
   app.innerHTML = `
     <div class="dash-head"><div>${masteredN} / ${CODES.length} nodes mastered</div></div>
     <div class="dash-lane">
-      <div class="lane-label">📖 पठन · Read &amp; learn a full verse</div>
-      <div class="dash-actions">
-        <button class="primary" id="readBtn">📖 Read a verse</button>
-        <button class="secondary" id="tutorialBtn">🧩 वाक्य-विग्रह</button>
+      <div class="lane-label">🧠 अभ्यास-मार्गौ · Two ways to study</div>
+      <div class="readgrid modegrid">
+        <a class="rcard modecard" id="readBtn"><div class="rtitle">📖 Read a verse</div><div class="modetag">know each word</div><div class="modedesc">Walk each word — recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the Drill pool.</div></a>
+        <a class="rcard modecard" id="tutorialBtn"><div class="rtitle">🧩 वाक्य-विग्रह</div><div class="modetag">parse the sentence</div><div class="modedesc">How the words relate across the whole sentence — kāraka, qualifier-of, coordination, clauses, uddeśya–vidheya, samāsa vigraha.</div></a>
       </div>
     </div>
     <div class="dash-lane">
-      <div class="lane-label">🪷 मनन · Reflect — Śāṅkara-bhāṣya reading</div>
-      <div class="dash-actions">
-        ${BHASYA_TEXTS.map(t => `<button class="secondary" data-reflect="${t.file}">${t.label}</button>`).join('')}
+      <div class="lane-label">🪷 स्वाध्यायः · Read the texts</div>
+      <div class="lane-sub">Each text opens its reading page. <span class="mulahue">मूलम्</span> = word-by-word hover (kāraka · vibhakti · samāsa) · <span class="bhasyahue">भाष्यम्</span> = Śāṅkara-bhāṣya.</div>
+      <div class="readgroup">
+        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 texts</span></div>
+        <div class="readgrid">${readGroup('prasthana')}</div>
       </div>
-      <div class="lane-label" style="margin-top:12px">📜 पदार्थ · word-by-word mūla reading (hover for kāraka · vibhakti · samāsa)</div>
-      <div class="dash-actions">
-        ${MULA_TEXTS.map(t => `<button class="secondary" data-reflect="${t.file}">${t.label}</button>`).join('')}
+      <div class="readgroup">
+        <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">3 · मूलम्</span></div>
+        <div class="readgrid">${readGroup('prakarana')}</div>
       </div>
     </div>
     <div class="dash-lane">

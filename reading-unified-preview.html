@@ -34,7 +34,15 @@ a{color:var(--mula);text-decoration:none}
 
 /* top controls */
 .topbar{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
-.topbar .grow{margin-left:auto;display:flex;gap:8px}
+.topbar .grow{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--line);border-radius:0;background:var(--card);
+  color:var(--muted);padding:6px 11px;font-size:12.5px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--moola);color:var(--bg);font-weight:600}
+/* mūlam-only view: hide all bhāṣya prose (intro, preambles, bhāṣya zones) */
+body.moola-only .introbox,body.moola-only .pre-zone,body.moola-only .bh-zone{display:none}
+body.moola-only .mula-zone{margin-bottom:14px}
 button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
   border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
 
@@ -86,9 +94,9 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 /* bhasya zone */
 .bh-zone{padding:12px 16px 16px;margin:12px 13px 14px;border-left:3px solid var(--conn);border-radius:0 10px 10px 0}
 .bh-zone .zlabel{color:var(--spine)}
-.pre-zone{padding:11px 16px 2px;margin:9px 13px 0}
+.pre-zone{padding:11px 16px 6px;margin:9px 13px 0;border-left:3px dashed var(--conn);border-radius:0 10px 10px 0}
 .pre{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;
-  line-height:1.95;color:var(--muted);border-left:2px dashed var(--conn);padding-left:10px;margin:0}
+  line-height:1.95;color:var(--muted);margin:0}
 .pre::before{content:"उपोद्घातः";display:block;font-family:-apple-system,sans-serif;font-size:10px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
 .bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:19px;line-height:2.05}
@@ -114,7 +122,7 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 #tip.plain{font-family:"Noto Serif Devanagari",serif;font-size:14.5px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .mantra.navhit{animation:navflash 1.6s ease-out}
-</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>ईशावास्योपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><div id="navbar"><label class="navlvl"><span>अध्याय</span><select data-lvl="0"></select></label><label class="navlvl"><span>मन्त्र</span><select data-lvl="1"></select></label><span class="navgo">→</span></div><script>(function(){var N={"refs": ["1.1", "1.2", "1.3", "1.4", "1.5"], "levels": ["अध्याय", "मन्त्र"], "files": ["reading-unified-preview.html"], "pageIdx": {"1.1": 0, "1.2": 0, "1.3": 0, "1.4": 0, "1.5": 0}, "cur": 0};
+</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><button id="tog">◐ theme</button></div></div><h1>ईशावास्योपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><div id="navbar"><label class="navlvl"><span>अध्याय</span><select data-lvl="0"></select></label><label class="navlvl"><span>मन्त्र</span><select data-lvl="1"></select></label><span class="navgo">→</span></div><script>(function(){var N={"refs": ["1.1", "1.2", "1.3", "1.4", "1.5"], "levels": ["अध्याय", "मन्त्र"], "files": ["reading-unified-preview.html"], "pageIdx": {"1.1": 0, "1.2": 0, "1.3": 0, "1.4": 0, "1.5": 0}, "cur": 0};
 var bar=document.getElementById('navbar');var sels=[].slice.call(bar.querySelectorAll('select'));
 function comps(r){return r.split('.');}
 function optsFor(level,prefix){var out=[],seen={};N.refs.forEach(function(r){var p=comps(r);if(p.length<=level)return;
@@ -241,4 +249,17 @@ document.getElementById('tog').onclick=function(){
     location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
     close();
   });
+})();</script>
+<script>(function(){
+  var KEY='vv_reading_moolaonly';
+  var seg=document.getElementById('viewseg');if(!seg)return;
+  var btns=[].slice.call(seg.querySelectorAll('button'));
+  function apply(mo){document.body.classList.toggle('moola-only',mo);
+    btns.forEach(function(b){b.classList.toggle('on',(b.dataset.v==='moola')===mo);});}
+  var saved='0';try{saved=localStorage.getItem(KEY)||'0';}catch(e){}
+  apply(saved==='1');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    var mo=b.dataset.v==='moola';apply(mo);
+    try{localStorage.setItem(KEY,mo?'1':'0');}catch(e){}
+  });});
 })();</script></body></html>

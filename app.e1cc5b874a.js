@@ -2328,6 +2328,12 @@ function buildTutorialSteps(sentence) {
     // agrees with the कर्ता of X?" references a कर्ता the learner can't see (VC 2 लभ्यते, कर्ता elided).
     const hasKartaRef = c.karta.length || c.samuccayaKarta.length || c.subjectIsHead;
     const hasKarmaRef = c.karma.length || c.samuccayaKarma.length;
+    // उद्देश्य–विधेय: a verbless nominal predication ("X [is] Y" — subjectIsHead) whose head has a real
+    // विधेय (agreementKarta, a co-referential प्रथमा word). Ask the learner to spot the उद्देश्य (subject)
+    // FIRST — the head is otherwise only ever NAMED (in agreementKarta / genderCheck / qualifier prompts),
+    // never itself a click-target. Fired only when there's a genuine predicate nominal, so it's a real
+    // "X is Y" and not a bare genitive head (Harsha, 2026-08-24). Goes before agreementKarta (उद्देश्य→विधेय).
+    if (c.subjectIsHead && c.governorWordIndex != null && c.agreementKarta.length) steps.push({ type: 'nominalSubject', clusterIdx: ci });
     if (c.agreementKarta.length && hasKartaRef) steps.push({ type: 'agreementKarta', clusterIdx: ci });
     if (c.agreementKarma.length && hasKarmaRef) steps.push({ type: 'agreementKarma', clusterIdx: ci });
     if (c.qualifierKarta.length) steps.push({ type: 'qualifierKarta', clusterIdx: ci });
@@ -2450,6 +2456,9 @@ function expectedSetForStep(sentence, step) {
   // कर्ता/कर्म as the corpus's "primary"-tagged one (Harsha, 2026-08-16).
   const kartaFullSet = () => new Set([...coreArgIndices(c, 'karta'), ...c.qualifierKarta]);
   const karmaFullSet = () => new Set([...coreArgIndices(c, 'karma'), ...c.qualifierKarma]);
+  // उद्देश्य = the head subject + any coordinated co-subjects (NOT the विधेय — that's agreementKarta,
+  // asked in its own step). Distinguishing उद्देश्य from विधेय is the whole point of this question.
+  if (step.type === 'nominalSubject') return new Set([c.governorWordIndex, ...c.samuccayaKarta]);
   if (step.type === 'karta' || step.type === 'agreementKarta') return kartaFullSet();
   if (step.type === 'karma' || step.type === 'agreementKarma') return karmaFullSet();
   if (step.type === 'qualifierKarta') return new Set(c.qualifierKarta);
@@ -2790,6 +2799,13 @@ function tutorialStepLabelBase(step, sentence) {
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
+    // उद्देश्य–विधेय (verbless nominal predication). Name the विधेय explicitly so the task is fair —
+    // both stand in the same प्रथमा (सामानाधिकरण्य), so without the cue "pick the subject" would be an
+    // ambiguous guess between two co-referential words (cf. [[feedback_quiz_question_framing]]).
+    case 'nominalSubject': {
+      const vidheya = [...new Set(c.agreementKarta)].map(i => sentence.words[i]).filter(Boolean).join('/');
+      return `This clause has no finite verb — an <b>अस्ति/भवति</b> ("is") is implied, so it is a सामानाधिकरण्य (appositional) predication in which two words share one प्रथमा: the <b>उद्देश्य</b> (the subject — what the statement is <i>about</i>, the logical कर्ता) and the <b>विधेय</b>${vidheya ? ` (here <b>${esc(vidheya)}</b> — what is asserted of it)` : ' (what is asserted of it)'}. Which word is the <b>उद्देश्य</b>? Pick every word that shares the role — including any joined by च (समुच्चय).`;
+    }
     case 'karta': return `For ${gov}, which word(s) together are the कर्ता (the doer — "who?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is none, choose "None of these" below.`;
     case 'karma': return `For ${gov}, which word(s) together are the कर्म (what the action is done to — "whom/what?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is no कर्म, choose "None of these" below.`;
     // Name the word being agreed with DIRECTLY ("agrees with <नर-जन्म>?") rather than "the कर्ता/कर्म of
@@ -3531,7 +3547,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['karta', 'karma', 'verbs', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
+  const multiSelect = ['karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   // "None of these" is offered for EVERY multi-select word step (not just kartā/karma) so a question
@@ -3559,6 +3575,16 @@ function renderTutorial() {
       if (sc) feedbackHtml += `<div class="tut-explain">${sc}</div>`;
     }
     if (step.type === 'qualifierKarta' || step.type === 'qualifierKarma') feedbackHtml += `<div class="tut-explain">${tutorialQualifierCallout()}</div>`;
+    // उद्देश्य–विधेय callout: reinforce the concept, and if the learner picked the विधेय (a reasonable
+    // slip — both words are प्रथमा), name it honourably rather than just "wrong" ([[feedback_quiz_question_framing]]).
+    if (step.type === 'nominalSubject') {
+      const c = sentence.clusters[step.clusterIdx];
+      const pickedVidheya = [...selected].filter(i => (c.agreementKarta || []).includes(i)).map(i => sentence.words[i]).filter(Boolean);
+      const udWord = sentence.words[c.governorWordIndex];
+      let msg = `उद्देश्य (subject) and विधेय (predicate) both stand in the <b>same प्रथमा</b> — that co-reference is सामानाधिकरण्य. The उद्देश्य <b>${esc(udWord)}</b> is what the sentence is <i>about</i>; the विधेय is what is asserted of it.`;
+      if (pickedVidheya.length) msg += ` You picked <b>${esc(pickedVidheya.join('/'))}</b> — that's the विधेय (predicate), a fair confusion since it shares the case; the next question asks for it directly.`;
+      feedbackHtml += `<div class="tut-explain">${msg}</div>`;
+    }
     // Step 1 "honour + explain": if the learner picked a word that isn't a verb here but is easy to
     // mistake for one (e.g. भक्तः in BG 4.3, a predicate noun after असि), explain why + where to pick.
     if (step.type === 'verbs' && sentence.step1Hints) {

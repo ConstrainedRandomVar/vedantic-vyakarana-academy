@@ -61,7 +61,8 @@
     + '#vvstart-pop .vv-row{display:flex;gap:6px;margin-top:8px}'
     + '#vvstart-pop button{font:inherit;font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid var(--line);'
     + '  background:var(--bg);color:var(--ink);cursor:pointer}'
-    + '#vvstart-pop button:hover{background:var(--card)}';
+    + '#vvstart-pop button:hover{background:var(--card)}'
+    + 'body.vvnopeek #tip{display:none !important}';   // presenter: hover drives the laser; hold Alt to peek
   var _st = document.createElement('style'); _st.textContent = CSS;
   (document.head || document.documentElement).appendChild(_st);
 
@@ -278,6 +279,13 @@
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { if (role === 'present') sendClear(); else { clearHi(); clearPt(); } }
     });
+    // Presenter: hover drives the 🔴 laser, so suppress the page's word-analysis tooltip (#tip) while
+    // presenting; hold Alt (Option) to "peek" at the analysis on demand. Followers keep the tooltip.
+    function applyPeekMode() { if (role === 'present') document.body.classList.add('vvnopeek'); else document.body.classList.remove('vvnopeek'); }
+    window.addEventListener('keydown', function (e) { if (e.key === 'Alt' && role === 'present') document.body.classList.remove('vvnopeek'); });
+    window.addEventListener('keyup', function (e) { if (e.key === 'Alt' && role === 'present') document.body.classList.add('vvnopeek'); });
+    window.addEventListener('blur', function () { if (role === 'present') document.body.classList.add('vvnopeek'); });
+    applyPeekMode();
 
     function stopReplay() { replaying = false; replayTimers.forEach(clearTimeout); replayTimers = []; render(); }
     function runReplay(events) {
@@ -323,6 +331,7 @@
     }
     elRoleBtn.onclick = function () {
       role = (role === 'present' ? 'follow' : 'present'); brokeFree = false;
+      applyPeekMode();
       if (role === 'present') { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } render();
     };
     elReplay.onclick = function () { elFile.click(); };
@@ -336,6 +345,7 @@
       tip.innerHTML = '<b>Shared reading.</b> The presenter\'s scrolling, hover (🔴 laser) &amp; word-taps '
         + '(🟡 highlight) mirror to everyone in session <b>' + SESSION + '</b> — each in their own script. '
         + 'Clear the laser/highlight by clicking empty space, clicking the word again, or pressing <b>Esc</b>. '
+        + (role === 'present' ? 'The word-analysis tooltip is hidden while presenting — hold <b>Alt</b> (Option) to peek. ' : '')
         + 'Open a second text in another tab and switch — followers move with you. '
         + (RELAY ? 'Cross-device via relay.' : 'Same-browser (open another tab in this session). Add <code>?relay=wss://…</code> for cross-device.')
         + '<br>Followers can <b>break free</b> to look around, then <b>re-sync</b>. '

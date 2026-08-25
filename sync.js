@@ -211,6 +211,7 @@
         }
         return;
       }
+      if (d.t === 'clear') { if (role === 'follow' && !replaying) { clearHi(); clearPt(); } return; }
     }
     function makeTx() {
       if (RELAY) {
@@ -244,11 +245,14 @@
     function onWordTap(e) {
       if (role !== 'present' || !visible()) return;
       var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
-      if (!el) return;
+      if (!el) { sendClear(); return; }                             // click empty space → clear laser + highlight
+      if (el.classList.contains('synchi')) { sendClear(); return; } // click the highlighted word again → toggle off
       var k = el.getAttribute('data-k'); var r = refOfK(k) || curVerse();
       clearHi(); el.classList.add('synchi');
       sendPos(r, k);
     }
+    // clear the transient laser + the persistent highlight everywhere (click-empty / re-click / Esc)
+    function sendClear() { clearHi(); clearPt(); lastPt = null; send({ t: 'clear' }); if (recording && recLog) { recLog.push({ dt: Date.now() - recT0, clear: true }); } }
     var lastPt = null, ptTs = 0;
     // point carries the hovered word's ref too, so followers can also move to that verse (not just laser it)
     function sendPoint(k) { send({ t: 'point', page: PAGE, k: k, ref: (k ? refOfK(k) : null) }); if (recording && recLog) { recLog.push({ dt: Date.now() - recT0, pt: (k || null) }); } }
@@ -270,12 +274,16 @@
         detach();
       }, { passive: true });
     });
+    // Esc clears laser + highlight (presenter broadcasts the clear; a follower clears its own view)
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { if (role === 'present') sendClear(); else { clearHi(); clearPt(); } }
+    });
 
     function stopReplay() { replaying = false; replayTimers.forEach(clearTimeout); replayTimers = []; render(); }
     function runReplay(events) {
       stopReplay(); if (!events || !events.length) return;
       replaying = true; brokeFree = false;
-      events.forEach(function (ev) { replayTimers.push(setTimeout(function () { if (ev.pt !== undefined) applyPoint(ev.pt); else applyPos(ev.ref, ev.k); }, Math.max(0, ev.dt | 0))); });
+      events.forEach(function (ev) { replayTimers.push(setTimeout(function () { if (ev.clear) { clearHi(); clearPt(); } else if (ev.pt !== undefined) applyPoint(ev.pt); else applyPos(ev.ref, ev.k); }, Math.max(0, ev.dt | 0))); });
       var end = events[events.length - 1].dt | 0;
       replayTimers.push(setTimeout(function () { replaying = false; render(); }, end + 400));
       render();
@@ -327,6 +335,7 @@
       tip = document.createElement('div'); tip.className = 'vs-tip';
       tip.innerHTML = '<b>Shared reading.</b> The presenter\'s scrolling, hover (🔴 laser) &amp; word-taps '
         + '(🟡 highlight) mirror to everyone in session <b>' + SESSION + '</b> — each in their own script. '
+        + 'Clear the laser/highlight by clicking empty space, clicking the word again, or pressing <b>Esc</b>. '
         + 'Open a second text in another tab and switch — followers move with you. '
         + (RELAY ? 'Cross-device via relay.' : 'Same-browser (open another tab in this session). Add <code>?relay=wss://…</code> for cross-device.')
         + '<br>Followers can <b>break free</b> to look around, then <b>re-sync</b>. '

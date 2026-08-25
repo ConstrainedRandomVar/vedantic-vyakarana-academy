@@ -40,8 +40,8 @@ a{color:var(--mula);text-decoration:none}
   color:var(--muted);padding:6px 11px;font-size:12.5px;cursor:pointer}
 .seg button:last-child{border-right:0}
 .seg button.on{background:var(--moola);color:var(--bg);font-weight:600}
-/* mūlam-only view: hide all bhāṣya prose (intro, preambles, bhāṣya zones) */
-body.moola-only .introbox,body.moola-only .pre-zone,body.moola-only .bh-zone{display:none}
+/* mūlam-only view: hide all bhāṣya prose (intro, preambles, bhāṣya zones, end-notes) */
+body.moola-only .introbox,body.moola-only .pre-zone,body.moola-only .bh-zone,body.moola-only .post-zone{display:none}
 body.moola-only .mula-zone{margin-bottom:14px}
 button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
   border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
@@ -98,6 +98,12 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 .pre{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;
   line-height:1.95;color:var(--muted);margin:0}
 .pre::before{content:"उपोद्घातः";display:block;font-family:-apple-system,sans-serif;font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
+/* end-of-section note (::post) — mirrors .pre-zone but sits AFTER the bhāṣya zone */
+.post-zone{padding:6px 16px 12px;margin:0 13px 14px;border-left:3px dashed var(--conn);border-radius:0 10px 10px 0}
+.post{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;
+  line-height:1.95;color:var(--muted);margin:0}
+.post::before{content:"उपसंहारः";display:block;font-family:-apple-system,sans-serif;font-size:10px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
 .bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:19px;line-height:2.05}
 

@@ -96,6 +96,45 @@ const AUTO_ADVANCE_DELAY_WRONG = 1100;
 const AUTO_ADVANCE_KEY = 'vyakarana_auto_advance';
 function autoAdvanceOn() { return localStorage.getItem(AUTO_ADVANCE_KEY) !== '0'; }
 function setAutoAdvance(on) { localStorage.setItem(AUTO_ADVANCE_KEY, on ? '1' : '0'); }
+// ---- Settings (⚙ gear): auto-advance + reading-page script. The script pref (vv_script) is only SET
+// here; it's READ + applied by the reading pages' translit.js (the quiz itself is never transliterated).
+// Shared localStorage key, so the gear default and the reading-page picker stay in sync. ----
+const SCRIPT_KEY = 'vv_script';
+function readingScript() { return localStorage.getItem(SCRIPT_KEY) === 'iast' ? 'iast' : 'dev'; }
+function reflectScriptSeg() {
+  const d = document.getElementById('setScrDev'), i = document.getElementById('setScrIast');
+  if (d && i) { const s = readingScript(); d.className = (s === 'dev') ? 'on' : ''; i.className = (s === 'iast') ? 'on' : ''; }
+}
+function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScriptSeg(); }
+function openSettings() {
+  let ov = document.getElementById('settings-ov');
+  if (!ov) {
+    ov = document.createElement('div'); ov.id = 'settings-ov';
+    ov.innerHTML = `<div id="settings-box">
+      <h2>⚙ Settings</h2>
+      <div class="set-row">
+        <div class="set-label">Practice</div>
+        <label class="set-check"><input type="checkbox" id="setAutoAdv"> Auto-advance to the next question after answering</label>
+      </div>
+      <div class="set-row">
+        <div class="set-label">Script · reading pages</div>
+        <div class="set-seg"><button id="setScrDev">देवनागरी</button><button id="setScrIast">IAST</button></div>
+        <div class="set-hint">Applies to the “Read the texts” pages — shows the same Sanskrit in Devanāgarī or IAST (Latin). The quiz is unaffected.</div>
+      </div>
+      <div style="text-align:right"><button class="secondary" id="setClose">Done</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('on'); });
+    document.getElementById('setClose').onclick = () => ov.classList.remove('on');
+    const chk = document.getElementById('setAutoAdv');
+    chk.onchange = () => setAutoAdvance(chk.checked);
+    document.getElementById('setScrDev').onclick = () => setReadingScript('dev');
+    document.getElementById('setScrIast').onclick = () => setReadingScript('iast');
+  }
+  document.getElementById('setAutoAdv').checked = autoAdvanceOn();
+  reflectScriptSeg();
+  ov.classList.add('on');
+}
 const RECENT_ANSWER_WINDOW = 12; // ~3 questions' worth of shown strings (correct + distractors)
 
 // ---- sound feedback (per-answer ding/buzz + a batch-of-10-complete fanfare, à la Khan Academy) ----
@@ -1339,7 +1378,6 @@ function renderDashboard() {
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>
         <button class="secondary" id="adaptiveBtn">Practice</button>
       </div>
-      <label class="dash-setting"><input type="checkbox" id="autoAdvChk" ${autoAdvanceOn() ? 'checked' : ''}> auto-advance to the next question after answering</label>
     </div>
     ${categorySections.join('')}
     <div class="grid">
@@ -1350,8 +1388,6 @@ function renderDashboard() {
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
   document.getElementById('tutorialBtn').onclick = () => { view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
   app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
-  const autoAdvChk = document.getElementById('autoAdvChk');
-  if (autoAdvChk) autoAdvChk.onchange = () => setAutoAdvance(autoAdvChk.checked);
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
 }
 
@@ -3748,6 +3784,7 @@ function renderTutorialPicker() {
 // Boot: honor a ?tut=<ref>[&step=<type>][&cluster=<n>] testing back-gate (see jumpToTutorial), else
 // the normal dashboard.
 (function boot() {
+  const g = document.getElementById('gearBtn'); if (g) g.onclick = openSettings;
   try {
     const q = new URLSearchParams(location.search);
     if (q.get('tut')) {

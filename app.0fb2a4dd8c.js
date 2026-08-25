@@ -100,12 +100,10 @@ function setAutoAdvance(on) { localStorage.setItem(AUTO_ADVANCE_KEY, on ? '1' : 
 // here; it's READ + applied by the reading pages' translit.js (the quiz itself is never transliterated).
 // Shared localStorage key, so the gear default and the reading-page picker stay in sync. ----
 const SCRIPT_KEY = 'vv_script';
-function readingScript() { return localStorage.getItem(SCRIPT_KEY) === 'iast' ? 'iast' : 'dev'; }
-function reflectScriptSeg() {
-  const d = document.getElementById('setScrDev'), i = document.getElementById('setScrIast');
-  if (d && i) { const s = readingScript(); d.className = (s === 'dev') ? 'on' : ''; i.className = (s === 'iast') ? 'on' : ''; }
-}
-function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScriptSeg(); }
+const SCRIPT_OPTS = [['dev', 'देवनागरी'], ['iast', 'IAST'], ['kannada', 'ಕನ್ನಡ'], ['tamil', 'தமிழ்'], ['telugu', 'తెలుగు'], ['malayalam', 'മലയാളം'], ['bengali', 'বাংলা'], ['gujarati', 'ગુজરાતી'], ['cyrillic', 'Русский'], ['siddham', 'Siddhaṃ 梵字'], ['katakana', 'カタカナ']];
+function readingScript() { const v = localStorage.getItem(SCRIPT_KEY); return ['iast', 'kannada', 'tamil'].includes(v) ? v : 'dev'; }
+function reflectScriptSel() { const el = document.getElementById('setScrSel'); if (el) el.value = readingScript(); }
+function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScriptSel(); }
 function openSettings() {
   let ov = document.getElementById('settings-ov');
   if (!ov) {
@@ -118,8 +116,8 @@ function openSettings() {
       </div>
       <div class="set-row">
         <div class="set-label">Script · reading pages</div>
-        <div class="set-seg"><button id="setScrDev">देवनागरी</button><button id="setScrIast">IAST</button></div>
-        <div class="set-hint">Applies to the “Read the texts” pages — shows the same Sanskrit in Devanāgarī or IAST (Latin). The quiz is unaffected.</div>
+        <select id="setScrSel" class="set-select">${SCRIPT_OPTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
+        <div class="set-hint">Applies to the “Read the texts” pages — shows the same Sanskrit in Devanāgarī, IAST, or another script (Kannada, Tamil, Telugu, Malayalam, Bengali, Gujarati, Cyrillic, Siddhaṃ, katakana). The quiz is unaffected.</div>
       </div>
       <div style="text-align:right"><button class="secondary" id="setClose">Done</button></div>
     </div>`;
@@ -128,11 +126,10 @@ function openSettings() {
     document.getElementById('setClose').onclick = () => ov.classList.remove('on');
     const chk = document.getElementById('setAutoAdv');
     chk.onchange = () => setAutoAdvance(chk.checked);
-    document.getElementById('setScrDev').onclick = () => setReadingScript('dev');
-    document.getElementById('setScrIast').onclick = () => setReadingScript('iast');
+    document.getElementById('setScrSel').onchange = (e) => setReadingScript(e.target.value);
   }
   document.getElementById('setAutoAdv').checked = autoAdvanceOn();
-  reflectScriptSeg();
+  reflectScriptSel();
   ov.classList.add('on');
 }
 const RECENT_ANSWER_WINDOW = 12; // ~3 questions' worth of shown strings (correct + distractors)

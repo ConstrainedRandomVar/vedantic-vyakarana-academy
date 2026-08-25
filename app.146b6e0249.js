@@ -1370,6 +1370,13 @@ function renderDashboard() {
       </div>
     </div>
     <div class="dash-lane">
+      <div class="lane-label">🔎 उपकरणानि · Other tools</div>
+      <div class="readgrid modegrid">
+        <a class="rcard modecard" href="https://vyakarana-corpus-chat.onrender.com/" target="_blank" rel="noopener"><div class="rtitle">🔎 जिज्ञासा · Ask the corpus</div><div class="modetag">query all 15 texts</div><div class="modedesc">Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed.</div></a>
+        <a class="rcard modecard" href="https://constrainedrandomvar.github.io/prasthanatrayi-search/" target="_blank" rel="noopener"><div class="rtitle">🔦 अन्वेषण · Full-text search</div><div class="modetag">find any phrase</div><div class="modedesc">Search the source texts &amp; commentaries for any word or phrase, with page-linked results.</div></a>
+      </div>
+    </div>
+    <div class="dash-lane">
       <div class="lane-label">🎯 अभ्यास · Drill</div>
       <div class="dash-actions">
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>

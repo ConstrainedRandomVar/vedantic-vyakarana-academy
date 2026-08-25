@@ -236,9 +236,8 @@
   // ---- picker (dropdown, next to the ◐ theme button) ----
   function mount() {
     var st = document.createElement('style');
-    // Siddhaṃ needs a webfont or it renders as tofu boxes. NotoSansSiddham.woff2 is a PENDING drop-in
-    // (network is blocked now) — degrades gracefully (boxes) until it lands. build_deploy must copy the
-    // woff2 alongside this asset AND add it to the SW precache list.
+    // Siddhaṃ needs a webfont or it renders as tofu boxes. NotoSansSiddham.woff2 ships alongside this
+    // asset (build_deploy copies it, precaches it in the SW SHELL, and serves it cache-first).
     st.textContent = '#scriptpick{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px;margin-right:8px;vertical-align:middle;cursor:pointer;float:none}'
       + "@font-face{font-family:'Noto Sans Siddham';src:url('NotoSansSiddham.woff2') format('woff2');font-display:swap;}"
       + 'body.lipi-siddham,body.lipi-siddham *{font-family:\'Noto Sans Siddham\',serif;}';

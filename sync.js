@@ -196,7 +196,21 @@
       var d = m.data || {};
       if (d.t === 'hello') { if (role === 'present' && activeTab() && last.ref) sendPos(last.ref, last.k); return; }
       if (d.t === 'pos') { if (role === 'follow' && !replaying) { if (maybeNav(d.page, d.ref)) return; applyPos(d.ref, d.k); } return; }
-      if (d.t === 'point') { if (role === 'follow' && !replaying) { if (maybeNav(d.page, d.ref || refOfK(d.k))) return; applyPoint(d.k); } return; }
+      if (d.t === 'point') {
+        if (role === 'follow' && !replaying) {
+          var pref = d.ref || refOfK(d.k);
+          if (maybeNav(d.page, pref)) return;
+          // hovering into a NEW verse gently brings it into view (block:nearest = minimal move, no yank);
+          // hovering within the current verse just moves the laser.
+          if (pref && pref !== last.ref && !brokeFree) {
+            last.ref = pref;
+            var v = document.getElementById('v-' + pref);
+            if (v) { v.classList.add('syncv'); v.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+          }
+          applyPoint(d.k);
+        }
+        return;
+      }
     }
     function makeTx() {
       if (RELAY) {
@@ -236,13 +250,15 @@
       sendPos(r, k);
     }
     var lastPt = null, ptTs = 0;
-    function sendPoint(k) { send({ t: 'point', page: PAGE, k: k }); if (recording && recLog) { recLog.push({ dt: Date.now() - recT0, pt: (k || null) }); } }
+    // point carries the hovered word's ref too, so followers can also move to that verse (not just laser it)
+    function sendPoint(k) { send({ t: 'point', page: PAGE, k: k, ref: (k ? refOfK(k) : null) }); if (recording && recLog) { recLog.push({ dt: Date.now() - recT0, pt: (k || null) }); } }
     function onMove(e) {
       if (role !== 'present' || replaying || !visible()) return;
       var now = Date.now(); if (now - ptTs < 70) return; ptTs = now;
       var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
       var k = el ? el.getAttribute('data-k') : null;
       if (k === lastPt) return; lastPt = k;
+      if (k) { var r = refOfK(k); if (r) lastRef = r; }   // keep presenter state at the pointed verse (late joiners land here)
       applyPoint(k); sendPoint(k);
     }
     function onLeaveDoc() { if (role === 'present' && lastPt !== null) { lastPt = null; applyPoint(null); sendPoint(null); } }

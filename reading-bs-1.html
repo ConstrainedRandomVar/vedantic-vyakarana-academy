@@ -30,7 +30,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 h1{font-size:21px;margin:0 0 2px}
 .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
 a{color:var(--mula);text-decoration:none}
-.dv{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif}
+.dv{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;overflow-wrap:anywhere;word-break:break-word}
 
 /* top controls */
 .topbar{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
@@ -133,6 +133,7 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 .vk .vk-v{display:flex;gap:8px;margin:0 0 11px}.vk .vk-v:last-child{margin-bottom:0}
 .vk .vk-n{flex:0 0 auto;min-width:2em;text-align:right;color:var(--role);font-size:13px;font-family:-apple-system,sans-serif;line-height:1.95;opacity:.8}
 .vk .vk-x{flex:1 1 auto;min-width:0}
+.vk .w{cursor:default}   /* whole-verse laser/highlight target — not a word-gloss link */
 /* पार्श्वे layout — two balanced columns, widened page */
 body.parshve .wrap{max-width:1320px}
 body.parshve .paira{display:flex;gap:10px;align-items:flex-start}
@@ -347,14 +348,16 @@ document.getElementById('tog').onclick=function(){
   var place='inter';try{place=localStorage.getItem(PKEY)||'inter';}catch(e){}
   if(place!=='side')place='inter';
   function render(){
-    // section-gran commentaries (vārttika) are पार्श्वे-only → force side & disable the placement control
+    // vārttika (section-gran): placements are पार्श्वे (side) | अधः (below, = the 'inter' slot); ṭīkā: अन्तः | पार्श्वे.
+    // CSS forces below at ≤1024px so phones never get the cramped side-by-side.
     var curBtn=side?seg.querySelector('button[data-side="'+side+'"]'):null;
-    var forceSide=!!(curBtn&&curBtn.getAttribute('data-gran')==='section');
-    var eff=forceSide?'side':place;
-    document.body.classList.toggle('parshve',eff==='side'&&!!side);
+    var sectionGran=!!(curBtn&&curBtn.getAttribute('data-gran')==='section');
+    document.body.classList.toggle('parshve',place==='side'&&!!side);
     if(side)document.body.setAttribute('data-side',side);else document.body.removeAttribute('data-side');
     sideBtns.forEach(function(b){b.classList.toggle('on',(b.dataset.side||'')===(side||''));});
-    placeBtns.forEach(function(b){b.classList.toggle('on',b.dataset.place===eff);b.disabled=forceSide;b.style.opacity=forceSide?'.4':'';});
+    placeBtns.forEach(function(b){
+      if(b.dataset.place==='inter')b.textContent=sectionGran?'अधः':'अन्तः';
+      b.classList.toggle('on',b.dataset.place===place);b.disabled=false;b.style.opacity='';});
   }
   render();
   function fire(){ if(window.__vvView&&window.__vvView.onChange)window.__vvView.onChange(side,place); }

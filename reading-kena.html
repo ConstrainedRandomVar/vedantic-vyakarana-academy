@@ -107,6 +107,24 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
   letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
 .bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:19px;line-height:2.05}
 
+/* पार्श्वे · side-commentary (Ānandagiri-ṭīkā etc.) — interleaved on the right, one at a time */
+.paira{display:block}
+.side-zone{display:none}
+.side-zone .zlabel{color:var(--role)}
+.tika{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;line-height:1.95}
+.tk{margin:0 0 10px}.tk:last-child{margin-bottom:0}
+.tk-ava{color:var(--muted);font-style:italic}
+.tk-prat{color:var(--role);font-weight:700}
+.tk-vy{color:var(--ink)}
+.tk-mng{color:var(--role);font-weight:600}
+/* when a side-commentary is chosen: widen, lay bhāṣya|ṭīkā side-by-side, reveal the chosen panel only */
+body.parshve .wrap{max-width:1180px}
+body.parshve .paira{display:flex;gap:8px;align-items:flex-start}
+body.parshve .paira>.bh-zone{flex:1 1 0;min-width:0}
+body.parshve .side-zone{flex:1 1 0;min-width:0;padding:12px 16px 16px;margin:12px 13px 14px;
+  border-left:3px solid var(--role);border-radius:0 10px 10px 0;background:var(--mulatint)}
+@media(max-width:900px){body.parshve .paira{flex-direction:column}body.parshve .wrap{max-width:820px}}
+
 /* bhasya role colours */
 .mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
@@ -128,7 +146,8 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 #tip.plain{font-family:"Noto Serif Devanagari",serif;font-size:14.5px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .mantra.navhit{animation:navflash 1.6s ease-out}
-</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><button id="tog">◐ theme</button></div></div><h1>केनोपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
+.seglbl{font-size:12.5px;color:var(--muted);align-self:center;margin-right:-2px}
+body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><span class="seglbl dv">पार्श्वे</span><div class="seg dv" id="sideseg" role="group" aria-label="पार्श्वे"><button type="button" data-side="">✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button></div><button id="tog">◐ theme</button></div></div><h1>केनोपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
 #navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
   background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;
   box-shadow:0 2px 10px rgba(0,0,0,.04)}
@@ -286,4 +305,19 @@ document.getElementById('tog').onclick=function(){
     var mo=b.dataset.v==='moola';apply(mo);
     try{localStorage.setItem(KEY,mo?'1':'0');}catch(e){}
   });});
-})();</script><script>window.VVSYNC={slug:""};</script><script src="sync.js" defer></script><script src="translit.js"></script></body></html>
+})();</script><script>(function(){
+  var KEY='vv_reading_side';
+  var seg=document.getElementById('sideseg');if(!seg)return;
+  var btns=[].slice.call(seg.querySelectorAll('button'));
+  function apply(side){
+    document.body.classList.toggle('parshve',!!side);
+    if(side)document.body.setAttribute('data-side',side);else document.body.removeAttribute('data-side');
+    btns.forEach(function(b){b.classList.toggle('on',(b.dataset.side||'')===(side||''));});}
+  var saved='';try{saved=localStorage.getItem(KEY)||'';}catch(e){}
+  if(saved&&!seg.querySelector('button[data-side="'+saved+'"]'))saved='';  // that commentary not on this page
+  apply(saved);
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    var side=b.dataset.side||'';apply(side);
+    try{localStorage.setItem(KEY,side);}catch(e){}
+  });});
+})();</script><script src="translit.js"></script></body></html>

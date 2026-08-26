@@ -145,6 +145,7 @@
     var ended = false;     // follower: presenter ended the session
     var followers = null;  // presenter: live follower count from the relay's roster (null until known)
     var lastView = null;   // last commentary view {side,place} — presenter broadcasts, follower mirrors
+    var resumeGuard = 0;   // suppress accidental break-free right after the screen wakes / WS reconnects
     var SELF = 'c' + Math.floor((Math.random() * 1e9)) + '-' + ((window.performance && performance.now) ? Math.floor(performance.now()) : 0);
     var PAGE = (location.pathname.split('/').pop() || 'index.html');
 
@@ -240,7 +241,7 @@
       if (RELAY) {
         try {
           var ws = new WebSocket(RELAY);
-          ws.onopen = function () { status = 'live'; render(); send({ t: 'hello' }); };
+          ws.onopen = function () { status = 'live'; if (role === 'follow' && !replaying) resumeGuard = Date.now() + 2500; render(); send({ t: 'hello' }); };
           ws.onclose = function () { status = 'offline'; render(); if (!replaying) setTimeout(makeTx, 2500); };
           ws.onerror = function () { status = 'offline'; render(); };
           ws.onmessage = function (e) { try { onMsg(JSON.parse(e.data)); } catch (_) {} };
@@ -293,7 +294,8 @@
     }
     function onLeaveDoc() { if (role === 'present' && lastPt !== null) { lastPt = null; applyPoint(null); sendPoint(null); } }
 
-    function detach() { if (role === 'follow' && !brokeFree && !replaying) { brokeFree = true; render(); } }
+    function detach() { if (Date.now() < resumeGuard) return;   // ignore the wake/reconnect settle-touch
+      if (role === 'follow' && !brokeFree && !replaying) { brokeFree = true; render(); } }
     ['wheel', 'touchmove', 'keydown'].forEach(function (ev) {
       window.addEventListener(ev, function (e) {
         if (ev === 'keydown' && !/Arrow|Page|Home|End| /.test(e.key || '')) return;
@@ -340,7 +342,7 @@
       var dot = '<span class="vs-dot ' + dotClass() + '"></span>';
       if (replaying) { elRole.innerHTML = dot + '▶ replaying'; }
       else if (role === 'present') { elRole.innerHTML = dot + (stopped ? '⏹ session ended' : paused ? '⏸ paused' : '🎙 presenting') + (followers != null ? ' · 👥 ' + followers : ''); }
-      else { elRole.innerHTML = dot + (ended ? '⏹ session ended' : brokeFree ? '🔓 detached' : '👀 following'); }
+      else { elRole.innerHTML = dot + (ended ? '⏹ session ended' : status === 'offline' ? '⚠ reconnecting…' : brokeFree ? '🔓 detached' : '👀 following'); }
       elSid.textContent = SESSION + (RELAY ? ' · relay' : ' · local') + (status === 'offline' ? ' · offline' : '');
       if (replaying) { elAct.textContent = '⏹ stop'; elAct.className = ''; elAct.onclick = stopReplay; }
       else if (role === 'present') {
@@ -401,7 +403,13 @@
     document.addEventListener('mouseleave', onLeaveDoc);
     function announceLive() { if (role === 'present' && !paused && !stopped && !replaying && activeTab()) { sendView(); var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } }
     window.addEventListener('focus', announceLive);
-    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(announceLive, 60); });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return;
+      // screen woke / tab refocused: give a following user a grace window so the wake-touch doesn't
+      // accidentally break them free, and re-request the presenter's current position to catch up.
+      if (role === 'follow' && !replaying && !brokeFree) { resumeGuard = Date.now() + 2500; setTimeout(function () { if (tx) send({ t: 'hello' }); }, 60); }
+      setTimeout(announceLive, 60);
+    });
 
     // bridge: the page's commentary chooser calls this on a user change → presenter broadcasts it
     window.__vvView = window.__vvView || {};

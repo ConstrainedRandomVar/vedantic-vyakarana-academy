@@ -143,6 +143,7 @@
     var paused = false;    // presenter: temporarily hold broadcasting (followers wait)
     var stopped = false;   // presenter: session ended (followers notified + freed)
     var ended = false;     // follower: presenter ended the session
+    var followers = null;  // presenter: live follower count from the relay's roster (null until known)
     var SELF = 'c' + Math.floor((Math.random() * 1e9)) + '-' + ((window.performance && performance.now) ? Math.floor(performance.now()) : 0);
     var PAGE = (location.pathname.split('/').pop() || 'index.html');
 
@@ -205,7 +206,7 @@
     }
 
     var tx = null, status = '…';
-    function send(data) { if (tx) tx.send({ room: SESSION, from: SELF, data: data }); }
+    function send(data) { if (tx) tx.send({ room: SESSION, from: SELF, role: role, data: data }); }
     function onMsg(m) {
       if (!m || m.room !== SESSION || m.from === SELF) return;
       var d = m.data || {};
@@ -231,6 +232,7 @@
       }
       if (d.t === 'clear') { if (role === 'follow' && !replaying) { clearHi(); clearPt(); } return; }
       if (d.t === 'end') { if (role === 'follow' && !replaying) { ended = true; brokeFree = true; clearHi(); clearPt(); render(); } return; }
+      if (d.t === 'roster') { followers = d.followers; if (role === 'present') render(); return; }   // relay's live follower count
     }
     function makeTx() {
       if (RELAY) {
@@ -332,7 +334,7 @@
     function render() {
       var dot = '<span class="vs-dot ' + dotClass() + '"></span>';
       if (replaying) { elRole.innerHTML = dot + '▶ replaying'; }
-      else if (role === 'present') { elRole.innerHTML = dot + (stopped ? '⏹ session ended' : paused ? '⏸ paused' : '🎙 presenting'); }
+      else if (role === 'present') { elRole.innerHTML = dot + (stopped ? '⏹ session ended' : paused ? '⏸ paused' : '🎙 presenting') + (followers != null ? ' · 👥 ' + followers : ''); }
       else { elRole.innerHTML = dot + (ended ? '⏹ session ended' : brokeFree ? '🔓 detached' : '👀 following'); }
       elSid.textContent = SESSION + (RELAY ? ' · relay' : ' · local') + (status === 'offline' ? ' · offline' : '');
       if (replaying) { elAct.textContent = '⏹ stop'; elAct.className = ''; elAct.onclick = stopReplay; }

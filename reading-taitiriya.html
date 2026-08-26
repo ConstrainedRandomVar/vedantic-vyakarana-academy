@@ -128,6 +128,11 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 .side-zone .zlabel{color:var(--role)}
 .tika{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;line-height:1.95}
 .tk{margin:0 0 10px}.tk:last-child{margin-bottom:0}
+/* सुरेश्वर-वार्त्तिकम् (section-gran side): a brāhmaṇa's numbered verses */
+.vk .vk-t{font-family:-apple-system,sans-serif;font-size:12px;color:var(--muted);font-weight:500}
+.vk .vk-v{display:flex;gap:8px;margin:0 0 11px}.vk .vk-v:last-child{margin-bottom:0}
+.vk .vk-n{flex:0 0 auto;min-width:2em;text-align:right;color:var(--role);font-size:13px;font-family:-apple-system,sans-serif;line-height:1.95;opacity:.8}
+.vk .vk-x{flex:1 1 auto;min-width:0}
 /* पार्श्वे layout — two balanced columns, widened page */
 body.parshve .wrap{max-width:1320px}
 body.parshve .paira{display:flex;gap:10px;align-items:flex-start}
@@ -165,7 +170,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 @media(max-width:520px){.topbar{flex-wrap:wrap}.topbar .grow{width:100%;justify-content:flex-start}
   .topbar .seg button{padding:5px 8px;font-size:11.5px}.seglbl{font-size:11px}
   .topbar select{font-size:12px;padding:4px 6px;min-width:0}.topbar #tog{padding:5px 8px;font-size:11.5px}}
-body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:hidden}</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div><button id="tog">◐ theme</button></div></div><h1>तैत्तिरीयोपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
+body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}body[data-side="vartika"] .side-zone[data-side="vartika"]{display:block}html,body{overflow-x:hidden}</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button><button type="button" data-side="vartika" data-gran="section">सुरेश्वर-वार्त्तिकम्</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div><button id="tog">◐ theme</button></div></div><h1>तैत्तिरीयोपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
 #navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
   background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;
   box-shadow:0 2px 10px rgba(0,0,0,.04)}
@@ -226,6 +231,10 @@ else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.
       <span class="item">व्याख्या — the explanation</span>
     </div>
     <div class="legnote" style="margin-top:5px">Show it inline in the bhāṣya (अन्तः) or beside it (पार्श्वे) from the top bar; on phones it's always inline.</div>
+  </div>
+  <div class="legdiv"></div>
+  <div class="leggrp"><div class="leghd">सुरेश्वर-वार्त्तिकम् · vārttika</div>
+    <div class="legnote">Sureśvara's verse-vārttika on the whole brāhmaṇa (AdvaitaSharada-style). Choose it from the top bar; it reads पार्श्वे beside the last mantra of each section (and, on phones, below it). Numbers are Sureśvara's own verse-count.</div>
   </div>
 </div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-taitiriya-1.html">वल्ली 1</a><a class="refbadge" style="text-decoration:none" href="reading-taitiriya-2.html">वल्ली 2</a><a class="refbadge" style="text-decoration:none" href="reading-taitiriya-3.html">वल्ली 3</a></div><div id="tip"></div><script>var GM={};var GB={};
 var tip=document.getElementById('tip');
@@ -350,10 +359,14 @@ document.getElementById('tog').onclick=function(){
   var place='inter';try{place=localStorage.getItem(PKEY)||'inter';}catch(e){}
   if(place!=='side')place='inter';
   function render(){
-    document.body.classList.toggle('parshve',place==='side'&&!!side);
+    // section-gran commentaries (vārttika) are पार्श्वे-only → force side & disable the placement control
+    var curBtn=side?seg.querySelector('button[data-side="'+side+'"]'):null;
+    var forceSide=!!(curBtn&&curBtn.getAttribute('data-gran')==='section');
+    var eff=forceSide?'side':place;
+    document.body.classList.toggle('parshve',eff==='side'&&!!side);
     if(side)document.body.setAttribute('data-side',side);else document.body.removeAttribute('data-side');
     sideBtns.forEach(function(b){b.classList.toggle('on',(b.dataset.side||'')===(side||''));});
-    placeBtns.forEach(function(b){b.classList.toggle('on',b.dataset.place===place);});
+    placeBtns.forEach(function(b){b.classList.toggle('on',b.dataset.place===eff);b.disabled=forceSide;b.style.opacity=forceSide?'.4':'';});
   }
   render();
   sideBtns.forEach(function(b){b.addEventListener('click',function(){

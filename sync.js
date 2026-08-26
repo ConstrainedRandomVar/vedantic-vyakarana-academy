@@ -74,7 +74,8 @@
     + '  <span class="vs-sid" id="vs-sid"></span>'
     + '  <span class="vs-sp"></span>'
     + '  <button id="vs-act" type="button"></button>'
-    + '  <button id="vs-role-btn" type="button" title="Switch role">⇄</button>'
+    + '  <button id="vs-role-btn" type="button" title="Pause / resume broadcasting">⏸ pause</button>'
+    + '  <button id="vs-stop" type="button" title="End the session for everyone">⏹ end</button>'
     + '  <button id="vs-replay" type="button" title="Load a recorded session to replay">▶ replay</button>'
     + '  <input id="vs-file" type="file" accept="application/json,.json" hidden>'
     + '  <button class="vs-x" id="vs-help" type="button" title="What is this?">ⓘ</button>'
@@ -139,7 +140,9 @@
     // break free / re-sync but can never present. A presenter can PAUSE (stop broadcasting) & resume.
     var CAN_PRESENT = (qp('role') === 'present' || qp('role') === 'p');
     var role = CAN_PRESENT ? 'present' : 'follow';
-    var paused = false;
+    var paused = false;    // presenter: temporarily hold broadcasting (followers wait)
+    var stopped = false;   // presenter: session ended (followers notified + freed)
+    var ended = false;     // follower: presenter ended the session
     var SELF = 'c' + Math.floor((Math.random() * 1e9)) + '-' + ((window.performance && performance.now) ? Math.floor(performance.now()) : 0);
     var PAGE = (location.pathname.split('/').pop() || 'index.html');
 
@@ -207,7 +210,7 @@
       if (!m || m.room !== SESSION || m.from === SELF) return;
       var d = m.data || {};
       if (d.t === 'hello') { if (role === 'present' && activeTab() && last.ref) sendPos(last.ref, last.k); return; }
-      if (d.t === 'pos') { if (role === 'follow' && !replaying) { if (maybeNav(d.page, d.ref)) return; applyPos(d.ref, d.k); } return; }
+      if (d.t === 'pos') { if (role === 'follow' && !replaying) { if (ended) { ended = false; brokeFree = false; render(); } if (maybeNav(d.page, d.ref)) return; applyPos(d.ref, d.k); } return; }
       if (d.t === 'point') {
         if (role === 'follow' && !replaying) {
           var pref = d.ref || refOfK(d.k);
@@ -227,6 +230,7 @@
         return;
       }
       if (d.t === 'clear') { if (role === 'follow' && !replaying) { clearHi(); clearPt(); } return; }
+      if (d.t === 'end') { if (role === 'follow' && !replaying) { ended = true; brokeFree = true; clearHi(); clearPt(); render(); } return; }
     }
     function makeTx() {
       if (RELAY) {
@@ -253,12 +257,12 @@
     }
     var lastRef = null, tick = 0;
     function onScroll() {
-      if (role !== 'present' || paused || !visible()) return;
+      if (role !== 'present' || paused || stopped || !visible()) return;
       clearTimeout(tick);
       tick = setTimeout(function () { var r = curVerse(); if (r && r !== lastRef) { lastRef = r; sendPos(r, null); } }, 220);
     }
     function onWordTap(e) {
-      if (role !== 'present' || paused || !visible()) return;
+      if (role !== 'present' || paused || stopped || !visible()) return;
       var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
       if (!el) { sendClear(); return; }                             // click empty space → clear laser + highlight
       if (el.classList.contains('synchi')) { sendClear(); return; } // click the highlighted word again → toggle off
@@ -272,7 +276,7 @@
     // point carries the hovered word's ref too, so followers can also move to that verse (not just laser it)
     function sendPoint(k) { send({ t: 'point', page: PAGE, k: k, ref: (k ? refOfK(k) : null) }); if (recording && recLog) { recLog.push({ dt: Date.now() - recT0, pt: (k || null) }); } }
     function onMove(e) {
-      if (role !== 'present' || paused || replaying || !visible()) return;
+      if (role !== 'present' || paused || stopped || replaying || !visible()) return;
       var now = Date.now(); if (now - ptTs < 70) return; ptTs = now;
       var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
       var k = el ? el.getAttribute('data-k') : null;
@@ -295,7 +299,7 @@
     });
     // Presenter: hover drives the 🔴 laser, so suppress the page's word-analysis tooltip (#tip) while
     // presenting; hold Alt (Option) to "peek" at the analysis on demand. Followers keep the tooltip.
-    function applyPeekMode() { if (role === 'present' && !paused) document.body.classList.add('vvnopeek'); else document.body.classList.remove('vvnopeek'); }
+    function applyPeekMode() { if (role === 'present' && !paused && !stopped) document.body.classList.add('vvnopeek'); else document.body.classList.remove('vvnopeek'); }
     window.addEventListener('keydown', function (e) { if (e.key === 'Alt' && role === 'present') document.body.classList.remove('vvnopeek'); });
     window.addEventListener('keyup', function (e) { if (e.key === 'Alt' && role === 'present' && !paused) document.body.classList.add('vvnopeek'); });
     window.addEventListener('blur', function () { if (role === 'present' && !paused) document.body.classList.add('vvnopeek'); });
@@ -319,16 +323,17 @@
 
     var elRole = document.getElementById('vs-role'), elSid = document.getElementById('vs-sid'),
         elAct = document.getElementById('vs-act'), elRoleBtn = document.getElementById('vs-role-btn'),
+        elStop = document.getElementById('vs-stop'),
         elReplay = document.getElementById('vs-replay'), elFile = document.getElementById('vs-file'),
         elHelp = document.getElementById('vs-help'), tip = null;
-    // Only a presenter gets the ⏸ pause/resume control; followers can't present, so hide it for them.
-    if (!CAN_PRESENT && elRoleBtn) elRoleBtn.style.display = 'none';
+    // Only a presenter gets ⏸ pause/resume and ⏹ end; followers can't present, so hide both for them.
+    if (!CAN_PRESENT) { if (elRoleBtn) elRoleBtn.style.display = 'none'; if (elStop) elStop.style.display = 'none'; }
     function dotClass() { return status === 'live' ? 'on' : status === 'local' ? 'local' : ''; }
     function render() {
       var dot = '<span class="vs-dot ' + dotClass() + '"></span>';
       if (replaying) { elRole.innerHTML = dot + '▶ replaying'; }
-      else if (role === 'present') { elRole.innerHTML = dot + (paused ? '⏸ paused' : '🎙 presenting'); }
-      else { elRole.innerHTML = dot + (brokeFree ? '🔓 detached' : '👀 following'); }
+      else if (role === 'present') { elRole.innerHTML = dot + (stopped ? '⏹ session ended' : paused ? '⏸ paused' : '🎙 presenting'); }
+      else { elRole.innerHTML = dot + (ended ? '⏹ session ended' : brokeFree ? '🔓 detached' : '👀 following'); }
       elSid.textContent = SESSION + (RELAY ? ' · relay' : ' · local') + (status === 'offline' ? ' · offline' : '');
       if (replaying) { elAct.textContent = '⏹ stop'; elAct.className = ''; elAct.onclick = stopReplay; }
       else if (role === 'present') {
@@ -343,13 +348,24 @@
         elAct.className = brokeFree ? 'vs-hot' : '';
         elAct.onclick = function () { if (brokeFree) { brokeFree = false; if (pendingPage) { gotoPage(pendingPage, pendingRef); return; } if (last.ref) applyPos(last.ref, last.k); } else { brokeFree = true; render(); } };
       }
-      if (CAN_PRESENT) { elRoleBtn.textContent = paused ? '▶ resume' : '⏸ pause'; elRoleBtn.className = paused ? 'vs-hot' : ''; }
+      if (CAN_PRESENT) {
+        elRoleBtn.textContent = paused ? '▶ resume' : '⏸ pause'; elRoleBtn.className = paused ? 'vs-hot' : '';
+        elRoleBtn.disabled = stopped; elRoleBtn.style.opacity = stopped ? '.5' : '';
+        elStop.textContent = stopped ? '⇉ present again' : '⏹ end'; elStop.className = stopped ? 'vs-hot' : '';
+      }
     }
     // presenter-only: pause = stop broadcasting (read/scroll freely without dragging followers), resume = re-announce
     elRoleBtn.onclick = function () {
-      if (!CAN_PRESENT) return;
+      if (!CAN_PRESENT || stopped) return;
       paused = !paused; brokeFree = false; applyPeekMode();
       if (paused) { sendClear(); } else { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } }
+      render();
+    };
+    // presenter-only: ⏹ end broadcasts session-end (followers get notified + freed); toggles back to re-present
+    elStop.onclick = function () {
+      if (!CAN_PRESENT) return;
+      if (!stopped) { stopped = true; paused = false; applyPeekMode(); send({ t: 'end' }); clearHi(); clearPt(); }
+      else { stopped = false; var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } applyPeekMode(); }
       render();
     };
     elReplay.onclick = function () { elFile.click(); };
@@ -376,7 +392,7 @@
     document.addEventListener('click', onWordTap);
     document.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeaveDoc);
-    function announceLive() { if (role === 'present' && !paused && !replaying && activeTab()) { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } }
+    function announceLive() { if (role === 'present' && !paused && !stopped && !replaying && activeTab()) { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } }
     window.addEventListener('focus', announceLive);
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(announceLive, 60); });
 

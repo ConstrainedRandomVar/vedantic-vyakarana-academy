@@ -111,6 +111,8 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
    अन्तः (interleaved, DEFAULT) — notes dropped inline into the bhāṣya at their anchor;
    पार्श्वे (beside) — a parallel column (desktop only; auto-hidden / forced back to अन्तः on phones). */
 .paira{display:block}
+/* ṭīkā parts, styled by structural role: avataraṇikā = muted-italic lead-in · pratīka = brown-bold
+   catch-word (the bhāṣya lemma quoted, ending इति) · vyākhyā = normal-ink explanation · maṅgala accent. */
 .tk-ava{color:var(--muted);font-style:italic}
 .tk-prat{color:var(--role);font-weight:700}
 .tk-vy{color:var(--ink)}
@@ -214,6 +216,16 @@ else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.
       <span class="item"><span class="sw" style="background:var(--quote)"></span>प्रमाण-वाक्यम्</span>
       <span class="item"><u style="text-underline-offset:3px;text-decoration-thickness:1.5px">सङ्ग्रहः</u> · summary-thread</span>
     </div>
+  </div>
+  <div class="legdiv"></div>
+  <div class="leggrp"><div class="leghd">आनन्दगिरि-टीका · sub-commentary</div>
+    <div class="legnote">Each note runs in three moves — set up the doubt, point at the bhāṣya word, then explain it:</div>
+    <div class="legrow">
+      <span class="item"><i style="color:var(--muted)">अवतरणिका</i> — the lead-in framing the doubt</span>
+      <span class="item"><b style="color:var(--role)">प्रतीकम्</b> — the bhāṣya catch-word explained (ends इति)</span>
+      <span class="item">व्याख्या — the explanation</span>
+    </div>
+    <div class="legnote" style="margin-top:5px">Show it inline in the bhāṣya (अन्तः) or beside it (पार्श्वे) from the top bar; on phones it's always inline.</div>
   </div>
 </div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-kena-1.html">खण्डः 1</a><a class="refbadge" style="text-decoration:none" href="reading-kena-2.html">खण्डः 2</a><a class="refbadge" style="text-decoration:none" href="reading-kena-3.html">खण्डः 3</a><a class="refbadge" style="text-decoration:none" href="reading-kena-4.html">खण्डः 4</a></div><div id="tip"></div><script>var GM={};var GB={};
 var tip=document.getElementById('tip');

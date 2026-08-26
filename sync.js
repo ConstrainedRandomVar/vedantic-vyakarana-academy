@@ -135,7 +135,11 @@
     bar.hidden = false;
 
     var RELAY = qp('relay') || RELAY_HOST;
-    var role = (qp('role') === 'present' || qp('role') === 'p') ? 'present' : 'follow';
+    // Role is FIXED by the link: only someone who opened the presenter link can present. A follower can
+    // break free / re-sync but can never present. A presenter can PAUSE (stop broadcasting) & resume.
+    var CAN_PRESENT = (qp('role') === 'present' || qp('role') === 'p');
+    var role = CAN_PRESENT ? 'present' : 'follow';
+    var paused = false;
     var SELF = 'c' + Math.floor((Math.random() * 1e9)) + '-' + ((window.performance && performance.now) ? Math.floor(performance.now()) : 0);
     var PAGE = (location.pathname.split('/').pop() || 'index.html');
 
@@ -167,7 +171,14 @@
     }
     function refOfK(k) { var p = String(k || '').split(':'); return p.length >= 3 ? p[1] : null; }
 
-    function qK(k) { return document.querySelector('[data-k="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); }
+    // a data-k may exist in MORE than one place (a ṭīkā word is rendered both inline and in the पार्श्वे
+    // column; only one is shown per reader's layout) — return the VISIBLE copy so the laser/scroll lands
+    // where this reader can see it, even if the presenter is on a different placement.
+    function qK(k) { var sel = '[data-k="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]';
+      var els = document.querySelectorAll(sel);
+      for (var i = 0; i < els.length; i++) if (els[i].offsetParent !== null) return els[i];
+      return els[0] || null; }
+    function inView(el) { try { var r = el.getBoundingClientRect(); return r.top >= 64 && r.bottom <= innerHeight - 32; } catch (e) { return true; } }
     function clearHi() { var w = document.querySelector('.w.synchi'); if (w) w.classList.remove('synchi'); }
     function clearPt() { var p = document.querySelector('.w.syncpt'); if (p) p.classList.remove('syncpt'); }
     function applyPos(ref, k) {
@@ -209,6 +220,9 @@
             if (v) { v.classList.add('syncv'); v.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
           }
           applyPoint(d.k);
+          // follow the laser WITHIN a verse too: if the pointed word (bhāṣya/ṭīkā, possibly in a
+          // different layout than the presenter's) is off-screen, bring it into view.
+          if (!brokeFree && d.k) { var pe = qK(d.k); if (pe && !inView(pe)) pe.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         }
         return;
       }
@@ -239,12 +253,12 @@
     }
     var lastRef = null, tick = 0;
     function onScroll() {
-      if (role !== 'present' || !visible()) return;
+      if (role !== 'present' || paused || !visible()) return;
       clearTimeout(tick);
       tick = setTimeout(function () { var r = curVerse(); if (r && r !== lastRef) { lastRef = r; sendPos(r, null); } }, 220);
     }
     function onWordTap(e) {
-      if (role !== 'present' || !visible()) return;
+      if (role !== 'present' || paused || !visible()) return;
       var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
       if (!el) { sendClear(); return; }                             // click empty space → clear laser + highlight
       if (el.classList.contains('synchi')) { sendClear(); return; } // click the highlighted word again → toggle off
@@ -258,7 +272,7 @@
     // point carries the hovered word's ref too, so followers can also move to that verse (not just laser it)
     function sendPoint(k) { send({ t: 'point', page: PAGE, k: k, ref: (k ? refOfK(k) : null) }); if (recording && recLog) { recLog.push({ dt: Date.now() - recT0, pt: (k || null) }); } }
     function onMove(e) {
-      if (role !== 'present' || replaying || !visible()) return;
+      if (role !== 'present' || paused || replaying || !visible()) return;
       var now = Date.now(); if (now - ptTs < 70) return; ptTs = now;
       var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
       var k = el ? el.getAttribute('data-k') : null;
@@ -281,10 +295,10 @@
     });
     // Presenter: hover drives the 🔴 laser, so suppress the page's word-analysis tooltip (#tip) while
     // presenting; hold Alt (Option) to "peek" at the analysis on demand. Followers keep the tooltip.
-    function applyPeekMode() { if (role === 'present') document.body.classList.add('vvnopeek'); else document.body.classList.remove('vvnopeek'); }
+    function applyPeekMode() { if (role === 'present' && !paused) document.body.classList.add('vvnopeek'); else document.body.classList.remove('vvnopeek'); }
     window.addEventListener('keydown', function (e) { if (e.key === 'Alt' && role === 'present') document.body.classList.remove('vvnopeek'); });
-    window.addEventListener('keyup', function (e) { if (e.key === 'Alt' && role === 'present') document.body.classList.add('vvnopeek'); });
-    window.addEventListener('blur', function () { if (role === 'present') document.body.classList.add('vvnopeek'); });
+    window.addEventListener('keyup', function (e) { if (e.key === 'Alt' && role === 'present' && !paused) document.body.classList.add('vvnopeek'); });
+    window.addEventListener('blur', function () { if (role === 'present' && !paused) document.body.classList.add('vvnopeek'); });
     applyPeekMode();
 
     function stopReplay() { replaying = false; replayTimers.forEach(clearTimeout); replayTimers = []; render(); }
@@ -307,11 +321,13 @@
         elAct = document.getElementById('vs-act'), elRoleBtn = document.getElementById('vs-role-btn'),
         elReplay = document.getElementById('vs-replay'), elFile = document.getElementById('vs-file'),
         elHelp = document.getElementById('vs-help'), tip = null;
+    // Only a presenter gets the ⏸ pause/resume control; followers can't present, so hide it for them.
+    if (!CAN_PRESENT && elRoleBtn) elRoleBtn.style.display = 'none';
     function dotClass() { return status === 'live' ? 'on' : status === 'local' ? 'local' : ''; }
     function render() {
       var dot = '<span class="vs-dot ' + dotClass() + '"></span>';
       if (replaying) { elRole.innerHTML = dot + '▶ replaying'; }
-      else if (role === 'present') { elRole.innerHTML = dot + '🎙 presenting'; }
+      else if (role === 'present') { elRole.innerHTML = dot + (paused ? '⏸ paused' : '🎙 presenting'); }
       else { elRole.innerHTML = dot + (brokeFree ? '🔓 detached' : '👀 following'); }
       elSid.textContent = SESSION + (RELAY ? ' · relay' : ' · local') + (status === 'offline' ? ' · offline' : '');
       if (replaying) { elAct.textContent = '⏹ stop'; elAct.className = ''; elAct.onclick = stopReplay; }
@@ -327,12 +343,14 @@
         elAct.className = brokeFree ? 'vs-hot' : '';
         elAct.onclick = function () { if (brokeFree) { brokeFree = false; if (pendingPage) { gotoPage(pendingPage, pendingRef); return; } if (last.ref) applyPos(last.ref, last.k); } else { brokeFree = true; render(); } };
       }
-      elRoleBtn.textContent = role === 'present' ? '⇄ follow' : '⇄ present';
+      if (CAN_PRESENT) { elRoleBtn.textContent = paused ? '▶ resume' : '⏸ pause'; elRoleBtn.className = paused ? 'vs-hot' : ''; }
     }
+    // presenter-only: pause = stop broadcasting (read/scroll freely without dragging followers), resume = re-announce
     elRoleBtn.onclick = function () {
-      role = (role === 'present' ? 'follow' : 'present'); brokeFree = false;
-      applyPeekMode();
-      if (role === 'present') { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } render();
+      if (!CAN_PRESENT) return;
+      paused = !paused; brokeFree = false; applyPeekMode();
+      if (paused) { sendClear(); } else { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } }
+      render();
     };
     elReplay.onclick = function () { elFile.click(); };
     elFile.onchange = function () {
@@ -358,7 +376,7 @@
     document.addEventListener('click', onWordTap);
     document.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeaveDoc);
-    function announceLive() { if (role === 'present' && !replaying && activeTab()) { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } }
+    function announceLive() { if (role === 'present' && !paused && !replaying && activeTab()) { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } }
     window.addEventListener('focus', announceLive);
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(announceLive, 60); });
 

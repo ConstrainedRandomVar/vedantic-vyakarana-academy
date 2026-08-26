@@ -240,7 +240,10 @@ function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,
   var top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
   tip.style.left=left+'px';tip.style.top=top+'px';}
 function show(t){
-  if(t.dataset.k){var d=GM[t.dataset.k];if(!d)return;tip.className='';tip.innerHTML=mulaHtml(d);}
+  // data-k may be a mūla key (rich GM tooltip) OR a bhāṣya/ṭīkā laser-key with no GM entry — in that
+  // case fall through to data-w (bhāṣya plain gloss); ṭīkā words have neither, so they show nothing.
+  var d=t.dataset.k?GM[t.dataset.k]:null;
+  if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
   else if(t.dataset.w){var g=GB[t.dataset.w];if(!g)return;tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
   else return;
   tip.style.opacity=1;place(t);}

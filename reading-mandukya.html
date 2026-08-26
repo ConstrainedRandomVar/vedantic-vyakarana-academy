@@ -107,6 +107,39 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
   letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
 .bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:19px;line-height:2.05}
 
+/* व्याख्या · side-commentary (Ānandagiri-ṭīkā etc.). TWO placements:
+   अन्तः (interleaved, DEFAULT) — notes dropped inline into the bhāṣya at their anchor;
+   पार्श्वे (beside) — a parallel column (desktop only; auto-hidden / forced back to अन्तः on phones). */
+.paira{display:block}
+/* ṭīkā parts, styled by structural role: avataraṇikā = muted-italic lead-in · pratīka = brown-bold
+   catch-word (the bhāṣya lemma quoted, ending इति) · vyākhyā = normal-ink explanation · maṅgala accent. */
+.tk-ava{color:var(--muted);font-style:italic}
+.tk-prat{color:var(--role);font-weight:700}
+.tk-vy{color:var(--ink)}
+.tk-mng{color:var(--role);font-weight:600}
+/* interleaved inline note — a tinted, indented aside inside the bhāṣya flow */
+.tk-inline{display:none;margin:9px 0 11px 20px;padding:8px 13px;border-left:3px solid var(--role);
+  background:var(--mulatint);border-radius:0 9px 9px 0;font-size:16px;line-height:1.85}
+.tk-inline::before{content:attr(data-label);display:block;font-family:-apple-system,sans-serif;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--role);opacity:.85;margin-bottom:3px}
+/* side column */
+.side-zone{display:none;padding:12px 16px 16px;margin:12px 13px 14px;
+  border-left:3px solid var(--role);border-radius:0 10px 10px 0;background:var(--mulatint)}
+.side-zone .zlabel{color:var(--role)}
+.tika{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;line-height:1.95}
+.tk{margin:0 0 10px}.tk:last-child{margin-bottom:0}
+/* पार्श्वे layout — two balanced columns, widened page */
+body.parshve .wrap{max-width:1320px}
+body.parshve .paira{display:flex;gap:10px;align-items:flex-start}
+body.parshve .paira>.bh-zone,body.parshve .paira>.bh{flex:1 1 0;min-width:0}
+body.parshve .side-zone{flex:1 1 0;min-width:0}
+/* phones: पार्श्वे is unusable → hide its control, and treat any persisted पार्श्वे as अन्तः */
+@media(max-width:900px){
+  #placeseg{display:none!important}
+  body.parshve .wrap{max-width:820px}
+  body.parshve .paira{display:block}
+}
+
 /* bhasya role colours */
 .mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
@@ -128,7 +161,11 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 #tip.plain{font-family:"Noto Serif Devanagari",serif;font-size:14.5px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .mantra.navhit{animation:navflash 1.6s ease-out}
-</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><button id="tog">◐ theme</button></div></div><h1>माण्डूक्योपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
+.seglbl{font-size:12.5px;color:var(--muted);align-self:center;margin-right:-2px}
+@media(max-width:520px){.topbar{flex-wrap:wrap}.topbar .grow{width:100%;justify-content:flex-start}
+  .topbar .seg button{padding:5px 8px;font-size:11.5px}.seglbl{font-size:11px}
+  .topbar select{font-size:12px;padding:4px 6px;min-width:0}.topbar #tog{padding:5px 8px;font-size:11.5px}}
+body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:hidden}</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div><button id="tog">◐ theme</button></div></div><h1>माण्डूक्योपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
 #navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
   background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;
   box-shadow:0 2px 10px rgba(0,0,0,.04)}
@@ -180,6 +217,16 @@ else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.
       <span class="item"><u style="text-underline-offset:3px;text-decoration-thickness:1.5px">सङ्ग्रहः</u> · summary-thread</span>
     </div>
   </div>
+  <div class="legdiv"></div>
+  <div class="leggrp"><div class="leghd">आनन्दगिरि-टीका · sub-commentary</div>
+    <div class="legnote">Each note runs in three moves — set up the doubt, point at the bhāṣya word, then explain it:</div>
+    <div class="legrow">
+      <span class="item"><i style="color:var(--muted)">अवतरणिका</i> — the lead-in framing the doubt</span>
+      <span class="item"><b style="color:var(--role)">प्रतीकम्</b> — the bhāṣya catch-word explained (ends इति)</span>
+      <span class="item">व्याख्या — the explanation</span>
+    </div>
+    <div class="legnote" style="margin-top:5px">Show it inline in the bhāṣya (अन्तः) or beside it (पार्श्वे) from the top bar; on phones it's always inline.</div>
+  </div>
 </div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-mandukya-1.html">प्रकरणम् 1</a><a class="refbadge" style="text-decoration:none" href="reading-mandukya-2.html">प्रकरणम् 2</a><a class="refbadge" style="text-decoration:none" href="reading-mandukya-3.html">प्रकरणम् 3</a><a class="refbadge" style="text-decoration:none" href="reading-mandukya-4.html">प्रकरणम् 4</a></div><div id="tip"></div><script>var GM={};var GB={};
 var tip=document.getElementById('tip');
 function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
@@ -193,7 +240,10 @@ function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,
   var top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
   tip.style.left=left+'px';tip.style.top=top+'px';}
 function show(t){
-  if(t.dataset.k){var d=GM[t.dataset.k];if(!d)return;tip.className='';tip.innerHTML=mulaHtml(d);}
+  // data-k may be a mūla key (rich GM tooltip) OR a bhāṣya/ṭīkā laser-key with no GM entry — in that
+  // case fall through to data-w (bhāṣya plain gloss); ṭīkā words have neither, so they show nothing.
+  var d=t.dataset.k?GM[t.dataset.k]:null;
+  if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
   else if(t.dataset.w){var g=GB[t.dataset.w];if(!g)return;tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
   else return;
   tip.style.opacity=1;place(t);}
@@ -286,4 +336,28 @@ document.getElementById('tog').onclick=function(){
     var mo=b.dataset.v==='moola';apply(mo);
     try{localStorage.setItem(KEY,mo?'1':'0');}catch(e){}
   });});
-})();</script><script>window.VVSYNC={slug:""};</script><script src="sync.js" defer></script><script src="translit.js"></script></body></html>
+})();</script><script>(function(){
+  var CKEY='vv_reading_side',PKEY='vv_reading_place';
+  var seg=document.getElementById('sideseg');if(!seg)return;
+  var pseg=document.getElementById('placeseg');
+  var sideBtns=[].slice.call(seg.querySelectorAll('button'));
+  var placeBtns=pseg?[].slice.call(pseg.querySelectorAll('button')):[];
+  var firstBtn=seg.querySelector('button[data-side]:not([data-side=""])');
+  var firstKey=firstBtn?firstBtn.getAttribute('data-side'):'';
+  var savedSide=null;try{savedSide=localStorage.getItem(CKEY);}catch(e){}
+  var side=(savedSide===null)?firstKey:savedSide;                    // first visit → ṭīkā ON
+  if(side&&!seg.querySelector('button[data-side="'+side+'"]'))side='';
+  var place='inter';try{place=localStorage.getItem(PKEY)||'inter';}catch(e){}
+  if(place!=='side')place='inter';
+  function render(){
+    document.body.classList.toggle('parshve',place==='side'&&!!side);
+    if(side)document.body.setAttribute('data-side',side);else document.body.removeAttribute('data-side');
+    sideBtns.forEach(function(b){b.classList.toggle('on',(b.dataset.side||'')===(side||''));});
+    placeBtns.forEach(function(b){b.classList.toggle('on',b.dataset.place===place);});
+  }
+  render();
+  sideBtns.forEach(function(b){b.addEventListener('click',function(){
+    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}render();});});
+  placeBtns.forEach(function(b){b.addEventListener('click',function(){
+    place=b.dataset.place;try{localStorage.setItem(PKEY,place);}catch(e){}render();});});
+})();</script><script src="translit.js"></script></body></html>

@@ -3697,21 +3697,45 @@ function renderTutorialVerseComplete(avgScore) {
 // grouping (see groupTutorialVersesByChapter below) gives correct chapter order — but BG never
 // exceeds 18 chapters or 78 verses, so that padding is only useful internally. Strip it for
 // anything actually shown to the learner (Harsha, 2026-08-16: "do we need 3 digits for verses").
-function formatVerseRef(ref) { return ref.split('.').map(p => String(+p)).join('.'); }
+// Normalises numeric dot-segments (strips zero-padding: "01.001" → "1.1") but PRESERVES any
+// non-numeric segment verbatim — e.g. Māṇḍūkya's "1.1 · kārikā" would otherwise coerce to "1.NaN".
+function formatVerseRef(ref) { return ref.split('.').map(p => { const n = +p; return Number.isNaN(n) ? p : String(n); }).join('.'); }
 
-// Groups the flat tutorialVerses array by chapter (the part of `ref` before the '.', e.g. "01.001"
-// -> chapter "01"), preserving each verse's original index into tutorialVerses so startTutorialVerse
-// (which takes that index) still works after filtering.
-function groupTutorialVersesByChapter(verses) {
+// Chapter unit label(s) per tutorial text, mirroring the svādhyāya read-a-verse picker
+// (build_mula_walk.js CHAPTER_UNIT / CHAPTER_DEPTH) so the vākya-विग्रह picker names chapters the same
+// way. depth 2 = the ref's first two components form the chapter (अध्याय · वल्ली, मुण्डकम् · खण्डः).
+// Texts with flat refs (atmabodha, vivekacūḍāmaṇi, taittiriya-mula) never reach chapter grouping —
+// they show a single flat verse list.
+const TUT_CHAPTER = {
+  Gita: { unit: 'अध्याय' }, panchadashi: { unit: 'परिच्छेद' },
+  'kena-mula': { unit: 'खण्डः' }, 'prashna-mula': { unit: 'प्रश्नः' },
+  'katha-mula': { unit: ['अध्याय', 'वल्ली'], depth: 2 },
+  'mundaka-mula': { unit: ['मुण्डकम्', 'खण्डः'], depth: 2 },
+  'mandukya-mula': { unit: 'प्रकरणम्' }, 'aitareya-mula': { unit: 'अध्यायः' },
+  'chandogya-mula': { unit: 'अध्यायः' }, 'brihad-mula': { unit: 'अध्यायः' },
+  'taittiriya-mula': { unit: 'वल्ली' },
+};
+// "1.1" + {unit:['अध्याय','वल्ली']} → "अध्याय 1 · वल्ली 1"; "3" + {unit:'प्रकरणम्'} → "प्रकरणम् 3".
+function tutChapterLabel(chapterKey, cfg) {
+  const nums = String(chapterKey).split('.').map(p => { const n = +p; return Number.isNaN(n) ? p : String(n); });
+  if (!cfg) return 'Chapter ' + nums.join('.');
+  const units = Array.isArray(cfg.unit) ? cfg.unit : [cfg.unit];
+  return nums.map((n, i) => (units[i] || units[units.length - 1]) + ' ' + n).join(' · ');
+}
+// Groups the flat tutorialVerses array by chapter — the first `depth` dot-components of `ref` (e.g.
+// "01.001" -> "01"; a Kaṭha "1.2.3" at depth 2 -> "1.2" = adhyāya·vallī). Preserves each verse's
+// original index into tutorialVerses so startTutorialVerse (which takes that index) still works.
+function groupTutorialVersesByChapter(verses, depth) {
+  depth = depth || 1;
   const chapters = new Map();
   verses.forEach((v, idx) => {
-    const chapterKey = v.ref.split('.')[0];
+    const chapterKey = String(v.ref).split('.').slice(0, depth).join('.');
     if (!chapters.has(chapterKey)) chapters.set(chapterKey, []);
     chapters.get(chapterKey).push({ idx, ref: v.ref });
   });
   return [...chapters.entries()]
     .map(([chapterKey, verseList]) => ({ chapterKey, verses: verseList }))
-    .sort((a, b) => a.chapterKey.localeCompare(b.chapterKey));
+    .sort((a, b) => a.chapterKey.localeCompare(b.chapterKey, undefined, { numeric: true }));
 }
 
 function renderTutorialPicker() {
@@ -3734,10 +3758,14 @@ function renderTutorialPicker() {
     const resumeIdx = saved.lastRef ? tutorialVerses.findIndex(v => v.ref === saved.lastRef) : -1;
     // Some texts (e.g. vivekacūḍāmaṇi) have FLAT verse refs ("1".."44"), not "chapter.verse" — those
     // have no chapter level, so skip the Chapter dropdown and offer a single verse dropdown 1..N.
+    const cfg = TUT_CHAPTER[slug];
     const isDotted = tutorialVerses.length > 0 && tutorialVerses.every(v => v.ref.includes('.'));
-    const chapters = isDotted ? groupTutorialVersesByChapter(tutorialVerses) : null;
-    const selectedChapter = isDotted ? (chapters.find(c => c.chapterKey === p.chapterKey) || null) : null;
-    const flatVerses = isDotted ? null : tutorialVerses.map((v, idx) => ({ idx, ref: v.ref }));
+    const allChapters = isDotted ? groupTutorialVersesByChapter(tutorialVerses, cfg && cfg.depth) : null;
+    // Single-chapter texts (e.g. Īśā) get no chapter dropdown — just a flat verse list, like svādhyāya.
+    const useChapters = !!allChapters && allChapters.length > 1;
+    const chapters = useChapters ? allChapters : null;
+    const selectedChapter = useChapters ? (chapters.find(c => c.chapterKey === p.chapterKey) || null) : null;
+    const flatVerses = useChapters ? null : tutorialVerses.map((v, idx) => ({ idx, ref: v.ref }));
     const textTitle = textEntry.title || slug;
     app.innerHTML = `
       <div class="picker-head">
@@ -3756,11 +3784,11 @@ function renderTutorialPicker() {
         ${resumeIdx >= 0 ? `<button class="primary" id="tutResumeBtn">Continue (${esc(formatVerseRef(saved.lastRef))})</button>` : ''}
         <button class="secondary" id="tutStartBtn">Start from beginning</button>
       </div>
-      ${isDotted ? `<div class="picker-level">
-        <label>Chapter</label>
+      ${useChapters ? `<div class="picker-level">
+        <label>${esc(Array.isArray(cfg && cfg.unit) ? cfg.unit[0] : (cfg && cfg.unit) || 'Chapter')}</label>
         <select id="tutChapterSelect">
-          <option value="">Choose a chapter…</option>
-          ${chapters.map(c => `<option value="${esc(c.chapterKey)}"${c.chapterKey === p.chapterKey ? ' selected' : ''}>Chapter ${esc(formatVerseRef(c.chapterKey))}</option>`).join('')}
+          <option value="">Choose…</option>
+          ${chapters.map(c => `<option value="${esc(c.chapterKey)}"${c.chapterKey === p.chapterKey ? ' selected' : ''}>${esc(tutChapterLabel(c.chapterKey, cfg))}</option>`).join('')}
         </select>
       </div>
       ${selectedChapter ? `<div class="picker-level verse-jump">

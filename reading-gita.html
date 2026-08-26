@@ -128,6 +128,11 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 .side-zone .zlabel{color:var(--role)}
 .tika{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;line-height:1.95}
 .tk{margin:0 0 10px}.tk:last-child{margin-bottom:0}
+/* सुरेश्वर-वार्त्तिकम् (section-gran side): a brāhmaṇa's numbered verses */
+.vk .vk-t{font-family:-apple-system,sans-serif;font-size:12px;color:var(--muted);font-weight:500}
+.vk .vk-v{display:flex;gap:8px;margin:0 0 11px}.vk .vk-v:last-child{margin-bottom:0}
+.vk .vk-n{flex:0 0 auto;min-width:2em;text-align:right;color:var(--role);font-size:13px;font-family:-apple-system,sans-serif;line-height:1.95;opacity:.8}
+.vk .vk-x{flex:1 1 auto;min-width:0}
 /* पार्श्वे layout — two balanced columns, widened page */
 body.parshve .wrap{max-width:1320px}
 body.parshve .paira{display:flex;gap:10px;align-items:flex-start}
@@ -227,6 +232,7 @@ else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.
     </div>
     <div class="legnote" style="margin-top:5px">Show it inline in the bhāṣya (अन्तः) or beside it (पार्श्वे) from the top bar; on phones it's always inline.</div>
   </div>
+  
 </div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-gita-1.html">अध्याय 1</a><a class="refbadge" style="text-decoration:none" href="reading-gita-2.html">अध्याय 2</a><a class="refbadge" style="text-decoration:none" href="reading-gita-3.html">अध्याय 3</a><a class="refbadge" style="text-decoration:none" href="reading-gita-4.html">अध्याय 4</a><a class="refbadge" style="text-decoration:none" href="reading-gita-5.html">अध्याय 5</a><a class="refbadge" style="text-decoration:none" href="reading-gita-6.html">अध्याय 6</a><a class="refbadge" style="text-decoration:none" href="reading-gita-7.html">अध्याय 7</a><a class="refbadge" style="text-decoration:none" href="reading-gita-8.html">अध्याय 8</a><a class="refbadge" style="text-decoration:none" href="reading-gita-9.html">अध्याय 9</a><a class="refbadge" style="text-decoration:none" href="reading-gita-10.html">अध्याय 10</a><a class="refbadge" style="text-decoration:none" href="reading-gita-11.html">अध्याय 11</a><a class="refbadge" style="text-decoration:none" href="reading-gita-12.html">अध्याय 12</a><a class="refbadge" style="text-decoration:none" href="reading-gita-13.html">अध्याय 13</a><a class="refbadge" style="text-decoration:none" href="reading-gita-14.html">अध्याय 14</a><a class="refbadge" style="text-decoration:none" href="reading-gita-15.html">अध्याय 15</a><a class="refbadge" style="text-decoration:none" href="reading-gita-16.html">अध्याय 16</a><a class="refbadge" style="text-decoration:none" href="reading-gita-17.html">अध्याय 17</a><a class="refbadge" style="text-decoration:none" href="reading-gita-18.html">अध्याय 18</a></div><div id="tip"></div><script>var GM={};var GB={};
 var tip=document.getElementById('tip');
 function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
@@ -350,14 +356,23 @@ document.getElementById('tog').onclick=function(){
   var place='inter';try{place=localStorage.getItem(PKEY)||'inter';}catch(e){}
   if(place!=='side')place='inter';
   function render(){
-    document.body.classList.toggle('parshve',place==='side'&&!!side);
+    // section-gran commentaries (vārttika) are पार्श्वे-only → force side & disable the placement control
+    var curBtn=side?seg.querySelector('button[data-side="'+side+'"]'):null;
+    var forceSide=!!(curBtn&&curBtn.getAttribute('data-gran')==='section');
+    var eff=forceSide?'side':place;
+    document.body.classList.toggle('parshve',eff==='side'&&!!side);
     if(side)document.body.setAttribute('data-side',side);else document.body.removeAttribute('data-side');
     sideBtns.forEach(function(b){b.classList.toggle('on',(b.dataset.side||'')===(side||''));});
-    placeBtns.forEach(function(b){b.classList.toggle('on',b.dataset.place===place);});
+    placeBtns.forEach(function(b){b.classList.toggle('on',b.dataset.place===eff);b.disabled=forceSide;b.style.opacity=forceSide?'.4':'';});
   }
   render();
+  function fire(){ if(window.__vvView&&window.__vvView.onChange)window.__vvView.onChange(side,place); }
   sideBtns.forEach(function(b){b.addEventListener('click',function(){
-    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}render();});});
+    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}render();fire();});});
   placeBtns.forEach(function(b){b.addEventListener('click',function(){
-    place=b.dataset.place;try{localStorage.setItem(PKEY,place);}catch(e){}render();});});
+    place=b.dataset.place;try{localStorage.setItem(PKEY,place);}catch(e){}render();fire();});});
+  // shared-reading bridge: expose the current view + a remote-apply (no persist, no re-broadcast) to sync.js
+  window.__vvView=window.__vvView||{};
+  window.__vvView.get=function(){return {side:side,place:place};};
+  window.__vvView.apply=function(ns,np){ if(ns!==undefined)side=ns||''; if(np!==undefined)place=(np==='side')?'side':'inter'; render(); };
 })();</script><script src="translit.js"></script></body></html>

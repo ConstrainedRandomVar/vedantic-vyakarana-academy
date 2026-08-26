@@ -369,8 +369,13 @@ document.getElementById('tog').onclick=function(){
     placeBtns.forEach(function(b){b.classList.toggle('on',b.dataset.place===eff);b.disabled=forceSide;b.style.opacity=forceSide?'.4':'';});
   }
   render();
+  function fire(){ if(window.__vvView&&window.__vvView.onChange)window.__vvView.onChange(side,place); }
   sideBtns.forEach(function(b){b.addEventListener('click',function(){
-    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}render();});});
+    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}render();fire();});});
   placeBtns.forEach(function(b){b.addEventListener('click',function(){
-    place=b.dataset.place;try{localStorage.setItem(PKEY,place);}catch(e){}render();});});
+    place=b.dataset.place;try{localStorage.setItem(PKEY,place);}catch(e){}render();fire();});});
+  // shared-reading bridge: expose the current view + a remote-apply (no persist, no re-broadcast) to sync.js
+  window.__vvView=window.__vvView||{};
+  window.__vvView.get=function(){return {side:side,place:place};};
+  window.__vvView.apply=function(ns,np){ if(ns!==undefined)side=ns||''; if(np!==undefined)place=(np==='side')?'side':'inter'; render(); };
 })();</script><script src="translit.js"></script></body></html>

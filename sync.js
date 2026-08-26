@@ -144,6 +144,7 @@
     var stopped = false;   // presenter: session ended (followers notified + freed)
     var ended = false;     // follower: presenter ended the session
     var followers = null;  // presenter: live follower count from the relay's roster (null until known)
+    var lastView = null;   // last commentary view {side,place} — presenter broadcasts, follower mirrors
     var SELF = 'c' + Math.floor((Math.random() * 1e9)) + '-' + ((window.performance && performance.now) ? Math.floor(performance.now()) : 0);
     var PAGE = (location.pathname.split('/').pop() || 'index.html');
 
@@ -210,7 +211,7 @@
     function onMsg(m) {
       if (!m || m.room !== SESSION || m.from === SELF) return;
       var d = m.data || {};
-      if (d.t === 'hello') { if (role === 'present' && activeTab() && last.ref) sendPos(last.ref, last.k); return; }
+      if (d.t === 'hello') { if (role === 'present' && activeTab()) { sendView(); if (last.ref) sendPos(last.ref, last.k); } return; }
       if (d.t === 'pos') { if (role === 'follow' && !replaying) { if (ended) { ended = false; brokeFree = false; render(); } if (maybeNav(d.page, d.ref)) return; applyPos(d.ref, d.k); } return; }
       if (d.t === 'point') {
         if (role === 'follow' && !replaying) {
@@ -233,6 +234,7 @@
       if (d.t === 'clear') { if (role === 'follow' && !replaying) { clearHi(); clearPt(); } return; }
       if (d.t === 'end') { if (role === 'follow' && !replaying) { ended = true; brokeFree = true; clearHi(); clearPt(); render(); } return; }
       if (d.t === 'roster') { followers = d.followers; if (role === 'present') render(); return; }   // relay's live follower count
+      if (d.t === 'view') { if (role === 'follow' && !replaying) { lastView = { side: d.side, place: d.place }; if (!brokeFree && window.__vvView && window.__vvView.apply) window.__vvView.apply(d.side, d.place); } return; }
     }
     function makeTx() {
       if (RELAY) {
@@ -257,6 +259,9 @@
       send({ t: 'pos', page: PAGE, ref: ref, k: last.k });
       if (recording) { recLog.push({ dt: Date.now() - recT0, ref: ref, k: last.k }); render(); }
     }
+    // presenter → followers: mirror the commentary/placement choice (which ṭīkā/vārttika, अन्तः/पार्श्वे).
+    // The chooser lives in the page's inline script, which exposes window.__vvView (get/apply); sync bridges it.
+    function sendView() { if (role === 'present' && window.__vvView && window.__vvView.get) { var v = window.__vvView.get(); lastView = v; send({ t: 'view', side: v.side, place: v.place }); } }
     var lastRef = null, tick = 0;
     function onScroll() {
       if (role !== 'present' || paused || stopped || !visible()) return;
@@ -348,7 +353,7 @@
       } else {
         elAct.textContent = brokeFree ? '🔄 re-sync' : '🔓 break free';
         elAct.className = brokeFree ? 'vs-hot' : '';
-        elAct.onclick = function () { if (brokeFree) { brokeFree = false; if (pendingPage) { gotoPage(pendingPage, pendingRef); return; } if (last.ref) applyPos(last.ref, last.k); } else { brokeFree = true; render(); } };
+        elAct.onclick = function () { if (brokeFree) { brokeFree = false; if (lastView && window.__vvView && window.__vvView.apply) window.__vvView.apply(lastView.side, lastView.place); if (pendingPage) { gotoPage(pendingPage, pendingRef); return; } if (last.ref) applyPos(last.ref, last.k); } else { brokeFree = true; render(); } };
       }
       if (CAN_PRESENT) {
         elRoleBtn.textContent = paused ? '▶ resume' : '⏸ pause'; elRoleBtn.className = paused ? 'vs-hot' : '';
@@ -394,12 +399,16 @@
     document.addEventListener('click', onWordTap);
     document.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeaveDoc);
-    function announceLive() { if (role === 'present' && !paused && !stopped && !replaying && activeTab()) { var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } }
+    function announceLive() { if (role === 'present' && !paused && !stopped && !replaying && activeTab()) { sendView(); var r = curVerse(); if (r) { lastRef = r; sendPos(r, null); } } }
     window.addEventListener('focus', announceLive);
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(announceLive, 60); });
 
+    // bridge: the page's commentary chooser calls this on a user change → presenter broadcasts it
+    window.__vvView = window.__vvView || {};
+    window.__vvView.onChange = function (s, pl) { if (role === 'present' && !paused && !stopped) { lastView = { side: s, place: pl }; send({ t: 'view', side: s, place: pl }); } };
+
     makeTx();
     render();
-    if (role === 'present') { var r0 = curVerse(); if (r0) { lastRef = r0; setTimeout(function () { if (activeTab()) sendPos(r0, null); }, 300); } }
+    if (role === 'present') { setTimeout(function () { if (activeTab()) { sendView(); var r0 = curVerse(); if (r0) { lastRef = r0; sendPos(r0, null); } } }, 300); }
   })();
 })();

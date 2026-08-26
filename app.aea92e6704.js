@@ -3715,6 +3715,18 @@ const TUT_CHAPTER = {
   'chandogya-mula': { unit: 'अध्यायः' }, 'brihad-mula': { unit: 'अध्यायः' },
   'taittiriya-mula': { unit: 'वल्ली' },
 };
+// Display-title overrides for the वाक्य-विग्रह Text dropdown + heading. The tutorial-manifest titles are
+// written by several different builders and drifted inconsistent (some Devanāgarī-first, some raw slugs);
+// this is the single durable place to normalise them to one IAST pattern without fighting the builders.
+const TUT_TITLE = {
+  'atmabodha': 'Ātmabodha',
+  'isha-mula': 'Īśāvāsya Upaniṣad (mūla)',
+  'kena-mula': 'Kena Upaniṣad (mūla)',
+  'katha-mula': 'Kaṭha Upaniṣad (mūla)',
+  'mandukya-mula': 'Māṇḍūkya Upaniṣad (mūla + kārikā)',
+  'chandogya-mula': 'Chāndogya Upaniṣad (mūla)',
+};
+const tutTitle = (slug, fallback) => TUT_TITLE[slug] || fallback || slug;
 // "1.1" + {unit:['अध्याय','वल्ली']} → "अध्याय 1 · वल्ली 1"; "3" + {unit:'प्रकरणम्'} → "प्रकरणम् 3".
 function tutChapterLabel(chapterKey, cfg) {
   const nums = String(chapterKey).split('.').map(p => { const n = +p; return Number.isNaN(n) ? p : String(n); });
@@ -3766,7 +3778,7 @@ function renderTutorialPicker() {
     const chapters = useChapters ? allChapters : null;
     const selectedChapter = useChapters ? (chapters.find(c => c.chapterKey === p.chapterKey) || null) : null;
     const flatVerses = useChapters ? null : tutorialVerses.map((v, idx) => ({ idx, ref: v.ref }));
-    const textTitle = textEntry.title || slug;
+    const textTitle = tutTitle(slug, textEntry.title);
     app.innerHTML = `
       <div class="picker-head">
         <h2>🧩 वाक्य-विग्रह — ${esc(textTitle)}</h2>
@@ -3776,7 +3788,7 @@ function renderTutorialPicker() {
       <div class="picker-level">
         <label>Text</label>
         <select id="tutTextSelect">
-          ${manifest.map(m => `<option value="${esc(m.slug)}"${m.slug === slug ? ' selected' : ''}>${esc(m.title || m.slug)}</option>`).join('')}
+          ${manifest.map(m => `<option value="${esc(m.slug)}"${m.slug === slug ? ' selected' : ''}>${esc(tutTitle(m.slug, m.title))}</option>`).join('')}
         </select>
       </div>
       <p>${completedN} / ${tutorialVerses.length} verses completed</p>

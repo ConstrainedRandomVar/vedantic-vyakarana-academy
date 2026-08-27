@@ -2275,6 +2275,12 @@ let tutorialMode = 'vigraha';
 // it belongs to (the learner draws every boundary, no scaffolding); 'guided' asks per-clause "click this
 // clause's words". Switchable via ?cstyle=guided for comparison. (Harsha, 2026-08-27)
 let clauseStyle = 'socratic';
+// the कारक cluster whose governor IS this clause's head — gives the head's voice / करण / कर्म etc.,
+// needed to teach the passive-agent (कर्मणि) supply questions.
+function clusterForClauseHead(sentence, cl) {
+  if (!cl || cl.headWordIndex == null) return null;
+  return (sentence.clusters || []).find(c => c.governorWordIndex === cl.headWordIndex) || null;
+}
 // index of the gold clause that contains a given word (or null) — the answer key for clause segmentation.
 function wordClauseIdx(sentence, wordIndex) {
   const cls = sentence.clauses || [];
@@ -2382,12 +2388,22 @@ function buildClauseSteps(sentence) {
   }
   // supply phase: elided agents, then elided verbs — deduped on the supplied string so a repeated
   // अहम्/अस्ति isn't asked twice (mirrors the vigraha-mode clause dedup).
-  const seenKarta = new Set();
+  // supply the elided कर्ता. PASSIVE (कर्मणि) clause: teach the agent's CASE (कर्मणि ⇒ तृतीया), THEN
+  // identify it among the तृतीया words — distinguishing the करणम् trap (a same-case instrument that ISN'T
+  // the agent, e.g. Māṇḍūkya 3.15 मृद्-लोह…आद्यैः). ACTIVE clause with an elided pronoun: the recipe-ladder
+  // MCQ (only when derivable). (Harsha, 2026-08-27 — a vedānta student SHOULD deduce श्रुत्या from कर्मणि.)
+  const seenActive = new Set();
   clauses.forEach((cl, i) => {
-    if (!clauseKartaOptions(sentence, i)) return;
-    const k = (cl.anuktaKarta || '').trim();
-    if (seenKarta.has(k)) return; seenKarta.add(k);
-    steps.push({ type: 'clauseKarta', clauseIdx: i });
+    const cluster = clusterForClauseHead(sentence, cl);
+    const correct = (cl.anuktaKarta || '').trim();
+    if (!correct || /copula/i.test(correct)) return;
+    if (cluster && cluster.voice === 'कर्मणि') {
+      steps.push({ type: 'clauseKartaCase', clauseIdx: i });   // कर्मणि ⇒ agent in तृतीया
+      steps.push({ type: 'clauseKarta', clauseIdx: i });       // which तृतीया word is the agent (vs करणम्)
+    } else if (clauseKartaOptions(sentence, i) && !seenActive.has(correct)) {
+      seenActive.add(correct);
+      steps.push({ type: 'clauseKarta', clauseIdx: i });
+    }
   });
   const seenElided = new Set();
   clauses.forEach((cl, i) => {
@@ -2845,15 +2861,25 @@ function clauseSubordinateOptions(sentence, clauseIdx) {
   if (options.length < 2) return null;   // degenerate MCQ (2-clause verse) — skip
   return { correct, options: seedRotate(options, correct) };
 }
-const ELIDED_FALLBACK = ['अस्ति', 'भवति', 'सन्ति', 'दुर्लभम् अस्ति'];
+// The अस् (to-be) paradigm — for building AGREEMENT-mismatched distractors on a copula-supply question.
+// The learner must pick the form that agrees with the subject (सः → अस्ति), so distractors are other
+// person/number forms (स्तः dual, सन्ति plural, अस्मि 1st…) that are clearly WRONG. We deliberately do NOT
+// offer भवति: it's a synonym of अस्ति and would be an unfair (arguably also-correct) distractor — the
+// question tests AGREEMENT, not अस् vs भू. (Harsha, 2026-08-27: "make the other options more implausible.")
+const ASTI_PARADIGM = ['अस्मि', 'असि', 'अस्ति', 'स्वः', 'स्थः', 'स्तः', 'स्मः', 'स्थ', 'सन्ति'];
 function clauseElidedOptions(sentence, clauseIdx) {
   const cl = sentence.clauses[clauseIdx];
   const correct = (cl.elided || []).join(' ');
   if (!correct) return null;
-  const sibs = [];
-  (sentence.clauses || []).forEach(x => { const e = (x.elided || []).join(' '); if (e && e !== correct && !sibs.includes(e)) sibs.push(e); });
-  const pool = [...new Set([...sibs, ...ELIDED_FALLBACK.filter(e => e !== correct)])];
-  const distract = seedRotate(pool, correct).slice(0, 3);
+  let pool;
+  if (ASTI_PARADIGM.includes(correct)) {
+    pool = ASTI_PARADIGM.filter(f => f !== correct);   // agreement-wrong forms of the SAME verb
+  } else {
+    const sibs = [];
+    (sentence.clauses || []).forEach(x => { const e = (x.elided || []).join(' '); if (e && e !== correct && !sibs.includes(e)) sibs.push(e); });
+    pool = [...new Set([...sibs, 'अस्ति', 'सन्ति', 'दुर्लभम् अस्ति'].filter(e => e !== correct))];
+  }
+  const distract = seedRotate([...new Set(pool)], correct).slice(0, 3);
   if (!distract.length) return null;
   return { correct, options: seedRotate([...new Set([correct, ...distract])], correct) };
 }
@@ -2888,6 +2914,22 @@ function clauseKartaOptions(sentence, clauseIdx) {
 }
 function clauseKartaTip(cl) {
   return `This clause states no agent — its कर्ता is supplied by <b>अध्याहार</b> as <b>${esc((cl.anuktaKarta || '').trim())}</b> (अनुक्त-कर्ता, the unexpressed doer).`;
+}
+// Passive-clause agent MCQ: the कर्ता (agent) is in तृतीया. Options = the elided agent (correct) + the
+// SAME-CASE करणम् trap (an instrument in तृतीया that is NOT the agent) + the कर्म — so the learner learns
+// that not every तृतीया is the agent. Teaches Māṇḍūkya 3.15: श्रुत्या (agent) vs मृद्-लोह…आद्यैः (करणम्).
+function clauseAgentSpec(sentence, clauseIdx, cl, cluster) {
+  const correct = (cl.anuktaKarta || '').trim();
+  const karanaWords = (cluster.karana || []).map(r => sentence.words[r.wordIndex]).filter(Boolean);
+  const karmaWords = (cluster.karma || []).map(i => sentence.words[i]).filter(Boolean);
+  let pool = [...new Set([...karanaWords, ...karmaWords])].filter(o => o && o !== correct);
+  if (pool.length < 2) pool = [...new Set([...pool, 'तेन', 'देवेन'])].filter(o => o !== correct);   // ensure ≥3 options
+  const distract = seedRotate(pool, correct).slice(0, 3);
+  const options = seedRotate([...new Set([correct, ...distract])], correct);
+  let tip = `<b>${esc(correct)}</b> is the कर्ता (agent), supplied by अध्याहार (it is not in the verse).`;
+  if (karanaWords.length) tip += ` Careful: <b>${esc(karanaWords.join('/'))}</b> is ALSO in तृतीया, but it is the <b>करणम्</b> (the means/illustrations by which the creation is declared) — not the agent. Same case, different कारक.`;
+  if (karmaWords.length) tip += ` <b>${esc(karmaWords.join('/'))}</b> is the कर्म, standing in प्रथमा under the passive (अभिहित).`;
+  return { correct, options, highlight: new Set(cl.words), explainHtml: tip };
 }
 // teaching tips shown after answering
 function samasaTip(L) {
@@ -2949,8 +2991,16 @@ function tutorialMcqSpec(step, sentence) {
     const r = clauseElidedOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
     return { ...r, highlight: new Set(cl.words), explainHtml: clauseElidedTip(cl) };
   }
+  if (step.type === 'clauseKartaCase') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const cluster = clusterForClauseHead(sentence, cl) || {};
+    const r = kartaCaseOptions(cluster);   // कर्मणि ⇒ correct तृतीया (reuses वाक्य-विग्रह's own logic)
+    return { ...r, highlight: new Set(cl.words), explainHtml: `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
+  }
   if (step.type === 'clauseKarta') {
     const cl = sentence.clauses[step.clauseIdx];
+    const cluster = clusterForClauseHead(sentence, cl);
+    if (cluster && cluster.voice === 'कर्मणि') return clauseAgentSpec(sentence, step.clauseIdx, cl, cluster);
     const r = clauseKartaOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
     return { ...r, highlight: new Set(cl.words), explainHtml: clauseKartaTip(cl) };
   }
@@ -2965,7 +3015,7 @@ function tutorialMcqSpec(step, sentence) {
   }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseAssign']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseAssign']);
 
 // Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
 // negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
@@ -3099,9 +3149,17 @@ function tutorialStepLabelBase(step, sentence) {
       const w = sentence.words[step.wordIndex];
       return `<b>Recipe step 2 — draw the boundaries, word by word.</b> Which clause does <b>${esc(w)}</b> belong to? Use the signals: <b>या/यत्</b> opens a relative clause, <b>सः/तत्/तथा</b> its correlative, <b>इति</b> closes a quotation, a <b>daṇḍa</b> ends the sentence — and a gerund/participle stays with its finite verb.`;
     }
+    case 'clauseKartaCase': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this verb';
+      return `<b>Recipe step 3 — supply the unspoken agent.</b> ${h} is <b>कर्मणि</b> (passive). Before finding the agent, decide: in which <b>vibhakti</b> does the कर्ता (agent) of a passive verb stand?`;
+    }
     case 'clauseKarta': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
+      const cluster = clusterForClauseHead(sentence, cl);
+      if (cluster && cluster.voice === 'कर्मणि')
+        return `Now find that agent. ${h} is passive, so its कर्ता is in <b>तृतीया</b> — but beware: not every तृतीया word is the agent (some are करणम्, the instrument). Which word is the <b>कर्ता (agent)</b>?`;
       return `<b>Recipe step 3 — supply the unspoken agent.</b> The clause headed by ${h} states no कर्ता. Infer it from the signals: उत्तम-verb → अहम्, मध्यम → त्वम्, relative/optative → कश्चित्, existential/भावे → impersonal, else carry the main clause's subject. What is the अनुक्त-कर्ता here?`;
     }
     case 'clauseType': {

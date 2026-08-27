@@ -1355,6 +1355,7 @@ function renderDashboard() {
       <div class="readgrid modegrid">
         <a class="rcard modecard" id="readBtn"><div class="rtitle">📖 Read a verse</div><div class="modetag">know each word</div><div class="modedesc">Walk each word — recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the Drill pool.</div></a>
         <a class="rcard modecard" id="tutorialBtn"><div class="rtitle">🧩 वाक्य-विग्रह</div><div class="modetag">parse the sentence</div><div class="modedesc">How the words relate across the whole sentence — kāraka, qualifier-of, coordination, clauses, uddeśya–vidheya, samāsa vigraha.</div></a>
+        <a class="rcard modecard" id="clauseBtn"><div class="rtitle">🪢 वाक्य-विभाग</div><div class="modetag">carve the clauses</div><div class="modedesc">Split the verse into clauses (वाक्य): find each clause-head, group its words, then supply the अध्याहार — the unstated कर्ता and any implied verb. The step before वाक्य-विग्रह.</div></a>
       </div>
     </div>
     <div class="dash-lane">
@@ -1390,7 +1391,8 @@ function renderDashboard() {
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
-  document.getElementById('tutorialBtn').onclick = () => { view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
+  document.getElementById('tutorialBtn').onclick = () => { tutorialMode = 'vigraha'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
+  { const cb = document.getElementById('clauseBtn'); if (cb) cb.onclick = () => { tutorialMode = 'clause'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); }; }
   app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
 }
@@ -2264,6 +2266,11 @@ let tutorialSentIdx = 0;   // a verse can have >1 sentence — walked in order, 
 let tutorialSteps = [];    // flattened, cluster-major, for the CURRENT sentence only
 let tutorialStepIdx = 0;
 let tutorialScores = [];   // per-step scores this sentence, folded into per-verse completion
+// Which guided walk is running: 'vigraha' = the full कारक/role analysis (वाक्य-विग्रह, all texts);
+// 'clause' = वाक्य-विभाग, the segmentation-first walk (find clause-heads → group each clause's words →
+// supply the अध्याहार agent/verb). Clause mode runs ONLY on texts that carry gold `sentence.clauses`
+// (every Gemini text; NOT BG, whose e-reader source emitted no clause decomposition). (Harsha, 2026-08-27)
+let tutorialMode = 'vigraha';
 
 function currentTutorialSentence() {
   return tutorialVerses[tutorialVerseIdx].sentences[tutorialSentIdx];
@@ -2336,7 +2343,35 @@ function normalizeGenitiveCase(sentence) {
     }
   }
 }
+// वाक्य-विभाग (clause mode) step sequence — the "Core" recipe (Harsha, 2026-08-27): segment first, then
+// supply. (1) identify all clause-heads; (2) for each clause, click every word that belongs to it;
+// (3) supply the elided कर्ता (अनुक्त-कर्ता); (4) supply the elided verb/copula (अध्याहार). NO clause-type
+// taxonomy or subordination steps (that's the contestable part we deliberately skip). Reads gold
+// `sentence.clauses`; a verse with none falls back to just the heads step (which will show "identify 0").
+function buildClauseSteps(sentence) {
+  const clauses = sentence.clauses || [];
+  const steps = [{ type: 'clauseHeads' }];
+  clauses.forEach((cl, i) => steps.push({ type: 'clauseMembers', clauseIdx: i }));   // one per clause
+  // supply phase: elided agents, then elided verbs — deduped on the supplied string so a repeated
+  // अहम्/अस्ति isn't asked twice (mirrors the vigraha-mode clause dedup).
+  const seenKarta = new Set();
+  clauses.forEach((cl, i) => {
+    if (!clauseKartaOptions(sentence, i)) return;
+    const k = (cl.anuktaKarta || '').trim();
+    if (seenKarta.has(k)) return; seenKarta.add(k);
+    steps.push({ type: 'clauseKarta', clauseIdx: i });
+  });
+  const seenElided = new Set();
+  clauses.forEach((cl, i) => {
+    const el = (cl.elided || []).join(' ');
+    if (!el || seenElided.has(el) || !clauseElidedOptions(sentence, i)) return;
+    seenElided.add(el);
+    steps.push({ type: 'clauseElided', clauseIdx: i });
+  });
+  return steps;
+}
 function buildTutorialSteps(sentence) {
+  if (tutorialMode === 'clause') return buildClauseSteps(sentence);
   normalizeNipata(sentence);   // ensure निपात particles are quizzed as निपात in every text (idempotent)
   normalizeGenitiveCase(sentence);   // possessor coded पञ्चमी (त/ऋ-stem syncretism) → षष्ठी
   const steps = [{ type: 'verbs' }];
@@ -2514,6 +2549,9 @@ function verbsIndicesFor(sentence) {
 // upapada, upapadaCase} objects, same shape as `remaining` always had — not plain indices.
 function expectedSetForStep(sentence, step) {
   if (step.type === 'verbs') return verbsIndicesFor(sentence);
+  // वाक्य-विभाग word-select steps — graded against the gold `clauses` (no cluster involved)
+  if (step.type === 'clauseHeads') return new Set((sentence.clauses || []).map(cl => cl.headWordIndex).filter(i => i != null));
+  if (step.type === 'clauseMembers') return new Set((((sentence.clauses || [])[step.clauseIdx]) || {}).words || []);
   const c = sentence.clusters[step.clusterIdx];
   // करता/कर्म and their agreementKarta/Karma questions all share ONE full accepted-answer set per
   // argument (Harsha, 2026-08-16, found live via BG 4.1: इमम् is tagged कर्म; योगम् — तagged
@@ -2791,6 +2829,24 @@ function clauseElidedOptions(sentence, clauseIdx) {
   if (!distract.length) return null;
   return { correct, options: seedRotate([...new Set([correct, ...distract])], correct) };
 }
+// अनुक्त-कर्ता (elided agent) MCQ for वाक्य-विभाग. Gold = the clause's `anuktaKarta`. Skip a "(copula …
+// implied)" note (that's an elided VERB, asked by clauseElided, not an agent) and the empty case.
+// Distractors: the ladder of common elided agents + any sibling clause's own anuktaKarta.
+const KARTA_FALLBACK = ['अहम्', 'वयम्', 'त्वम्', 'सः', 'कश्चित्', '(impersonal)'];
+function clauseKartaOptions(sentence, clauseIdx) {
+  const cl = sentence.clauses[clauseIdx];
+  const correct = (cl.anuktaKarta || '').trim();
+  if (!correct || /copula/i.test(correct)) return null;
+  const sibs = [];
+  (sentence.clauses || []).forEach(x => { const a = (x.anuktaKarta || '').trim(); if (a && !/copula/i.test(a) && a !== correct && !sibs.includes(a)) sibs.push(a); });
+  const pool = [...new Set([...sibs, ...KARTA_FALLBACK.filter(a => a !== correct)])];
+  const distract = seedRotate(pool, correct).slice(0, 3);
+  if (!distract.length) return null;
+  return { correct, options: seedRotate([...new Set([correct, ...distract])], correct) };
+}
+function clauseKartaTip(cl) {
+  return `This clause states no agent — its कर्ता is supplied by <b>अध्याहार</b> as <b>${esc((cl.anuktaKarta || '').trim())}</b> (अनुक्त-कर्ता, the unexpressed doer).`;
+}
 // teaching tips shown after answering
 function samasaTip(L) {
   let s = `<b>${esc(L.c)}</b> = ${esc(L.vigraha)} — <b>${esc(L.type)}</b>`;
@@ -2851,9 +2907,14 @@ function tutorialMcqSpec(step, sentence) {
     const r = clauseElidedOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
     return { ...r, highlight: new Set(cl.words), explainHtml: clauseElidedTip(cl) };
   }
+  if (step.type === 'clauseKarta') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const r = clauseKartaOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
+    return { ...r, highlight: new Set(cl.words), explainHtml: clauseKartaTip(cl) };
+  }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta']);
 
 // Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
 // negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
@@ -2974,6 +3035,20 @@ function tutorialStepLabelBase(step, sentence) {
     case 'samasaLeaf': {
       const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
       return `<b>${esc(L.c)}</b> is a leaf of the peel — no longer a compound, but a प्रातिपदिक (base stem). How is it derived — <b>कृदन्त</b> (from a verb root), <b>तद्धित</b> (from a nominal), or a <b>मूल-प्रातिपदिक</b> (underived)?`;
+    }
+    case 'clauseHeads': {
+      const n = (sentence.clauses || []).length;
+      return `Every clause (वाक्य) is built on one nucleus: a <b>finite verb</b> (तिङन्त), or the <b>subject</b> of a verbless “X [is] Y” predication. A gerund/participle (ल्यप्/क्त्वा/शतृ/क्त…) is NOT its own clause. Which words are the clause-heads? (identify ${n})`;
+    }
+    case 'clauseMembers': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `Clause headed by ${h}: click <b>every</b> word that belongs to this clause (include ${h} itself). Words in the other clauses do not belong here.`;
+    }
+    case 'clauseKarta': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
+      return `The clause headed by ${h} (highlighted) states no कर्ता. What agent is understood — supplied by अध्याहार?`;
     }
     case 'clauseType': {
       const cl = sentence.clauses[step.clauseIdx];
@@ -3440,15 +3515,17 @@ function startTutorialVerse(verseIdx) {
 // from the console (exposed on window). ref accepts either the stored form "04.002" or "4.2". If the
 // requested step doesn't exist (e.g. it was removed by a fix — an empty modifiers step is skipped),
 // it lands on step 0 and reports that — itself a useful confirmation. Sentence 0 only.
-function jumpToTutorial(ref, stepType, clusterIdx, slug) {
+function jumpToTutorial(ref, stepType, clusterIdx, slug, mode) {
   slug = slug || 'Gita';
+  tutorialMode = (mode === 'clause') ? 'clause' : 'vigraha';   // deep-link ?mode=clause selects वाक्य-विभाग
   ensureTutorialDataLoaded(slug).then(() => {
     tutorialVerses = window.TUTORIAL_DATA[slug].verses;
     const idx = tutorialVerses.findIndex(v => v.ref === ref || formatVerseRef(v.ref) === ref || formatVerseRef(v.ref) === formatVerseRef(ref));
     if (idx < 0) { alert('tutorial jump: verse not found: ' + ref); view = { screen: 'dashboard' }; renderDashboard(); return; }
     startTutorialVerse(idx);   // builds tutorialSteps, resets to step 0, renders
     if (stepType) {
-      const si = tutorialSteps.findIndex(s => s.type === stepType && (clusterIdx == null || s.clusterIdx === clusterIdx));
+      // clusterIdx doubles as the clause index for clause-mode steps (they carry clauseIdx, not clusterIdx)
+      const si = tutorialSteps.findIndex(s => s.type === stepType && (clusterIdx == null || s.clusterIdx === clusterIdx || s.clauseIdx === clusterIdx));
       if (si >= 0) { tutorialStepIdx = si; renderTutorial(); }
       else console.warn(`tutorial jump: step "${stepType}"${clusterIdx != null ? ' (cluster ' + clusterIdx + ')' : ''} not present in ${ref} — likely skipped/empty (steps: ${tutorialSteps.map(s => s.type + (s.clusterIdx != null ? ':' + s.clusterIdx : '')).join(', ')})`);
     }
@@ -3624,7 +3701,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
+  const multiSelect = ['clauseHeads', 'clauseMembers', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   // "None of these" is offered for EVERY multi-select word step (not just kartā/karma) so a question
@@ -3791,16 +3868,21 @@ function groupTutorialVersesByChapter(verses, depth) {
     .sort((a, b) => a.chapterKey.localeCompare(b.chapterKey, undefined, { numeric: true }));
 }
 
+// texts with NO gold clause decomposition (their kāraka came from the UoHyd e-reader, not Gemini) —
+// वाक्य-विभाग (clause mode) can't run on them, so they're filtered out of that picker. BG only, today.
+const CLAUSE_MODE_EXCLUDE = new Set(['Gita']);
 function renderTutorialPicker() {
-  const manifest = window.TUTORIAL_MANIFEST || [];
+  const clauseMode = tutorialMode === 'clause';
+  const modeTitle = clauseMode ? '🪢 वाक्य-विभाग' : '🧩 वाक्य-विग्रह';
+  const manifest = (window.TUTORIAL_MANIFEST || []).filter(m => !clauseMode || !CLAUSE_MODE_EXCLUDE.has(m.slug));
   // Text is now a real level (mirrors renderReadingPicker) — the manifest carries every pre-built
   // tutorial text (Gita, vivekacudamani, …). Default to the first entry; remember the choice in
-  // view.picker.tutSlug across re-renders.
+  // view.picker.tutSlug across re-renders. Re-default if the remembered slug isn't in THIS mode's list.
   const p = view.picker || (view.picker = { tutSlug: null, chapterKey: null });
-  if (!p.tutSlug) p.tutSlug = manifest.length ? manifest[0].slug : null;
+  if (!p.tutSlug || !manifest.find(m => m.slug === p.tutSlug)) p.tutSlug = manifest.length ? manifest[0].slug : null;
   const textEntry = manifest.find(m => m.slug === p.tutSlug) || manifest[0] || null;
   const slug = textEntry ? textEntry.slug : null;
-  app.innerHTML = `<div class="picker-head"><h2>🧩 वाक्य-विग्रह</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>Loading…</p>`;
+  app.innerHTML = `<div class="picker-head"><h2>${modeTitle}</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>Loading…</p>`;
   document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   if (!slug) { app.innerHTML = `<p>No tutorial texts available. <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`; document.getElementById('tutPickerBackBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); }; return; }
   ensureTutorialDataLoaded(slug).then(() => {
@@ -3822,10 +3904,10 @@ function renderTutorialPicker() {
     const textTitle = tutTitle(slug, textEntry.title);
     app.innerHTML = `
       <div class="picker-head">
-        <h2>🧩 वाक्य-विग्रह — ${esc(textTitle)}</h2>
+        <h2>${modeTitle} — ${esc(textTitle)}</h2>
         <button class="link" id="tutPickerBackBtn">← Dashboard</button>
       </div>
-      <p class="picker-sub muted">Full-verse analysis: कारक (syntactic roles) · समास-विच्छेद (compound peeling) · वाक्य-भेद (clause structure)</p>
+      <p class="picker-sub muted">${clauseMode ? 'Clause decomposition: find each clause-head · group its words · supply the अध्याहार (unstated कर्ता / implied verb)' : 'Full-verse analysis: कारक (syntactic roles) · समास-विच्छेद (compound peeling) · वाक्य-भेद (clause structure)'}</p>
       <div class="picker-level">
         <label>Text</label>
         <select id="tutTextSelect">
@@ -3873,7 +3955,7 @@ function renderTutorialPicker() {
   try {
     const q = new URLSearchParams(location.search);
     if (q.get('tut')) {
-      jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null, q.get('slug') || null);
+      jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null, q.get('slug') || null, q.get('mode') || null);
       return;
     }
   } catch (e) {}

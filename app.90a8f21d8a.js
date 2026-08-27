@@ -1605,7 +1605,7 @@ try { samrSrc = localStorage.getItem('vv_samr_src') || 'all'; } catch (e) {}
 function samrPoolKeys() {
   const P = window.SAMASA_PEEL || {}, S = window.SAMASA_PEEL_SRC || {};
   let ks = Object.keys(P);
-  if (samrSrc === 'mula') ks = ks.filter(k => (S[k] || 'mula') === 'mula');
+  if (samrSrc === 'mula') ks = ks.filter(k => /^mula/.test(S[k] || 'mula'));
   else if (samrSrc === 'bhasya') ks = ks.filter(k => /^bhasya/.test(S[k] || ''));
   return ks.length ? ks : Object.keys(P);   // never leave an empty pool
 }

@@ -2287,6 +2287,30 @@ function clusterForClauseHead(sentence, cl) {
   if (!cl || cl.headWordIndex == null) return null;
   return (sentence.clusters || []).find(c => c.governorWordIndex === cl.headWordIndex) || null;
 }
+// A short morphology brief for a clause head, from what tutorial-data carries: case·वचन·लिङ्ग for a
+// declined participle/subject (wordCodes are [vibhakti][vacana] for nominals), plus kind + voice +
+// transitivity. The dhātu/root and the kṛt-affix name (क्त) and root-meaning are NOT in tutorial-data
+// (they live in the morph layer) — so they're not shown here. (Harsha, 2026-08-27)
+const CLAUSE_CASE_NAMES = { '1': 'प्रथमा', '2': 'द्वितीया', '3': 'तृतीया', '4': 'चतुर्थी', '5': 'पञ्चमी', '6': 'षष्ठी', '7': 'सप्तमी', '8': 'सम्बोधन' };
+const CLAUSE_VAC_NAMES = { '1': 'एकवचन', '2': 'द्विवचन', '3': 'बहुवचन' };
+const CLAUSE_LINGA = { 'पुं': 'पुंलिङ्ग', 'स्त्री': 'स्त्रीलिङ्ग', 'नपुं': 'नपुंसकलिङ्ग' };
+function headMorphBrief(sentence, cl, cluster) {
+  const i = cl.headWordIndex;
+  const parts = [];
+  const code = (sentence.wordCodes || [])[i] || '';
+  const g = (sentence.wordGenders || [])[i];
+  const finite = cluster && cluster.isFiniteVerb;
+  if (!finite && /^[1-8][1-3]$/.test(code)) {   // declined word → [vibhakti][vacana]
+    const decl = [CLAUSE_CASE_NAMES[code[0]], CLAUSE_VAC_NAMES[code[1]], g && CLAUSE_LINGA[g]].filter(Boolean).join('·');
+    if (decl) parts.push(decl);
+  }
+  if (cl.type === 'nominal') parts.push('verbless subject (the nucleus)');
+  else if (finite) parts.push('finite verb, तिङन्त');
+  else parts.push('कृदन्त participle acting as the clause’s verb');
+  if (cluster && cluster.voice) parts.push(cluster.voice);
+  if (cluster && /सकर्मक|द्विकर्मक/.test(cluster.transitivity || '')) parts.push('सकर्मक → governs a कर्म');
+  return parts.join('; ');
+}
 // index of the gold clause that contains a given word (or null) — the answer key for clause segmentation.
 function wordClauseIdx(sentence, wordIndex) {
   const cls = sentence.clauses || [];
@@ -3952,20 +3976,13 @@ function renderTutorial() {
     // TYPE (the boundary signal) + its gloss — taught, not quizzed (Core scope).
     if (step.type === 'clauseHeads') {
       const cls = sentence.clauses || [];
-      const kinds = cls.map(cl => {
+      const lines = cls.map(cl => {
         const w = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '?';
         const cluster = clusterForClauseHead(sentence, cl);
-        let kind;
-        if (cl.type === 'nominal') kind = 'verbless — its subject is the nucleus';
-        else if (cluster && cluster.isFiniteVerb) kind = 'finite verb, तिङन्त';
-        else kind = 'a कृदन्त participle acting as its clause’s verb';
-        let hint = '';
-        if (cluster && /सकर्मक|द्विकर्मक/.test(cluster.transitivity || '')) {
-          hint = ` — सकर्मक, so it governs a कर्म${cluster.voice === 'कर्मणि' ? ' (which, being कर्मणि/passive, stands in प्रथमा — अभिहित)' : ''}`;
-        }
-        return `<b>${esc(w)}</b> (${kind}${hint})`;
+        const gloss = cl.gloss ? ` <span class="muted">“${esc(cl.gloss)}”</span>` : '';
+        return `<b>${esc(w)}</b> — ${headMorphBrief(sentence, cl, cluster)}.${gloss}`;
       });
-      feedbackHtml += `<div class="tut-explain">You found <b>${cls.length}</b> nuclei ⇒ this verse has <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}: ${kinds.join('; ')}. Next you'll trace each one's boundary, then supply what each leaves unspoken.</div>`;
+      feedbackHtml += `<div class="tut-explain">You found <b>${cls.length}</b> nuclei ⇒ this verse has <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}:<br>• ${lines.join('<br>• ')}<br>Next: trace each one's boundary, then supply what each leaves unspoken.</div>`;
     }
     if (step.type === 'clauseMembers') {
       const cl = sentence.clauses[step.clauseIdx];

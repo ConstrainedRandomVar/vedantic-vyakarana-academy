@@ -2417,7 +2417,7 @@ function buildClauseSteps(sentence) {
   const seenActive = new Set();
   clauses.forEach((cl, i) => {
     const cluster = clusterForClauseHead(sentence, cl);
-    const correct = (cl.anuktaKarta || '').trim();
+    const correct = normalizeAgent(cl.anuktaKarta);
     if (!correct || /copula/i.test(correct)) return;
     if (cluster && cluster.voice === 'कर्मणि') {
       steps.push({ type: 'clauseKartaCase', clauseIdx: i });   // कर्मणि ⇒ agent in तृतीया
@@ -2427,10 +2427,19 @@ function buildClauseSteps(sentence) {
       steps.push({ type: 'clauseKarta', clauseIdx: i });
     }
   });
+  // a transitive (सकर्मक) clause head governs a कर्म: identify its case, then the word — completes the clause.
+  clauses.forEach((cl, i) => {
+    const cluster = clusterForClauseHead(sentence, cl);
+    if (cluster && cluster.voice && (cluster.karma || []).length) {
+      steps.push({ type: 'clauseKarmaCase', clauseIdx: i });
+      steps.push({ type: 'clauseKarma', clauseIdx: i });
+    }
+  });
   const seenElided = new Set();
   clauses.forEach((cl, i) => {
     const el = (cl.elided || []).join(' ');
     if (!el || seenElided.has(el) || !clauseElidedOptions(sentence, i)) return;
+    if (el === normalizeAgent(cl.anuktaKarta)) return;   // the supplied word IS the agent — already asked as कर्ता, don't re-ask as an elided verb
     seenElided.add(el);
     steps.push({ type: 'clauseElided', clauseIdx: i });
   });
@@ -2618,6 +2627,7 @@ function expectedSetForStep(sentence, step) {
   // वाक्य-विभाग word-select steps — graded against the gold `clauses` (no cluster involved)
   if (step.type === 'clauseHeads') return new Set((sentence.clauses || []).map(cl => cl.headWordIndex).filter(i => i != null));
   if (step.type === 'clauseMembers') return new Set((((sentence.clauses || [])[step.clauseIdx]) || {}).words || []);
+  if (step.type === 'clauseKarma') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set((cluster && cluster.karma) || []); }
   const c = sentence.clusters[step.clusterIdx];
   // करता/कर्म and their agreementKarta/Karma questions all share ONE full accepted-answer set per
   // argument (Harsha, 2026-08-16, found live via BG 4.1: इमम् is tagged कर्म; योगम् — तagged
@@ -2915,6 +2925,13 @@ const KARTA_FALLBACK = ['अहम्', 'वयम्', 'त्वम्', 'य�
 // in the verse — is NOT recipe-derivable; quizzing it would be unfair (the learner would have to know
 // the commentary). So we only pose the कर्ता-supply MCQ when the answer is recipe-derivable; otherwise
 // skip it. (Harsha, 2026-08-27 — "श्रुत्या is not part of the … clause".)
+// the gold anuktaKarta is sometimes parenthesized ("(श्रुत्या)") — strip the parens to the bare word, but
+// KEEP marker forms "(impersonal)"/"(copula … implied)" as-is (they're not real word answers).
+function normalizeAgent(a) {
+  a = (a || '').trim();
+  const m = a.match(/^\((.+)\)$/);
+  return (m && !/impersonal|copula/i.test(m[1])) ? m[1].trim() : a;
+}
 const LADDER_AGENTS = new Set(['अहम्', 'वयम्', 'त्वम्', 'यूयम्', 'सः', 'सा', 'तत्', 'एतत्', 'कश्चित्', '(impersonal)']);
 function kartaIsRecipeDerivable(sentence, correct) {
   const c = (correct || '').trim();
@@ -2924,7 +2941,7 @@ function kartaIsRecipeDerivable(sentence, correct) {
 }
 function clauseKartaOptions(sentence, clauseIdx) {
   const cl = sentence.clauses[clauseIdx];
-  const correct = (cl.anuktaKarta || '').trim();
+  const correct = normalizeAgent(cl.anuktaKarta);
   if (!correct || /copula/i.test(correct)) return null;
   if (!kartaIsRecipeDerivable(sentence, correct)) return null;   // don't quiz an un-derivable external agent
   const sibs = [];
@@ -2935,22 +2952,27 @@ function clauseKartaOptions(sentence, clauseIdx) {
   return { correct, options: seedRotate([...new Set([correct, ...distract])], correct) };
 }
 function clauseKartaTip(cl) {
-  return `This clause states no agent — its कर्ता is supplied by <b>अध्याहार</b> as <b>${esc((cl.anuktaKarta || '').trim())}</b> (अनुक्त-कर्ता, the unexpressed doer).`;
+  return `This clause states no agent — its कर्ता is supplied by <b>अध्याहार</b> as <b>${esc(normalizeAgent(cl.anuktaKarta))}</b> (अनुक्त-कर्ता, the unexpressed doer).`;
 }
 // Passive-clause agent MCQ: the कर्ता (agent) is in तृतीया. Options = the elided agent (correct) + the
 // SAME-CASE करणम् trap (an instrument in तृतीया that is NOT the agent) + the कर्म — so the learner learns
 // that not every तृतीया is the agent. Teaches Māṇḍūkya 3.15: श्रुत्या (agent) vs मृद्-लोह…आद्यैः (करणम्).
 function clauseAgentSpec(sentence, clauseIdx, cl, cluster) {
-  const correct = (cl.anuktaKarta || '').trim();
-  const karanaWords = (cluster.karana || []).map(r => sentence.words[r.wordIndex]).filter(Boolean);
-  const karmaWords = (cluster.karma || []).map(i => sentence.words[i]).filter(Boolean);
-  let pool = [...new Set([...karanaWords, ...karmaWords])].filter(o => o && o !== correct);
+  const correct = normalizeAgent(cl.anuktaKarta);
+  const roleWords = arr => (arr || []).map(r => sentence.words[(r && typeof r === 'object') ? r.wordIndex : r]).filter(Boolean);
+  const karana = roleWords(cluster.karana);   // instrument (तृतीया) — a trap
+  const hetu = roleWords(cluster.hetu);        // cause/motive (हेतु-तृतीया) — a trap
+  const karma = roleWords(cluster.karma);      // object (प्रथमा under passive)
+  let pool = [...new Set([...karana, ...hetu, ...karma])].filter(o => o && o !== correct);
   if (pool.length < 2) pool = [...new Set([...pool, 'तेन', 'देवेन'])].filter(o => o !== correct);   // ensure ≥3 options
   const distract = seedRotate(pool, correct).slice(0, 3);
   const options = seedRotate([...new Set([correct, ...distract])], correct);
-  let tip = `<b>${esc(correct)}</b> is the कर्ता (agent), supplied by अध्याहार (it is not in the verse).`;
-  if (karanaWords.length) tip += ` Careful: <b>${esc(karanaWords.join('/'))}</b> is ALSO in तृतीया, but it is the <b>करणम्</b> (the means/illustrations by which the creation is declared) — not the agent. Same case, different कारक.`;
-  if (karmaWords.length) tip += ` <b>${esc(karmaWords.join('/'))}</b> is the कर्म, standing in प्रथमा under the passive (अभिहित).`;
+  let tip = `<b>${esc(correct)}</b> is the कर्ता (agent), supplied by अध्याहार (not stated in the verse).`;
+  const traps = [];
+  if (karana.length) traps.push(`<b>${esc(karana.join('/'))}</b> is <b>करणम्</b> (the instrument/means)`);
+  if (hetu.length) traps.push(`<b>${esc(hetu.join('/'))}</b> is <b>हेतु-तृतीया</b> (the cause/motive — तृतीया by 2.3.23 हेतौ), NOT the अनभिहित-कर्ता`);
+  if (traps.length) tip += ` Beware the other तृतीया word(s) that are NOT the agent: ${traps.join('; ')} — same case, different कारक.`;
+  if (karma.length) tip += ` <b>${esc(karma.join('/'))}</b> is the कर्म (प्रथमा under the passive, अभिहित).`;
   return { correct, options, highlight: new Set(cl.words), explainHtml: tip };
 }
 // teaching tips shown after answering
@@ -3019,6 +3041,15 @@ function tutorialMcqSpec(step, sentence) {
     const r = kartaCaseOptions(cluster);   // कर्मणि ⇒ correct तृतीया (reuses वाक्य-विग्रह's own logic)
     return { ...r, highlight: new Set(cl.words), explainHtml: `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
   }
+  if (step.type === 'clauseKarmaCase') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const cluster = clusterForClauseHead(sentence, cl) || {};
+    const r = karmaCaseOptions(cluster);
+    const tip = cluster.voice === 'कर्मणि'
+      ? `Under <b>कर्मणि</b> (passive) the कर्म is <b>अभिहित</b> — expressed by the verb — so it stands in <b>प्रथमा</b>, not द्वितीया.`
+      : `Under <b>कर्तरि</b> (active) the कर्म is <b>अनुक्त</b> — so it stands in its plain <b>द्वितीया</b>.`;
+    return { ...r, highlight: new Set(cl.words), explainHtml: tip };
+  }
   if (step.type === 'clauseKarta') {
     const cl = sentence.clauses[step.clauseIdx];
     const cluster = clusterForClauseHead(sentence, cl);
@@ -3037,7 +3068,7 @@ function tutorialMcqSpec(step, sentence) {
   }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseAssign']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign']);
 
 // Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
 // negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
@@ -3181,8 +3212,19 @@ function tutorialStepLabelBase(step, sentence) {
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
       const cluster = clusterForClauseHead(sentence, cl);
       if (cluster && cluster.voice === 'कर्मणि')
-        return `Now find that agent. ${h} is passive, so its कर्ता is in <b>तृतीया</b> — but beware: not every तृतीया word is the agent (some are करणम्, the instrument). Which word is the <b>कर्ता (agent)</b>?`;
+        return `Now find that agent. ${h} is passive, so its कर्ता is in <b>तृतीया</b> — but beware: not every तृतीया word is the agent (some are करणम् the instrument, or हेतु the cause). Which word is the <b>कर्ता (agent)</b>?`;
       return `<b>Recipe step 3 — supply the unspoken agent.</b> The clause headed by ${h} states no कर्ता. Infer it from the signals: उत्तम-verb → अहम्, मध्यम → त्वम्, relative/optative → कश्चित्, existential/भावे → impersonal, else carry the main clause's subject. What is the अनुक्त-कर्ता here?`;
+    }
+    case 'clauseKarmaCase': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const cluster = clusterForClauseHead(sentence, cl) || {};
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `<b>Recipe step 4 — the head's object.</b> ${h} is <b>सकर्मक</b> (transitive)${cluster.voice ? `, ${esc(cluster.voice)}` : ''}, so it governs a कर्म. In which vibhakti does its कर्म stand?`;
+    }
+    case 'clauseKarma': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `Now identify it: which word is the <b>कर्म</b> (what the action is done to) of ${h}?`;
     }
     case 'clauseType': {
       const cl = sentence.clauses[step.clauseIdx];
@@ -3692,16 +3734,36 @@ function renderTutorial() {
   // The pipeline sometimes records an implied copula in `anuktaKarta` as "(copula अस्ति implied)" rather
   // than in `elided` (e.g. VC 85 देहः परार्थः [अस्ति]) — pull that out too so it's shown.
   const elidedAfter = {};
-  if (!clauseMode) (sentence.clauses || []).forEach(cl => {
-    const supplied = [...(cl.elided || [])];
-    const m = (cl.anuktaKarta || '').match(/copula\s+([^\s)]+)\s+implied/i);
-    if (m && !supplied.includes(m[1])) supplied.push(m[1]);   // don't double when elided already has the copula
-    if (supplied.length && cl.words && cl.words.length) {
-      const last = Math.max(...cl.words);
-      const arr = (elidedAfter[last] = elidedAfter[last] || []);
-      for (const w of supplied) if (!arr.includes(w)) arr.push(w);   // dedup across clauses sharing a position too
+  const addSupplied = (cl, list) => {
+    if (!list.length || !cl.words || !cl.words.length) return;
+    const last = Math.max(...cl.words);
+    const arr = (elidedAfter[last] = elidedAfter[last] || []);
+    for (const w of list) if (!arr.includes(w)) arr.push(w);   // dedup across clauses sharing a position too
+  };
+  // the supplied words of a clause: its elided verb(s) + any supplied AGENT (a copula noted in
+  // anuktaKarta, or an external agent like श्रुत्या/अहम् that isn't itself in the verse).
+  const suppliedOf = cl => {
+    const out = [...(cl.elided || [])];
+    const raw = (cl.anuktaKarta || '').trim();
+    const m = raw.match(/copula\s+([^\s)]+)\s+implied/i);
+    if (m) { if (!out.includes(m[1])) out.push(m[1]); }
+    else {
+      const agent = normalizeAgent(raw);
+      if (agent && !/impersonal/i.test(agent) && !(sentence.words || []).includes(agent) && !out.includes(agent)) out.push(agent);
     }
-  });
+    return out;
+  };
+  if (!clauseMode) {
+    (sentence.clauses || []).forEach(cl => addSupplied(cl, suppliedOf(cl)));
+  } else {
+    // वाक्य-विभाग: reveal a clause's adhyāhāra ONLY after its supply step has been answered, then keep it
+    // shown ("from this point on") bracketed inside that clause (Harsha, 2026-08-27, 3.16 सन्ति).
+    (sentence.clauses || []).forEach((cl, ci) => {
+      const done = tutorialSteps.some((st, p) => st.clauseIdx === ci && (st.type === 'clauseElided' || st.type === 'clauseKarta') &&
+        (p < tutorialStepIdx || (p === tutorialStepIdx && view.checked)));
+      if (done) addSupplied(cl, suppliedOf(cl));
+    });
+  }
 
   if (step.type === 'voice') {
     const c = sentence.clusters[step.clusterIdx];
@@ -3847,7 +3909,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['clauseHeads', 'clauseMembers', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
+  const multiSelect = ['clauseHeads', 'clauseMembers', 'clauseKarma', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   // "None of these" is offered for EVERY multi-select word step (not just kartā/karma) so a question
@@ -3892,9 +3954,18 @@ function renderTutorial() {
       const cls = sentence.clauses || [];
       const kinds = cls.map(cl => {
         const w = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '?';
-        return `<b>${esc(w)}</b> (${cl.type === 'nominal' ? 'verbless — its subject is the nucleus' : 'finite verb'})`;
+        const cluster = clusterForClauseHead(sentence, cl);
+        let kind;
+        if (cl.type === 'nominal') kind = 'verbless — its subject is the nucleus';
+        else if (cluster && cluster.isFiniteVerb) kind = 'finite verb, तिङन्त';
+        else kind = 'a कृदन्त participle acting as its clause’s verb';
+        let hint = '';
+        if (cluster && /सकर्मक|द्विकर्मक/.test(cluster.transitivity || '')) {
+          hint = ` — सकर्मक, so it governs a कर्म${cluster.voice === 'कर्मणि' ? ' (which, being कर्मणि/passive, stands in प्रथमा — अभिहित)' : ''}`;
+        }
+        return `<b>${esc(w)}</b> (${kind}${hint})`;
       });
-      feedbackHtml += `<div class="tut-explain">You found <b>${cls.length}</b> nuclei ⇒ this verse has <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}: ${kinds.join('; ')}. Next you'll trace each one's boundary.</div>`;
+      feedbackHtml += `<div class="tut-explain">You found <b>${cls.length}</b> nuclei ⇒ this verse has <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}: ${kinds.join('; ')}. Next you'll trace each one's boundary, then supply what each leaves unspoken.</div>`;
     }
     if (step.type === 'clauseMembers') {
       const cl = sentence.clauses[step.clauseIdx];

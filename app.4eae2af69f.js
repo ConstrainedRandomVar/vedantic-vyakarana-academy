@@ -2487,10 +2487,33 @@ function buildTutorialSteps(sentence) {
   });
   return steps;
 }
+// The step-1 "which words are the verbs" answer set. `sentence.verbs` holds only what its SOURCE
+// tagged: the UoHyd e-reader (BG) already folds कृत्-participle clause-heads that govern an argument
+// into `verbs` (476 of them — हत्वा, दृष्ट्वा, प्रवृत्ते …), but the Gemini adapter (every other text)
+// put ONLY finite तिङन्त there — so a genuine कृत्-participle acting as its clause's verb (Māṇḍūkya
+// 3.15 चोदिता — कर्मणि, कर्म=सृष्टिः) was graded wrong even though the walk then turns around and asks
+// its voice/कर्मCase (Harsha, 2026-08-27). The grading must be source-independent — identical whether
+// a verse came from the e-reader or Gemini — so union in the कृदन्त clause-governors here at runtime.
+// Predicate = `karmaGovernorIsKrdanta` (the corpus's explicit "this governor is a कृत् form" flag)
+// AND it governs a कर्ता/कर्म. That flag is the ONLY clean discriminator: `voice` alone admits
+// copular subject-nouns Gemini mis-tags कर्तरि (जन्मजराकार्श्यलयादयः, ब्रह्म), and `कर्ता/कर्म` alone
+// admits noun/pronoun heads with a spuriously-tagged कर्म (Māṇḍūkya 2.27 तत्-विदः/लैङ्गाः/अपरे). This
+// is a strict superset of `sentence.verbs`, so BG (already complete) is unchanged. Excludes participles
+// used as a noun/adjective (जाग्रत्/जायमानम् — no governed argument), per the step's own prompt.
+function verbsIndicesFor(sentence) {
+  const set = new Set(sentence.verbs || []);
+  for (const c of sentence.clusters || []) {
+    if (c.isFiniteVerb) continue;   // finite governors are already in sentence.verbs
+    if (c.karmaGovernorIsKrdanta && ((c.karta && c.karta.length) || (c.karma && c.karma.length))) set.add(c.governorWordIndex);
+  }
+  // never contradict an explicit step1Hint (a word flagged as a verb-lookalike that ISN'T a verb here)
+  for (const h of (sentence.step1Hints || [])) set.delete(h.wordIndex);
+  return set;
+}
 // Sweep-role arrays (करण/सम्प्रदान/अपादान/अधिकरण/सतिसप्तमी/remaining) hold {wordIndex, role,
 // upapada, upapadaCase} objects, same shape as `remaining` always had — not plain indices.
 function expectedSetForStep(sentence, step) {
-  if (step.type === 'verbs') return new Set(sentence.verbs);
+  if (step.type === 'verbs') return verbsIndicesFor(sentence);
   const c = sentence.clusters[step.clusterIdx];
   // करता/कर्म and their agreementKarta/Karma questions all share ONE full accepted-answer set per
   // argument (Harsha, 2026-08-16, found live via BG 4.1: इमम् is tagged कर्म; योगम् — तagged
@@ -2849,7 +2872,7 @@ function tutorialStepLabelBase(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle acting as its clause's verb (governing its own कर्ता/कर्म)? Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${sentence.verbs.length})`;
+    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle acting as its clause's verb (governing its own कर्ता/कर्म)? Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${verbsIndicesFor(sentence).size})`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;

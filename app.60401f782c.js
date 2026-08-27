@@ -2275,6 +2275,12 @@ let tutorialMode = 'vigraha';
 // it belongs to (the learner draws every boundary, no scaffolding); 'guided' asks per-clause "click this
 // clause's words". Switchable via ?cstyle=guided for comparison. (Harsha, 2026-08-27)
 let clauseStyle = 'socratic';
+// How many words the socratic pass asks: 'auto' (default) = ask EVERY non-nucleus word on short verses,
+// but only the BOUNDARY-ADJACENT ones once a verse has many (interior words are unambiguous — skip them);
+// 'all' = always every word; 'smart' = always boundary-adjacent only. Override with ?cskip=all|smart.
+let clauseSkip = 'auto';
+const CLAUSE_SMART_THRESHOLD = 18;   // verse longer than this many words ⇒ auto switches to smart-skip
+                                     // (keeps normal ślokas full; trims only long prose/dialogue verses)
 // the कारक cluster whose governor IS this clause's head — gives the head's voice / करण / कर्म etc.,
 // needed to teach the passive-agent (कर्मणि) supply questions.
 function clusterForClauseHead(sentence, cl) {
@@ -2286,6 +2292,15 @@ function wordClauseIdx(sentence, wordIndex) {
   const cls = sentence.clauses || [];
   for (let i = 0; i < cls.length; i++) if ((cls[i].words || []).includes(wordIndex)) return i;
   return null;
+}
+// a word sits AT a clause boundary if its clause differs from the previous or next word's clause (or it
+// is the verse's first/last word) — the pedagogically meaningful picks. Interior words are unambiguous,
+// so smart-skip asks only these on long verses (Harsha, 2026-08-27).
+function isClauseBoundaryWord(sentence, i) {
+  const ci = wordClauseIdx(sentence, i);
+  const prev = i > 0 ? wordClauseIdx(sentence, i - 1) : null;
+  const next = i < sentence.words.length - 1 ? wordClauseIdx(sentence, i + 1) : null;
+  return ci !== prev || ci !== next;
 }
 // Boundary boxes built from the GOLD clauses (for the post-clustering reveal), NOT from clusters. Returns
 // null when clauses interleave (non-contiguous spans can't be drawn as clean non-overlapping boxes).
@@ -2377,11 +2392,18 @@ function buildClauseSteps(sentence) {
   const clauses = sentence.clauses || [];
   const steps = [{ type: 'clauseHeads' }];
   if (clauseStyle === 'socratic') {
-    // draw every boundary: for each non-nucleus word (reading order), ask which clause it belongs to
+    // draw the boundaries: for each non-nucleus word (reading order), ask which clause it belongs to.
     const heads = new Set(clauses.map(cl => cl.headWordIndex).filter(i => i != null));
+    const assignable = [];
     for (let i = 0; i < sentence.words.length; i++) {
       if (heads.has(i)) continue;                       // nuclei already found in step 1
-      if (wordClauseIdx(sentence, i) != null) steps.push({ type: 'clauseAssign', wordIndex: i });
+      if (wordClauseIdx(sentence, i) != null) assignable.push(i);
+    }
+    // smart-skip: on long verses ask only the boundary-adjacent words (interior words are obvious)
+    const smart = clauseSkip === 'smart' || (clauseSkip === 'auto' && sentence.words.length > CLAUSE_SMART_THRESHOLD);
+    for (const i of assignable) {
+      if (smart && !isClauseBoundaryWord(sentence, i)) continue;
+      steps.push({ type: 'clauseAssign', wordIndex: i });
     }
   } else {
     clauses.forEach((cl, i) => steps.push({ type: 'clauseMembers', clauseIdx: i }));   // guided: one per clause
@@ -4095,6 +4117,7 @@ function renderTutorialPicker() {
     const q = new URLSearchParams(location.search);
     if (q.get('tut')) {
       if (q.get('cstyle') === 'guided' || q.get('cstyle') === 'socratic') clauseStyle = q.get('cstyle');
+      if (['all', 'smart', 'auto'].includes(q.get('cskip'))) clauseSkip = q.get('cskip');
       jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null, q.get('slug') || null, q.get('mode') || null);
       return;
     }

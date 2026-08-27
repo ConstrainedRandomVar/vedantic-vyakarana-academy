@@ -9,6 +9,7 @@
 .en{color:var(--muted);font-size:14px;font-style:italic;margin-top:8px}
 .w{cursor:help}.w:hover{background:rgba(120,120,120,.14);border-radius:3px}
 #tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
+#tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px #a7f3d0}
 #tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
 #tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
 #tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
@@ -62,11 +63,16 @@ function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||
   let left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
   let top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
   tip.style.left=left+'px';tip.style.top=top+'px';}
-function show(t){const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d);tip.style.opacity=1;place(t);}
+function show(t){const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d);tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
 const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
-document.addEventListener('mouseover',e=>{if(touch)return;const t=e.target.closest('.w');if(t)show(t);});
-document.addEventListener('mouseout',e=>{if(touch)return;if(e.target.closest('.w'))tip.style.opacity=0;});
-document.addEventListener('click',e=>{const t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}e.stopPropagation();show(t);});
+// PIN: click a word to pin the tooltip (selectable/copyable); hover stays preview-only. Additive & sync-safe
+// (no preventDefault/stopImmediatePropagation → sync.js onWordTap + Esc/click-empty clears still fire).
+let pinned=false;
+function hideTip(force){if(pinned&&!force)return;pinned=false;tip.style.opacity=0;tip.classList.remove('pinned');}
+document.addEventListener('mouseover',e=>{if(touch||pinned)return;const t=e.target.closest('.w');if(t)show(t);});
+document.addEventListener('mouseout',e=>{if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',e=>{if(tip.contains(e.target))return;const t=e.target.closest('.w');if(t){pinned=true;show(t);tip.classList.add('pinned');return;}hideTip(true);});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Esc')hideTip(true);});
 const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script><style>
 #rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
   background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;

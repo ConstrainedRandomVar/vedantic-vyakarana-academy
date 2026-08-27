@@ -160,6 +160,8 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 #tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);
   font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;
   box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
+/* pinned (clicked) tooltip: interactive + text-selectable so the analysis can be copied */
+#tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px var(--accent,#a7f3d0)}
 #tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
 #tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}
 #tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
@@ -234,7 +236,7 @@ else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.
     <div class="legnote" style="margin-top:5px">Show it inline in the bhāṣya (अन्तः) or beside it (पार्श्वे) from the top bar; on phones it's always inline.</div>
   </div>
   
-</div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-chandogya-1.html">अध्यायः 1</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-2.html">अध्यायः 2</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-3.html">अध्यायः 3</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-4.html">अध्यायः 4</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-5.html">अध्यायः 5</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-6.html">अध्यायः 6</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-7.html">अध्यायः 7</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-8.html">अध्यायः 8</a></div><div id="tip"></div><script>var GM={};var GB={};
+</div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-chandogya-1.html">अध्यायः 1</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-2.html">अध्यायः 2</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-3.html">अध्यायः 3</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-4.html">अध्यायः 4</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-5.html">अध्यायः 5</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-6.html">अध्यायः 6</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-7.html">अध्यायः 7</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-8.html">अध्यायः 8</a></div><div id="tip"></div><script>var GM={};var GB={};var GBP={};
 var tip=document.getElementById('tip');
 function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
 function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
@@ -251,13 +253,27 @@ function show(t){
   // case fall through to data-w (bhāṣya plain gloss); ṭīkā words have neither, so they show nothing.
   var d=t.dataset.k?GM[t.dataset.k]:null;
   if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
-  else if(t.dataset.w){var g=GB[t.dataset.w];if(!g)return;tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
+  else if(t.dataset.w){var g=GB[t.dataset.w],pl=GBP[t.dataset.w];
+    // bhāṣya word: plain gloss, PLUS the recursive samāsa peel when this compound has one (§9 lane)
+    if(pl&&pl.length){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+'<div class="peel">'+pl.join('<br>')+'</div>';}
+    else if(g){tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
+    else return;}
   else return;
-  tip.style.opacity=1;place(t);}
+  tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
 var touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
-document.addEventListener('mouseover',function(e){if(touch)return;var t=e.target.closest('.w');if(t)show(t);});
-document.addEventListener('mouseout',function(e){if(touch)return;if(e.target.closest('.w'))tip.style.opacity=0;});
-document.addEventListener('click',function(e){var t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}e.stopPropagation();show(t);});
+// PIN: a click on a word pins the tooltip so its text is selectable/copyable; hover stays preview-only.
+// Additive & sync-safe — no preventDefault / stopImmediatePropagation, so sync.js's onWordTap (🟡 highlight)
+// and Esc/click-empty clears still fire; presenter suppression (body.vvnopeek #tip) is untouched.
+var pinned=false;
+function hideTip(force){if(pinned&&!force)return;pinned=false;tip.style.opacity=0;tip.classList.remove('pinned');}
+document.addEventListener('mouseover',function(e){if(touch||pinned)return;var t=e.target.closest('.w');if(t)show(t);});
+document.addEventListener('mouseout',function(e){if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',function(e){
+  if(tip.contains(e.target))return;                              // selecting inside the tip never dismisses it
+  var t=e.target.closest('.w');
+  if(t){pinned=true;show(t);tip.classList.add('pinned');return;} // click a word → pin (selectable)
+  hideTip(true);});                                              // click empty → unpin+hide
+window.addEventListener('keydown',function(e){if(e.key==='Escape'||e.key==='Esc')hideTip(true);});
 var root=document.documentElement;
 document.getElementById('tog').onclick=function(){
   var c=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');

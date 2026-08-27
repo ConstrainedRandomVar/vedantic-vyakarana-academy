@@ -1570,7 +1570,7 @@ function newQuestion() {
     let item, built, compoundDone;
     for (let guard = 0; guard < 5000; guard++) {
       if (!session.peel || session.peelIdx >= session.peel.length) {
-        if (!session.queue.length) session.queue = shuffle(Object.keys(window.SAMASA_PEEL || {})); // wrap around
+        if (!session.queue.length) session.queue = shuffle(samrPoolKeys()); // wrap around
         session.peel = samasaPeelItems(window.SAMASA_PEEL[session.queue.pop()], {});
         session.peelIdx = 0;
         if (!session.peel.length) { session.peel = null; continue; }   // compound with no quizzable layer
@@ -1597,12 +1597,25 @@ function newQuestion() {
   renderQuiz();
 }
 
+// 🧅 समास-विच्छेद Practise source filter: 'all' | 'mula' | 'bhasya'. Bhāṣya compounds come from the
+// 2026-08-20 batch's bhāṣya samāsa (source-tagged in SAMASA_PEEL_SRC); this lets a learner drill only
+// mūla compounds, only bhāṣya compounds, or both. Persisted.
+let samrSrc = 'all';
+try { samrSrc = localStorage.getItem('vv_samr_src') || 'all'; } catch (e) {}
+function samrPoolKeys() {
+  const P = window.SAMASA_PEEL || {}, S = window.SAMASA_PEEL_SRC || {};
+  let ks = Object.keys(P);
+  if (samrSrc === 'mula') ks = ks.filter(k => (S[k] || 'mula') === 'mula');
+  else if (samrSrc === 'bhasya') ks = ks.filter(k => /^bhasya/.test(S[k] || ''));
+  return ks.length ? ks : Object.keys(P);   // never leave an empty pool
+}
+
 function startQuiz(mode, code) {
   walkItemPools = computeItemPools(window.QUIZ_ITEMS); // reset from any leftover chapter-scoped reading pools
   session = { mode, fixedCode: code, batchCount: 0, batchCorrect: 0 };
-  // recursive-samāsa Practise: a shuffled queue of ALL analyzed compounds; each is peeled fully,
-  // back-to-back, until a batch crosses BATCH_SIZE questions AND the current compound is done.
-  if (mode === 'samasa') { session.queue = shuffle(Object.keys(window.SAMASA_PEEL || {})); session.peel = null; session.peelIdx = 0; }
+  // recursive-samāsa Practise: a shuffled queue of ALL analyzed compounds (in the chosen source filter);
+  // each is peeled fully, back-to-back, until a batch crosses BATCH_SIZE questions AND the compound is done.
+  if (mode === 'samasa') { session.queue = shuffle(samrPoolKeys()); session.peel = null; session.peelIdx = 0; }
   newQuestion();
 }
 // A lazy axis card (see AXIS_MANIFEST) needs its data fetched before a node session can start —
@@ -2066,6 +2079,7 @@ function renderQuiz() {
       <span class="batch">${mode === 'samasa' ? `Q${batchCount + (answered ? 0 : 1)}` : `Q${Math.min(batchCount + (answered ? 0 : 1), BATCH_SIZE)}/${BATCH_SIZE}`}</span>
       <span class="streak">streak ${p.streak} · best ${p.best}${p.mastered ? ' · ✓ mastered' : ''}</span>
     </div>
+    ${code === 'SAMR' ? `<div class="samr-src muted" style="font-size:13px;margin:-4px 0 8px">peel from: ${[['all','सर्व'],['mula','मूल'],['bhasya','भाष्य']].map(([s,l])=>`<button class="link samr-src-btn" data-src="${s}"${samrSrc===s?' style="font-weight:700;text-decoration:underline"':''}>${l}</button>`).join(' · ')}</div>` : ''}
     <div class="question">
       ${renderPrompt(item)}
     </div>
@@ -2090,6 +2104,10 @@ function renderQuiz() {
     ${renderReportArea()}
     ${bottom}`;
   document.getElementById('backBtn').onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
+  app.querySelectorAll('.samr-src-btn').forEach(b => b.onclick = () => {
+    samrSrc = b.dataset.src; try { localStorage.setItem('vv_samr_src', samrSrc); } catch (e) {}
+    startQuiz('samasa', 'SAMR');   // re-seed the queue from the chosen source pool
+  });
   const hintBtn = document.getElementById('hintBtn');
   if (hintBtn) hintBtn.onclick = () => { view = { ...view, hintRevealed: true }; renderQuiz(); };
   const reportCurrentBtn = document.getElementById('reportCurrentBtn');

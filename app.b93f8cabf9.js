@@ -2271,6 +2271,25 @@ let tutorialScores = [];   // per-step scores this sentence, folded into per-ver
 // supply the अध्याहार agent/verb). Clause mode runs ONLY on texts that carry gold `sentence.clauses`
 // (every Gemini text; NOT BG, whose e-reader source emitted no clause decomposition). (Harsha, 2026-08-27)
 let tutorialMode = 'vigraha';
+// Clause-mode discovery style: 'socratic' (default) walks EVERY non-nucleus word and asks which clause
+// it belongs to (the learner draws every boundary, no scaffolding); 'guided' asks per-clause "click this
+// clause's words". Switchable via ?cstyle=guided for comparison. (Harsha, 2026-08-27)
+let clauseStyle = 'socratic';
+// index of the gold clause that contains a given word (or null) — the answer key for clause segmentation.
+function wordClauseIdx(sentence, wordIndex) {
+  const cls = sentence.clauses || [];
+  for (let i = 0; i < cls.length; i++) if ((cls[i].words || []).includes(wordIndex)) return i;
+  return null;
+}
+// Boundary boxes built from the GOLD clauses (for the post-clustering reveal), NOT from clusters. Returns
+// null when clauses interleave (non-contiguous spans can't be drawn as clean non-overlapping boxes).
+function clauseGroupsFromGold(sentence) {
+  const cls = sentence.clauses || [];
+  if (cls.length < 2) return null;
+  const spans = cls.map((cl, idx) => ({ min: Math.min(...cl.words), max: Math.max(...cl.words), topClusterIdx: idx })).sort((a, b) => a.min - b.min);
+  for (let k = 1; k < spans.length; k++) if (spans[k].min <= spans[k - 1].max) return null;   // overlapping/interleaved
+  return spans;
+}
 
 function currentTutorialSentence() {
   return tutorialVerses[tutorialVerseIdx].sentences[tutorialSentIdx];
@@ -2351,7 +2370,16 @@ function normalizeGenitiveCase(sentence) {
 function buildClauseSteps(sentence) {
   const clauses = sentence.clauses || [];
   const steps = [{ type: 'clauseHeads' }];
-  clauses.forEach((cl, i) => steps.push({ type: 'clauseMembers', clauseIdx: i }));   // one per clause
+  if (clauseStyle === 'socratic') {
+    // draw every boundary: for each non-nucleus word (reading order), ask which clause it belongs to
+    const heads = new Set(clauses.map(cl => cl.headWordIndex).filter(i => i != null));
+    for (let i = 0; i < sentence.words.length; i++) {
+      if (heads.has(i)) continue;                       // nuclei already found in step 1
+      if (wordClauseIdx(sentence, i) != null) steps.push({ type: 'clauseAssign', wordIndex: i });
+    }
+  } else {
+    clauses.forEach((cl, i) => steps.push({ type: 'clauseMembers', clauseIdx: i }));   // guided: one per clause
+  }
   // supply phase: elided agents, then elided verbs — deduped on the supplied string so a repeated
   // अहम्/अस्ति isn't asked twice (mirrors the vigraha-mode clause dedup).
   const seenKarta = new Set();
@@ -2832,11 +2860,25 @@ function clauseElidedOptions(sentence, clauseIdx) {
 // अनुक्त-कर्ता (elided agent) MCQ for वाक्य-विभाग. Gold = the clause's `anuktaKarta`. Skip a "(copula …
 // implied)" note (that's an elided VERB, asked by clauseElided, not an agent) and the empty case.
 // Distractors: the ladder of common elided agents + any sibling clause's own anuktaKarta.
-const KARTA_FALLBACK = ['अहम्', 'वयम्', 'त्वम्', 'सः', 'कश्चित्', '(impersonal)'];
+const KARTA_FALLBACK = ['अहम्', 'वयम्', 'त्वम्', 'यूयम्', 'सः', 'कश्चित्', '(impersonal)'];
+// The recipe's कर्ता-ladder only predicts a PRONOUN agent (from the verb's person/mood/voice) or a
+// subject carried from another clause of the SAME verse. A कर्मणि/context agent that is a specific
+// EXTERNAL noun — e.g. Māṇḍūkya 3.15 चोदिता's श्रुत्या ("declared BY scripture"), which never appears
+// in the verse — is NOT recipe-derivable; quizzing it would be unfair (the learner would have to know
+// the commentary). So we only pose the कर्ता-supply MCQ when the answer is recipe-derivable; otherwise
+// skip it. (Harsha, 2026-08-27 — "श्रुत्या is not part of the … clause".)
+const LADDER_AGENTS = new Set(['अहम्', 'वयम्', 'त्वम्', 'यूयम्', 'सः', 'सा', 'तत्', 'एतत्', 'कश्चित्', '(impersonal)']);
+function kartaIsRecipeDerivable(sentence, correct) {
+  const c = (correct || '').trim();
+  if (LADDER_AGENTS.has(c)) return true;                       // ladder pronoun / impersonal
+  if ((sentence.words || []).some(w => w === c)) return true;  // subject stated elsewhere in the verse (rung 5)
+  return false;                                                // external context/commentary noun (श्रुत्या) — not derivable
+}
 function clauseKartaOptions(sentence, clauseIdx) {
   const cl = sentence.clauses[clauseIdx];
   const correct = (cl.anuktaKarta || '').trim();
   if (!correct || /copula/i.test(correct)) return null;
+  if (!kartaIsRecipeDerivable(sentence, correct)) return null;   // don't quiz an un-derivable external agent
   const sibs = [];
   (sentence.clauses || []).forEach(x => { const a = (x.anuktaKarta || '').trim(); if (a && !/copula/i.test(a) && a !== correct && !sibs.includes(a)) sibs.push(a); });
   const pool = [...new Set([...sibs, ...KARTA_FALLBACK.filter(a => a !== correct)])];
@@ -2912,9 +2954,18 @@ function tutorialMcqSpec(step, sentence) {
     const r = clauseKartaOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
     return { ...r, highlight: new Set(cl.words), explainHtml: clauseKartaTip(cl) };
   }
+  if (step.type === 'clauseAssign') {
+    const ci = wordClauseIdx(sentence, step.wordIndex);
+    const cl = (sentence.clauses || [])[ci] || {};
+    const headOf = idx => (sentence.clauses[idx] && sentence.clauses[idx].headWordIndex != null) ? sentence.words[sentence.clauses[idx].headWordIndex] : `clause ${idx + 1}`;
+    const correct = headOf(ci);
+    const options = seedRotate([...new Set((sentence.clauses || []).map((_, idx) => headOf(idx)))], correct);
+    const tip = `<b>${esc(sentence.words[step.wordIndex])}</b> belongs to the <b>${esc(clauseTypeLabel(cl.type))}</b> (headed by <b>${esc(correct)}</b>)${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}.`;
+    return { correct, options, highlight: new Set([step.wordIndex]), explainHtml: tip };
+  }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseAssign']);
 
 // Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
 // negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
@@ -3043,6 +3094,10 @@ function tutorialStepLabelBase(step, sentence) {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
       return `<b>Recipe step 2 — draw this clause's boundary.</b> Starting from ${h}, click <b>every</b> word that belongs to its clause (include ${h}). Boundary signals: <b>या/यत्</b> opens a relative clause, <b>सः/तत्/तथा</b> its correlative, a quotation <b>इति</b> closes a quote, a <b>daṇḍa</b> ends the sentence — and a gerund/participle stays with its finite verb.`;
+    }
+    case 'clauseAssign': {
+      const w = sentence.words[step.wordIndex];
+      return `<b>Recipe step 2 — draw the boundaries, word by word.</b> Which clause does <b>${esc(w)}</b> belong to? Use the signals: <b>या/यत्</b> opens a relative clause, <b>सः/तत्/तथा</b> its correlative, <b>इति</b> closes a quotation, a <b>daṇḍa</b> ends the sentence — and a gerund/participle stays with its finite verb.`;
     }
     case 'clauseKarta': {
       const cl = sentence.clauses[step.clauseIdx];
@@ -3537,15 +3592,22 @@ function renderTutorial() {
   const verse = tutorialVerses[tutorialVerseIdx];
   const step = currentTutorialStep();
   const words = sentence.words;
-  const clauseGroups = computeClauseGroups(sentence);
-  // वाक्य-विभाग is ABOUT discovering the clause boundaries + the elided words, so in clause mode we must
-  // NOT pre-draw them: no clause-group boxes, and no bracketed [अस्ति]-style supplied words. The learner
-  // works on a FLAT verse and figures the structure out via the recipe; correctness is revealed only
-  // after answering (Harsha, 2026-08-27 — "the recipe should help the user figure this out").
+  let clauseGroups = computeClauseGroups(sentence);
+  // वाक्य-विभाग is ABOUT discovering the clause boundaries + the elided words, so during the DISCOVERY
+  // steps (find nuclei / assign words / select a clause's words) we render a FLAT verse — no boxes, no
+  // bracketed [अस्ति] supplied-words — and let the recipe guide the learner. THEN, once the verse is
+  // clustered, we REVEAL the gold clause boxes on the supply steps to demarcate what was found (Harsha,
+  // 2026-08-27: "once the words have been clustered, add the boundaries to demarcate it").
   const clauseMode = tutorialMode === 'clause';
-  const showClauseGroups = clauseGroups.length > 1 && !clauseMode;
+  let showClauseGroups = clauseGroups.length > 1 && !clauseMode;
   const currentGroup = step.clusterIdx != null ? clauseGroups.find(g => g.clusterIdxs.includes(step.clusterIdx)) : null;
-  const currentGroupTop = currentGroup ? currentGroup.topClusterIdx : null;
+  let currentGroupTop = currentGroup ? currentGroup.topClusterIdx : null;
+  if (clauseMode) {
+    const segmentPhase = step.type === 'clauseHeads' || step.type === 'clauseAssign' || step.type === 'clauseMembers';
+    const gold = segmentPhase ? null : clauseGroupsFromGold(sentence);
+    if (gold) { clauseGroups = gold; showClauseGroups = true; currentGroupTop = step.clauseIdx != null ? step.clauseIdx : null; }
+    else showClauseGroups = false;
+  }
   // supplied/elided words per clause → shown bracketed after the clause's last word in the verse display.
   // The pipeline sometimes records an implied copula in `anuktaKarta` as "(copula अस्ति implied)" rather
   // than in `elided` (e.g. VC 85 देहः परार्थः [अस्ति]) — pull that out too so it's shown.
@@ -3974,6 +4036,7 @@ function renderTutorialPicker() {
   try {
     const q = new URLSearchParams(location.search);
     if (q.get('tut')) {
+      if (q.get('cstyle') === 'guided' || q.get('cstyle') === 'socratic') clauseStyle = q.get('cstyle');
       jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null, q.get('slug') || null, q.get('mode') || null);
       return;
     }

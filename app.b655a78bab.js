@@ -3036,19 +3036,18 @@ function tutorialStepLabelBase(step, sentence) {
       const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
       return `<b>${esc(L.c)}</b> is a leaf of the peel — no longer a compound, but a प्रातिपदिक (base stem). How is it derived — <b>कृदन्त</b> (from a verb root), <b>तद्धित</b> (from a nominal), or a <b>मूल-प्रातिपदिक</b> (underived)?`;
     }
-    case 'clauseHeads': {
-      const n = (sentence.clauses || []).length;
-      return `Every clause (वाक्य) is built on one nucleus: a <b>finite verb</b> (तिङन्त), or the <b>subject</b> of a verbless “X [is] Y” predication. A gerund/participle (ल्यप्/क्त्वा/शतृ/क्त…) is NOT its own clause. Which words are the clause-heads? (identify ${n})`;
-    }
+    case 'clauseHeads':
+      // Deliberately DON'T reveal the count — deriving "#nuclei = #clauses" is the lesson (revealed after).
+      return `<b>Recipe step 1 — find the nuclei.</b> Every clause (वाक्य) is built on exactly one nucleus: a <b>finite verb</b> (तिङन्त), or — in a verbless “X [is] Y” — the <b>subject</b>. A gerund/participle (ल्यप्/क्त्वा/शतृ/क्त…) is NOT a nucleus; it stays inside a finite verb's clause. Click every nucleus — how many you find is how many clauses the verse has.`;
     case 'clauseMembers': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
-      return `Clause headed by ${h}: click <b>every</b> word that belongs to this clause (include ${h} itself). Words in the other clauses do not belong here.`;
+      return `<b>Recipe step 2 — draw this clause's boundary.</b> Starting from ${h}, click <b>every</b> word that belongs to its clause (include ${h}). Boundary signals: <b>या/यत्</b> opens a relative clause, <b>सः/तत्/तथा</b> its correlative, a quotation <b>इति</b> closes a quote, a <b>daṇḍa</b> ends the sentence — and a gerund/participle stays with its finite verb.`;
     }
     case 'clauseKarta': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
-      return `The clause headed by ${h} (highlighted) states no कर्ता. What agent is understood — supplied by अध्याहार?`;
+      return `<b>Recipe step 3 — supply the unspoken agent.</b> The clause headed by ${h} states no कर्ता. Infer it from the signals: उत्तम-verb → अहम्, मध्यम → त्वम्, relative/optative → कश्चित्, existential/भावे → impersonal, else carry the main clause's subject. What is the अनुक्त-कर्ता here?`;
     }
     case 'clauseType': {
       const cl = sentence.clauses[step.clauseIdx];
@@ -3539,14 +3538,19 @@ function renderTutorial() {
   const step = currentTutorialStep();
   const words = sentence.words;
   const clauseGroups = computeClauseGroups(sentence);
-  const showClauseGroups = clauseGroups.length > 1;
+  // वाक्य-विभाग is ABOUT discovering the clause boundaries + the elided words, so in clause mode we must
+  // NOT pre-draw them: no clause-group boxes, and no bracketed [अस्ति]-style supplied words. The learner
+  // works on a FLAT verse and figures the structure out via the recipe; correctness is revealed only
+  // after answering (Harsha, 2026-08-27 — "the recipe should help the user figure this out").
+  const clauseMode = tutorialMode === 'clause';
+  const showClauseGroups = clauseGroups.length > 1 && !clauseMode;
   const currentGroup = step.clusterIdx != null ? clauseGroups.find(g => g.clusterIdxs.includes(step.clusterIdx)) : null;
   const currentGroupTop = currentGroup ? currentGroup.topClusterIdx : null;
   // supplied/elided words per clause → shown bracketed after the clause's last word in the verse display.
   // The pipeline sometimes records an implied copula in `anuktaKarta` as "(copula अस्ति implied)" rather
   // than in `elided` (e.g. VC 85 देहः परार्थः [अस्ति]) — pull that out too so it's shown.
   const elidedAfter = {};
-  (sentence.clauses || []).forEach(cl => {
+  if (!clauseMode) (sentence.clauses || []).forEach(cl => {
     const supplied = [...(cl.elided || [])];
     const m = (cl.anuktaKarta || '').match(/copula\s+([^\s)]+)\s+implied/i);
     if (m && !supplied.includes(m[1])) supplied.push(m[1]);   // don't double when elided already has the copula
@@ -3738,6 +3742,21 @@ function renderTutorial() {
       let msg = `उद्देश्य (subject) and विधेय (predicate) both stand in the <b>same प्रथमा</b> — that co-reference is सामानाधिकरण्य. The उद्देश्य <b>${esc(udWord)}</b> is what the sentence is <i>about</i>; the विधेय is what is asserted of it.`;
       if (pickedVidheya.length) msg += ` You picked <b>${esc(pickedVidheya.join('/'))}</b> — that's the विधेय (predicate), a fair confusion since it shares the case; the next question asks for it directly.`;
       feedbackHtml += `<div class="tut-explain">${msg}</div>`;
+    }
+    // वाक्य-विभाग reveals (the recipe made explicit AFTER the learner answers, since the boundaries were
+    // deliberately not pre-drawn). clauseHeads: tie #nuclei → #clauses. clauseMembers: name the clause
+    // TYPE (the boundary signal) + its gloss — taught, not quizzed (Core scope).
+    if (step.type === 'clauseHeads') {
+      const cls = sentence.clauses || [];
+      const kinds = cls.map(cl => {
+        const w = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '?';
+        return `<b>${esc(w)}</b> (${cl.type === 'nominal' ? 'verbless — its subject is the nucleus' : 'finite verb'})`;
+      });
+      feedbackHtml += `<div class="tut-explain">You found <b>${cls.length}</b> nuclei ⇒ this verse has <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}: ${kinds.join('; ')}. Next you'll trace each one's boundary.</div>`;
+    }
+    if (step.type === 'clauseMembers') {
+      const cl = sentence.clauses[step.clauseIdx];
+      feedbackHtml += `<div class="tut-explain">This is the <b>${esc(clauseTypeLabel(cl.type))}</b>${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}.</div>`;
     }
     // Step 1 "honour + explain": if the learner picked a word that isn't a verb here but is easy to
     // mistake for one (e.g. भक्तः in BG 4.3, a predicate noun after असि), explain why + where to pick.

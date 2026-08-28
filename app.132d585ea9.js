@@ -1407,7 +1407,9 @@ function groupManifestByText(manifest) {
     bySlug.get(e.slug).chapters.push(e);
   }
   for (const t of bySlug.values()) t.chapters.sort((a, b) => a.chapter - b.chapter);
-  return [...bySlug.values()];
+  // texts listed lexicographically (by romanized slug) in the read-a-verse picker — independent of the
+  // build-emitted manifest order, which is churn-prone (Harsha, 2026-08-28).
+  return [...bySlug.values()].sort((a, b) => a.slug.toLowerCase().localeCompare(b.slug.toLowerCase()));
 }
 // A chapter's verse list carries an extra sub-level (e.g. Kaṭha's adhyāya.vallī.mantra, refs like
 // "1.2.3") when every ref has 3+ dot-segments — group by the 2nd segment in that case so the picker
@@ -2736,10 +2738,27 @@ function buildTutorialSteps(sentence) {
 // is a strict superset of `sentence.verbs`, so BG (already complete) is unchanged. Excludes participles
 // used as a noun/adjective (जाग्रत्/जायमानम् — no governed argument), per the step's own prompt.
 function verbsIndicesFor(sentence) {
-  const set = new Set(sentence.verbs || []);
+  const clauses = sentence.clauses || [];
+  const hasClause = clauses.length > 0;
+  const headSet = hasClause ? new Set(clauses.map(cl => cl.headWordIndex).filter(i => i != null)) : null;
+  // words that govern a NON-finite cluster (कृदन्त — participle or absolutive/gerund). A कृदन्त counts as a
+  // clause "verb" only when it ACTS AS a clause's verb (a predicate that HEADS a clause, e.g. passive क्त
+  // चोदिता). A dependent ABSOLUTIVE/gerund (क्त्वा/ल्यप् — विदित्वा, प्रणोद्य) governs its own कर्म but merely
+  // hangs on a finite verb — it is never a clause head. So, when gold clause data exists, drop any non-finite
+  // governor that isn't a clause head. This reconciles step-1 with वाक्य-विभाग's clauseHeads (both give the
+  // finite/predicate nuclei, not the gerunds — Harsha, 2026-08-28, katha 1.1.18: चिनुते/मोदते, not
+  // विदित्वा/प्रणोद्य). The Gemini adapter puts gerunds in sentence.verbs, so we must filter the base set,
+  // not just the union. Texts with no clause data (BG/Gita, e-reader-sourced) are untouched (authoritative).
+  const nonFiniteGov = new Set((sentence.clusters || []).filter(c => !c.isFiniteVerb).map(c => c.governorWordIndex));
+  const consider = new Set(sentence.verbs || []);
   for (const c of sentence.clusters || []) {
     if (c.isFiniteVerb) continue;   // finite governors are already in sentence.verbs
-    if (c.karmaGovernorIsKrdanta && ((c.karta && c.karta.length) || (c.karma && c.karma.length))) set.add(c.governorWordIndex);
+    if (c.karmaGovernorIsKrdanta && ((c.karta && c.karta.length) || (c.karma && c.karma.length))) consider.add(c.governorWordIndex);
+  }
+  const set = new Set();
+  for (const i of consider) {
+    if (hasClause && nonFiniteGov.has(i) && !headSet.has(i)) continue;   // dependent गerund/participle — not a clause verb
+    set.add(i);
   }
   // never contradict an explicit step1Hint (a word flagged as a verb-lookalike that ISN'T a verb here)
   for (const h of (sentence.step1Hints || [])) set.delete(h.wordIndex);
@@ -3167,7 +3186,9 @@ function tutorialMcqSpec(step, sentence) {
     const cl = sentence.clauses[step.clauseIdx];
     const cluster = clusterForClauseHead(sentence, cl) || {};
     const r = kartaCaseOptions(cluster, sentence);   // कर्मणि ⇒ correct तृतीया (reuses वाक्य-विग्रह's own logic); कारक-षष्ठी honoured
-    return { ...r, highlight: new Set(cl.words), explainHtml: r.tip || `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
+    // highlight only the HEAD verb (like वाक्य-विग्रह's kartaCase), NOT the whole clause — highlighting
+    // every word paints them "correct"-green and prematurely reveals the boundary the trace is discovering.
+    return { ...r, highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: r.tip || `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
   }
   if (step.type === 'clauseKarmaCase') {
     const cl = sentence.clauses[step.clauseIdx];
@@ -3176,7 +3197,7 @@ function tutorialMcqSpec(step, sentence) {
     const tip = r.tip || (cluster.voice === 'कर्मणि'
       ? `Under <b>कर्मणि</b> (passive) the कर्म is <b>अभिहित</b> — expressed by the verb — so it stands in <b>प्रथमा</b>, not द्वितीया.`
       : `Under <b>कर्तरि</b> (active) the कर्म is <b>अनुक्त</b> — so it stands in its plain <b>द्वितीया</b>.`);
-    return { ...r, highlight: new Set(cl.words), explainHtml: tip };
+    return { ...r, highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: tip };
   }
   if (step.type === 'clauseKarta') {
     const cl = sentence.clauses[step.clauseIdx];
@@ -3225,7 +3246,7 @@ function tutorialStepLabelBase(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle acting as its clause's verb (governing its own कर्ता/कर्म)? Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${verbsIndicesFor(sentence).size})`;
+    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle that <i>acts as</i> its clause's verb (a predicate, e.g. passive क्त चोदिता)? A <b>gerund/absolutive</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य) is NOT the clause's verb; it depends on the finite verb, so leave it out — as do participles used to name or describe (nouns/adjectives). (identify ${verbsIndicesFor(sentence).size})`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
@@ -4162,6 +4183,18 @@ function renderTutorial() {
       const role = step.type === 'clauseKarma' ? 'karma' : step.type === 'clauseKartaTrace' ? 'karta' : step.role;
       const cd = hc ? caseDiscriminationCallout(sentence, hc, role) : '';
       if (cd) feedbackHtml += `<div class="tut-explain">${cd}</div>`;
+      // Honour a reasonable slip: the learner picked a विशेषण (adjective) OF the कर्ता/कर्म instead of the
+      // head word itself — name it, don't just fail it ([[feedback_quiz_question_framing]]). Same referent,
+      // but the कारक slot is filled by the head noun; its adjective rides it and is placed in the mop-up.
+      if (hc && (step.type === 'clauseKartaTrace' || step.type === 'clauseKarma')) {
+        const qual = step.type === 'clauseKartaTrace' ? (hc.qualifierKarta || []) : (hc.qualifierKarma || []);
+        const picked = [...selected].filter(i => qual.includes(i) && !expected.has(i)).map(i => sentence.words[i]);
+        if (picked.length) {
+          const rl = step.type === 'clauseKartaTrace' ? 'कर्ता' : 'कर्म';
+          const headW = [...expected].map(i => sentence.words[i]).join('/');
+          feedbackHtml += `<div class="tut-explain"><b>${esc(picked.join('/'))}</b> is a <b>विशेषण</b> (adjective) of the ${rl}${headW ? ` <b>${esc(headW)}</b>` : ''}, not the ${rl} itself — an adjective rides its noun. The ${rl} slot is the head word${headW ? ` (<b>${esc(headW)}</b>)` : ''}; you'll place <b>${esc(picked.join('/'))}</b> in the mop-up step.</div>`;
+        }
+      }
     }
     // mop-up reveal: name the clause type + gloss, and make the ride-your-noun / gerund-stays rule explicit
     // on the very words just clustered (the boundary is now drawn — its box is revealed alongside).
@@ -4305,7 +4338,10 @@ const CLAUSE_MODE_EXCLUDE = new Set(['Gita']);
 function renderTutorialPicker() {
   const clauseMode = tutorialMode === 'clause';
   const modeTitle = clauseMode ? '🪢 वाक्य-विभाग' : '🧩 वाक्य-विग्रह';
-  const manifest = (window.TUTORIAL_MANIFEST || []).filter(m => !clauseMode || !CLAUSE_MODE_EXCLUDE.has(m.slug));
+  // texts listed lexicographically (by romanized slug) in वाक्य-विग्रह + वाक्य-विभाग pickers — independent
+  // of the build-emitted manifest order (Harsha, 2026-08-28).
+  const manifest = (window.TUTORIAL_MANIFEST || []).filter(m => !clauseMode || !CLAUSE_MODE_EXCLUDE.has(m.slug))
+    .slice().sort((a, b) => a.slug.toLowerCase().localeCompare(b.slug.toLowerCase()));
   // Text is now a real level (mirrors renderReadingPicker) — the manifest carries every pre-built
   // tutorial text (Gita, vivekacudamani, …). Default to the first entry; remember the choice in
   // view.picker.tutSlug across re-renders. Re-default if the remembered slug isn't in THIS mode's list.

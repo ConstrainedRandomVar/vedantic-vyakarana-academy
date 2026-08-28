@@ -2447,7 +2447,45 @@ function normalizeGenitiveCase(sentence) {
 // teaches the relation), then mop up the rest. Peripheral kārakas ARE traced (that's where the same-case
 // discrimination — करणम् vs हेतु vs adverbial — lives); qualifiers / gerund-sub-clusters / adverbs are
 // swept together in the mop-up. ----
-const CLAUSE_PERIPHERAL_ROLES = ['karana', 'sampradana', 'apadana', 'adhikarana', 'hetu'];
+// ALL of the nucleus's own kāraka/relational roles are traced individually (Harsha, 2026-08-28) so the
+// mop-up is left with only genuinely non-kāraka words (adjectives, adverbs, particles, genitives, negation,
+// predicate-agreement). `sequence` (the absolutive time-relation) is deliberately NOT here — गerunds get
+// their own attach+trace sub-sequence.
+const CLAUSE_PERIPHERAL_ROLES = ['karana', 'sampradana', 'apadana', 'adhikarana', 'hetu', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana'];
+// [name, gloss] per peripheral role — shared by the nucleus (clausePeripheral) and gerund
+// (clauseGerundPeripheral) trace prompts.
+const CLAUSE_ROLE_LABEL = {
+  karana: ['करणम्', 'the means/instrument — “by what?” (तृतीया, 2.3.18)'],
+  sampradana: ['सम्प्रदानम्', 'the recipient/purpose — “for whom/what?” (चतुर्थी, 2.3.13)'],
+  apadana: ['अपादानम्', 'the source — “from what?” (पञ्चमी, 2.3.28)'],
+  adhikarana: ['अधिकरणम्', 'the locus — “where/when?” (सप्तमी, 2.3.36)'],
+  hetu: ['हेतु', 'the cause/motive — “because of what?” (तृतीया/पञ्चमी, 2.3.23)'],
+  satisaptami: ['सति-सप्तमी', 'a locative-absolute circumstance — “when/while …” (सप्तमी)'],
+  itthambhuta: ['इत्थम्भूत-लक्षण', 'the mark by which the agent is recognized (तृतीया, 2.3.21)'],
+  upamana: ['उपमानम्', 'the standard of comparison — “like ___” (इव/वत्)'],
+  upameya: ['उपमेयम्', 'the thing being compared (to the उपमान)'],
+  sambodhana: ['सम्बोधन', 'the one addressed / called out to (सम्बोधन)'],
+  nirdharana: ['निर्धारण', 'the group it is singled out from — “among ___” (षष्ठी/सप्तमी, 2.3.41)'],
+};
+// The gerund/participle sub-clusters of a clause = non-head, non-finite cluster governors whose governor is
+// one of the clause's words. These are subordinate verbal forms (absolutives क्त्वा/ल्यप्, participles) that
+// carry their own कारक frame — traced as mini-nuclei when the verse has ≥2 nuclei (so "which nucleus does it
+// attach to?" is a real question). Returns [{cluster, clusterIdx}].
+function clauseGerundClusters(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return [];
+  const words = new Set(cl.words || []);
+  const out = [];
+  (sentence.clusters || []).forEach((c, ci) => {
+    if (c.isFiniteVerb) return;
+    if (c.governorWordIndex === cl.headWordIndex) return;   // the clause head itself (incl. a क्त predicate head) — traced as the nucleus
+    if (!words.has(c.governorWordIndex)) return;
+    out.push({ cluster: c, clusterIdx: ci });
+  });
+  return out;
+}
+function clauseNucleiCount(sentence) {
+  return (sentence.clauses || []).filter(c => c.headWordIndex != null).length;
+}
 // role arrays are either plain indices (karta/karma/samuccaya*) or {wordIndex,…} objects (sweep roles).
 function roleIndices(cluster, role) {
   return (cluster[role] || []).map(x => (x && typeof x === 'object') ? x.wordIndex : x).filter(i => i != null);
@@ -2465,6 +2503,18 @@ function clauseTracedIndices(sentence, clauseIdx) {
     if ((hc.karta || []).length) { for (const i of hc.karta) s.add(i); for (const i of (hc.samuccayaKarta || [])) s.add(i); }
     if ((hc.karma || []).length) { for (const i of hc.karma) s.add(i); for (const i of (hc.samuccayaKarma || [])) s.add(i); }
     for (const role of CLAUSE_PERIPHERAL_ROLES) for (const i of roleIndices(hc, role)) s.add(i);
+  }
+  // GERUND sub-clusters get their own attach + kāraka mini-trace — only when the verse has ≥2 nuclei (so
+  // "which nucleus?" is a real choice). Mirror those step guards: the gerund GOVERNOR is asked by the attach
+  // step (≥2 nuclei), and each of its कारक roles is asked when present. When <2 nuclei, the gerund + its
+  // deps fall through to the mop-up unchanged.
+  if (clauseNucleiCount(sentence) >= 2) {
+    for (const { cluster: gc } of clauseGerundClusters(sentence, clauseIdx)) {
+      s.add(gc.governorWordIndex);
+      if ((gc.karta || []).length) { for (const i of gc.karta) s.add(i); for (const i of (gc.samuccayaKarta || [])) s.add(i); }
+      if ((gc.karma || []).length) { for (const i of gc.karma) s.add(i); for (const i of (gc.samuccayaKarma || [])) s.add(i); }
+      for (const role of CLAUSE_PERIPHERAL_ROLES) for (const i of roleIndices(gc, role)) s.add(i);
+    }
   }
   return s;
 }
@@ -2527,6 +2577,7 @@ function samanadhikaranyaHint(sentence, hc, role) {
 // Reads gold `sentence.clauses` + the head's कारक cluster; a verse with none falls back to just the heads.
 function buildClauseSteps(sentence) {
   const clauses = sentence.clauses || [];
+  const nucleiCount = clauseNucleiCount(sentence);
   const steps = [{ type: 'clauseHeads' }];
   if (clauseStyle === 'socratic') {
     // verb-out kāraka trace, clause by clause (reading order). Each nucleus: valence → its own कारक words
@@ -2542,7 +2593,18 @@ function buildClauseSteps(sentence) {
       if (hc && (hc.karta || []).length) steps.push({ type: 'clauseKartaTrace', clauseIdx: i });
       // (2c) present peripheral kārakas — each teaches the same-case-vs-कारक discrimination
       for (const role of CLAUSE_PERIPHERAL_ROLES) if (hc && roleIndices(hc, role).length) steps.push({ type: 'clausePeripheral', clauseIdx: i, role });
-      // (3) mop-up — the remaining words of the clause (qualifiers, gerund sub-clusters, adverbs, particles)
+      // (3) GERUND/participle sub-nuclei: attach each to its finite verb, then trace ITS own frame. Only when
+      // the verse has ≥2 nuclei (so the attach question — "which nucleus?" — is a real boundary choice).
+      if (nucleiCount >= 2) {
+        for (const { cluster: gc, clusterIdx: gci } of clauseGerundClusters(sentence, i)) {
+          steps.push({ type: 'clauseGerundAttach', clauseIdx: i, clusterIdx: gci });   // which nucleus does it hang on?
+          if (gc.transitivity) steps.push({ type: 'clauseGerundValence', clauseIdx: i, clusterIdx: gci });
+          if ((gc.karma || []).length) { steps.push({ type: 'clauseGerundKarmaCase', clauseIdx: i, clusterIdx: gci }); steps.push({ type: 'clauseGerundKarma', clauseIdx: i, clusterIdx: gci }); }
+          if ((gc.karta || []).length) steps.push({ type: 'clauseGerundKarta', clauseIdx: i, clusterIdx: gci });   // an absolutive rarely has its own कर्ता, but क्त/शतृ participles can
+          for (const role of CLAUSE_PERIPHERAL_ROLES) if (roleIndices(gc, role).length) steps.push({ type: 'clauseGerundPeripheral', clauseIdx: i, clusterIdx: gci, role });
+        }
+      }
+      // (4) mop-up — the remaining words of the clause (adjectives/विशेषण, adverbs, particles, genitives)
       if (clauseMopUpIndices(sentence, i).size) steps.push({ type: 'clauseMopUp', clauseIdx: i });
     });
   } else {
@@ -2778,6 +2840,9 @@ function expectedSetForStep(sentence, step) {
   if (step.type === 'clauseKarma') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set([...((cluster && cluster.karma) || []), ...((cluster && cluster.samuccayaKarma) || [])]); }
   if (step.type === 'clauseKartaTrace') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set([...((cluster && cluster.karta) || []), ...((cluster && cluster.samuccayaKarta) || [])]); }
   if (step.type === 'clausePeripheral') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set(cluster ? roleIndices(cluster, step.role) : []); }
+  if (step.type === 'clauseGerundKarma') { const gc = sentence.clusters[step.clusterIdx]; return new Set([...((gc && gc.karma) || []), ...((gc && gc.samuccayaKarma) || [])]); }
+  if (step.type === 'clauseGerundKarta') { const gc = sentence.clusters[step.clusterIdx]; return new Set([...((gc && gc.karta) || []), ...((gc && gc.samuccayaKarta) || [])]); }
+  if (step.type === 'clauseGerundPeripheral') { const gc = sentence.clusters[step.clusterIdx]; return new Set(gc ? roleIndices(gc, step.role) : []); }
   if (step.type === 'clauseMopUp') return clauseMopUpIndices(sentence, step.clauseIdx);
   const c = sentence.clusters[step.clusterIdx];
   // करता/कर्म and their agreementKarta/Karma questions all share ONE full accepted-answer set per
@@ -3220,6 +3285,29 @@ function tutorialMcqSpec(step, sentence) {
       : `<b>${esc(head)}</b> is <b>अकर्मक</b> (intransitive) — it takes no कर्म. Its कर्ता alone completes the action; a द्वितीया word here would belong to some other verb, not to ${esc(head)}.`;
     return { correct, options: ['सकर्मक', 'अकर्मक'], highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: tip };
   }
+  if (step.type === 'clauseGerundAttach') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const gc = sentence.clusters[step.clusterIdx] || {};
+    const gw = gc.governorWord || '';
+    const headOf = idx => (sentence.clauses[idx] && sentence.clauses[idx].headWordIndex != null) ? sentence.words[sentence.clauses[idx].headWordIndex] : `clause ${idx + 1}`;
+    const correct = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '';
+    const options = seedRotate([...new Set((sentence.clauses || []).map((_, idx) => headOf(idx)))], correct);
+    return { correct, options, highlight: new Set(gc.governorWordIndex != null ? [gc.governorWordIndex] : []), explainHtml: `<b>${esc(gw)}</b> is an absolutive/participle (कृत्) — not a clause of its own; it hangs on a finite verb, whose action it precedes or accompanies (and whose कर्ता it shares). Here it attaches to <b>${esc(correct)}</b>.` };
+  }
+  if (step.type === 'clauseGerundValence') {
+    const gc = sentence.clusters[step.clusterIdx] || {};
+    const gw = gc.governorWord || '';
+    const correct = /अकर्मक/.test(gc.transitivity || '') ? 'अकर्मक' : 'सकर्मक';
+    const tip = correct === 'सकर्मक'
+      ? `<b>${esc(gw)}</b> is <b>सकर्मक</b> (transitive) — it governs its own कर्म, distinct from the finite verb's. Find that कर्म next.`
+      : `<b>${esc(gw)}</b> is <b>अकर्मक</b> (intransitive) — it takes no कर्म of its own.`;
+    return { correct, options: ['सकर्मक', 'अकर्मक'], highlight: new Set(gc.governorWordIndex != null ? [gc.governorWordIndex] : []), explainHtml: tip };
+  }
+  if (step.type === 'clauseGerundKarmaCase') {
+    const gc = sentence.clusters[step.clusterIdx] || {};
+    const r = karmaCaseOptions(gc, sentence);
+    return { ...r, highlight: new Set(gc.governorWordIndex != null ? [gc.governorWordIndex] : []), explainHtml: r.tip || `A gerund/participle governs its own कर्म in the usual <b>द्वितीया</b> (2.3.2) — the कारक-षष्ठी (2.3.65) is blocked for absolutives/निष्ठा/शतृ forms (2.3.69).` };
+  }
   if (step.type === 'clauseAssign') {
     const ci = wordClauseIdx(sentence, step.wordIndex);
     const cl = (sentence.clauses || [])[ci] || {};
@@ -3231,7 +3319,7 @@ function tutorialMcqSpec(step, sentence) {
   }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase']);
 
 // Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
 // negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
@@ -3406,8 +3494,34 @@ function tutorialStepLabelBase(step, sentence) {
     case 'clausePeripheral': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
-      const L = { karana: ['करणम्', 'the means/instrument — "by what?" (तृतीया, 2.3.18)'], sampradana: ['सम्प्रदानम्', 'the recipient/purpose — "for whom/what?" (चतुर्थी, 2.3.13)'], apadana: ['अपादानम्', 'the source — "from what?" (पञ्चमी, 2.3.28)'], adhikarana: ['अधिकरणम्', 'the locus — "where/when?" (सप्तमी, 2.3.36)'], hetu: ['हेतु', 'the cause/motive — "because of what?" (तृतीया/पञ्चमी, 2.3.23)'] }[step.role] || [step.role, ''];
+      const L = CLAUSE_ROLE_LABEL[step.role] || [step.role, ''];
       return `<b>Trace — a peripheral कारक.</b> For ${h}, which word is the <b>${esc(L[0])}</b>${L[1] ? ` — ${L[1]}` : ''}? Match by कारक, not just by case.`;
+    }
+    case 'clauseGerundAttach': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `<b>Trace — the gerund's anchor.</b> <b>${esc(gc.governorWord || '')}</b> is an absolutive/participle (कृत्, e.g. क्त्वा/ल्यप्) — it isn't a clause of its own; it hangs on a finite verb whose action it precedes or accompanies. Which nucleus does it attach to?`;
+    }
+    case 'clauseGerundValence': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `<b>Trace the gerund's own frame.</b> Is <b>${esc(gc.governorWord || '')}</b> <b>सकर्मक</b> (governs its own कर्म) or <b>अकर्मक</b> (none)?`;
+    }
+    case 'clauseGerundKarmaCase': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `<b>${esc(gc.governorWord || '')}</b> is <b>सकर्मक</b>, so it takes its own कर्म. In which vibhakti does that कर्म stand?`;
+    }
+    case 'clauseGerundKarma': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      const gw = `<b>${esc(gc.governorWord || '')}</b>`;
+      return `Which word is <b>${esc(gc.governorWord || '')}</b>'s <b>कर्म</b> (the thing <i>it</i> acts on — distinct from the finite verb's कर्म)?${samanadhikaranyaHint(sentence, gc, 'karma')}`;
+    }
+    case 'clauseGerundKarta': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `Which word is <b>${esc(gc.governorWord || '')}</b>'s own <b>कर्ता</b> (its doer)? Pick the substantive head, not its adjectives.${samanadhikaranyaHint(sentence, gc, 'karta')}`;
+    }
+    case 'clauseGerundPeripheral': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      const L = CLAUSE_ROLE_LABEL[step.role] || [step.role, ''];
+      return `For the gerund <b>${esc(gc.governorWord || '')}</b>, which word is its <b>${esc(L[0])}</b>${L[1] ? ` — ${L[1]}` : ''}?`;
     }
     case 'clauseMopUp': {
       const cl = sentence.clauses[step.clauseIdx];
@@ -3924,7 +4038,7 @@ function renderTutorial() {
     // SOCRATIC = verb-out trace: the verse stays FLAT during the trace steps, but each clause's box is
     // REVEALED progressively as soon as its mop-up is answered (its boundary is now fully drawn). GUIDED
     // keeps the older behaviour: flat during clauseHeads/clauseMembers, full boxes on the supply steps.
-    const TRACE_FLAT = new Set(['clauseHeads', 'clauseValence', 'clauseKarmaCase', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'clauseAssign']);
+    const TRACE_FLAT = new Set(['clauseHeads', 'clauseValence', 'clauseKarmaCase', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'clauseAssign', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase', 'clauseGerundKarma', 'clauseGerundKarta', 'clauseGerundPeripheral']);
     const segmentLike = clauseStyle === 'socratic' ? TRACE_FLAT.has(step.type) : (step.type === 'clauseHeads' || step.type === 'clauseMembers');
     if (segmentLike) {
       let revealed = null;
@@ -4127,7 +4241,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['clauseHeads', 'clauseMembers', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
+  const multiSelect = ['clauseHeads', 'clauseMembers', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'clauseGerundKarma', 'clauseGerundKarta', 'clauseGerundPeripheral', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   // "None of these" is offered for EVERY multi-select word step (not just kartā/karma) so a question
@@ -4182,20 +4296,22 @@ function renderTutorial() {
       const cl = sentence.clauses[step.clauseIdx];
       feedbackHtml += `<div class="tut-explain">This is the <b>${esc(clauseTypeLabel(cl.type))}</b>${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}.</div>`;
     }
-    // verb-out trace: after a कारक pick, surface the "same case, different कारक" traps with their sūtras.
-    if (step.type === 'clauseKarma' || step.type === 'clauseKartaTrace' || step.type === 'clausePeripheral') {
-      const hc = clusterForClauseHead(sentence, sentence.clauses[step.clauseIdx]);
-      const role = step.type === 'clauseKarma' ? 'karma' : step.type === 'clauseKartaTrace' ? 'karta' : step.role;
+    // verb-out trace: after a कारक pick (nucleus OR gerund sub-nucleus), surface the "same case, different
+    // कारक" traps with their sūtras, and honour a विशेषण-instead-of-head slip.
+    if (['clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseGerundKarma', 'clauseGerundKarta', 'clauseGerundPeripheral'].includes(step.type)) {
+      const hc = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : clusterForClauseHead(sentence, sentence.clauses[step.clauseIdx]);
+      const isKarma = /Karma/.test(step.type), isKarta = /Karta/.test(step.type);
+      const role = isKarma ? 'karma' : isKarta ? 'karta' : step.role;
       const cd = hc ? caseDiscriminationCallout(sentence, hc, role) : '';
       if (cd) feedbackHtml += `<div class="tut-explain">${cd}</div>`;
       // Honour a reasonable slip: the learner picked a विशेषण (adjective) OF the कर्ता/कर्म instead of the
       // head word itself — name it, don't just fail it ([[feedback_quiz_question_framing]]). Same referent,
       // but the कारक slot is filled by the head noun; its adjective rides it and is placed in the mop-up.
-      if (hc && (step.type === 'clauseKartaTrace' || step.type === 'clauseKarma')) {
-        const qual = step.type === 'clauseKartaTrace' ? (hc.qualifierKarta || []) : (hc.qualifierKarma || []);
+      if (hc && (isKarta || isKarma)) {
+        const qual = isKarta ? (hc.qualifierKarta || []) : (hc.qualifierKarma || []);
         const picked = [...selected].filter(i => qual.includes(i) && !expected.has(i)).map(i => sentence.words[i]);
         if (picked.length) {
-          const rl = step.type === 'clauseKartaTrace' ? 'कर्ता' : 'कर्म';
+          const rl = isKarta ? 'कर्ता' : 'कर्म';
           const headW = [...expected].map(i => sentence.words[i]).join('/');
           feedbackHtml += `<div class="tut-explain"><b>${esc(picked.join('/'))}</b> is a <b>विशेषण</b> (adjective) of the ${rl}${headW ? ` <b>${esc(headW)}</b>` : ''}, not the ${rl} itself — an adjective rides its noun. The ${rl} slot is the head word${headW ? ` (<b>${esc(headW)}</b>)` : ''}; you'll place <b>${esc(picked.join('/'))}</b> in the mop-up step.</div>`;
         }

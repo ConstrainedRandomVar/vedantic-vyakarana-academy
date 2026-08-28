@@ -2506,6 +2506,20 @@ function caseDiscriminationCallout(sentence, hc, role) {
   const self = ROLE_LABEL_SUTRA[role] ? ROLE_LABEL_SUTRA[role][0] : role;
   return `Same case, different कारक: other <b>${esc(V)}</b> word(s) here are NOT the ${self} — ${others.join('; ')}. Match the कारक to the verb, not just the case.`;
 }
+// सामानाधिकरण्य framing (Harsha, 2026-08-28 — "a great way to teach"): when the कर्ता/कर्म has विशेषण
+// present in the clause, list ALL the co-referential same-case candidates of THIS clause and give the
+// विशेष्य-vs-विशेषण rule, so the learner reasons to the head instead of guessing यः-vs-विद्वान् at random.
+// Returns '' when there are no qualifiers (plain prompt stays). Question-specific: lists this clause's words.
+function samanadhikaranyaHint(sentence, hc, role) {
+  if (!hc) return '';
+  const heads = role === 'karta' ? [...(hc.karta || []), ...(hc.samuccayaKarta || [])] : [...(hc.karma || []), ...(hc.samuccayaKarma || [])];
+  const quals = role === 'karta' ? (hc.qualifierKarta || []) : (hc.qualifierKarma || []);
+  if (!quals.length || !heads.length) return '';
+  const cand = [...new Set([...heads, ...quals])].sort((a, b) => a - b).map(i => sentence.words[i]);
+  const lbl = role === 'karta' ? 'कर्ता' : 'कर्म';
+  const ent = role === 'karta' ? 'doer' : 'thing acted upon';
+  return `<div class="tut-explain">⚠ More than one word here shares the ${lbl}'s case (सामानाधिकरण्य): <b>${cand.map(esc).join(' · ')}</b>. Exactly one is the ${lbl} — the word that <b>names the ${ent}</b> (a pronoun / सर्वनाम, or the principal noun). The rest are <b>विशेषण</b> (adjectives — a quality or a derived word describing it), which agree with it and are placed in the mop-up. Which word <i>names</i> the ${ent}?</div>`;
+}
 // वाक्य-विभाग (clause mode) step sequence. GUIDED style keeps the "Core" recipe (segment, then supply).
 // SOCRATIC style (default) is now a VERB-OUT KĀRAKA TRACE (Harsha, 2026-08-28): per nucleus — (1) valence
 // (सकर्मक/अकर्मक), (2) place its own कारक words (कर्म+case, कर्ता, करणम्/अधिकरण/…), each drawing the
@@ -2738,27 +2752,17 @@ function buildTutorialSteps(sentence) {
 // is a strict superset of `sentence.verbs`, so BG (already complete) is unchanged. Excludes participles
 // used as a noun/adjective (जाग्रत्/जायमानम् — no governed argument), per the step's own prompt.
 function verbsIndicesFor(sentence) {
-  const clauses = sentence.clauses || [];
-  const hasClause = clauses.length > 0;
-  const headSet = hasClause ? new Set(clauses.map(cl => cl.headWordIndex).filter(i => i != null)) : null;
-  // words that govern a NON-finite cluster (कृदन्त — participle or absolutive/gerund). A कृदन्त counts as a
-  // clause "verb" only when it ACTS AS a clause's verb (a predicate that HEADS a clause, e.g. passive क्त
-  // चोदिता). A dependent ABSOLUTIVE/gerund (क्त्वा/ल्यप् — विदित्वा, प्रणोद्य) governs its own कर्म but merely
-  // hangs on a finite verb — it is never a clause head. So, when gold clause data exists, drop any non-finite
-  // governor that isn't a clause head. This reconciles step-1 with वाक्य-विभाग's clauseHeads (both give the
-  // finite/predicate nuclei, not the gerunds — Harsha, 2026-08-28, katha 1.1.18: चिनुते/मोदते, not
-  // विदित्वा/प्रणोद्य). The Gemini adapter puts gerunds in sentence.verbs, so we must filter the base set,
-  // not just the union. Texts with no clause data (BG/Gita, e-reader-sourced) are untouched (authoritative).
-  const nonFiniteGov = new Set((sentence.clusters || []).filter(c => !c.isFiniteVerb).map(c => c.governorWordIndex));
-  const consider = new Set(sentence.verbs || []);
+  // वाक्य-विग्रह's step-1 is ROLE/GOVERNOR analysis (broad): a word is a "verb" here if it is a finite
+  // तिङन्त OR any कृत् form that governs its own कारक (कर्ता/कर्म) — this INCLUDES gerunds/absolutives
+  // (क्त्वा/ल्यप् विदित्वा/प्रणोद्य) and predicate participles (क्त चोदिता). We deliberately keep gerunds
+  // here because the per-cluster walk later ASKS their कर्म (विदित्वा → त्रयम्), so step-1 must agree with
+  // the walk or it contradicts itself (Harsha, 2026-08-28). This differs on purpose from वाक्य-विभाग's
+  // clauseHeads, which asks for clause NUCLEI (finite/predicate heads only) — a gerund is a verbal governor
+  // but NOT a nucleus; there it goes to the mop-up. Two lenses, each internally consistent.
+  const set = new Set(sentence.verbs || []);
   for (const c of sentence.clusters || []) {
     if (c.isFiniteVerb) continue;   // finite governors are already in sentence.verbs
-    if (c.karmaGovernorIsKrdanta && ((c.karta && c.karta.length) || (c.karma && c.karma.length))) consider.add(c.governorWordIndex);
-  }
-  const set = new Set();
-  for (const i of consider) {
-    if (hasClause && nonFiniteGov.has(i) && !headSet.has(i)) continue;   // dependent गerund/participle — not a clause verb
-    set.add(i);
+    if (c.karmaGovernorIsKrdanta && ((c.karta && c.karta.length) || (c.karma && c.karma.length))) set.add(c.governorWordIndex);
   }
   // never contradict an explicit step1Hint (a word flagged as a verb-lookalike that ISN'T a verb here)
   for (const h of (sentence.step1Hints || [])) set.delete(h.wordIndex);
@@ -3246,7 +3250,7 @@ function tutorialStepLabelBase(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any कृत्-participle that <i>acts as</i> its clause's verb (a predicate, e.g. passive क्त चोदिता)? A <b>gerund/absolutive</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य) is NOT the clause's verb; it depends on the finite verb, so leave it out — as do participles used to name or describe (nouns/adjectives). (identify ${verbsIndicesFor(sentence).size})`;
+    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any verbal (कृत्) form that <b>governs its own कारक</b> (कर्ता/कर्म)? This <b>includes gerunds/absolutives</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य, which take their own कर्म) and predicate participles (क्त — e.g. चोदिता). Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${verbsIndicesFor(sentence).size})`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
@@ -3387,8 +3391,9 @@ function tutorialStepLabelBase(step, sentence) {
     }
     case 'clauseKarma': {
       const cl = sentence.clauses[step.clauseIdx];
+      const hc = clusterForClauseHead(sentence, cl) || {};
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
-      return `Now identify it: which word is the <b>कर्म</b> (what the action is done to) of ${h}? Picking it draws part of ${h}'s clause boundary.`;
+      return `Now identify it: which word is the <b>कर्म</b> (what the action is done to) of ${h}? Picking it draws part of ${h}'s clause boundary.${samanadhikaranyaHint(sentence, hc, 'karma')}`;
     }
     case 'clauseKartaTrace': {
       const cl = sentence.clauses[step.clauseIdx];
@@ -3396,7 +3401,7 @@ function tutorialStepLabelBase(step, sentence) {
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
       const vibs = [...new Set((hc.karta || []).map(i => actualVibhakti(sentence, i)).filter(Boolean))];
       const caseNote = vibs.length === 1 ? ` (it stands in <b>${esc(vibs[0])}</b>)` : '';
-      return `<b>Trace step 3 — the agent.</b> Whose action is ${h}? Click the word(s) that are its <b>कर्ता</b> (the doer)${caseNote}. Beware: a तृतीया word may be the <b>करणम्</b> (instrument) or <b>हेतु</b> (cause), not the agent — match the कारक to the verb.`;
+      return `<b>Trace step 3 — the agent.</b> Whose action is ${h}? Click the <b>substantive head</b> that is its <b>कर्ता</b> (the doer)${caseNote} — a pronoun (यः/सः) or the principal noun, <b>not</b> its adjectives (a विशेषण agrees with the कर्ता in समानाधिकरण्य and is placed in the mop-up). Also beware a तृतीया word that is the <b>करणम्</b> (instrument) or <b>हेतु</b> (cause), not the agent — match the कारक to the verb.${samanadhikaranyaHint(sentence, hc, 'karta')}`;
     }
     case 'clausePeripheral': {
       const cl = sentence.clauses[step.clauseIdx];

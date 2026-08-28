@@ -2351,11 +2351,36 @@ function currentTutorialStep() { return tutorialSteps[tutorialStepIdx]; }
 // तृतीया for कर्मणि/भावे. षष्ठी (2.3.65 कारक-षष्ठी) is only offered as a distractor when the
 // governor is genuinely a कृदन्त — offering it for a plain finite verb would be a fake distractor, since
 // षष्ठी is never actually live there.
+// The vibhakti a PRESENT word actually stands in, read from its wordCode ([vibhakti][vacana]) — null if
+// absent/unknown. We honour the corpus's OWN coding rather than deriving case only from voice, so the
+// tutorial never contradicts the text it displays (fidelity).
+function actualVibhakti(sentence, i) {
+  const code = ((sentence && sentence.wordCodes) || [])[i] || '';
+  return CLAUSE_CASE_NAMES[code[0]] || null;
+}
+// The कारक-षष्ठी signal: does an अनभिहित कर्ता/कर्म of a कृत्/कृदन्त governor actually stand in षष्ठी here?
+// Returns that word index, else null. This is real in the corpus (e.g. कठ 1.1.27 वरणीयः → मे in षष्ठी by
+// 2.3.71; केन 2.1 मीमांस्यम्; VC 139 प्राप्तः) — the voice-derived प्रथमा/तृतीया would be the WRONG answer
+// there. Only fires when a role word is genuinely present and 6x-coded.
+function sashthiKaraka(indices, sentence) {
+  for (const i of (indices || [])) if (actualVibhakti(sentence, i) === 'षष्ठी') return i;
+  return null;
+}
 const VOICE_TO_KARTA_CASE = { 'कर्तरि': 'प्रथमा', 'कर्मणि': 'तृतीया', 'भावे': 'तृतीया' };
-function kartaCaseOptions(c) {
-  const correct = VOICE_TO_KARTA_CASE[c.voice] || 'प्रथमा';
-  const options = c.karmaGovernorIsKrdanta ? ['प्रथमा', 'तृतीया', 'षष्ठी'] : ['प्रथमा', 'तृतीया'];
-  return { correct, options };
+function kartaCaseOptions(c, sentence) {
+  const base = VOICE_TO_KARTA_CASE[c.voice] || 'प्रथमा';
+  // Fidelity (कारक-षष्ठी): when the agent is actually PRESENT in षष्ठी — a कृत्/कृदन्त governor taking its
+  // अनभिहित कर्ता in षष्ठी (2.3.65; कृत्य forms optionally षष्ठी/तृतीया by 2.3.71; present-sense क्त by
+  // 2.3.67) — the voice-derived प्रथमा/तृतीया is NOT the case the text uses. Make षष्ठी correct and accept
+  // the voice default too (both attested), so we never mark the text's own case wrong.
+  const sIdx = sashthiKaraka(c.karta, sentence);
+  const correct = sIdx != null ? 'षष्ठी' : base;
+  const accept = sIdx != null ? ['षष्ठी', base] : [base];
+  const options = (c.karmaGovernorIsKrdanta || sIdx != null) ? ['प्रथमा', 'तृतीया', 'षष्ठी'] : ['प्रथमा', 'तृतीया'];
+  const tip = sIdx != null
+    ? `Here the agent stands in <b>षष्ठी</b> — कारक-षष्ठी with a कृत्/कृदन्त governor (2.3.65). कृत्य forms (तव्य/अनीय/यत्) allow either षष्ठी or तृतीया (2.3.71); present-sense क्त takes षष्ठी (2.3.67). But when a कर्म is also present, the agent instead goes तृतीया (2.3.66).`
+    : '';
+  return { correct, options, accept, tip };
 }
 // कर्म-case sub-question (Harsha, 2026-08-16), mirroring कर्ता-case above — कर्तरि leaves कर्म in its
 // plain द्वितीया (अनुक्त); कर्मणि promotes it to प्रथमा (अभिहित). No भावे entry: भावे प्रयोग is only
@@ -2364,10 +2389,18 @@ function kartaCaseOptions(c) {
 // c.karta.length, so भावे clusters simply never reach here. षष्ठी distractor rule is identical to
 // कर्ता's (2.3.65 कर्तृकर्मणोः कृति applies to BOTH कर्ता and कर्म of a कृदन्त governor, not just कर्ता).
 const VOICE_TO_KARMA_CASE = { 'कर्तरि': 'द्वितीया', 'कर्मणि': 'प्रथमा' };
-function karmaCaseOptions(c) {
-  const correct = VOICE_TO_KARMA_CASE[c.voice] || 'द्वितीया';
-  const options = c.karmaGovernorIsKrdanta ? ['द्वितीया', 'प्रथमा', 'षष्ठी'] : ['द्वितीया', 'प्रथमा'];
-  return { correct, options };
+function karmaCaseOptions(c, sentence) {
+  const base = VOICE_TO_KARMA_CASE[c.voice] || 'द्वितीया';
+  // कारक-षष्ठी (2.3.65/2.3.66): a कृत् action-noun governs its अनभिहित object in षष्ठी; when an agent is
+  // also present only the OBJECT keeps षष्ठी (2.3.66). Honour the text's actual coding, as with कर्ता.
+  const sIdx = sashthiKaraka(c.karma, sentence);
+  const correct = sIdx != null ? 'षष्ठी' : base;
+  const accept = sIdx != null ? ['षष्ठी', base] : [base];
+  const options = (c.karmaGovernorIsKrdanta || sIdx != null) ? ['द्वितीया', 'प्रथमा', 'षष्ठी'] : ['द्वितीया', 'प्रथमा'];
+  const tip = sIdx != null
+    ? `Here the object stands in <b>षष्ठी</b> — कारक-षष्ठी (2.3.65): a कृत् governor takes its अनभिहित कर्म in षष्ठी. With an agent also present, only the object keeps षष्ठी; the agent then goes तृतीया (2.3.66).`
+    : '';
+  return { correct, options, accept, tip };
 }
 // Emphatic/quotative/simile निपात particles — never a कारक of the verb (अवधारण: they qualify the preceding
 // word). The VC/Gemini adapter already buckets these into `nipata`, but texts built by the older pipeline
@@ -2407,28 +2440,95 @@ function normalizeGenitiveCase(sentence) {
     }
   }
 }
-// वाक्य-विभाग (clause mode) step sequence — the "Core" recipe (Harsha, 2026-08-27): segment first, then
-// supply. (1) identify all clause-heads; (2) for each clause, click every word that belongs to it;
-// (3) supply the elided कर्ता (अनुक्त-कर्ता); (4) supply the elided verb/copula (अध्याहार). NO clause-type
-// taxonomy or subordination steps (that's the contestable part we deliberately skip). Reads gold
-// `sentence.clauses`; a verse with none falls back to just the heads step (which will show "identify 0").
+// ---- verb-out kāraka-trace helpers (Harsha, 2026-08-28) — the socratic discovery is now a trace: for
+// each nucleus, establish its valence, then place its own कारक words (each pick draws the boundary AND
+// teaches the relation), then mop up the rest. Peripheral kārakas ARE traced (that's where the same-case
+// discrimination — करणम् vs हेतु vs adverbial — lives); qualifiers / gerund-sub-clusters / adverbs are
+// swept together in the mop-up. ----
+const CLAUSE_PERIPHERAL_ROLES = ['karana', 'sampradana', 'apadana', 'adhikarana', 'hetu'];
+// role arrays are either plain indices (karta/karma/samuccaya*) or {wordIndex,…} objects (sweep roles).
+function roleIndices(cluster, role) {
+  return (cluster[role] || []).map(x => (x && typeof x === 'object') ? x.wordIndex : x).filter(i => i != null);
+}
+// the words a clause's trace explicitly asks for = its head + the head cluster's OWN कारक words.
+function clauseTracedIndices(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return new Set();
+  const hc = clusterForClauseHead(sentence, cl);
+  const s = new Set();
+  if (cl.headWordIndex != null) s.add(cl.headWordIndex);
+  // Mirror the trace-step GUARDS exactly (a step is generated only when its PRIMARY role is present) so
+  // `traced` never claims a word the trace didn't actually ask — otherwise an orphan समुच्चय co-agent/object
+  // (present when the primary कर्ता/कर्म is absent) would be excluded from mop-up yet never quizzed.
+  if (hc) {
+    if ((hc.karta || []).length) { for (const i of hc.karta) s.add(i); for (const i of (hc.samuccayaKarta || [])) s.add(i); }
+    if ((hc.karma || []).length) { for (const i of hc.karma) s.add(i); for (const i of (hc.samuccayaKarma || [])) s.add(i); }
+    for (const role of CLAUSE_PERIPHERAL_ROLES) for (const i of roleIndices(hc, role)) s.add(i);
+  }
+  return s;
+}
+// mop-up = the clause's PRESENT words that the trace didn't already ask for (qualifiers, gerund
+// sub-clusters + their own objects, adverbs, particles). One multi-select per clause (Harsha, 2026-08-28).
+function clauseMopUpIndices(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return new Set();
+  const traced = clauseTracedIndices(sentence, clauseIdx);
+  return new Set((cl.words || []).filter(i => !traced.has(i)));
+}
+// "same case, different कारक" teaching (Harsha, 2026-08-28): after a trace pick, name the OTHER words in
+// the verse that share the picked role's vibhakti but serve a DIFFERENT kāraka, each with its sūtra — so
+// the learner matches कारक to the verb, not just the case (करणम् 2.3.18 vs हेतु 2.3.23, etc.).
+const ROLE_LABEL_SUTRA = {
+  karta: ['कर्ता (agent)', '2.3.18 कर्तृकरणयोस्तृतीया'], karana: ['करणम् (instrument)', '2.3.18 कर्तृकरणयोस्तृतीया'],
+  hetu: ['हेतु (cause)', '2.3.23 हेतौ'], karma: ['कर्म (object)', '2.3.2 कर्मणि द्वितीया'],
+  sampradana: ['सम्प्रदानम् (recipient/purpose)', '2.3.13 चतुर्थी सम्प्रदाने'],
+  apadana: ['अपादानम् (source)', '2.3.28 अपादाने पञ्चमी'], adhikarana: ['अधिकरणम् (locus)', '2.3.36 सप्तम्यधिकरणे'],
+};
+function sentenceRoleMap(sentence) {
+  const m = {};
+  for (const c of (sentence.clusters || [])) for (const r of Object.keys(ROLE_LABEL_SUTRA))
+    for (const i of roleIndices(c, r)) if (m[i] == null) m[i] = r;
+  return m;
+}
+function caseDiscriminationCallout(sentence, hc, role) {
+  const idxs = roleIndices(hc, role);
+  const vibs = [...new Set(idxs.map(i => actualVibhakti(sentence, i)).filter(Boolean))];
+  if (vibs.length !== 1) return '';   // no single clean vibhakti to contrast against
+  const V = vibs[0];
+  const rm = sentenceRoleMap(sentence);
+  const others = [];
+  (sentence.words || []).forEach((w, i) => {
+    if (idxs.includes(i) || actualVibhakti(sentence, i) !== V) return;
+    const r = rm[i];
+    if (r && r !== role && ROLE_LABEL_SUTRA[r]) others.push(`<b>${esc(w)}</b> = ${ROLE_LABEL_SUTRA[r][0]} (${ROLE_LABEL_SUTRA[r][1]})`);
+  });
+  if (!others.length) return '';
+  const self = ROLE_LABEL_SUTRA[role] ? ROLE_LABEL_SUTRA[role][0] : role;
+  return `Same case, different कारक: other <b>${esc(V)}</b> word(s) here are NOT the ${self} — ${others.join('; ')}. Match the कारक to the verb, not just the case.`;
+}
+// वाक्य-विभाग (clause mode) step sequence. GUIDED style keeps the "Core" recipe (segment, then supply).
+// SOCRATIC style (default) is now a VERB-OUT KĀRAKA TRACE (Harsha, 2026-08-28): per nucleus — (1) valence
+// (सकर्मक/अकर्मक), (2) place its own कारक words (कर्म+case, कर्ता, करणम्/अधिकरण/…), each drawing the
+// boundary + teaching the relation, (3) mop up the rest. THEN the supply phase (elided agents/copula).
+// Reads gold `sentence.clauses` + the head's कारक cluster; a verse with none falls back to just the heads.
 function buildClauseSteps(sentence) {
   const clauses = sentence.clauses || [];
   const steps = [{ type: 'clauseHeads' }];
   if (clauseStyle === 'socratic') {
-    // draw the boundaries: for each non-nucleus word (reading order), ask which clause it belongs to.
-    const heads = new Set(clauses.map(cl => cl.headWordIndex).filter(i => i != null));
-    const assignable = [];
-    for (let i = 0; i < sentence.words.length; i++) {
-      if (heads.has(i)) continue;                       // nuclei already found in step 1
-      if (wordClauseIdx(sentence, i) != null) assignable.push(i);
-    }
-    // smart-skip: on long verses ask only the boundary-adjacent words (interior words are obvious)
-    const smart = clauseSkip === 'smart' || (clauseSkip === 'auto' && sentence.words.length > CLAUSE_SMART_THRESHOLD);
-    for (const i of assignable) {
-      if (smart && !isClauseBoundaryWord(sentence, i)) continue;
-      steps.push({ type: 'clauseAssign', wordIndex: i });
-    }
+    // verb-out kāraka trace, clause by clause (reading order). Each nucleus: valence → its own कारक words
+    // (each pick draws the boundary) → mop-up. ELIDED agents/objects are NOT asked here (no present word to
+    // click) — they're supplied in the supply phase below.
+    clauses.forEach((cl, i) => {
+      const hc = clusterForClauseHead(sentence, cl);
+      // (1) valence — only for a genuine verb nucleus whose transitivity is known (skip verbless/nominal heads)
+      if (hc && hc.transitivity && cl.type !== 'nominal' && !hc.subjectIsHead) steps.push({ type: 'clauseValence', clauseIdx: i });
+      // (2a) the PRESENT object of a transitive head: its case, then the word (elided objects → supply phase)
+      if (hc && (hc.karma || []).length) { steps.push({ type: 'clauseKarmaCase', clauseIdx: i }); steps.push({ type: 'clauseKarma', clauseIdx: i }); }
+      // (2b) the PRESENT agent (an अनुक्त/elided agent has no word to click → asked in the supply phase)
+      if (hc && (hc.karta || []).length) steps.push({ type: 'clauseKartaTrace', clauseIdx: i });
+      // (2c) present peripheral kārakas — each teaches the same-case-vs-कारक discrimination
+      for (const role of CLAUSE_PERIPHERAL_ROLES) if (hc && roleIndices(hc, role).length) steps.push({ type: 'clausePeripheral', clauseIdx: i, role });
+      // (3) mop-up — the remaining words of the clause (qualifiers, gerund sub-clusters, adverbs, particles)
+      if (clauseMopUpIndices(sentence, i).size) steps.push({ type: 'clauseMopUp', clauseIdx: i });
+    });
   } else {
     clauses.forEach((cl, i) => steps.push({ type: 'clauseMembers', clauseIdx: i }));   // guided: one per clause
   }
@@ -2451,8 +2551,9 @@ function buildClauseSteps(sentence) {
       steps.push({ type: 'clauseKarta', clauseIdx: i });
     }
   });
-  // a transitive (सकर्मक) clause head governs a कर्म: identify its case, then the word — completes the clause.
-  clauses.forEach((cl, i) => {
+  // a transitive (सकर्मक) clause head governs a कर्म: identify its case, then the word. GUIDED style only —
+  // the socratic trace already asked the PRESENT object above (as part of the verb-out kāraka trace).
+  if (clauseStyle !== 'socratic') clauses.forEach((cl, i) => {
     const cluster = clusterForClauseHead(sentence, cl);
     if (cluster && cluster.voice && (cluster.karma || []).length) {
       steps.push({ type: 'clauseKarmaCase', clauseIdx: i });
@@ -2651,7 +2752,10 @@ function expectedSetForStep(sentence, step) {
   // वाक्य-विभाग word-select steps — graded against the gold `clauses` (no cluster involved)
   if (step.type === 'clauseHeads') return new Set((sentence.clauses || []).map(cl => cl.headWordIndex).filter(i => i != null));
   if (step.type === 'clauseMembers') return new Set((((sentence.clauses || [])[step.clauseIdx]) || {}).words || []);
-  if (step.type === 'clauseKarma') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set((cluster && cluster.karma) || []); }
+  if (step.type === 'clauseKarma') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set([...((cluster && cluster.karma) || []), ...((cluster && cluster.samuccayaKarma) || [])]); }
+  if (step.type === 'clauseKartaTrace') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set([...((cluster && cluster.karta) || []), ...((cluster && cluster.samuccayaKarta) || [])]); }
+  if (step.type === 'clausePeripheral') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set(cluster ? roleIndices(cluster, step.role) : []); }
+  if (step.type === 'clauseMopUp') return clauseMopUpIndices(sentence, step.clauseIdx);
   const c = sentence.clusters[step.clusterIdx];
   // करता/कर्म and their agreementKarta/Karma questions all share ONE full accepted-answer set per
   // argument (Harsha, 2026-08-16, found live via BG 4.1: इमम् is tagged कर्म; योगम् — तagged
@@ -3062,16 +3166,16 @@ function tutorialMcqSpec(step, sentence) {
   if (step.type === 'clauseKartaCase') {
     const cl = sentence.clauses[step.clauseIdx];
     const cluster = clusterForClauseHead(sentence, cl) || {};
-    const r = kartaCaseOptions(cluster);   // कर्मणि ⇒ correct तृतीया (reuses वाक्य-विग्रह's own logic)
-    return { ...r, highlight: new Set(cl.words), explainHtml: `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
+    const r = kartaCaseOptions(cluster, sentence);   // कर्मणि ⇒ correct तृतीया (reuses वाक्य-विग्रह's own logic); कारक-षष्ठी honoured
+    return { ...r, highlight: new Set(cl.words), explainHtml: r.tip || `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
   }
   if (step.type === 'clauseKarmaCase') {
     const cl = sentence.clauses[step.clauseIdx];
     const cluster = clusterForClauseHead(sentence, cl) || {};
-    const r = karmaCaseOptions(cluster);
-    const tip = cluster.voice === 'कर्मणि'
+    const r = karmaCaseOptions(cluster, sentence);
+    const tip = r.tip || (cluster.voice === 'कर्मणि'
       ? `Under <b>कर्मणि</b> (passive) the कर्म is <b>अभिहित</b> — expressed by the verb — so it stands in <b>प्रथमा</b>, not द्वितीया.`
-      : `Under <b>कर्तरि</b> (active) the कर्म is <b>अनुक्त</b> — so it stands in its plain <b>द्वितीया</b>.`;
+      : `Under <b>कर्तरि</b> (active) the कर्म is <b>अनुक्त</b> — so it stands in its plain <b>द्वितीया</b>.`);
     return { ...r, highlight: new Set(cl.words), explainHtml: tip };
   }
   if (step.type === 'clauseKarta') {
@@ -3080,6 +3184,16 @@ function tutorialMcqSpec(step, sentence) {
     if (cluster && cluster.voice === 'कर्मणि') return clauseAgentSpec(sentence, step.clauseIdx, cl, cluster);
     const r = clauseKartaOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
     return { ...r, highlight: new Set(cl.words), explainHtml: clauseKartaTip(cl) };
+  }
+  if (step.type === 'clauseValence') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const hc = clusterForClauseHead(sentence, cl) || {};
+    const head = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '';
+    const correct = /अकर्मक/.test(hc.transitivity || '') ? 'अकर्मक' : 'सकर्मक';
+    const tip = correct === 'सकर्मक'
+      ? `<b>${esc(head)}</b> is <b>सकर्मक</b> (transitive) — its action reaches out to a कर्म. So look for the word it acts upon: that कर्म (and its vibhakti) draws this clause's boundary.`
+      : `<b>${esc(head)}</b> is <b>अकर्मक</b> (intransitive) — it takes no कर्म. Its कर्ता alone completes the action; a द्वितीया word here would belong to some other verb, not to ${esc(head)}.`;
+    return { correct, options: ['सकर्मक', 'अकर्मक'], highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: tip };
   }
   if (step.type === 'clauseAssign') {
     const ci = wordClauseIdx(sentence, step.wordIndex);
@@ -3092,7 +3206,7 @@ function tutorialMcqSpec(step, sentence) {
   }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence']);
 
 // Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
 // negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
@@ -3239,16 +3353,40 @@ function tutorialStepLabelBase(step, sentence) {
         return `Now find that agent. ${h} is passive, so its कर्ता is in <b>तृतीया</b> — but beware: not every तृतीया word is the agent (some are करणम् the instrument, or हेतु the cause). Which word is the <b>कर्ता (agent)</b>?`;
       return `<b>Recipe step 3 — supply the unspoken agent.</b> The clause headed by ${h} states no कर्ता. Infer it from the signals: उत्तम-verb → अहम्, मध्यम → त्वम्, relative/optative → कश्चित्, existential/भावे → impersonal, else carry the main clause's subject. What is the अनुक्त-कर्ता here?`;
     }
+    case 'clauseValence': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this nucleus';
+      return `<b>Trace step 1 — the nucleus's valence.</b> Look only at ${h}: does its action reach out to an object (<b>सकर्मक</b> — transitive, it wants a कर्म), or complete in itself (<b>अकर्मक</b> — intransitive, no कर्म)? This tells you which words to hunt for next.`;
+    }
     case 'clauseKarmaCase': {
       const cl = sentence.clauses[step.clauseIdx];
       const cluster = clusterForClauseHead(sentence, cl) || {};
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
-      return `<b>Recipe step 4 — the head's object.</b> ${h} is <b>सकर्मक</b> (transitive)${cluster.voice ? `, ${esc(cluster.voice)}` : ''}, so it governs a कर्म. In which vibhakti does its कर्म stand?`;
+      return `<b>Trace step 2 — the object.</b> ${h} is <b>सकर्मक</b> (transitive)${cluster.voice ? `, ${esc(cluster.voice)}` : ''}, so it governs a कर्म. In which vibhakti does its कर्म stand?`;
     }
     case 'clauseKarma': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
-      return `Now identify it: which word is the <b>कर्म</b> (what the action is done to) of ${h}?`;
+      return `Now identify it: which word is the <b>कर्म</b> (what the action is done to) of ${h}? Picking it draws part of ${h}'s clause boundary.`;
+    }
+    case 'clauseKartaTrace': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const hc = clusterForClauseHead(sentence, cl) || {};
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      const vibs = [...new Set((hc.karta || []).map(i => actualVibhakti(sentence, i)).filter(Boolean))];
+      const caseNote = vibs.length === 1 ? ` (it stands in <b>${esc(vibs[0])}</b>)` : '';
+      return `<b>Trace step 3 — the agent.</b> Whose action is ${h}? Click the word(s) that are its <b>कर्ता</b> (the doer)${caseNote}. Beware: a तृतीया word may be the <b>करणम्</b> (instrument) or <b>हेतु</b> (cause), not the agent — match the कारक to the verb.`;
+    }
+    case 'clausePeripheral': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      const L = { karana: ['करणम्', 'the means/instrument — "by what?" (तृतीया, 2.3.18)'], sampradana: ['सम्प्रदानम्', 'the recipient/purpose — "for whom/what?" (चतुर्थी, 2.3.13)'], apadana: ['अपादानम्', 'the source — "from what?" (पञ्चमी, 2.3.28)'], adhikarana: ['अधिकरणम्', 'the locus — "where/when?" (सप्तमी, 2.3.36)'], hetu: ['हेतु', 'the cause/motive — "because of what?" (तृतीया/पञ्चमी, 2.3.23)'] }[step.role] || [step.role, ''];
+      return `<b>Trace — a peripheral कारक.</b> For ${h}, which word is the <b>${esc(L[0])}</b>${L[1] ? ` — ${L[1]}` : ''}? Match by कारक, not just by case.`;
+    }
+    case 'clauseMopUp': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `<b>Trace step 4 — mop up the rest.</b> Which OTHER words belong to ${h}'s clause? An <b>adjective rides its noun</b>; a <b>gerund</b> (त्वा/य) and its own object <b>stay with the finite verb</b>; adverbs and particles attach to the verb. Pick every remaining word of this clause.`;
     }
     case 'clauseType': {
       const cl = sentence.clauses[step.clauseIdx];
@@ -3454,10 +3592,18 @@ function tutorialOverrideNote(sentence, step, wordIndex) {
   if (av) return av;     // एव/हि/तु … — emphatic निपात, not a कारक relation
   if (sentence.words[wordIndex] === 'इति') return `इति is a quotative particle (निपात) — it closes the preceding quoted statement/idea ("… — thus"), marking an उद्धरण (quotation); it is not a कारक of the verb.`;
   if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
-    return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}), and the agent of such forms is always in तृतीया.`;
+    return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}); the agent of a कृत्य form takes तृतीया — or, optionally, षष्ठी (कृत्यानां कर्तरि वा, 2.3.71).`;
   }
-  if (step.type === 'karma' && c.karmaGovernorIsKrdanta) {
-    return `Note — ${esc(c.governorWord)} is itself a कृदन्त, so its कर्म can also appear in षष्ठी here (instead of the usual द्वितीया) — कारक-षष्ठी, 2.3.65.`;
+  // कारक-षष्ठी note — corrected 2026-08-28 (Harsha): the old blanket "its कर्म can appear in षष्ठी (2.3.65)"
+  // fired on ~105 कृदन्त-governor clusters but is only true on ~2. षष्ठी is an अनभिहित rule (moot under
+  // कर्मणि, where the object is प्रथमा/अभिहित) and is BLOCKED for निष्ठा(past-क्त)/शतृ/शानच्/gerund/तृन्
+  // forms by 2.3.69. So: assert षष्ठी only when the object is ACTUALLY 6x-coded here (real 2.3.65/66);
+  // otherwise explain WHY it correctly stays द्वितीया.
+  if (step.type === 'karma' && c.karmaGovernorIsKrdanta && c.voice !== 'कर्मणि') {
+    const sIdx = sashthiKaraka(c.karma, sentence);
+    return sIdx != null
+      ? `Here ${esc(c.governorWord)}'s कर्म stands in <b>षष्ठी</b> — कारक-षष्ठी (2.3.65): a कृत् governor takes its अनभिहित object in षष्ठी. When an agent is also present, only the object keeps षष्ठी; the agent then goes तृतीया (2.3.66).`
+      : `${esc(c.governorWord)} is a कृदन्त, but its कर्म stays in <b>द्वितीया</b> here — the कारक-षष्ठी (2.3.65) does <b>not</b> apply to past-participle (निष्ठा), शतृ/शानच्, gerund (क्त्वा/ल्यप्) or तृन् forms (2.3.69).`;
   }
   const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'remaining'];
   if (SWEEP_ARRAYS.includes(step.type)) {
@@ -3749,10 +3895,27 @@ function renderTutorial() {
   const currentGroup = step.clusterIdx != null ? clauseGroups.find(g => g.clusterIdxs.includes(step.clusterIdx)) : null;
   let currentGroupTop = currentGroup ? currentGroup.topClusterIdx : null;
   if (clauseMode) {
-    const segmentPhase = step.type === 'clauseHeads' || step.type === 'clauseAssign' || step.type === 'clauseMembers';
-    const gold = segmentPhase ? null : clauseGroupsFromGold(sentence);
-    if (gold) { clauseGroups = gold; showClauseGroups = true; currentGroupTop = step.clauseIdx != null ? step.clauseIdx : null; }
-    else showClauseGroups = false;
+    // SOCRATIC = verb-out trace: the verse stays FLAT during the trace steps, but each clause's box is
+    // REVEALED progressively as soon as its mop-up is answered (its boundary is now fully drawn). GUIDED
+    // keeps the older behaviour: flat during clauseHeads/clauseMembers, full boxes on the supply steps.
+    const TRACE_FLAT = new Set(['clauseHeads', 'clauseValence', 'clauseKarmaCase', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'clauseAssign']);
+    const segmentLike = clauseStyle === 'socratic' ? TRACE_FLAT.has(step.type) : (step.type === 'clauseHeads' || step.type === 'clauseMembers');
+    if (segmentLike) {
+      let revealed = null;
+      if (clauseStyle === 'socratic') {
+        const done = new Set();
+        (sentence.clauses || []).forEach((cl, ci) => {
+          if (tutorialSteps.some((st, p) => st.type === 'clauseMopUp' && st.clauseIdx === ci && (p < tutorialStepIdx || (p === tutorialStepIdx && view.checked)))) done.add(ci);
+        });
+        if (done.size) { const gold = clauseGroupsFromGold(sentence); if (gold) revealed = gold.filter(g => done.has(g.topClusterIdx)); }
+      }
+      if (revealed && revealed.length) { clauseGroups = revealed; showClauseGroups = true; currentGroupTop = step.clauseIdx != null ? step.clauseIdx : null; }
+      else showClauseGroups = false;
+    } else {
+      const gold = clauseGroupsFromGold(sentence);
+      if (gold) { clauseGroups = gold; showClauseGroups = true; currentGroupTop = step.clauseIdx != null ? step.clauseIdx : null; }
+      else showClauseGroups = false;
+    }
   }
   // supplied/elided words per clause → shown bracketed after the clause's last word in the verse display.
   // The pipeline sometimes records an implied copula in `anuktaKarta` as "(copula अस्ति implied)" rather
@@ -3821,7 +3984,8 @@ function renderTutorial() {
 
   if (step.type === 'kartaCase') {
     const c = sentence.clusters[step.clusterIdx];
-    const { correct, options } = kartaCaseOptions(c);
+    const { correct, options, accept, tip } = kartaCaseOptions(c, sentence);
+    const acc = new Set(accept || [correct]);
     const answered = view.checked;
     app.innerHTML = `
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
@@ -3829,8 +3993,9 @@ function renderTutorial() {
         <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
         <div class="options">
-          ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.kartaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+          ${options.map(o => `<button class="opt ${answered ? (acc.has(o) ? 'correct' : (o === view.kartaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
+        ${answered && tip ? `<div class="tut-explain">${tip}</div>` : ''}
         <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
         ${renderTutorialReportArea(sentence, step, verse)}
       </div>`;
@@ -3849,7 +4014,8 @@ function renderTutorial() {
 
   if (step.type === 'karmaCase') {
     const c = sentence.clusters[step.clusterIdx];
-    const { correct, options } = karmaCaseOptions(c);
+    const { correct, options, accept, tip } = karmaCaseOptions(c, sentence);
+    const acc = new Set(accept || [correct]);
     const answered = view.checked;
     app.innerHTML = `
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
@@ -3857,8 +4023,9 @@ function renderTutorial() {
         <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
         <div class="options">
-          ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.karmaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+          ${options.map(o => `<button class="opt ${answered ? (acc.has(o) ? 'correct' : (o === view.karmaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
         </div>
+        ${answered && tip ? `<div class="tut-explain">${tip}</div>` : ''}
         <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
         ${renderTutorialReportArea(sentence, step, verse)}
       </div>`;
@@ -3908,13 +4075,14 @@ function renderTutorial() {
   if (NEW_MCQ_TYPES.has(step.type)) {
     const spec = tutorialMcqSpec(step, sentence);
     const answered = view.checked;
+    const acc = new Set(spec.accept || [spec.correct]);   // some case-MCQs accept >1 vibhakti (कारक-षष्ठी / कृत्य optionality)
     app.innerHTML = `
       <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
       <div class="question">
         <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: spec.highlight, disabled: true, expected: spec.highlight, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
         <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
         <div class="options">
-          ${spec.options.map((o, oi) => `<button class="opt ${answered ? (o === spec.correct ? 'correct' : (o === view.mcqPicked ? 'wrong' : '')) : ''}" data-oi="${oi}" ${answered ? 'disabled' : ''}>${esc(o)}</button>`).join('')}
+          ${spec.options.map((o, oi) => `<button class="opt ${answered ? (acc.has(o) ? 'correct' : (o === view.mcqPicked ? 'wrong' : '')) : ''}" data-oi="${oi}" ${answered ? 'disabled' : ''}>${esc(o)}</button>`).join('')}
         </div>
         ${answered && spec.explainHtml ? `<div class="tut-explain">${spec.explainHtml}</div>` : ''}
         <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
@@ -3933,7 +4101,7 @@ function renderTutorial() {
   }
 
   const expected = expectedSetForStep(sentence, step);
-  const multiSelect = ['clauseHeads', 'clauseMembers', 'clauseKarma', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
+  const multiSelect = ['clauseHeads', 'clauseMembers', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
   const selected = view.selectedIndices;
   const checked = view.checked;
   // "None of these" is offered for EVERY multi-select word step (not just kartā/karma) so a question
@@ -3987,6 +4155,20 @@ function renderTutorial() {
     if (step.type === 'clauseMembers') {
       const cl = sentence.clauses[step.clauseIdx];
       feedbackHtml += `<div class="tut-explain">This is the <b>${esc(clauseTypeLabel(cl.type))}</b>${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}.</div>`;
+    }
+    // verb-out trace: after a कारक pick, surface the "same case, different कारक" traps with their sūtras.
+    if (step.type === 'clauseKarma' || step.type === 'clauseKartaTrace' || step.type === 'clausePeripheral') {
+      const hc = clusterForClauseHead(sentence, sentence.clauses[step.clauseIdx]);
+      const role = step.type === 'clauseKarma' ? 'karma' : step.type === 'clauseKartaTrace' ? 'karta' : step.role;
+      const cd = hc ? caseDiscriminationCallout(sentence, hc, role) : '';
+      if (cd) feedbackHtml += `<div class="tut-explain">${cd}</div>`;
+    }
+    // mop-up reveal: name the clause type + gloss, and make the ride-your-noun / gerund-stays rule explicit
+    // on the very words just clustered (the boundary is now drawn — its box is revealed alongside).
+    if (step.type === 'clauseMopUp') {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? esc(sentence.words[cl.headWordIndex]) : 'this head';
+      feedbackHtml += `<div class="tut-explain">That completes the <b>${esc(clauseTypeLabel(cl.type))}</b> headed by <b>${h}</b>${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}. An adjective stays with the noun it qualifies; a gerund and its own object stay inside the finite verb's clause — that is why they land here, not in the other clause.</div>`;
     }
     // Step 1 "honour + explain": if the learner picked a word that isn't a verb here but is easy to
     // mistake for one (e.g. भक्तः in BG 4.3, a predicate noun after असि), explain why + where to pick.

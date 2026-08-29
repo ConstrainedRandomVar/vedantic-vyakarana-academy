@@ -1357,7 +1357,7 @@ function renderDashboard() {
   app.innerHTML = `
     <div class="dash-head"><div>${masteredN} / ${CODES.length} nodes mastered</div></div>
     <div class="dash-lane">
-      <div class="lane-label">🧠 अभ्यास-मार्गौ · Two ways to study</div>
+      <div class="lane-label">🧠 अभ्यास-मार्गाः · Three ways to study</div>
       <div class="readgrid modegrid">
         <a class="rcard modecard" id="readBtn"><div class="rtitle">📖 Read a verse</div><div class="modetag">know each word</div><div class="modedesc">Walk each word — recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the Drill pool.</div></a>
         <a class="rcard modecard" id="tutorialBtn"><div class="rtitle">🧩 वाक्य-विग्रह</div><div class="modetag">parse the sentence</div><div class="modedesc">How the words relate across the whole sentence — kāraka, qualifier-of, coordination, clauses, uddeśya–vidheya, samāsa vigraha.</div></a>

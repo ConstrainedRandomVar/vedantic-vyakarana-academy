@@ -1442,6 +1442,12 @@ function renderReadingPicker() {
   const selectedSection = sections ? sections.find(s => s.key === p.sectionKey) : null;
   const verseChoices = !selectedChapter ? [] : sections ? (selectedSection ? selectedSection.verses : []) : selectedChapter.verses;
   const hasProgress = selectedChapter && !!loadReadingProgress(selectedChapter.chapterKey, p.contentScope);
+  // Context-drive the mūlam/bhāṣyam source picker: only offer bhāṣyam options for a text whose read-a-verse
+  // WALK actually has bhāṣya content (walk-manifest `hasBhasya` — today only the Gītā). For a mūla-only text
+  // the 3-way toggle is meaningless (bhāṣyam-only → empty walk; mūlam+bhāṣyam == mūlam), so hide it and pin
+  // the scope to mūlam. (Harsha, 2026-08-29.)
+  const textHasBhasya = !!(selectedText && selectedText.chapters.some(c => c.hasBhasya));
+  if (!textHasBhasya && p.contentScope && p.contentScope !== 'both') p.contentScope = 'both';
 
   app.innerHTML = `
     <div class="picker-head">
@@ -1478,12 +1484,12 @@ function renderReadingPicker() {
       <select id="verseSelect">${verseChoices.map(v => `<option value="${esc(v.ref)}">${esc(v.label)}</option>`).join('')}</select>
       <button class="secondary" data-action="goto" data-key="${selectedChapter.chapterKey}">▶ Go to verse</button>
     </div>` : ''}`}
-    <div class="scope-toggle">
+    ${textHasBhasya ? `<div class="scope-toggle">
       <div class="scope-head">Read</div>
       <label><input type="radio" name="scopeRadio" value="both" ${p.contentScope === 'both' ? 'checked' : ''}> mūlam + bhāṣyam</label>
       <label><input type="radio" name="scopeRadio" value="mula" ${p.contentScope === 'mula' ? 'checked' : ''}> mūlam only</label>
       <label><input type="radio" name="scopeRadio" value="bhasya" ${p.contentScope === 'bhasya' ? 'checked' : ''}> bhāṣyam only</label>
-    </div>
+    </div>` : ''}
     <div class="deep-toggle"><label><input type="checkbox" id="deepToggle"> Go deep — ask every applicable question per word, not just one</label></div>
     <div class="skills-toggle">
       <div class="skills-head">Which skills do you want to be quizzed on?</div>
@@ -1502,7 +1508,7 @@ function renderReadingPicker() {
   app.querySelectorAll('[data-action]').forEach(btn => {
     btn.onclick = () => {
       const deep = document.getElementById('deepToggle').checked;
-      const scope = p.contentScope;
+      const scope = textHasBhasya ? p.contentScope : 'both';   // mūla-only texts: toggle hidden → pin to mūlam
       const key = btn.dataset.key;
       if (btn.dataset.action === 'goto') {
         startReading(key, { deep, scope, verseRef: document.getElementById('verseSelect').value });

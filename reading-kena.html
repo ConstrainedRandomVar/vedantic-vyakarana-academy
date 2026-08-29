@@ -241,7 +241,7 @@ var tip=document.getElementById('tip');
 function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
 function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
   if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
-  h+=mrow('vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('samāsa',d.sam)+mrow('व्याकरण',d.g);
+  h+=mrow(d.morphLabel||'vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('samāsa',d.sam)+mrow('व्याकरण',d.g);
   if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';
   if(d.p)h+='<div class="peel">'+d.p+'</div>';return h;}
 function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;

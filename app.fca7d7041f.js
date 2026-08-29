@@ -2295,6 +2295,8 @@ function clusterForClauseHead(sentence, cl) {
 // (they live in the morph layer) — so they're not shown here. (Harsha, 2026-08-27)
 const CLAUSE_CASE_NAMES = { '1': 'प्रथमा', '2': 'द्वितीया', '3': 'तृतीया', '4': 'चतुर्थी', '5': 'पञ्चमी', '6': 'षष्ठी', '7': 'सप्तमी', '8': 'सम्बोधन' };
 const CLAUSE_VAC_NAMES = { '1': 'एकवचन', '2': 'द्विवचन', '3': 'बहुवचन' };
+// A finite verb's code is [पुरुष][वचन] (NOT [vibhakti][vacana]): 3 प्रथम, 2 मध्यम, 1 उत्तम. (2026-08-29)
+const CLAUSE_PURUSHA_NAMES = { '3': 'प्रथमपुरुष', '2': 'मध्यमपुरुष', '1': 'उत्तमपुरुष' };
 const CLAUSE_LINGA = { 'पुं': 'पुंलिङ्ग', 'स्त्री': 'स्त्रीलिङ्ग', 'नपुं': 'नपुंसकलिङ्ग' };
 function headMorphBrief(sentence, cl, cluster) {
   const i = cl.headWordIndex;
@@ -2307,7 +2309,12 @@ function headMorphBrief(sentence, cl, cluster) {
     if (decl) parts.push(decl);
   }
   if (cl.type === 'nominal') parts.push('verbless subject (the nucleus)');
-  else if (finite) parts.push('finite verb, तिङन्त');
+  else if (finite) {
+    // finite तिङन्त: surface its लकार · पुरुष·वचन · पद (code here is [पुरुष][वचन]). (2026-08-29)
+    const pv = /^[1-3][1-3]$/.test(code) ? [CLAUSE_PURUSHA_NAMES[code[0]], CLAUSE_VAC_NAMES[code[1]]].filter(Boolean).join('·') : '';
+    const vb = [cluster && cluster.lakara, pv, cluster && cluster.pada].filter(Boolean).join(' · ');
+    parts.push('finite verb, तिङन्त' + (vb ? ' — ' + vb : ''));
+  }
   else parts.push('कृदन्त participle acting as the clause’s verb');
   if (cluster && cluster.voice) parts.push(cluster.voice);
   if (cluster && /सकर्मक|द्विकर्मक/.test(cluster.transitivity || '')) parts.push('सकर्मक → governs a कर्म');
@@ -2659,6 +2666,7 @@ function buildTutorialSteps(sentence) {
     // root's transitivity is genuinely undecidable — asking then showed a broken "(unknown)" step
     // that graded even a correct answer wrong (Harsha, BG 4.3 प्रोक्तः, 2026-08-19). Skip it cleanly.
     if (c.isFiniteVerb && c.voice) steps.push({ type: 'voice', clusterIdx: ci });
+    if (c.isFiniteVerb && c.lakara) steps.push({ type: 'verbLakara', clusterIdx: ci });   // लकार (tense/mood) MCQ (2026-08-29)
     const canKartaCase = c.voice && c.karta.length;
     const canKarmaCase = c.voice && c.karma.length;
     let showKartaCase = canKartaCase, showKarmaCase = canKarmaCase;
@@ -3223,6 +3231,10 @@ function clauseElidedTip(cl) {
 }
 // per-step MCQ spec (options/correct/highlight/explain) for the new samāsa + clause question types
 function tutorialMcqSpec(step, sentence) {
+  if (step.type === 'verbLakara') {
+    const c = sentence.clusters[step.clusterIdx];
+    return { ...lakaraOptions(c.lakara), highlight: new Set([c.governorWordIndex]), explainHtml: lakaraTip(c.lakara) };
+  }
   if (step.type === 'samasaType') {
     const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
     return { ...samasaTypeOptions(L.type), highlight: new Set([sm.wordIndex]), explainHtml: samasaTip(L) };
@@ -3319,7 +3331,22 @@ function tutorialMcqSpec(step, sentence) {
   }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase', 'verbLakara']);
+// लकार (tense/mood) MCQ: distractors from the lakāras a learner actually meets (present/future/imperative/
+// optative/past/perfect); the correct one is always included even if rarer. (2026-08-29)
+const LAKARA_DISTRACT_POOL = ['लट्', 'लृट्', 'लोट्', 'विधिलिङ्', 'लङ्', 'लिट्'];
+function lakaraOptions(correct) {
+  const distract = seedRotate(LAKARA_DISTRACT_POOL.filter(l => l !== correct), correct + 'l').slice(0, 3);
+  return { correct, options: seedRotate([correct, ...distract], correct) };
+}
+const LAKARA_SENSE = {
+  'लट्': 'वर्तमाने — present ("does")', 'लङ्': 'अनद्यतने भूते — past ("did")',
+  'लिट्': 'परोक्षे भूते — remote past', 'लुङ्': 'भूते — past (aorist)',
+  'लृट्': 'भविष्यति — future ("will do")', 'लुट्': 'अनद्यतने भविष्यति — future',
+  'लोट्': 'आज्ञायाम् — command ("let / do!")', 'विधिलिङ्': 'विधौ — "should / may"',
+  'आशीर्लिङ्': 'आशीषि — blessing ("may …")', 'लृङ्': 'क्रियातिपत्तौ — conditional ("would have")',
+};
+const lakaraTip = l => `<b>${esc(l)}</b> — ${esc(LAKARA_SENSE[l] || 'a लकार (tense/mood) of the verb')}.`;
 
 // Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
 // negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
@@ -3340,6 +3367,7 @@ function tutorialStepLabelBase(step, sentence) {
   switch (step.type) {
     case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any verbal (कृत्) form that <b>governs its own कारक</b> (कर्ता/कर्म)? This <b>includes gerunds/absolutives</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य, which take their own कर्म) and predicate participles (क्त — e.g. चोदिता). Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${verbsIndicesFor(sentence).size})`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
+    case 'verbLakara': return `${gov} — which लकार (tense/mood) is this verb in?`;
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
     // उद्देश्य–विधेय (verbless nominal predication). Name the विधेय explicitly so the task is fair —

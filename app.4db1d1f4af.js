@@ -4574,6 +4574,9 @@ function renderTutorialPicker() {
 // the normal dashboard.
 (function boot() {
   const g = document.getElementById('gearBtn'); if (g) g.onclick = openSettings;
+  // Top-level banner Home button (persists across every SPA screen; header lives outside #app) — always
+  // returns to the dashboard. Non-destructive: reading/quiz progress is already saved as you go. (Harsha, 2026-08-29.)
+  const hb = document.getElementById('homeBtn'); if (hb) hb.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
   try {
     const q = new URLSearchParams(location.search);
     if (q.get('tut')) {

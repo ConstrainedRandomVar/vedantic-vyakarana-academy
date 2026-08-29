@@ -10,6 +10,18 @@
 .w.gb{color:#3f4653;font-style:italic}          /* B = gloss (synonym / vivaraṇa) */
 .geq{color:#9a8f78;padding:0 2px}               /* the author's = gloss connector */
 .skt.pp{color:var(--pp)} .skt.sid{color:var(--sid)} .skt.def{color:var(--lak)}   /* deterministic fallback (whole-sentence) when a sentence has no roleSpans */
+/* section-role ribbon — a role-coloured band before the first āvarta of each topical (A. n-m) section */
+.secband{margin:26px 0 12px;padding:7px 14px;border-left:5px solid #caa45a;background:#f3ead8;border-radius:0 7px 7px 0;font-family:system-ui;font-size:14px;color:#5a4632;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;scroll-margin-top:var(--smt,180px)}
+.secband .sr{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+.secband .st{font-weight:600;color:var(--mula)} .secband .srange{margin-left:auto;font-size:11px;color:#a07f45;font-weight:700;white-space:nowrap}
+.secband.r-purvapaksha{border-left-color:var(--pp)} .secband.r-purvapaksha .sr{color:var(--pp)}
+.secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-siddhanta .sr{color:var(--sid)}
+.secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-drishtanta .sr{color:var(--drs)}
+.secband.r-lakshana{border-left-color:var(--lak)} .secband.r-lakshana .sr{color:var(--lak)}
+.secband.r-phalita{border-left-color:var(--tat)} .secband.r-phalita .sr{color:var(--tat)}
+.secband.r-ekadeshi{border-left-color:var(--eka)} .secband.r-ekadeshi .sr{color:var(--eka)}
+.secband.sangraha .st{text-decoration:underline;text-decoration-color:#caa45a;text-underline-offset:3px}
+body.nosec .secband{display:none}
 .spk{display:inline-block;font:600 10px/1 system-ui;padding:2px 6px;border-radius:9px;margin-right:6px;vertical-align:1px}
 .spk-g{background:#dcecdc;color:#15603d} .spk-s{background:#f0e2d0;color:#8a5a2b}
 *{box-sizing:border-box}
@@ -77,7 +89,7 @@ body.notip .tip-wrap{display:none}
   <span>word<sup class="anc"><a>1</a></sup> ṭippaṇī anchor — click to jump to its note</span>
   <span><span class="w ga">पदम्</span> <span class="geq">=</span> <span class="w gb">पर्यायः</span> author's inline gloss (A = B)</span>
 </div>
-<div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English translation</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label></div>
+<div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English translation</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः (sections)</label></div>
 </header>
 <main><details class="vs-about"><summary>About this edition</summary>
 <div class="vs-about-body">
@@ -102,4 +114,5 @@ document.querySelectorAll('.w').forEach(function(w){
 function place(e){var r=8,x=e.clientX+14,y=e.clientY+16,b=tip.getBoundingClientRect();if(x+b.width>innerWidth-r)x=e.clientX-b.width-14;if(y+b.height>innerHeight-r)y=e.clientY-b.height-16;tip.style.left=x+'px';tip.style.top=y+'px';}
 document.getElementById('ck-tr').addEventListener('change',function(e){document.body.classList.toggle('notr',!e.target.checked);});
 document.getElementById('ck-tip').addEventListener('change',function(e){document.body.classList.toggle('notip',!e.target.checked);});
+document.getElementById('ck-sec').addEventListener('change',function(e){document.body.classList.toggle('nosec',!e.target.checked);});
 </script></body></html>

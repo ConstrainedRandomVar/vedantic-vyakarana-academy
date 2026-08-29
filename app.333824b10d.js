@@ -284,9 +284,15 @@ function eligibleIndices(step) {
   return step.items.map((_, i) => i).filter(i => {
     const it = step.items[i];
     if (isReportHidden(reportKey(it, null))) return false;
-    // 'spot' items aren't their own toggleable skill — they're the basic-tier question for
-    // whichever node their subtype names (krdanta or taddhita), so they follow THAT toggle.
-    return it.kind === 'spot' ? enabledSkills[it.subtype] !== false : enabledSkills[it.kind] !== false;
+    // Map each item to the SKILL toggle that governs it. 'spot' items aren't their own skill — they're
+    // the basic-tier question for whichever node their subtype names (krdanta/taddhita). The samāsa-peel
+    // sub-kinds (samasaType/samasaVigraha/samasaLeaf — produced by flattenWalk EXPANDING a 'samasa' item at
+    // runtime) have no checkbox of their own, so they must follow the 'samasa' toggle; otherwise
+    // enabledSkills[<peel-kind>] is undefined → `undefined !== false` = ALWAYS eligible, and they LEAK into
+    // any selection that excludes समास (they're also LEAD_KINDS, so they're the most visible leak). (Harsha,
+    // 2026-08-29: "picking only some areas still asks questions from unselected areas.")
+    const skill = it.kind === 'spot' ? it.subtype : (it.kind.indexOf('samasa') === 0 ? 'samasa' : it.kind);
+    return enabledSkills[skill] !== false;
   });
 }
 let walkSteps = []; // flattened {verseRef, verseLabel, moola, section, word, wordIndex, items, defaultItemIndex}[]

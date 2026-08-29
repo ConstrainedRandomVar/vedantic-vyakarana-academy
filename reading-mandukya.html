@@ -173,41 +173,154 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 @media(max-width:520px){.topbar{flex-wrap:wrap}.topbar .grow{width:100%;justify-content:flex-start}
   .topbar .seg button{padding:5px 8px;font-size:11.5px}.seglbl{font-size:11px}
   .topbar select{font-size:12px;padding:4px 6px;min-width:0}.topbar #tog{padding:5px 8px;font-size:11.5px}}
-body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:hidden}</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div><button id="tog">◐ theme</button></div></div><h1>माण्डूक्योपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
-#navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
-  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;
-  box-shadow:0 2px 10px rgba(0,0,0,.04)}
-#navbar .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted)}
-#navbar select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
-  border-radius:8px;padding:5px 9px;min-width:64px}
-#navbar .navgo{margin-left:auto;align-self:center;font-size:12px;color:var(--muted)}
+body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:hidden}</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div><button id="tog">◐ theme</button></div></div><h1>माण्डूक्योपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
 .v{scroll-margin-top:78px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
-.v.navhit{animation:navflash 1.6s ease-out}
-</style>
-<div id="navbar"><label class="navlvl"><span>प्रकरण</span><select data-lvl="0"></select></label><label class="navlvl"><span>मन्त्र</span><select data-lvl="1"></select></label><span class="navgo">→</span></div>
-<script>(function(){var N={"refs":["1.1","1.2","1.3","1.4","1.5","1.6","1.1 · kārikā","1.2 · kārikā","1.3 · kārikā","1.4 · kārikā","1.5 · kārikā","1.6 · kārikā","1.7 · kārikā","1.8 · kārikā","1.9 · kārikā","1.7","1.10 · kārikā","1.11 · kārikā","1.12 · kārikā","1.13 · kārikā","1.14 · kārikā","1.15 · kārikā","1.16 · kārikā","1.17 · kārikā","1.18 · kārikā","1.8","1.9","1.10","1.11","1.19 · kārikā","1.20 · kārikā","1.21 · kārikā","1.22 · kārikā","1.23 · kārikā","1.12","1.24 · kārikā","1.25 · kārikā","1.26 · kārikā","1.27 · kārikā","1.28 · kārikā","1.29 · kārikā","2.1 · kārikā","2.2 · kārikā","2.3 · kārikā","2.4 · kārikā","2.5 · kārikā","2.6 · kārikā","2.7 · kārikā","2.8 · kārikā","2.9 · kārikā","2.10 · kārikā","2.11 · kārikā","2.12 · kārikā","2.13 · kārikā","2.14 · kārikā","2.15 · kārikā","2.16 · kārikā","2.17 · kārikā","2.18 · kārikā","2.19 · kārikā","2.20 · kārikā","2.21 · kārikā","2.22 · kārikā","2.23 · kārikā","2.24 · kārikā","2.25 · kārikā","2.26 · kārikā","2.27 · kārikā","2.28 · kārikā","2.29 · kārikā","2.30 · kārikā","2.31 · kārikā","2.32 · kārikā","2.33 · kārikā","2.34 · kārikā","2.35 · kārikā","2.36 · kārikā","2.37 · kārikā","2.38 · kārikā","3.1 · kārikā","3.2 · kārikā","3.3 · kārikā","3.4 · kārikā","3.5 · kārikā","3.6 · kārikā","3.7 · kārikā","3.8 · kārikā","3.9 · kārikā","3.10 · kārikā","3.11 · kārikā","3.12 · kārikā","3.13 · kārikā","3.14 · kārikā","3.15 · kārikā","3.16 · kārikā","3.17 · kārikā","3.18 · kārikā","3.19 · kārikā","3.20 · kārikā","3.21 · kārikā","3.22 · kārikā","3.23 · kārikā","3.24 · kārikā","3.25 · kārikā","3.26 · kārikā","3.27 · kārikā","3.28 · kārikā","3.29 · kārikā","3.30 · kārikā","3.31 · kārikā","3.32 · kārikā","3.33 · kārikā","3.34 · kārikā","3.35 · kārikā","3.36 · kārikā","3.37 · kārikā","3.38 · kārikā","3.39 · kārikā","3.40 · kārikā","3.41 · kārikā","3.42 · kārikā","3.43 · kārikā","3.44 · kārikā","3.45 · kārikā","3.46 · kārikā","3.47 · kārikā","3.48 · kārikā","4.1 · kārikā","4.2 · kārikā","4.3 · kārikā","4.4 · kārikā","4.5 · kārikā","4.6 · kārikā","4.7 · kārikā","4.8 · kārikā","4.9 · kārikā","4.10 · kārikā","4.11 · kārikā","4.12 · kārikā","4.13 · kārikā","4.14 · kārikā","4.15 · kārikā","4.16 · kārikā","4.17 · kārikā","4.18 · kārikā","4.19 · kārikā","4.20 · kārikā","4.21 · kārikā","4.22 · kārikā","4.23 · kārikā","4.24 · kārikā","4.25 · kārikā","4.26 · kārikā","4.27 · kārikā","4.28 · kārikā","4.29 · kārikā","4.30 · kārikā","4.31 · kārikā","4.32 · kārikā","4.33 · kārikā","4.34 · kārikā","4.35 · kārikā","4.36 · kārikā","4.37 · kārikā","4.38 · kārikā","4.39 · kārikā","4.40 · kārikā","4.41 · kārikā","4.42 · kārikā","4.43 · kārikā","4.44 · kārikā","4.45 · kārikā","4.46 · kārikā","4.47 · kārikā","4.48 · kārikā","4.49 · kārikā","4.50 · kārikā","4.51 · kārikā","4.52 · kārikā","4.53 · kārikā","4.54 · kārikā","4.55 · kārikā","4.56 · kārikā","4.57 · kārikā","4.58 · kārikā","4.59 · kārikā","4.60 · kārikā","4.61 · kārikā","4.62 · kārikā","4.63 · kārikā","4.64 · kārikā","4.65 · kārikā","4.66 · kārikā","4.67 · kārikā","4.68 · kārikā","4.69 · kārikā","4.70 · kārikā","4.71 · kārikā","4.72 · kārikā","4.73 · kārikā","4.74 · kārikā","4.75 · kārikā","4.76 · kārikā","4.77 · kārikā","4.78 · kārikā","4.79 · kārikā","4.80 · kārikā","4.81 · kārikā","4.82 · kārikā","4.83 · kārikā","4.84 · kārikā","4.85 · kārikā","4.86 · kārikā","4.87 · kārikā","4.88 · kārikā","4.89 · kārikā","4.90 · kārikā","4.91 · kārikā","4.92 · kārikā","4.93 · kārikā","4.94 · kārikā","4.95 · kārikā","4.96 · kārikā","4.97 · kārikā","4.98 · kārikā","4.99 · kārikā","4.100 · kārikā"],"levels":["प्रकरण","मन्त्र"],"nlev":2,"files":["reading-mandukya-1.html","reading-mandukya-2.html","reading-mandukya-3.html","reading-mandukya-4.html"],"pageIdx":{"1.1":0,"1.2":0,"1.3":0,"1.4":0,"1.5":0,"1.6":0,"1.1 · kārikā":0,"1.2 · kārikā":0,"1.3 · kārikā":0,"1.4 · kārikā":0,"1.5 · kārikā":0,"1.6 · kārikā":0,"1.7 · kārikā":0,"1.8 · kārikā":0,"1.9 · kārikā":0,"1.7":0,"1.10 · kārikā":0,"1.11 · kārikā":0,"1.12 · kārikā":0,"1.13 · kārikā":0,"1.14 · kārikā":0,"1.15 · kārikā":0,"1.16 · kārikā":0,"1.17 · kārikā":0,"1.18 · kārikā":0,"1.8":0,"1.9":0,"1.10":0,"1.11":0,"1.19 · kārikā":0,"1.20 · kārikā":0,"1.21 · kārikā":0,"1.22 · kārikā":0,"1.23 · kārikā":0,"1.12":0,"1.24 · kārikā":0,"1.25 · kārikā":0,"1.26 · kārikā":0,"1.27 · kārikā":0,"1.28 · kārikā":0,"1.29 · kārikā":0,"2.1 · kārikā":1,"2.2 · kārikā":1,"2.3 · kārikā":1,"2.4 · kārikā":1,"2.5 · kārikā":1,"2.6 · kārikā":1,"2.7 · kārikā":1,"2.8 · kārikā":1,"2.9 · kārikā":1,"2.10 · kārikā":1,"2.11 · kārikā":1,"2.12 · kārikā":1,"2.13 · kārikā":1,"2.14 · kārikā":1,"2.15 · kārikā":1,"2.16 · kārikā":1,"2.17 · kārikā":1,"2.18 · kārikā":1,"2.19 · kārikā":1,"2.20 · kārikā":1,"2.21 · kārikā":1,"2.22 · kārikā":1,"2.23 · kārikā":1,"2.24 · kārikā":1,"2.25 · kārikā":1,"2.26 · kārikā":1,"2.27 · kārikā":1,"2.28 · kārikā":1,"2.29 · kārikā":1,"2.30 · kārikā":1,"2.31 · kārikā":1,"2.32 · kārikā":1,"2.33 · kārikā":1,"2.34 · kārikā":1,"2.35 · kārikā":1,"2.36 · kārikā":1,"2.37 · kārikā":1,"2.38 · kārikā":1,"3.1 · kārikā":2,"3.2 · kārikā":2,"3.3 · kārikā":2,"3.4 · kārikā":2,"3.5 · kārikā":2,"3.6 · kārikā":2,"3.7 · kārikā":2,"3.8 · kārikā":2,"3.9 · kārikā":2,"3.10 · kārikā":2,"3.11 · kārikā":2,"3.12 · kārikā":2,"3.13 · kārikā":2,"3.14 · kārikā":2,"3.15 · kārikā":2,"3.16 · kārikā":2,"3.17 · kārikā":2,"3.18 · kārikā":2,"3.19 · kārikā":2,"3.20 · kārikā":2,"3.21 · kārikā":2,"3.22 · kārikā":2,"3.23 · kārikā":2,"3.24 · kārikā":2,"3.25 · kārikā":2,"3.26 · kārikā":2,"3.27 · kārikā":2,"3.28 · kārikā":2,"3.29 · kārikā":2,"3.30 · kārikā":2,"3.31 · kārikā":2,"3.32 · kārikā":2,"3.33 · kārikā":2,"3.34 · kārikā":2,"3.35 · kārikā":2,"3.36 · kārikā":2,"3.37 · kārikā":2,"3.38 · kārikā":2,"3.39 · kārikā":2,"3.40 · kārikā":2,"3.41 · kārikā":2,"3.42 · kārikā":2,"3.43 · kārikā":2,"3.44 · kārikā":2,"3.45 · kārikā":2,"3.46 · kārikā":2,"3.47 · kārikā":2,"3.48 · kārikā":2,"4.1 · kārikā":3,"4.2 · kārikā":3,"4.3 · kārikā":3,"4.4 · kārikā":3,"4.5 · kārikā":3,"4.6 · kārikā":3,"4.7 · kārikā":3,"4.8 · kārikā":3,"4.9 · kārikā":3,"4.10 · kārikā":3,"4.11 · kārikā":3,"4.12 · kārikā":3,"4.13 · kārikā":3,"4.14 · kārikā":3,"4.15 · kārikā":3,"4.16 · kārikā":3,"4.17 · kārikā":3,"4.18 · kārikā":3,"4.19 · kārikā":3,"4.20 · kārikā":3,"4.21 · kārikā":3,"4.22 · kārikā":3,"4.23 · kārikā":3,"4.24 · kārikā":3,"4.25 · kārikā":3,"4.26 · kārikā":3,"4.27 · kārikā":3,"4.28 · kārikā":3,"4.29 · kārikā":3,"4.30 · kārikā":3,"4.31 · kārikā":3,"4.32 · kārikā":3,"4.33 · kārikā":3,"4.34 · kārikā":3,"4.35 · kārikā":3,"4.36 · kārikā":3,"4.37 · kārikā":3,"4.38 · kārikā":3,"4.39 · kārikā":3,"4.40 · kārikā":3,"4.41 · kārikā":3,"4.42 · kārikā":3,"4.43 · kārikā":3,"4.44 · kārikā":3,"4.45 · kārikā":3,"4.46 · kārikā":3,"4.47 · kārikā":3,"4.48 · kārikā":3,"4.49 · kārikā":3,"4.50 · kārikā":3,"4.51 · kārikā":3,"4.52 · kārikā":3,"4.53 · kārikā":3,"4.54 · kārikā":3,"4.55 · kārikā":3,"4.56 · kārikā":3,"4.57 · kārikā":3,"4.58 · kārikā":3,"4.59 · kārikā":3,"4.60 · kārikā":3,"4.61 · kārikā":3,"4.62 · kārikā":3,"4.63 · kārikā":3,"4.64 · kārikā":3,"4.65 · kārikā":3,"4.66 · kārikā":3,"4.67 · kārikā":3,"4.68 · kārikā":3,"4.69 · kārikā":3,"4.70 · kārikā":3,"4.71 · kārikā":3,"4.72 · kārikā":3,"4.73 · kārikā":3,"4.74 · kārikā":3,"4.75 · kārikā":3,"4.76 · kārikā":3,"4.77 · kārikā":3,"4.78 · kārikā":3,"4.79 · kārikā":3,"4.80 · kārikā":3,"4.81 · kārikā":3,"4.82 · kārikā":3,"4.83 · kārikā":3,"4.84 · kārikā":3,"4.85 · kārikā":3,"4.86 · kārikā":3,"4.87 · kārikā":3,"4.88 · kārikā":3,"4.89 · kārikā":3,"4.90 · kārikā":3,"4.91 · kārikā":3,"4.92 · kārikā":3,"4.93 · kārikā":3,"4.94 · kārikā":3,"4.95 · kārikā":3,"4.96 · kārikā":3,"4.97 · kārikā":3,"4.98 · kārikā":3,"4.99 · kārikā":3,"4.100 · kārikā":3},"cur":-1};
-var bar=document.getElementById('navbar');var sels=[].slice.call(bar.querySelectorAll('select'));
-function comps(r){var p=r.split('.');if(p.length>N.nlev){p=p.slice(0,N.nlev-1).concat(p.slice(N.nlev-1).join('.'));}return p;}
-function optsFor(level,prefix){var out=[],seen={};N.refs.forEach(function(r){var p=comps(r);if(p.length<=level)return;
-  for(var i=0;i<level;i++)if(p[i]!==prefix[i])return;if(!seen[p[level]]){seen[p[level]]=1;out.push(p[level]);}});return out;}
-function fill(sel,opts,val){sel.innerHTML=opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+o+'</option>';}).join('');}
-function chosen(uptolevel){var a=[];for(var i=0;i<=uptolevel;i++)a.push(sels[i].value);return a;}
-function rebuild(from){for(var L=from;L<sels.length;L++){var opts=optsFor(L,chosen(L-1));fill(sels[L],opts,opts[0]);}}
-function target(){return sels.map(function(s){return s.value;}).join('.');}
-function jump(ref){var i=N.pageIdx[ref];if(i==null)return;
-  if(i===N.cur){var el=document.getElementById('v-'+ref);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});
-    el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');}}
-  else location.href=N.files[i]+'#v-'+ref;}
-sels.forEach(function(s,L){s.addEventListener('change',function(){rebuild(L+1);jump(target());});});
-function setTo(ref){var p=comps(ref);rebuild(0);for(var L=0;L<sels.length&&L<p.length;L++){var opts=optsFor(L,p.slice(0,L));
-  fill(sels[L],opts,p[L]);}}
-// init: reflect #v-<ref> if present, else first verse on this page, else first ref overall
-var h=location.hash.replace(/^#v-/,'');
-if(h&&N.pageIdx[h]!=null){setTo(h);var el=document.getElementById('v-'+h);if(el){el.classList.add('navhit');}}
-else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.refs[k]]===N.cur){first=N.refs[k];break;}}
-  setTo(first||N.refs[0]);}
-})();</script><details class="legend" open><summary>॥ सङ्केत-सूची · legend <span class="tw">▲ tap to fold</span></summary>
+.v.navhit{animation:navflash 1.6s ease-out}</style>
+<div id="reading-nav"></div>
+<script>'use strict';
+/*
+ * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
+ * ============================================================================
+ * A single source of truth (LEVELS + cascade logic + rendering) used by BOTH:
+ *   1. the static svādhyāya reading pages (मनन bhāṣya + पदार्थ mūla) — via nav.js's buildNav,
+ *      which now emits a container + calls ReadingNav.mount(...) at runtime; and
+ *   2. the in-app "read-a-verse" picker (app.js renderReadingPicker).
+ * Fix the chapter/verse scheme HERE and it percolates to every page — no per-surface drift/creep.
+ *
+ * UMD: works as a browser global (window.ReadingNav) AND a Node require() (nav.js / build tooling).
+ *
+ * API
+ *   ReadingNav.LEVELS                       // { slug: [level-label, ...] }  (per-text native divisions)
+ *   ReadingNav.levelsFor(slug, refs)        // -> [labels]; falls back by ref-depth for an unlisted text
+ *   ReadingNav.comps(ref, nlev)             // -> ref split into nlev comps (extra trailing comps folded into last)
+ *   ReadingNav.optionsFor(refs, nlev, L, prefix)  // -> distinct options at level L under `prefix`
+ *   ReadingNav.STYLE                        // the navbar <style> text (injected once per page)
+ *   ReadingNav.mount(container, opts)       // render cascading <select>s + wire cascade & selection
+ *
+ * mount(container, {
+ *   slug,                 // text slug (LEVELS key)
+ *   refs,                 // ORDERED array of every ref in the text, e.g. ["1.1.1","1.1.2", ...]
+ *   curRef,               // optional: pre-select this ref
+ *   mode,                 // 'jump' (reading pages) | 'callback' (picker)
+ *   pageByRef, curFile,   // 'jump' mode only: {ref:file} + this page's file → same-page scroll or cross-page #v-<ref>
+ *   onSelect,             // called with (ref) whenever the selection changes (both modes)
+ * })  ->  { getRef(), setRef(ref), refresh() }
+ */
+(function (root, factory) {
+  const mod = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = mod;   // Node (nav.js, tooling)
+  if (typeof window !== 'undefined') window.ReadingNav = mod;                   // browser global
+})(this, function () {
+
+  // Level labels per text — MUST span the full ref depth (uniform depth per text). Single source; keep this
+  // the only copy. (Was duplicated in nav.js; nav.js now imports it from here.)
+  const LEVELS = {
+    Gita: ['अध्याय', 'श्लोक'], Isha: ['अध्याय', 'मन्त्र'], Kena: ['खण्ड', 'मन्त्र'], Kena_pada: ['खण्ड', 'मन्त्र'], Kena_vakya: ['खण्ड', 'मन्त्र'],
+    Kathaka: ['अध्याय', 'वल्ली', 'मन्त्र'], Prashna: ['प्रश्न', 'मन्त्र'], Mundaka: ['मुण्डक', 'खण्ड', 'मन्त्र'],
+    Mandukya: ['प्रकरण', 'मन्त्र'], Aitareya: ['अध्याय', 'खण्ड', 'मन्त्र'], Chandogya: ['अध्याय', 'खण्ड', 'मन्त्र'],
+    Taitiriya: ['वल्ली', 'अनुवाक', 'मन्त्र'], Brha: ['अध्याय', 'ब्राह्मण', 'मन्त्र'], BS: ['अध्याय', 'पाद', 'सूत्र'],
+    VC: ['श्लोक'], PD: ['अध्याय', 'श्लोक'], AB: ['श्लोक'],
+  };
+  const FALLBACK = ['भाग', 'उप', 'क्रम', 'मन्त्र'];
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function levelsFor(slug, refs) {
+    let lv = LEVELS[slug];
+    if (!lv) { const depth = Math.max(1, ...(refs || []).map(r => String(r).split('.').length)); lv = FALLBACK.slice(Math.max(0, FALLBACK.length - depth)); }
+    return lv;
+  }
+
+  // Split a ref into exactly nlev components; a ref DEEPER than nlev folds its extra trailing comps into the
+  // last level (e.g. brihad "3.9.28.1" under a 3-level scheme → ["3","9","28.1"]). Mirrors nav.js's old comps().
+  function comps(ref, nlev) {
+    let p = String(ref).split('.');
+    if (p.length > nlev) p = p.slice(0, nlev - 1).concat(p.slice(nlev - 1).join('.'));
+    return p;
+  }
+
+  // Distinct options at level L, given the chosen values for levels 0..L-1 (`prefix`), in first-seen order.
+  function optionsFor(refs, nlev, level, prefix) {
+    const out = [], seen = {};
+    for (const r of refs) {
+      const p = comps(r, nlev);
+      if (p.length <= level) continue;
+      let ok = true;
+      for (let i = 0; i < level; i++) if (p[i] !== prefix[i]) { ok = false; break; }
+      if (ok && !seen[p[level]]) { seen[p[level]] = 1; out.push(p[level]); }
+    }
+    return out;
+  }
+
+  // Inner styling, keyed on the `.reading-nav` CLASS that mount() adds to its container — so it applies in
+  // BOTH surfaces regardless of the container's id (reading pages ALSO get the sticky card bar via nav.js's
+  // own #reading-nav rule; the picker gets just this inner row).
+  const STYLE = `
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
+.v{scroll-margin-top:78px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.v.navhit{animation:navflash 1.6s ease-out}`;
+
+  // Render cascading <select>s into `container` and wire them. Returns a small controller.
+  function mount(container, opts) {
+    opts = opts || {};
+    const refs = (opts.refs || []).filter(r => r != null).map(String);
+    const slug = opts.slug;
+    const levels = levelsFor(slug, refs);
+    const nlev = levels.length;
+    if (refs.length < 2 && opts.mode !== 'callback') { container.innerHTML = ''; return { getRef: () => refs[0] || null, setRef: () => {}, refresh: () => {} }; }
+
+    container.classList.add('reading-nav');   // so ReadingNav.STYLE applies regardless of the container's id
+    container.innerHTML = levels.map((lb, i) => `<label class="navlvl"><span>${esc(lb)}</span><select data-lvl="${i}"></select></label>`).join('');
+    const sels = [].slice.call(container.querySelectorAll('select'));
+
+    function chosen(uptoLevel) { const a = []; for (let i = 0; i <= uptoLevel; i++) a.push(sels[i].value); return a; }
+    function fill(sel, options, val) { sel.innerHTML = options.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join(''); }
+    // (Re)build levels from `from` downward, each defaulting to its first valid option under the ones above.
+    function rebuild(from) { for (let L = from; L < sels.length; L++) { const o = optionsFor(refs, nlev, L, chosen(L - 1)); fill(sels[L], o, o[0]); } }
+    function currentRef() { return sels.map(s => s.value).join('.'); }
+    function setRef(ref) {
+      const p = comps(ref, nlev);
+      rebuild(0);
+      for (let L = 0; L < sels.length && L < p.length; L++) { const o = optionsFor(refs, nlev, L, p.slice(0, L)); fill(sels[L], o, p[L]); }
+    }
+
+    function jump(ref) {
+      if (opts.mode !== 'jump') return;
+      const file = opts.pageByRef ? opts.pageByRef[ref] : null;
+      if (file == null) return;
+      if (opts.curFile != null && file === opts.curFile) {
+        const el = document.getElementById('v-' + ref);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('navhit'); void el.offsetWidth; el.classList.add('navhit'); }
+      } else location.href = file + '#v-' + ref;
+    }
+    function onChange() { const ref = currentRef(); if (typeof opts.onSelect === 'function') opts.onSelect(ref); jump(ref); }
+    sels.forEach((s, L) => s.addEventListener('change', function () { rebuild(L + 1); onChange(); }));
+
+    // initial selection: explicit curRef → #v-<ref> hash → (jump mode) first ref ON THIS PAGE → first ref
+    // overall. The "first on this page" step matters for split texts (chandogya/brihad/gita spread across
+    // files): landing on page N with no hash must show page N's first verse, not the global first (nav.js parity).
+    let init = opts.curRef, fromHash = false;
+    if (!init && typeof location !== 'undefined') { const h = (location.hash || '').replace(/^#v-/, ''); if (h && refs.indexOf(h) >= 0) { init = h; fromHash = true; } }
+    if (!init && opts.mode === 'jump' && opts.pageByRef && opts.curFile != null) init = refs.find(r => opts.pageByRef[r] === opts.curFile) || null;
+    setRef(init || refs[0]);
+    // arriving via #v-<ref>: mirror nav.js's flash cue on the target verse.
+    if (fromHash && opts.mode === 'jump' && typeof document !== 'undefined') { const el = document.getElementById('v-' + init); if (el) el.classList.add('navhit'); }
+
+    return { getRef: currentRef, setRef, refresh: () => setRef(currentRef()) };
+  }
+
+  return { LEVELS, FALLBACK, levelsFor, comps, optionsFor, esc, STYLE, mount };
+});
+
+;(function(){var el=document.getElementById('reading-nav');if(el&&window.ReadingNav)window.ReadingNav.mount(el, {"slug":"Mandukya","refs":["1.1","1.2","1.3","1.4","1.5","1.6","1.1 · kārikā","1.2 · kārikā","1.3 · kārikā","1.4 · kārikā","1.5 · kārikā","1.6 · kārikā","1.7 · kārikā","1.8 · kārikā","1.9 · kārikā","1.7","1.10 · kārikā","1.11 · kārikā","1.12 · kārikā","1.13 · kārikā","1.14 · kārikā","1.15 · kārikā","1.16 · kārikā","1.17 · kārikā","1.18 · kārikā","1.8","1.9","1.10","1.11","1.19 · kārikā","1.20 · kārikā","1.21 · kārikā","1.22 · kārikā","1.23 · kārikā","1.12","1.24 · kārikā","1.25 · kārikā","1.26 · kārikā","1.27 · kārikā","1.28 · kārikā","1.29 · kārikā","2.1 · kārikā","2.2 · kārikā","2.3 · kārikā","2.4 · kārikā","2.5 · kārikā","2.6 · kārikā","2.7 · kārikā","2.8 · kārikā","2.9 · kārikā","2.10 · kārikā","2.11 · kārikā","2.12 · kārikā","2.13 · kārikā","2.14 · kārikā","2.15 · kārikā","2.16 · kārikā","2.17 · kārikā","2.18 · kārikā","2.19 · kārikā","2.20 · kārikā","2.21 · kārikā","2.22 · kārikā","2.23 · kārikā","2.24 · kārikā","2.25 · kārikā","2.26 · kārikā","2.27 · kārikā","2.28 · kārikā","2.29 · kārikā","2.30 · kārikā","2.31 · kārikā","2.32 · kārikā","2.33 · kārikā","2.34 · kārikā","2.35 · kārikā","2.36 · kārikā","2.37 · kārikā","2.38 · kārikā","3.1 · kārikā","3.2 · kārikā","3.3 · kārikā","3.4 · kārikā","3.5 · kārikā","3.6 · kārikā","3.7 · kārikā","3.8 · kārikā","3.9 · kārikā","3.10 · kārikā","3.11 · kārikā","3.12 · kārikā","3.13 · kārikā","3.14 · kārikā","3.15 · kārikā","3.16 · kārikā","3.17 · kārikā","3.18 · kārikā","3.19 · kārikā","3.20 · kārikā","3.21 · kārikā","3.22 · kārikā","3.23 · kārikā","3.24 · kārikā","3.25 · kārikā","3.26 · kārikā","3.27 · kārikā","3.28 · kārikā","3.29 · kārikā","3.30 · kārikā","3.31 · kārikā","3.32 · kārikā","3.33 · kārikā","3.34 · kārikā","3.35 · kārikā","3.36 · kārikā","3.37 · kārikā","3.38 · kārikā","3.39 · kārikā","3.40 · kārikā","3.41 · kārikā","3.42 · kārikā","3.43 · kārikā","3.44 · kārikā","3.45 · kārikā","3.46 · kārikā","3.47 · kārikā","3.48 · kārikā","4.1 · kārikā","4.2 · kārikā","4.3 · kārikā","4.4 · kārikā","4.5 · kārikā","4.6 · kārikā","4.7 · kārikā","4.8 · kārikā","4.9 · kārikā","4.10 · kārikā","4.11 · kārikā","4.12 · kārikā","4.13 · kārikā","4.14 · kārikā","4.15 · kārikā","4.16 · kārikā","4.17 · kārikā","4.18 · kārikā","4.19 · kārikā","4.20 · kārikā","4.21 · kārikā","4.22 · kārikā","4.23 · kārikā","4.24 · kārikā","4.25 · kārikā","4.26 · kārikā","4.27 · kārikā","4.28 · kārikā","4.29 · kārikā","4.30 · kārikā","4.31 · kārikā","4.32 · kārikā","4.33 · kārikā","4.34 · kārikā","4.35 · kārikā","4.36 · kārikā","4.37 · kārikā","4.38 · kārikā","4.39 · kārikā","4.40 · kārikā","4.41 · kārikā","4.42 · kārikā","4.43 · kārikā","4.44 · kārikā","4.45 · kārikā","4.46 · kārikā","4.47 · kārikā","4.48 · kārikā","4.49 · kārikā","4.50 · kārikā","4.51 · kārikā","4.52 · kārikā","4.53 · kārikā","4.54 · kārikā","4.55 · kārikā","4.56 · kārikā","4.57 · kārikā","4.58 · kārikā","4.59 · kārikā","4.60 · kārikā","4.61 · kārikā","4.62 · kārikā","4.63 · kārikā","4.64 · kārikā","4.65 · kārikā","4.66 · kārikā","4.67 · kārikā","4.68 · kārikā","4.69 · kārikā","4.70 · kārikā","4.71 · kārikā","4.72 · kārikā","4.73 · kārikā","4.74 · kārikā","4.75 · kārikā","4.76 · kārikā","4.77 · kārikā","4.78 · kārikā","4.79 · kārikā","4.80 · kārikā","4.81 · kārikā","4.82 · kārikā","4.83 · kārikā","4.84 · kārikā","4.85 · kārikā","4.86 · kārikā","4.87 · kārikā","4.88 · kārikā","4.89 · kārikā","4.90 · kārikā","4.91 · kārikā","4.92 · kārikā","4.93 · kārikā","4.94 · kārikā","4.95 · kārikā","4.96 · kārikā","4.97 · kārikā","4.98 · kārikā","4.99 · kārikā","4.100 · kārikā"],"pageByRef":{"1.1":"reading-mandukya-1.html","1.2":"reading-mandukya-1.html","1.3":"reading-mandukya-1.html","1.4":"reading-mandukya-1.html","1.5":"reading-mandukya-1.html","1.6":"reading-mandukya-1.html","1.1 · kārikā":"reading-mandukya-1.html","1.2 · kārikā":"reading-mandukya-1.html","1.3 · kārikā":"reading-mandukya-1.html","1.4 · kārikā":"reading-mandukya-1.html","1.5 · kārikā":"reading-mandukya-1.html","1.6 · kārikā":"reading-mandukya-1.html","1.7 · kārikā":"reading-mandukya-1.html","1.8 · kārikā":"reading-mandukya-1.html","1.9 · kārikā":"reading-mandukya-1.html","1.7":"reading-mandukya-1.html","1.10 · kārikā":"reading-mandukya-1.html","1.11 · kārikā":"reading-mandukya-1.html","1.12 · kārikā":"reading-mandukya-1.html","1.13 · kārikā":"reading-mandukya-1.html","1.14 · kārikā":"reading-mandukya-1.html","1.15 · kārikā":"reading-mandukya-1.html","1.16 · kārikā":"reading-mandukya-1.html","1.17 · kārikā":"reading-mandukya-1.html","1.18 · kārikā":"reading-mandukya-1.html","1.8":"reading-mandukya-1.html","1.9":"reading-mandukya-1.html","1.10":"reading-mandukya-1.html","1.11":"reading-mandukya-1.html","1.19 · kārikā":"reading-mandukya-1.html","1.20 · kārikā":"reading-mandukya-1.html","1.21 · kārikā":"reading-mandukya-1.html","1.22 · kārikā":"reading-mandukya-1.html","1.23 · kārikā":"reading-mandukya-1.html","1.12":"reading-mandukya-1.html","1.24 · kārikā":"reading-mandukya-1.html","1.25 · kārikā":"reading-mandukya-1.html","1.26 · kārikā":"reading-mandukya-1.html","1.27 · kārikā":"reading-mandukya-1.html","1.28 · kārikā":"reading-mandukya-1.html","1.29 · kārikā":"reading-mandukya-1.html","2.1 · kārikā":"reading-mandukya-2.html","2.2 · kārikā":"reading-mandukya-2.html","2.3 · kārikā":"reading-mandukya-2.html","2.4 · kārikā":"reading-mandukya-2.html","2.5 · kārikā":"reading-mandukya-2.html","2.6 · kārikā":"reading-mandukya-2.html","2.7 · kārikā":"reading-mandukya-2.html","2.8 · kārikā":"reading-mandukya-2.html","2.9 · kārikā":"reading-mandukya-2.html","2.10 · kārikā":"reading-mandukya-2.html","2.11 · kārikā":"reading-mandukya-2.html","2.12 · kārikā":"reading-mandukya-2.html","2.13 · kārikā":"reading-mandukya-2.html","2.14 · kārikā":"reading-mandukya-2.html","2.15 · kārikā":"reading-mandukya-2.html","2.16 · kārikā":"reading-mandukya-2.html","2.17 · kārikā":"reading-mandukya-2.html","2.18 · kārikā":"reading-mandukya-2.html","2.19 · kārikā":"reading-mandukya-2.html","2.20 · kārikā":"reading-mandukya-2.html","2.21 · kārikā":"reading-mandukya-2.html","2.22 · kārikā":"reading-mandukya-2.html","2.23 · kārikā":"reading-mandukya-2.html","2.24 · kārikā":"reading-mandukya-2.html","2.25 · kārikā":"reading-mandukya-2.html","2.26 · kārikā":"reading-mandukya-2.html","2.27 · kārikā":"reading-mandukya-2.html","2.28 · kārikā":"reading-mandukya-2.html","2.29 · kārikā":"reading-mandukya-2.html","2.30 · kārikā":"reading-mandukya-2.html","2.31 · kārikā":"reading-mandukya-2.html","2.32 · kārikā":"reading-mandukya-2.html","2.33 · kārikā":"reading-mandukya-2.html","2.34 · kārikā":"reading-mandukya-2.html","2.35 · kārikā":"reading-mandukya-2.html","2.36 · kārikā":"reading-mandukya-2.html","2.37 · kārikā":"reading-mandukya-2.html","2.38 · kārikā":"reading-mandukya-2.html","3.1 · kārikā":"reading-mandukya-3.html","3.2 · kārikā":"reading-mandukya-3.html","3.3 · kārikā":"reading-mandukya-3.html","3.4 · kārikā":"reading-mandukya-3.html","3.5 · kārikā":"reading-mandukya-3.html","3.6 · kārikā":"reading-mandukya-3.html","3.7 · kārikā":"reading-mandukya-3.html","3.8 · kārikā":"reading-mandukya-3.html","3.9 · kārikā":"reading-mandukya-3.html","3.10 · kārikā":"reading-mandukya-3.html","3.11 · kārikā":"reading-mandukya-3.html","3.12 · kārikā":"reading-mandukya-3.html","3.13 · kārikā":"reading-mandukya-3.html","3.14 · kārikā":"reading-mandukya-3.html","3.15 · kārikā":"reading-mandukya-3.html","3.16 · kārikā":"reading-mandukya-3.html","3.17 · kārikā":"reading-mandukya-3.html","3.18 · kārikā":"reading-mandukya-3.html","3.19 · kārikā":"reading-mandukya-3.html","3.20 · kārikā":"reading-mandukya-3.html","3.21 · kārikā":"reading-mandukya-3.html","3.22 · kārikā":"reading-mandukya-3.html","3.23 · kārikā":"reading-mandukya-3.html","3.24 · kārikā":"reading-mandukya-3.html","3.25 · kārikā":"reading-mandukya-3.html","3.26 · kārikā":"reading-mandukya-3.html","3.27 · kārikā":"reading-mandukya-3.html","3.28 · kārikā":"reading-mandukya-3.html","3.29 · kārikā":"reading-mandukya-3.html","3.30 · kārikā":"reading-mandukya-3.html","3.31 · kārikā":"reading-mandukya-3.html","3.32 · kārikā":"reading-mandukya-3.html","3.33 · kārikā":"reading-mandukya-3.html","3.34 · kārikā":"reading-mandukya-3.html","3.35 · kārikā":"reading-mandukya-3.html","3.36 · kārikā":"reading-mandukya-3.html","3.37 · kārikā":"reading-mandukya-3.html","3.38 · kārikā":"reading-mandukya-3.html","3.39 · kārikā":"reading-mandukya-3.html","3.40 · kārikā":"reading-mandukya-3.html","3.41 · kārikā":"reading-mandukya-3.html","3.42 · kārikā":"reading-mandukya-3.html","3.43 · kārikā":"reading-mandukya-3.html","3.44 · kārikā":"reading-mandukya-3.html","3.45 · kārikā":"reading-mandukya-3.html","3.46 · kārikā":"reading-mandukya-3.html","3.47 · kārikā":"reading-mandukya-3.html","3.48 · kārikā":"reading-mandukya-3.html","4.1 · kārikā":"reading-mandukya-4.html","4.2 · kārikā":"reading-mandukya-4.html","4.3 · kārikā":"reading-mandukya-4.html","4.4 · kārikā":"reading-mandukya-4.html","4.5 · kārikā":"reading-mandukya-4.html","4.6 · kārikā":"reading-mandukya-4.html","4.7 · kārikā":"reading-mandukya-4.html","4.8 · kārikā":"reading-mandukya-4.html","4.9 · kārikā":"reading-mandukya-4.html","4.10 · kārikā":"reading-mandukya-4.html","4.11 · kārikā":"reading-mandukya-4.html","4.12 · kārikā":"reading-mandukya-4.html","4.13 · kārikā":"reading-mandukya-4.html","4.14 · kārikā":"reading-mandukya-4.html","4.15 · kārikā":"reading-mandukya-4.html","4.16 · kārikā":"reading-mandukya-4.html","4.17 · kārikā":"reading-mandukya-4.html","4.18 · kārikā":"reading-mandukya-4.html","4.19 · kārikā":"reading-mandukya-4.html","4.20 · kārikā":"reading-mandukya-4.html","4.21 · kārikā":"reading-mandukya-4.html","4.22 · kārikā":"reading-mandukya-4.html","4.23 · kārikā":"reading-mandukya-4.html","4.24 · kārikā":"reading-mandukya-4.html","4.25 · kārikā":"reading-mandukya-4.html","4.26 · kārikā":"reading-mandukya-4.html","4.27 · kārikā":"reading-mandukya-4.html","4.28 · kārikā":"reading-mandukya-4.html","4.29 · kārikā":"reading-mandukya-4.html","4.30 · kārikā":"reading-mandukya-4.html","4.31 · kārikā":"reading-mandukya-4.html","4.32 · kārikā":"reading-mandukya-4.html","4.33 · kārikā":"reading-mandukya-4.html","4.34 · kārikā":"reading-mandukya-4.html","4.35 · kārikā":"reading-mandukya-4.html","4.36 · kārikā":"reading-mandukya-4.html","4.37 · kārikā":"reading-mandukya-4.html","4.38 · kārikā":"reading-mandukya-4.html","4.39 · kārikā":"reading-mandukya-4.html","4.40 · kārikā":"reading-mandukya-4.html","4.41 · kārikā":"reading-mandukya-4.html","4.42 · kārikā":"reading-mandukya-4.html","4.43 · kārikā":"reading-mandukya-4.html","4.44 · kārikā":"reading-mandukya-4.html","4.45 · kārikā":"reading-mandukya-4.html","4.46 · kārikā":"reading-mandukya-4.html","4.47 · kārikā":"reading-mandukya-4.html","4.48 · kārikā":"reading-mandukya-4.html","4.49 · kārikā":"reading-mandukya-4.html","4.50 · kārikā":"reading-mandukya-4.html","4.51 · kārikā":"reading-mandukya-4.html","4.52 · kārikā":"reading-mandukya-4.html","4.53 · kārikā":"reading-mandukya-4.html","4.54 · kārikā":"reading-mandukya-4.html","4.55 · kārikā":"reading-mandukya-4.html","4.56 · kārikā":"reading-mandukya-4.html","4.57 · kārikā":"reading-mandukya-4.html","4.58 · kārikā":"reading-mandukya-4.html","4.59 · kārikā":"reading-mandukya-4.html","4.60 · kārikā":"reading-mandukya-4.html","4.61 · kārikā":"reading-mandukya-4.html","4.62 · kārikā":"reading-mandukya-4.html","4.63 · kārikā":"reading-mandukya-4.html","4.64 · kārikā":"reading-mandukya-4.html","4.65 · kārikā":"reading-mandukya-4.html","4.66 · kārikā":"reading-mandukya-4.html","4.67 · kārikā":"reading-mandukya-4.html","4.68 · kārikā":"reading-mandukya-4.html","4.69 · kārikā":"reading-mandukya-4.html","4.70 · kārikā":"reading-mandukya-4.html","4.71 · kārikā":"reading-mandukya-4.html","4.72 · kārikā":"reading-mandukya-4.html","4.73 · kārikā":"reading-mandukya-4.html","4.74 · kārikā":"reading-mandukya-4.html","4.75 · kārikā":"reading-mandukya-4.html","4.76 · kārikā":"reading-mandukya-4.html","4.77 · kārikā":"reading-mandukya-4.html","4.78 · kārikā":"reading-mandukya-4.html","4.79 · kārikā":"reading-mandukya-4.html","4.80 · kārikā":"reading-mandukya-4.html","4.81 · kārikā":"reading-mandukya-4.html","4.82 · kārikā":"reading-mandukya-4.html","4.83 · kārikā":"reading-mandukya-4.html","4.84 · kārikā":"reading-mandukya-4.html","4.85 · kārikā":"reading-mandukya-4.html","4.86 · kārikā":"reading-mandukya-4.html","4.87 · kārikā":"reading-mandukya-4.html","4.88 · kārikā":"reading-mandukya-4.html","4.89 · kārikā":"reading-mandukya-4.html","4.90 · kārikā":"reading-mandukya-4.html","4.91 · kārikā":"reading-mandukya-4.html","4.92 · kārikā":"reading-mandukya-4.html","4.93 · kārikā":"reading-mandukya-4.html","4.94 · kārikā":"reading-mandukya-4.html","4.95 · kārikā":"reading-mandukya-4.html","4.96 · kārikā":"reading-mandukya-4.html","4.97 · kārikā":"reading-mandukya-4.html","4.98 · kārikā":"reading-mandukya-4.html","4.99 · kārikā":"reading-mandukya-4.html","4.100 · kārikā":"reading-mandukya-4.html"},"curFile":"reading-mandukya.html","mode":"jump"});})();</script><details class="legend" open><summary>॥ सङ्केत-सूची · legend <span class="tw">▲ tap to fold</span></summary>
 <div class="legbody">
   <div class="leggrp"><div class="leghd">पदार्थ · hover-analysis</div>
     <div class="legnote">Hover or tap any word — in the mūla or the bhāṣya — for its analysis — meaning, vibhakti (case·vacana·liṅga), kāraka role, and recursive samāsa vigraha.</div>

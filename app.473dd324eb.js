@@ -1417,6 +1417,13 @@ function groupManifestByText(manifest) {
   // build-emitted manifest order, which is churn-prone (Harsha, 2026-08-28).
   return [...bySlug.values()].sort((a, b) => a.slug.toLowerCase().localeCompare(b.slug.toLowerCase()));
 }
+// Every ref of a text in reading order (across its chapters) — the input to the shared ReadingNav cascade.
+function textAllRefs(text) { return text.chapters.flatMap(c => (c.verses || []).map(v => String(v.ref))); }
+// Which walk chapter (chapterKey) contains a given ref — so a ReadingNav pick maps back to startReading().
+function chapterKeyForRef(text, ref) {
+  for (const c of text.chapters) if ((c.verses || []).some(v => String(v.ref) === String(ref))) return c.chapterKey;
+  return (text.chapters[0] || {}).chapterKey || null;
+}
 // A chapter's verse list carries an extra sub-level (e.g. Kaṭha's adhyāya.vallī.mantra, refs like
 // "1.2.3") when every ref has 3+ dot-segments — group by the 2nd segment in that case so the picker
 // can offer it as its own step. Flat chapters (Gītā's "4.1", 2 segments) return null: no sub-level,
@@ -1435,13 +1442,8 @@ function groupVersesBySection(chapterEntry) {
 function renderReadingPicker() {
   const manifest = window.WALK_MANIFEST || [];
   const texts = groupManifestByText(manifest);
-  const p = view.picker || (view.picker = { slug: null, chapterKey: null, sectionKey: null, contentScope: 'both' });
+  const p = view.picker || (view.picker = { slug: null, curRef: null, contentScope: 'both' });
   const selectedText = texts.find(t => t.slug === p.slug) || null;
-  const selectedChapter = selectedText ? selectedText.chapters.find(c => c.chapterKey === p.chapterKey) : null;
-  const sections = selectedChapter ? groupVersesBySection(selectedChapter) : null;
-  const selectedSection = sections ? sections.find(s => s.key === p.sectionKey) : null;
-  const verseChoices = !selectedChapter ? [] : sections ? (selectedSection ? selectedSection.verses : []) : selectedChapter.verses;
-  const hasProgress = selectedChapter && !!loadReadingProgress(selectedChapter.chapterKey, p.contentScope);
   // Context-drive the mūlam/bhāṣyam source picker: only offer bhāṣyam options for a text whose read-a-verse
   // WALK actually has bhāṣya content (walk-manifest `hasBhasya` — today only the Gītā). For a mūla-only text
   // the 3-way toggle is meaningless (bhāṣyam-only → empty walk; mūlam+bhāṣyam == mūlam), so hide it and pin
@@ -1462,28 +1464,12 @@ function renderReadingPicker() {
         ${texts.map(t => `<option value="${esc(t.slug)}"${t.slug === p.slug ? ' selected' : ''}>${esc(t.title)}</option>`).join('')}
       </select>
     </div>
-    ${selectedText ? `<div class="picker-level">
-      <label>Chapter</label>
-      <select id="chapterSelect">
-        <option value="">Choose a chapter…</option>
-        ${selectedText.chapters.map(c => `<option value="${esc(c.chapterKey)}"${c.chapterKey === p.chapterKey ? ' selected' : ''}>${esc(c.label.split(' · ')[1] || c.label)}</option>`).join('')}
-      </select>
-    </div>` : ''}
-    ${selectedChapter ? `<div class="reading-actions">
-      ${hasProgress ? `<button class="primary" data-action="continue" data-key="${selectedChapter.chapterKey}">Continue</button>` : ''}
-      <button class="${hasProgress ? 'secondary' : 'primary'}" data-action="start" data-key="${selectedChapter.chapterKey}">${hasProgress ? 'Start over' : 'Start'}</button>
-    </div>` : ''}
-    ${selectedChapter && sections ? `<div class="picker-level">
-      <label>Section</label>
-      <select id="sectionSelect">
-        <option value="">Choose a section…</option>
-        ${sections.map(s => `<option value="${esc(s.key)}"${s.key === p.sectionKey ? ' selected' : ''}>${esc(s.key)}</option>`).join('')}
-      </select>
-    </div>` : ''}
-    ${selectedChapter && (!sections || selectedSection) ? `<div class="picker-level verse-jump">
-      <select id="verseSelect">${verseChoices.map(v => `<option value="${esc(v.ref)}">${esc(v.label)}</option>`).join('')}</select>
-      <button class="secondary" data-action="goto" data-key="${selectedChapter.chapterKey}">▶ Go to verse</button>
-    </div>` : ''}`}
+    ${selectedText ? `<div class="picker-level nav-verse">
+      <style>${(window.ReadingNav && window.ReadingNav.STYLE) || ''}</style>
+      <label>Verse</label>
+      <div id="readingNavHost"></div>
+    </div>
+    <div class="reading-actions" id="readingActions"></div>` : ''}`}
     ${textHasBhasya ? `<div class="scope-toggle">
       <div class="scope-head">Read</div>
       <label><input type="radio" name="scopeRadio" value="both" ${p.contentScope === 'both' ? 'checked' : ''}> mūlam + bhāṣyam</label>
@@ -1497,26 +1483,34 @@ function renderReadingPicker() {
     </div>`;
   document.getElementById('pickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
   const textSelect = document.getElementById('textSelect');
-  if (textSelect) textSelect.onchange = e => { p.slug = e.target.value || null; p.chapterKey = null; p.sectionKey = null; renderReadingPicker(); };
-  const chapterSelect = document.getElementById('chapterSelect');
-  if (chapterSelect) chapterSelect.onchange = e => { p.chapterKey = e.target.value || null; p.sectionKey = null; renderReadingPicker(); };
-  const sectionSelect = document.getElementById('sectionSelect');
-  if (sectionSelect) sectionSelect.onchange = e => { p.sectionKey = e.target.value || null; renderReadingPicker(); };
-  // Re-render on scope change (not just record it) — hasProgress and the Continue/Start over
-  // label depend on which scope's OWN saved resume point exists (see readingProgressKey).
+  if (textSelect) textSelect.onchange = e => { p.slug = e.target.value || null; p.curRef = null; renderReadingPicker(); };
+  // Re-render on scope change — the Continue/Start-over affordance depends on which scope has its OWN saved
+  // resume point (see readingProgressKey).
   app.querySelectorAll('input[name="scopeRadio"]').forEach(r => r.onchange = () => { p.contentScope = r.value; renderReadingPicker(); });
-  app.querySelectorAll('[data-action]').forEach(btn => {
-    btn.onclick = () => {
-      const deep = document.getElementById('deepToggle').checked;
-      const scope = textHasBhasya ? p.contentScope : 'both';   // mūla-only texts: toggle hidden → pin to mūlam
-      const key = btn.dataset.key;
-      if (btn.dataset.action === 'goto') {
-        startReading(key, { deep, scope, verseRef: document.getElementById('verseSelect').value });
-      } else {
-        startReading(key, { deep, scope, fromBeginning: btn.dataset.action === 'start' });
-      }
+  // Chapter/verse navigation is the ONE shared ReadingNav component (identical to svādhyāya), in 'callback'
+  // mode: a pick just reports the ref, which we map back to its walk chapter for startReading. The extra
+  // context-sensitive read-a-verse options (mūlam/bhāṣyam scope, deep, skills) layer on top, unchanged.
+  if (selectedText && window.ReadingNav) {
+    const host = document.getElementById('readingNavHost');
+    const actionsEl = document.getElementById('readingActions');
+    const refs = textAllRefs(selectedText);
+    const scope = textHasBhasya ? p.contentScope : 'both';   // mūla-only texts: scope toggle hidden → pin to mūlam
+    const updateActions = (ref) => {
+      p.curRef = ref;
+      const ck = chapterKeyForRef(selectedText, ref);
+      const hasProg = ck && !!loadReadingProgress(ck, scope);
+      actionsEl.innerHTML =
+        (hasProg ? `<button class="primary" data-act="continue">Continue</button>` : '') +
+        `<button class="${hasProg ? 'secondary' : 'primary'}" data-act="start">▶ Read from ${esc(ref)}</button>`;
+      actionsEl.querySelectorAll('[data-act]').forEach(btn => btn.onclick = () => {
+        const deep = document.getElementById('deepToggle').checked;
+        if (btn.dataset.act === 'continue') startReading(ck, { deep, scope });
+        else startReading(ck, { deep, scope, verseRef: ref });
+      });
     };
-  });
+    const ctrl = window.ReadingNav.mount(host, { slug: selectedText.slug, refs, curRef: p.curRef, mode: 'callback', onSelect: updateActions });
+    updateActions(ctrl.getRef());
+  }
   // At least one skill must stay enabled, or a reading session would have nothing to ask —
   // revert the checkbox rather than let the picker save an all-off state (undoes the click itself,
   // not a confirm dialog — cheap correction fits the "keep tempo up" spirit of this session's

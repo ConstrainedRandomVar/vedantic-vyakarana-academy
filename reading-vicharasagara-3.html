@@ -26,10 +26,13 @@ body.nosec .secband{display:none}
 .spk-g{background:#dcecdc;color:#15603d} .spk-s{background:#f0e2d0;color:#8a5a2b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.85 "Noto Serif Devanagari","Adishila",Georgia,serif;padding:0 0 120px}
-header{position:sticky;top:0;background:rgba(250,247,240,.97);border-bottom:1px solid var(--rule);padding:12px 20px;z-index:5;backdrop-filter:blur(6px)}
+header{position:sticky;top:0;background:rgba(250,247,240,.97);border-bottom:1px solid var(--rule);padding:9px 20px;z-index:5;backdrop-filter:blur(6px)}
 /* mandatory site brand — saffron, left-aligned, on every page (standard template) */
-.brand{display:block;color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:"Noto Serif Devanagari",serif;margin-bottom:3px}
-h1{margin:0;font-size:22px;color:var(--accent)} .sub{font-size:13px;color:#8a7d68;margin-top:2px;font-family:system-ui}
+.brand{color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:"Noto Serif Devanagari",serif;white-space:nowrap}
+/* compact header rows: brand|picker, then title|toolbar, then the dynamic pin */
+.hbar{display:flex;align-items:center;justify-content:space-between;gap:6px 18px;flex-wrap:wrap} .hbar+.hbar{margin-top:5px}
+h1{margin:0;font-size:20px;color:var(--accent);line-height:1.2} .by{font-size:12px;font-weight:400;color:#a08d6f;font-family:system-ui}
+.sub{font-size:13px;color:#8a7d68;margin-top:2px;font-family:system-ui}
 /* dynamic pinned topic — the current (A. n-m) section, role-coloured, updated on scroll */
 .nowsec{margin-top:4px;font-family:system-ui;font-size:13.5px;color:#8a7d68;display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;border-left:3px solid #caa45a;padding-left:9px;min-height:1.2em;transition:border-color .2s}
 .nowsec .ns-r{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
@@ -41,8 +44,8 @@ h1{margin:0;font-size:22px;color:var(--accent)} .sub{font-size:13px;color:#8a7d6
 .nowsec.r-phalita{border-left-color:var(--tat)} .nowsec.r-phalita .ns-r{color:var(--tat)}
 .nowsec.r-ekadeshi{border-left-color:var(--eka)} .nowsec.r-ekadeshi .ns-r{color:var(--eka)}
 .byline{font-size:11.5px;color:#a08d6f;margin-top:3px;font-family:system-ui}
-.toolbar{margin-top:8px;font-family:system-ui;font-size:13px} .toolbar label{margin-right:16px;cursor:pointer;color:#6b5d47}
-#reading-nav{margin-top:8px}
+.toolbar{margin:0;font-family:system-ui;font-size:12.5px;white-space:nowrap} .toolbar label{margin-left:14px;cursor:pointer;color:#6b5d47}
+#reading-nav{margin:0}
 .reading-nav{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:flex-end}
 .reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:#8a7d68;font-family:system-ui}
 .reading-nav select{font:inherit;font-size:14px;color:var(--ink);background:#fff;border:1px solid var(--rule);border-radius:8px;padding:4px 9px;min-width:70px}
@@ -116,11 +119,10 @@ body.notip .tip-wrap{display:none}
 .vs-ab-prov{margin-top:.9em;font-size:12px;color:#8a7a5c;font-family:system-ui,sans-serif;line-height:1.55}
 
 </style></head><body>
-<header><a class="brand" href="index.html" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><h1>विचारसागरः — तृतीयतरङ्गः</h1>
+<header>
+<div class="hbar"><a class="brand" href="index.html" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><div id="reading-nav"></div></div>
+<div class="hbar"><h1>विचारसागरः — तृतीयतरङ्गः<span class="by"> · श्रीवासुदेवब्रह्मेन्द्रसरस्वती</span></h1><div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः</label></div></div>
 <div class="nowsec" id="nowsec"><span class="ns-t">गुरुशिष्यस्वरूपनिरूपणम्</span></div>
-<div class="byline">श्रीवासुदेवब्रह्मेन्द्रसरस्वती · आवर्ताः १०९–१२१</div>
-<div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English translation</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः (sections)</label></div>
-<div id="reading-nav"></div>
 </header>
 <main>
 
@@ -332,9 +334,9 @@ body.notip .tip-wrap{display:none}
   var cur=null;
   function paint(ref){
     var s=SEC&&SEC[ref]; if(!s){return;}
-    var lab=LAB[s.r]||'', rng=s.f?('॥ '+dev(s.f)+(s.to>s.f?'–'+dev(s.to):'')+' ॥'):'';
+    var rng=s.f?('॥ '+dev(s.f)+(s.to>s.f?'–'+dev(s.to):'')+' ॥'):'';   // no role-name tag — colour + legend convey it
     ns.className='nowsec r-'+s.r;
-    ns.innerHTML=(lab?'<span class="ns-r">'+esc(lab)+'</span>':'')+'<span class="ns-t">'+esc(s.t)+'</span>'+(rng?'<span class="ns-range">'+rng+'</span>':'');
+    ns.innerHTML='<span class="ns-t">'+esc(s.t)+'</span>'+(rng?'<span class="ns-range">'+rng+'</span>':'');
     setSmt();   // topic may wrap to a new line → keep --smt (anchor offset) honest
   }
   function upd(){

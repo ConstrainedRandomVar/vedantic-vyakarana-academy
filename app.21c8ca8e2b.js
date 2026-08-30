@@ -1,0 +1,4592 @@
+'use strict';
+// Sandhi quiz app logic: per-node streak mastery (10 correct in a row), adaptive node
+// selection weighted toward weak/unmastered nodes, localStorage persistence. No framework,
+// no build step — matches search.html/review.html's dependency-free convention.
+
+const LABELS = {
+  SVD: 'savarṇadīrgha', GUN: 'guṇa', VRD: 'vṛddhi', YAN: 'yaṇ', AYA: 'ayādi', PVR: 'pūrvarūpa',
+  SCU: 'ścutva', JSH: 'jaśtva', CAR: 'cartva', ANU: 'anusvāra', PSV: 'parasavarṇa',
+  NUD: 'ṅamuṭ', HKC: 'hakāra→caturtha', LAT: 'latva',
+  VSS: 'visarga → s', VSR: 'visarga → r', VSO: 'visarga → o', VSL: 'visarga-lopa', ANN: 'anunāsika',
+  ABT: 'no-sandhi word boundary', MIX: 'sandhi (rule unclassified)', SAMASA: 'samāsa classification',
+  DHT: 'dhātu (verb-ending/tense)', VIB: 'vibhakti (case-ending)', MNG: 'word meaning',
+  MNG1: 'word meaning (vocabulary)', MNG2: 'word meaning (compound/phrase)',
+  VIB1: 'vibhakti (case & number)', VIB2: 'vibhakti (stem/lemma)', VIB3: 'vibhakti (gender/pronoun)',
+  KRT: 'kṛt-pratyaya (kṛdanta)', TAD: 'taddhita-pratyaya (secondary derivation)',
+  PCH: 'padaccheda (full word-split)', KAR: 'kāraka (syntactic role)',
+};
+// meaning and vibhakti each split into two distinct GLOBAL-pool dashboard nodes (MNG1/MNG2,
+// VIB1/VIB2) since each pair is a materially different skill — meaning: MNG1 recalls a single
+// word's plain meaning (gloss is 1-2 words) vs. MNG2 parses+translates a long compound into a full
+// phrase. vibhakti: VIB1 is the classic "what case/number is this word in" drill vs. VIB2 is
+// word-property identification (stem/lemma, gender, pronoun-recognition). The bare VIB/MNG codes
+// above are still needed too — reading-walk items (walk-data-<chapter>.js) keep their original
+// unsplit code, only the corpus-wide axis pool (build_axis_items.js) is split. KIND_LABELS below
+// is keyed by kind, which can't tell VIB1 from VIB2 (or MNG1 from MNG2) apart, so these codes get
+// their own headline via CODE_LABEL_OVERRIDES instead (see renderNodeCard); renderCategorySection
+// groups each split pair under one collapsible card with combined progress, same pattern as the
+// Sandhi category.
+const CODE_LABEL_OVERRIDES = {
+  MNG1: 'अर्थ · Word meaning (vocabulary)', MNG2: 'अर्थ · Word meaning (compound/phrase)',
+  VIB1: 'विभक्ति · Case & number', VIB2: 'विभक्ति · Stem / lemma', VIB3: 'विभक्ति · Gender & pronoun',
+};
+// Student-facing labels for samāsa categories — the internal strings (from classify_samasa.js)
+// are debug-oriented, mixing English/Devanāgarī for the survey that produced them.
+const SAMASA_LABELS = {
+  'Dvandva': 'द्वन्द्व', 'Bahuvrīhi': 'बहुव्रीहि', 'Karmadhāraya': 'कर्मधारय', 'Dvigu': 'द्विगु',
+  'Avyayībhāva': 'अव्ययीभाव', 'Nañ-tatpuruṣa': 'नञ्-तत्पुरुष',
+  'Rūpaka (metaphor-compound)': 'रूपक (तत्पुरुष)',
+  'TP: general (unspecified vibhakti)': 'तत्पुरुष',
+  'TP: upapada': 'उपपद-तत्पुरुष', 'TP: samāhāra (dvigu-like)': 'समाहार-तत्पुरुष',
+  'TP: vibhakti-marked (षष्ठी)': 'षष्ठी-तत्पुरुष', 'TP: vibhakti-marked (तृतीया)': 'तृतीया-तत्पुरुष',
+  'TP: vibhakti-marked (पञ्चमी)': 'पञ्चमी-तत्पुरुष', 'TP: vibhakti-marked (सप्तमी)': 'सप्तमी-तत्पुरुष',
+  'TP: vibhakti-marked (द्वितीया)': 'द्वितीया-तत्पुरुष', 'TP: vibhakti-marked (चतुर्थी)': 'चतुर्थी-तत्पुरुष',
+  'N/A': 'N/A (समास नहीं)',
+};
+function samasaLabel(cat) { return SAMASA_LABELS[cat] || cat; }
+// A samāsa item's correct answer might be a specific tatpuruṣa SUBTYPE (a vibhakti case, upapada,
+// samāhāra) or nañ (also technically a TP subtype). Offering the generic parent "तत्पुरुष (सामान्य)"
+// as a wrong-answer option in those cases would be misleading, not cleanly wrong — a षष्ठी-तत्पुरुष
+// genuinely IS also "a tatpuruṣa." Excluded from the distractor pool in that direction.
+// Symmetrically, when the correct answer IS the general तत्पुरुष (the split couldn't be narrowed
+// to a specific vibhakti/upapada/नञ् subtype), a SPECIFIC subtype like षष्ठी-तत्पुरुष is equally
+// misleading as a "wrong" option — it doesn't contradict "तत्पुरुष," it's just more specific than
+// what's being asked. Found via real usage (Harsha): when तत्पुरुष is correct, the distractors
+// should come from genuinely DIFFERENT samāsa types (बहुव्रीहि/द्वन्द्व/"not a compound"/...), not
+// sibling TP subtypes.
+const TP_GENERAL = 'TP: general (unspecified vibhakti)';
+function isTPSubtype(cat) { return cat !== TP_GENERAL && (cat.startsWith('TP:') || cat === 'Nañ-tatpuruṣa'); }
+
+const MASTERY_TARGET = 10;
+const BATCH_SIZE = 10;
+const STORAGE_KEY = 'sandhiQuizProgress';
+const RECENT_WINDOW = 5;
+
+// ---- "report wrong answer" feature: pre-filled GitHub issue, no backend. Two-tier hide (see
+// isReportHidden()): an instant per-browser hide the moment a report is filed, plus a shipped
+// window.FLAGGED_WRONG list (flagged-wrong.js) Harsha edits once he's reviewed the issue — only
+// entries in THAT file are hidden for every user. ----
+const REPORTER_KEY = 'sandhiQuizReporterName';
+const REPORTER_EMAIL_KEY = 'sandhiQuizReporterEmail';
+const HIDDEN_REPORTS_KEY = 'sandhiQuizHiddenReports';
+function loadReporterName() { return localStorage.getItem(REPORTER_KEY) || ''; }
+function saveReporterName(name) { localStorage.setItem(REPORTER_KEY, name); }
+function loadReporterEmail() { return localStorage.getItem(REPORTER_EMAIL_KEY) || ''; }
+function saveReporterEmail(email) { localStorage.setItem(REPORTER_EMAIL_KEY, email); }
+function loadHiddenReports() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HIDDEN_REPORTS_KEY));
+    if (Array.isArray(saved)) return new Set(saved);
+  } catch (e) { /* fall through to empty set */ }
+  return new Set();
+}
+function saveHiddenReports(set) { localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify([...set])); }
+let hiddenReports = loadHiddenReports();
+const SHIPPED_FLAGGED = new Set(window.FLAGGED_WRONG || []);
+function isReportHidden(key) { return hiddenReports.has(key) || SHIPPED_FLAGGED.has(key); }
+// Single-click flow: after answering, auto-advance instead of waiting for a separate "Next
+// question" click — keeps tempo up, a mishit/mistake is cheap to recover from. Correct answers
+// advance fast (nothing new to read); wrong ones pause a bit longer so the highlighted correct
+// answer is actually legible before it's gone. The "Next question →" button still appears as a
+// manual override for anyone who wants to skip the wait.
+const AUTO_ADVANCE_DELAY_CORRECT = 450;
+const AUTO_ADVANCE_DELAY_WRONG = 1100;
+// User setting (dashboard): auto-advance to the next drill question after answering, or wait for a
+// manual "Next" click. Default ON (preserves prior behaviour). (Harsha, 2026-08-22)
+const AUTO_ADVANCE_KEY = 'vyakarana_auto_advance';
+function autoAdvanceOn() { return localStorage.getItem(AUTO_ADVANCE_KEY) !== '0'; }
+function setAutoAdvance(on) { localStorage.setItem(AUTO_ADVANCE_KEY, on ? '1' : '0'); }
+// ---- Settings (⚙ gear): auto-advance + reading-page script. The script pref (vv_script) is only SET
+// here; it's READ + applied by the reading pages' translit.js (the quiz itself is never transliterated).
+// Shared localStorage key, so the gear default and the reading-page picker stay in sync. ----
+const SCRIPT_KEY = 'vv_script';
+const SCRIPT_OPTS = [['dev', 'देवनागरी'], ['iast', 'IAST'], ['kannada', 'ಕನ್ನಡ'], ['tamil', 'தமிழ்'], ['telugu', 'తెలుగు'], ['malayalam', 'മലയാളം'], ['bengali', 'বাংলা'], ['gujarati', 'ગુজરાતી'], ['cyrillic', 'Русский'], ['siddham', 'Siddhaṃ 梵字'], ['katakana', 'カタカナ']];
+function readingScript() { const v = localStorage.getItem(SCRIPT_KEY); return ['iast', 'kannada', 'tamil'].includes(v) ? v : 'dev'; }
+function reflectScriptSel() { const el = document.getElementById('setScrSel'); if (el) el.value = readingScript(); }
+function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScriptSel(); }
+function openSettings() {
+  let ov = document.getElementById('settings-ov');
+  if (!ov) {
+    ov = document.createElement('div'); ov.id = 'settings-ov';
+    ov.innerHTML = `<div id="settings-box">
+      <h2>⚙ Settings</h2>
+      <div class="set-row">
+        <div class="set-label">Practice</div>
+        <label class="set-check"><input type="checkbox" id="setAutoAdv"> Auto-advance to the next question after answering</label>
+      </div>
+      <div class="set-row">
+        <div class="set-label">Script · reading pages</div>
+        <select id="setScrSel" class="set-select">${SCRIPT_OPTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
+        <div class="set-hint">Applies to the “Read the texts” pages — shows the same Sanskrit in Devanāgarī, IAST, or another script (Kannada, Tamil, Telugu, Malayalam, Bengali, Gujarati, Cyrillic, Siddhaṃ, katakana). The quiz is unaffected.</div>
+      </div>
+      <div style="text-align:right"><button class="secondary" id="setClose">Done</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('on'); });
+    document.getElementById('setClose').onclick = () => ov.classList.remove('on');
+    const chk = document.getElementById('setAutoAdv');
+    chk.onchange = () => setAutoAdvance(chk.checked);
+    document.getElementById('setScrSel').onchange = (e) => setReadingScript(e.target.value);
+  }
+  document.getElementById('setAutoAdv').checked = autoAdvanceOn();
+  reflectScriptSel();
+  ov.classList.add('on');
+}
+const RECENT_ANSWER_WINDOW = 12; // ~3 questions' worth of shown strings (correct + distractors)
+
+// ---- sound feedback (per-answer ding/buzz + a batch-of-10-complete fanfare, à la Khan Academy) ----
+// Synthesized via the Web Audio API rather than shipped audio files — Khan Academy's actual sound
+// assets are their own property, not something to copy, and synthesizing keeps this PWA's existing
+// zero-external-asset, fully-offline architecture intact (no new files for sw.js to cache).
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playTone(freq, startDelay, duration, type, gain) {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  const t0 = ctx.currentTime + startDelay;
+  g.gain.setValueAtTime(gain || 0.2, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + duration);
+}
+// Short ascending two-note "ding" for correct, a single low buzz for wrong — mirrors the
+// immediate per-question feedback Khan Academy gives, without reusing their actual sound files.
+function playAnswerSound(correct) {
+  try {
+    if (correct) { playTone(880, 0, 0.12, 'sine', 0.2); playTone(1318.5, 0.09, 0.18, 'sine', 0.2); }
+    else playTone(220, 0, 0.22, 'sawtooth', 0.12);
+  } catch (e) { /* Web Audio unavailable/blocked — sound is a nice-to-have, never block the quiz on it */ }
+}
+// A small 4-note major-triad fanfare (C5-E5-G5-C6), distinct from the per-question ding, marking
+// "you just finished a batch of 10" — scheduled via a short setTimeout so it doesn't overlap the
+// answer sound that triggered it.
+function playBatchCompleteSound() {
+  try {
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => playTone(freq, i * 0.12, 0.3, 'triangle', 0.18));
+  } catch (e) { /* see playAnswerSound */ }
+}
+
+// Samāsa items carry a `category`, not a `code` — give them a single shared pseudo-code so the
+// existing per-node progress/mastery/dashboard/batch machinery (all keyed by `code`) treats
+// "samāsa classification" as just one more node, no special-casing needed anywhere else.
+for (const it of window.QUIZ_ITEMS) if (it.kind === 'samasa') it.code = 'SAMASA';
+
+const itemsByCode = {};
+for (const it of window.QUIZ_ITEMS) (itemsByCode[it.code] = itemsByCode[it.code] || []).push(it);
+const CODES = Object.keys(itemsByCode).sort();
+const SAMASA_CATEGORIES = itemsByCode.SAMASA ? [...new Set(itemsByCode.SAMASA.map(i => i.category))] : [];
+
+// ---- Dashboard grouping: every item already carries a `kind` (same taxonomy SKILL_KINDS below
+// already uses for the reading-walk's per-kind toggles) — derived here, not hand-maintained, so a
+// newly-added axis/code is grouped automatically instead of silently landing in the wrong bucket
+// or needing a hardcoded list update. `sandhi` dwarfs every other kind (dozens of individual
+// Pāṇini-sūtra codes vs. one code per axis for everything else) — kept as its own collapsible
+// group in renderDashboard() rather than forcing every kind through the same accordion treatment.
+const KIND_LABELS = {
+  sandhi: 'सन्धि · Sandhi rules', vibhakti: 'विभक्ति · Case, gender, stem',
+  dhatu: 'धातु · Verb tense/voice', samasa: 'समास · Compound classification',
+  krdanta: 'कृदन्त · Participles', taddhita: 'तद्धित · Secondary derivation',
+  karaka: 'कारक · Syntactic role', meaning: 'अर्थ · Word meaning',
+  verbvoice: 'क्रिया · Verb & voice (overview)',
+};
+const CODES_BY_KIND = {};
+const CODE_KIND = {};
+for (const code of CODES) {
+  const kind = itemsByCode[code][0].kind || 'sandhi';
+  CODE_KIND[code] = kind;
+  (CODES_BY_KIND[kind] = CODES_BY_KIND[kind] || []).push(code);
+}
+
+// ---- Lazy-loaded global axis pools (axis-manifest.js, e.g. meaning-1/meaning-2) — declared here
+// but not fetched until their dashboard card is actually clicked (ensureAxisLoaded()), same lazy
+// <script> pattern reading-walk already uses for walk-data-<chapter>.js. Added 2026-08-11: the
+// eagerly-loaded quiz-items.js baseline alone had crept to ~96MB of GitHub's 100MB hard push
+// limit from organic corpus growth, before any meaning content was even added — bundling every
+// large axis in eagerly was no longer sustainable. These codes are listed in CODES/CODES_BY_KIND
+// immediately (so their dashboard card renders and progress pre-seeds like any other node), but
+// deliberately WITHOUT an itemsByCode entry until loaded — pickMixedNode/pickWeightedNode below
+// filter on itemsByCode[c] being present, so Mix it up/Practice simply won't draw a lazy axis
+// until its card has been opened directly at least once this session.
+const AXIS_MANIFEST = window.AXIS_MANIFEST || [];
+for (const ax of AXIS_MANIFEST) {
+  if (itemsByCode[ax.code]) continue; // already present eagerly — don't shadow
+  CODE_KIND[ax.code] = ax.kind;
+  CODES.push(ax.code);
+  (CODES_BY_KIND[ax.kind] = CODES_BY_KIND[ax.kind] || []).push(ax.code);
+}
+CODES.sort();
+function ensureAxisLoaded(code) {
+  if (itemsByCode[code]) return Promise.resolve();
+  const entry = AXIS_MANIFEST.find(a => a.code === code);
+  if (!entry) return Promise.resolve();
+  if (ensureAxisLoaded._pending && ensureAxisLoaded._pending[code]) return ensureAxisLoaded._pending[code];
+  ensureAxisLoaded._pending = ensureAxisLoaded._pending || {};
+  const p = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = entry.file;
+    s.onload = () => {
+      const items = (window.AXIS_DATA && window.AXIS_DATA[code]) || [];
+      itemsByCode[code] = items;
+      for (const it of items) window.QUIZ_ITEMS.push(it);
+      resolve();
+    };
+    s.onerror = () => reject(new Error('failed to load ' + entry.file));
+    document.head.appendChild(s);
+  });
+  ensureAxisLoaded._pending[code] = p;
+  return p;
+}
+
+// ---- Reading-walk mode: sequential verse-by-verse walk through a chosen text/chapter, instead of
+// random node/adaptive/mixed selection. Content is lazy-loaded (walk-data-<chapterKey>.js, only
+// fetched when the user opens the picker) and lives ENTIRELY outside window.QUIZ_ITEMS/itemsByCode
+// — vibhakti/dhātu/meaning items only ever exist inside a loaded walk, there is no global pool for
+// them in this build (a corpus-wide pool for those axes is a bigger, separate future module).
+const READING_KEY = 'sandhiQuizReadingProgress';
+// Which question KINDS a reading-walk session should draw from — e.g. someone who already knows
+// the vocabulary may want to drop 'meaning' (translation) entirely and focus on grammar. Persisted
+// across sessions like everything else here; defaults to everything ON so existing behavior is
+// unchanged until a user actively narrows it. Scoped to reading-walk only, per how it was asked
+// for — Mix it up/Practice use a different code-keyed pool with no equivalent kind-level concept.
+const SKILL_KINDS = [
+  { kind: 'verbvoice', label: 'क्रिया · verb & voice overview (leads each verse)' },
+  { kind: 'sandhi', label: 'सन्धि (sandhi)' },
+  { kind: 'samasa', label: 'समास (samāsa)' },
+  { kind: 'vibhakti', label: 'विभक्ति (case, gender, stem)' },
+  { kind: 'dhatu', label: 'धातु (verb tense/voice)' },
+  { kind: 'krdanta', label: 'कृदन्त (participles)' },
+  { kind: 'taddhita', label: 'तद्धित (secondary derivation)' },
+  { kind: 'karaka', label: 'कारक (kāraka role)' },
+  { kind: 'meaning', label: 'अर्थ (word meaning/translation)' },
+];
+const SKILLS_KEY = 'sandhiQuizReadingSkills';
+function loadEnabledSkills() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SKILLS_KEY));
+    if (saved && typeof saved === 'object') return saved;
+  } catch (e) { /* fall through to default */ }
+  return Object.fromEntries(SKILL_KINDS.map(s => [s.kind, true]));
+}
+function saveEnabledSkills(skills) { localStorage.setItem(SKILLS_KEY, JSON.stringify(skills)); }
+let enabledSkills = loadEnabledSkills();
+// Indices into step.items whose kind is currently enabled — the shared basis for picking,
+// advancing, and verse-crossing so all three agree on what "the next question" even means once
+// some kinds are filtered out.
+function eligibleIndices(step) {
+  return step.items.map((_, i) => i).filter(i => {
+    const it = step.items[i];
+    if (isReportHidden(reportKey(it, null))) return false;
+    // Map each item to the SKILL toggle that governs it. 'spot' items aren't their own skill — they're
+    // the basic-tier question for whichever node their subtype names (krdanta/taddhita). The samāsa-peel
+    // sub-kinds (samasaType/samasaVigraha/samasaLeaf — produced by flattenWalk EXPANDING a 'samasa' item at
+    // runtime) have no checkbox of their own, so they must follow the 'samasa' toggle; otherwise
+    // enabledSkills[<peel-kind>] is undefined → `undefined !== false` = ALWAYS eligible, and they LEAK into
+    // any selection that excludes समास (they're also LEAD_KINDS, so they're the most visible leak). (Harsha,
+    // 2026-08-29: "picking only some areas still asks questions from unselected areas.")
+    const skill = it.kind === 'spot' ? it.subtype : (it.kind.indexOf('samasa') === 0 ? 'samasa' : it.kind);
+    return enabledSkills[skill] !== false;
+  });
+}
+let walkSteps = []; // flattened {verseRef, verseLabel, moola, section, word, wordIndex, items, defaultItemIndex}[]
+let walkPos = { stepIdx: 0, itemIdx: 0 };
+// Tracks the exact CONTENT of every question already shown this reading session (in-memory only,
+// same "session, not persisted" scope as recentByCode/recentAnswersByCode below) — e.g. "case and
+// number for योगम्" has one fixed correct answer no matter which sentence/verse it recurs in, so
+// asking it again a few batches later reads as a flat-out repeat to the learner, not a new
+// teaching moment. Used to prefer an UNASKED axis/subtype at a step over the build-time default
+// when one is available; if every axis at a step has already been asked, the default is shown
+// anyway rather than adding step-skipping complexity for what should be a rare edge case.
+let askedSignatures = new Set();
+// Closed value-universes for vibhakti/dhātu/kṛdanta/taddhita/kāraka/meaning distractor generation.
+// Chapter-scoped while reading (computeWalkPools(), called from startReading — derives from
+// what's actually in THAT chapter, so a Gita reading-walk doesn't show Brahma-sūtra vocabulary as
+// a wrong answer). Falls back to (and is explicitly reset to, in startQuiz) the CORPUS-WIDE pool
+// computed from window.QUIZ_ITEMS below — without this, starting a node/mixed/adaptive session
+// before ever opening a reading-walk chapter would leave every one of these axes' distractor
+// pools empty, since nothing had populated them yet.
+function computeItemPools(allItems) {
+  const vibItems = allItems.filter(it => it.kind === 'vibhakti');
+  // 'prayoga'-subtype dhātu items don't carry lakara/purusha/vacana/pada at all — scope the
+  // tense-axis pools to the 'tense' subtype only, or Set() would pick up stray `undefined` values.
+  const dhatuTenseItems = allItems.filter(it => it.kind === 'dhatu' && it.subtype === 'tense');
+  const krdantaItems = allItems.filter(it => it.kind === 'krdanta' && it.subtype === 'pratyaya');
+  const taddhitaItems = allItems.filter(it => it.kind === 'taddhita' && it.subtype === 'pratyaya');
+  const karakaItems = allItems.filter(it => it.kind === 'karaka' && it.subtype === 'role');
+  return {
+    krt: [...new Set(krdantaItems.map(it => it.pratyaya))],
+    taddhita: [...new Set(taddhitaItems.map(it => it.pratyaya))],
+    karaka: [...new Set(karakaItems.map(it => it.role))],
+    stem: [...new Set(vibItems.filter(it => it.subtype === 'stem').map(it => it.lemma))],
+    meaning: [...new Set(allItems.filter(it => it.kind === 'meaning').map(it => it.meaning))],
+    vibhakti: [...new Set(vibItems.filter(it => it.subtype === 'caseNumber').map(it => it.vibhakti))],
+    vacana: [...new Set(vibItems.filter(it => it.subtype === 'caseNumber').map(it => it.vacana))],
+    linga: [...new Set(vibItems.filter(it => it.linga).map(it => it.linga))],
+    lakara: [...new Set(dhatuTenseItems.map(it => it.lakara))],
+    purusha: [...new Set(dhatuTenseItems.map(it => it.purusha))],
+    dhatuVacana: [...new Set(dhatuTenseItems.map(it => it.vacana))],
+    pada: [...new Set(dhatuTenseItems.filter(it => it.pada).map(it => it.pada))],
+  };
+}
+let walkItemPools = computeItemPools(window.QUIZ_ITEMS);
+
+const recentByCode = {}; // in-memory only — avoid immediate item repeats within a session
+// Tracks every answer STRING shown recently in a node (as either the correct answer or a
+// distractor), so a word the learner just saw doesn't reappear as a decoy on the very next
+// question — e.g. असावादित्यः being the correct answer to one question, then showing up a
+// question or two later as a wrong-answer option elsewhere (found via real usage, 2026-07-29).
+const recentAnswersByCode = {};
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Alternate junction outcomes, grouped by what kind of thing can fill that slot — used to build
+// "wrong rule, same words" distractors. Vowel matras only ever get swapped for other vowel
+// matras (never inserted where no matra existed), and consonant clusters only for other clusters
+// of the same rough shape, so every candidate stays orthographically valid.
+const MATRA_ALTS = {
+  'ा': ['ि', 'ी', 'ु', 'ू', 'े', 'ो'], 'ि': ['ी', 'े', 'ा'], 'ी': ['ि', 'े', 'ा'],
+  'ु': ['ू', 'ो', 'ा'], 'ू': ['ु', 'ो', 'ा'], 'े': ['ो', 'ै', 'ा', 'ी'],
+  'ै': ['े', 'ौ'], 'ो': ['े', 'ौ', 'ा', 'ू'], 'ौ': ['ो', 'ै'],
+};
+const CLUSTER_ALTS = {
+  'स्': ['श्', 'ष्', 'र्'], 'श्': ['स्', 'ष्'], 'ष्': ['स्', 'श्'],
+  'र्': ['स्', 'ः', 'श्', 'ष्'], 'ः': ['र्', 'स्'],
+  'न्न': ['म्म', 'द्ध'], 'म्म': ['न्न', 'ब्भ'],
+  'द्ध': ['ग्घ', 'ड्ढ', 'ब्भ'], 'ग्घ': ['द्ध', 'ड्ढ', 'ब्भ'],
+  'ड्ढ': ['द्ध', 'ग्घ', 'ब्भ'], 'ब्भ': ['द्ध', 'ग्घ', 'ड्ढ'],
+  // yaṇ's semivowel+halant conjunct (े.g. हि+अस्य→ह्यस्य, "्य" is the junction) — which semivowel
+  // fires depends on the preceding vowel (i/ī→्य, u/ū→्व, ṛ/ṝ→्र), so swapping one for another is
+  // exactly a "wrong rule, same words" distractor. Missing case found via real usage (Harsha:
+  // हि+अस्य's options included totally unrelated sibling words आद्युपेतः/विध्यादि) — this junction
+  // shape fell through both ALT_MAP cases (the 2-char conjunct itself wasn't a key, and its bare
+  // trailing consonant य्/व्/र् wasn't in CONSONANT_ALTS either), landing on the sibling-pool
+  // fallback with nothing in common with the actual prompt.
+  '्य': ['्व', '्र'], '्व': ['्य', '्र'], '्र': ['्य', '्व'],
+};
+// Bare consonants (no halant/matra) that can appear alone as a junction outcome — e.g. cartva's
+// द्→त् before a voiceless stop leaves a lone "त" once the shared halant falls into the common
+// suffix. Not claiming these are all real competing Pāṇinian outcomes — just same-shape, clearly-
+// wrong swaps so the option stays visibly built from the SAME word instead of an unrelated one.
+const CONSONANT_ALTS = {
+  'त': ['द', 'ट', 'ड'], 'द': ['त', 'ड', 'ट'], 'ट': ['त', 'ड'], 'ड': ['द', 'ट'],
+  'क': ['ग', 'च'], 'ग': ['क', 'ज'], 'च': ['ज', 'क'], 'ज': ['च', 'ग'],
+  'प': ['ब', 'फ'], 'ब': ['प', 'भ'],
+  'श': ['ष', 'स'], 'ष': ['श', 'स'], 'स': ['श', 'ष'],
+  'ल': ['न', 'ण'], 'न': ['म', 'ण'], 'म': ['न', 'ण'], 'ण': ['न', 'म'],
+};
+const ALT_MAP = Object.assign({}, MATRA_ALTS, CLUSTER_ALTS, CONSONANT_ALTS);
+
+function commonPrefixLen(x, y) {
+  let i = 0;
+  while (i < x.length && i < y.length && x[i] === y[i]) i++;
+  return i;
+}
+function commonSuffixLen(x, y, maxLen) {
+  let i = 0;
+  while (i < maxLen && x[x.length - 1 - i] === y[y.length - 1 - i]) i++;
+  return i;
+}
+
+// "Wrong rule, same words" distractors — swap ONLY the sandhi-junction outcome for a different
+// plausible one, keeping the rest of both words untouched. Fixes a real quality bug (found via
+// usage 2026-07-29): sibling-node distractors were pulling in the correct answer of a completely
+// UNRELATED word pair (e.g. अभ्युपगमे+अपि's options included आस्येन्तर् — a valid answer, but to
+// a different question, sharing no letters with the prompt, so it's recognizable as wrong without
+// any sandhi knowledge at all). Returns [] if no safe swap applies (falls back to siblings below).
+function junctionDistractors(item) {
+  const correct = item.after, abut = item.before[0] + item.before[1];
+  const pre = commonPrefixLen(correct, abut);
+  const maxSuf = Math.max(0, Math.min(correct.length, abut.length) - pre);
+  const suf = commonSuffixLen(correct, abut, maxSuf);
+  const coreCorrect = correct.slice(pre, correct.length - suf);
+  const head = correct.slice(0, pre), tail = suf ? correct.slice(correct.length - suf) : '';
+  const out = [];
+
+  // Case 1: the junction itself is a known matra/cluster/bare-consonant outcome — swap it
+  // directly (e.g. guṇa's े/ो is exactly this — the whole junction IS a single matra).
+  if (ALT_MAP[coreCorrect]) {
+    for (const alt of ALT_MAP[coreCorrect]) {
+      const cand = head + alt + tail;
+      if (cand !== correct && cand !== abut && !out.includes(cand)) out.push(cand);
+    }
+  }
+  // Case 2: the junction is a multi-character span ending in a known matra/consonant (e.g.
+  // ṅamuṭ's ओषधि → नोषधि inserts a whole नो akṣara — core "नो" isn't itself a table key, but its
+  // LAST character ो is) — swap just that trailing character, keeping the rest of the core intact.
+  if (!out.length && coreCorrect.length > 1 && ALT_MAP[coreCorrect.slice(-1)]) {
+    const stem = coreCorrect.slice(0, -1);
+    for (const alt of ALT_MAP[coreCorrect.slice(-1)]) {
+      const cand = head + stem + alt + tail;
+      if (cand !== correct && cand !== abut && !out.includes(cand)) out.push(cand);
+    }
+  }
+  // Case 3: elision/empty junction (e.g. pūrvarūpa's e/o+a → e/o) — nothing to swap AT the
+  // junction, so swap the character just before it instead (the actual "rule" character).
+  if (!out.length && pre > 0 && ALT_MAP[correct[pre - 1]]) {
+    const base = correct.slice(0, pre - 1);
+    for (const alt of ALT_MAP[correct[pre - 1]]) {
+      const cand = base + alt + correct.slice(pre);
+      if (cand !== correct && cand !== abut && !out.includes(cand)) out.push(cand);
+    }
+  }
+  return out;
+}
+
+// Dispatches to the right option-builder for this item's question type: samāsa classification,
+// no-sandhi word-boundary splits (ABT), or the default "produce the joined form" sandhi question.
+function buildOptions(item, code) {
+  if (item.kind === 'verbvoice') return buildVerbVoiceOptions(item);
+  if (item.kind === 'samasa') return buildSamasaOptions(item);
+  if (item.kind === 'samasaType') { const { correct, options } = samasaTypeOptions(item.correctType); return { options, correctIndex: options.indexOf(correct) }; }
+  if (item.kind === 'samasaVigraha') { const options = seedRotate([...new Set(item.vigrahaOptions)], item.vigrahaOptions[0] + 'v'); return { options, correctIndex: options.indexOf(item.vigrahaOptions[0]) }; }
+  if (item.kind === 'samasaLeaf') { const options = seedRotate(['कृदन्त', 'तद्धित', 'मूल-प्रातिपदिक'], item.word); return { options, correctIndex: options.indexOf(item.leafType) }; }
+  if (item.kind === 'vibhakti') return buildVibhaktiOptions(item);
+  if (item.kind === 'dhatu') return buildDhatuQuestionOptions(item);
+  if (item.kind === 'krdanta') return buildKrdantaQuestionOptions(item);
+  if (item.kind === 'taddhita') return buildTaddhitaOptions(item);
+  if (item.kind === 'karaka' && (item.subtype === 'associate' || item.subtype === 'governor' || item.subtype === 'implied')) return buildKarakaAssociateOptions(item);
+  if (item.kind === 'karaka') return buildKarakaOptions(item);
+  if (item.kind === 'spot') return buildSpotOptions(item);
+  if (item.kind === 'meaning') return buildMeaningOptions(item);
+  if (item.subtype === 'spotlopa') return buildSpotOptions(item); // same shape as spot: kRt/taddhita items
+  if (item.subtype === 'lopa') return buildLopaOptions(item);
+  if (item.subtype === 'fullsplit') return buildFullSplitOptions(item);
+  if (item.code === 'ABT' || item.askSplit) return buildSplitOptions(item);
+  return buildSandhiOptions(item, code);
+}
+
+// Samāsa classification options: correct category + 3 others drawn from the fixed category
+// universe (a small, closed set — unlike sandhi's per-word junction perturbation, no need to
+// generate anything, just exclude the TP-parent when the correct answer is a TP subtype).
+function buildSamasaOptions(item) {
+  const correct = item.category;
+  let pool = SAMASA_CATEGORIES.filter(c => c !== correct);
+  if (isTPSubtype(correct)) {
+    pool = pool.filter(c => c !== TP_GENERAL);
+  } else if (correct === TP_GENERAL) {
+    pool = pool.filter(c => !isTPSubtype(c));
+  } else if (pool.includes(TP_GENERAL) && pool.some(isTPSubtype)) {
+    // correct is unrelated to tatpuruṣa entirely (Bahuvrīhi/Dvandva/etc.) — the two branches above
+    // only guard against TP_GENERAL and a TP subtype BOTH appearing when the correct answer IS one
+    // of them; with an unrelated correct answer neither branch fired, so a random draw could still
+    // show "तत्पुरुष" alongside e.g. "तृतीया-तत्पुरुष" — general vs one of its OWN specific
+    // children, reads as two right-ish answers (found via a real report, 2026-08-11: a Bahuvrīhi
+    // question showed both). Multiple DIFFERENT subtypes together (no general) is fine — they're
+    // genuinely mutually exclusive answers, not a redundant pairing — so only drop one side of the
+    // general/specific divide, at random, not every subtype down to a single survivor.
+    pool = Math.random() < 0.5 ? pool.filter(c => c !== TP_GENERAL) : pool.filter(c => !isTPSubtype(c));
+  }
+  const distractors = shuffle(pool).slice(0, 3);
+  const options = shuffle([correct, ...distractors]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+// No-sandhi word-boundary (ABT) options: the correct split is the item's own known before[0]/
+// before[1] (never reconstructed from `after` — the akṣara-merge that happens when a bare
+// consonant absorbs a following vowel, e.g. इदम्+एकः → इदमेकः, means before[0].length doesn't
+// reliably correspond to a character offset within `after`). Wrong splits cut `after` at OTHER
+// offsets near the true boundary — like the sandhi quiz's "naive abut" distractor, these don't
+// need to be real words, just visibly different candidate splits of the same fused string.
+// Devanāgarī combining marks (vowel matras + halant + nasalization/aspiration marks) need a base
+// consonant/vowel letter before them — cutting a string right before one of these leaves it
+// orphaned, which renders as a broken dotted-circle glyph. Only offsets where the SECOND piece
+// starts with a real, independent letter are valid split candidates.
+const COMBINING_MARKS = new Set(['ा', 'ि', 'ी', 'ु', 'ू', 'ृ', 'ॄ', 'ॅ', 'ॆ', 'े', 'ै', 'ॉ', 'ॊ', 'ो', 'ौ', '्', 'ं', 'ँ', 'ः', '़']);
+function validSplitOffset(s, k) { return k >= 1 && k <= s.length - 1 && !COMBINING_MARKS.has(s[k]); }
+
+function splitDistractors(item) {
+  const after = item.after;
+  const correctSplit = item.before[0] + ' + ' + item.before[1];
+  const trueBoundary = commonPrefixLen(after, item.before[0]);
+  const out = [];
+  const offsets = shuffle([-3, -2, -1, 1, 2, 3].map(d => trueBoundary + d));
+  for (const k of offsets) {
+    if (out.length >= 3) break;
+    if (!validSplitOffset(after, k)) continue;
+    const cand = after.slice(0, k) + ' + ' + after.slice(k);
+    if (cand !== correctSplit && !out.includes(cand)) out.push(cand);
+  }
+  // fallback for very short fused strings — try every remaining valid offset
+  for (let k = 1; k < after.length && out.length < 3; k++) {
+    if (!validSplitOffset(after, k)) continue;
+    const cand = after.slice(0, k) + ' + ' + after.slice(k);
+    if (cand !== correctSplit && !out.includes(cand)) out.push(cand);
+  }
+  return out;
+}
+// Wrong-boundary candidates for ONE junction within a full multi-way split — same near-the-true-
+// cut character-offset approach as splitDistractors (same validSplitOffset combining-mark guard),
+// but returns raw [x, y] piece pairs instead of a formatted "X + Y" string, since the caller needs
+// to splice the pair back into a longer word list, not display it alone. Kept separate from
+// splitDistractors (not refactored to share) to avoid any risk of changing that function's
+// existing, already-tested behavior.
+function nearbyWrongPairs(after, trueBoundary, maxCount) {
+  const out = [];
+  const offsets = shuffle([-3, -2, -1, 1, 2, 3].map(d => trueBoundary + d));
+  for (const k of offsets) {
+    if (out.length >= maxCount) break;
+    if (!validSplitOffset(after, k)) continue;
+    out.push([after.slice(0, k), after.slice(k)]);
+  }
+  for (let k = 1; k < after.length && out.length < maxCount; k++) {
+    if (!validSplitOffset(after, k)) continue;
+    const pair = [after.slice(0, k), after.slice(k)];
+    if (!out.some(([x, y]) => x === pair[0] && y === pair[1])) out.push(pair);
+  }
+  return out;
+}
+// "Find ALL the word boundaries" (padaccheda) question — the whole fused surface is the prompt,
+// options are complete alternative segmentations. Correct = the real word list; each wrong answer
+// perturbs exactly ONE boundary (reusing splitDistractors' near-the-true-cut approach) while
+// keeping every OTHER boundary at its real, correct position — a plausible-looking wrong full
+// segmentation, not scattered noise across the whole string.
+function buildFullSplitOptions(item) {
+  const correct = item.words.join(' + ');
+  const distractors = [];
+  const boundaryOrder = shuffle(item.afters.map((_, i) => i));
+  for (const i of boundaryOrder) {
+    if (distractors.length >= 3) break;
+    const trueBoundary = commonPrefixLen(item.afters[i], item.words[i]);
+    for (const [x, y] of nearbyWrongPairs(item.afters[i], trueBoundary, 3)) {
+      if (distractors.length >= 3) break;
+      const candWords = [...item.words.slice(0, i), x, y, ...item.words.slice(i + 2)];
+      const cand = candWords.join(' + ');
+      if (cand !== correct && !distractors.includes(cand)) distractors.push(cand);
+    }
+  }
+  const shown = [correct, ...distractors];
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+function buildSplitOptions(item) {
+  const correct = item.before[0] + ' + ' + item.before[1];
+  const distractors = splitDistractors(item);
+  const options = shuffle([correct, ...distractors]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+// Picks 3 distractors: the naive no-sandhi abut, then same-word "wrong rule" junction swaps,
+// then (only if those can't fill 3) sibling answers from other items in the same node — skipping
+// any string shown recently in this node (correct or distractor).
+function buildSandhiOptions(item, code) {
+  const pool = itemsByCode[code];
+  const recentAnswers = recentAnswersByCode[code] || [];
+  const correct = item.after;
+  const abut = item.before[0] + item.before[1];
+  const distractors = [];
+  if (abut !== correct && !recentAnswers.includes(abut)) distractors.push(abut);
+
+  for (const c of shuffle(junctionDistractors(item))) {
+    if (distractors.length >= 3) break;
+    if (c === correct || distractors.includes(c) || recentAnswers.includes(c)) continue;
+    distractors.push(c);
+  }
+
+  if (distractors.length < 3) {
+    const siblingAfters = shuffle(pool.filter(s => s.id !== item.id).map(s => s.after));
+    for (const c of siblingAfters) {
+      if (distractors.length >= 3) break;
+      if (c === correct || distractors.includes(c) || recentAnswers.includes(c)) continue;
+      distractors.push(c);
+    }
+    // thin node / heavy recent-exclusion fallback — allow recent-but-not-duplicate candidates
+    if (distractors.length < 3 && abut !== correct && !distractors.includes(abut)) distractors.push(abut);
+    for (const c of siblingAfters) {
+      if (distractors.length >= 3) break;
+      if (c === correct || distractors.includes(c)) continue;
+      distractors.push(c);
+    }
+  }
+
+  const shown = [correct, ...distractors];
+  recentAnswersByCode[code] = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+// ---- vibhakti (case-ending for prātipadikas): 3 sub-question types, dispatched by item.subtype ----
+function plainVibDescriptor(vibhakti, vacana, linga) {
+  return linga ? `${vibhakti} · ${vacana} · ${linga}` : `${vibhakti} · ${vacana}`;
+}
+// When a word's g-string genuinely offers a second, separately valid reading (item.alt — see
+// classify_vibhakti.js's findAltClause), show ONE combined, complete answer instead of arbitrarily
+// picking a side — e.g. मेधाविनः (BhG 4.16 bhāṣya) is genuinely BOTH षष्ठी-एकवचन ("of the wise
+// one") AND प्रथमा/द्वितीया-बहुवचन ("the wise poets", the reading the sentence actually uses).
+function vibhaktiDescriptor(it) {
+  const base = plainVibDescriptor(it.vibhakti, it.vacana, it.linga);
+  if (!it.alt) return base;
+  return `${base} (अथवा ${plainVibDescriptor(it.alt.vibhakti, it.alt.vacana, it.alt.linga)})`;
+}
+function sharedPrefixLen(a, b) {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return i;
+}
+// Distractors are lemmas from the same chapter's stem pool, ranked by shared PREFIX with the
+// correct answer — e.g. for इदम्, prefer other short pronoun-shaped stems over something like
+// ब्रह्मादि/कर्तृ that shares no letters and is trivially eliminable on sight (found via real
+// usage — the original pure-random draw made this question too easy, since the odd-one-out was
+// obvious from word shape alone, no stem recognition required). Falls back to whatever's left in
+// the pool (still shuffled, not literally random-quality — ties broken randomly) if there aren't
+// 3 genuinely similar-looking candidates. This is the FALLBACK method — see buildStemOptions for
+// the preferred phonological-ending method, which this only pads out when that comes up short.
+function poolStemDistractors(correct, exclude, count, recentAnswers) {
+  const ranked = shuffle((walkItemPools.stem || []).filter(l => l !== correct && !exclude.includes(l)))
+    .map(l => ({ l, score: sharedPrefixLen(correct, l) }))
+    .sort((a, b) => b.score - a.score);
+  const distractors = [];
+  for (const { l } of ranked) { if (distractors.length >= count) break; if (!distractors.includes(l) && !recentAnswers.includes(l)) distractors.push(l); }
+  for (const { l } of ranked) { if (distractors.length >= count) break; if (!distractors.includes(l)) distractors.push(l); }
+  return distractors;
+}
+// Mirrors classify_vibhakti.js's SARVANAMA_LEMMAS exactly — sarvanāma-गण declension is irregular/
+// suppletive (तद् is द्-कारान्त, not one of pratipadika_endings.js's 9 supported classes at all;
+// none of these fit that scheme), so the honest "same-kind" distractor for a sarvanāma word is
+// another sarvanāma lemma, not a phonological ending-swap.
+const SARVANAMA_STEM_POOL = ['तद्', 'एतद्', 'यद्', 'इदम्', 'अदस्', 'एक', 'द्वि', 'युष्मद्', 'अस्मद्', 'भवत्', 'किम्', 'सर्व', 'अन्य'];
+// Distractors are FAKE same-base stems with a different (but real) declension-class ending swapped
+// in — e.g. for विमत्सर (अकारान्त), विमत्सृ (ऋकारान्त)/विमत्सरन् (नकारान्त)/विमत्सरि (इकारान्त) — so
+// the question tests recognizing the stem's ending class, not vocabulary recall against unrelated
+// pool words (found via real usage: वikarman/विषम/विशेषण as विमत्सर's old distractors share only a
+// वि- prefix and are trivially eliminable by meaning, testing nothing about the ending itself). See
+// pratipadika_endings.js for the construction rules.
+// For sarvanāma words, use the closed SARVANAMA_STEM_POOL instead — NOT the generic corpus pool
+// (found via real usage: सः/तद् got तद्-अकरण/तद्-कृत/तद्विपर्ययग्रहणनिवृत्त्यर्थम् as distractors,
+// compounds that merely share तद् as their first MEMBER, not real alternative sarvanāma stems —
+// the same "incongruous options" problem the phonological fix solved for regular nouns, just
+// re-appearing here because sarvanāma words are explicitly excluded from that fix). Falls back to
+// the old prefix-ranked pool only if neither method yields enough (e.g. a sarvanāma lemma not in
+// SARVANAMA_STEM_POOL, or a non-sarvanāma stem whose ending isn't one of the 9 supported classes).
+function buildStemOptions(item) {
+  const correct = item.lemma;
+  const recentAnswers = recentAnswersByCode.VIB || [];
+  let distractors = [];
+  if (item.isSarvanama) {
+    const pool = shuffle(SARVANAMA_STEM_POOL.filter(l => l !== correct));
+    const fresh = pool.filter(l => !recentAnswers.includes(l));
+    const stale = pool.filter(l => recentAnswers.includes(l));
+    distractors = [...fresh, ...stale].slice(0, 3);
+  } else if (typeof PratipadikaEndings !== 'undefined') {
+    const fake = PratipadikaEndings.buildStemDistractors(correct, 8);
+    if (fake) {
+      const fresh = shuffle(fake.filter(f => !recentAnswers.includes(f)));
+      const stale = shuffle(fake.filter(f => recentAnswers.includes(f)));
+      distractors = [...fresh, ...stale].slice(0, 3);
+    }
+  }
+  if (distractors.length < 3) {
+    distractors = distractors.concat(poolStemDistractors(correct, distractors, 3 - distractors.length, recentAnswers));
+  }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.VIB = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+function buildCaseNumberOptions(item) {
+  const correct = vibhaktiDescriptor(item);
+  // A wrong axis-swap candidate must never itself equal the alt reading (also genuinely valid, so
+  // not a "wrong" option) and must never carry the CORRECT item's own alt suffix — strip `alt`
+  // before descriptor-izing swapped candidates, or every fabricated wrong combo would misleadingly
+  // claim the same "(अथवा ...)" alternate as the real answer.
+  const altPlain = item.alt ? plainVibDescriptor(item.alt.vibhakti, item.alt.vacana, item.alt.linga) : null;
+  const recentAnswers = recentAnswersByCode.VIB || [];
+  const axes = ['vibhakti', 'vacana'];
+  if (item.linga) axes.push('linga');
+  const distractors = [];
+  for (let pass = 0; pass < 2 && distractors.length < 3; pass++) {
+    for (let guard = 0; distractors.length < 3 && guard < 40; guard++) {
+      const axis = axes[Math.floor(Math.random() * axes.length)];
+      const universe = walkItemPools[axis];
+      if (!universe || universe.length < 2) continue;
+      const swapped = Object.assign({}, item, { [axis]: universe[Math.floor(Math.random() * universe.length)], alt: undefined });
+      const cand = vibhaktiDescriptor(swapped);
+      if (cand === correct || cand === altPlain || distractors.includes(cand)) continue;
+      if (pass === 0 && recentAnswers.includes(cand)) continue; // pass 1 relaxes this for thin pools
+      distractors.push(cand);
+    }
+  }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.VIB = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+// Gender (M/F/N) and सर्वनाम-गण membership are orthogonal — यः is masculine AND सर्वनाम, not one
+// or the other (see classify_vibhakti.js's buildVibhaktiSubItems for the fuller reasoning). This
+// question only ever asks the actual liṅग; 'gender' items are never emitted for genderless words
+// (युष्मद्/अस्मद्) in the first place, so there's no "no answer" case to handle here.
+const GENDER_OPTIONS = ['पुंलिङ्ग', 'स्त्रीलिङ्ग', 'नपुंसकलिङ्ग'];
+function buildGenderOptions(item) {
+  const correct = item.linga;
+  const distractors = shuffle(GENDER_OPTIONS.filter(o => o !== correct));
+  const options = shuffle([correct, ...distractors]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+// Binary — a lemma either is or isn't in the closed सर्वनाम-गण class, so (like buildPrayogaOptions)
+// this is an honest 2-option question rather than padded to 4.
+function buildSarvanamaOptions(item) {
+  const correct = item.isSarvanama ? 'सर्वनाम' : 'सामान्य नाम';
+  const other = item.isSarvanama ? 'सामान्य नाम' : 'सर्वनाम';
+  const options = shuffle([correct, other]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+function buildVibhaktiOptions(item) {
+  if (item.subtype === 'stem') return buildStemOptions(item);
+  if (item.subtype === 'gender') return buildGenderOptions(item);
+  if (item.subtype === 'sarvanama') return buildSarvanamaOptions(item);
+  return buildCaseNumberOptions(item);
+}
+
+// ---- dhātu (verb-ending + tense) ----
+function dhatuDescriptor(it) {
+  return it.pada ? `${it.lakara} · ${it.purusha} · ${it.vacana} · ${it.pada}` : `${it.lakara} · ${it.purusha} · ${it.vacana}`;
+}
+const DHATU_AXIS_POOL_KEY = { lakara: 'lakara', purusha: 'purusha', vacana: 'dhatuVacana', pada: 'pada' };
+function buildDhatuOptions(item) {
+  const correct = dhatuDescriptor(item);
+  const recentAnswers = recentAnswersByCode.DHT || [];
+  const axes = ['lakara', 'purusha', 'vacana'];
+  if (item.pada) axes.push('pada');
+  const distractors = [];
+  for (let pass = 0; pass < 2 && distractors.length < 3; pass++) {
+    for (let guard = 0; distractors.length < 3 && guard < 40; guard++) {
+      const axis = axes[Math.floor(Math.random() * axes.length)];
+      const universe = walkItemPools[DHATU_AXIS_POOL_KEY[axis]];
+      if (!universe || universe.length < 2) continue;
+      const swapped = Object.assign({}, item, { [axis]: universe[Math.floor(Math.random() * universe.length)] });
+      const cand = dhatuDescriptor(swapped);
+      if (cand === correct || distractors.includes(cand)) continue;
+      if (pass === 0 && recentAnswers.includes(cand)) continue;
+      distractors.push(cand);
+    }
+  }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.DHT = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+// कर्तरि (active) vs कर्मणि (passive/impersonal — भावे is folded into कर्मणि at classification
+// time, see classify_dhatu.js) — a genuinely binary grammatical fact, so a 2-option question
+// (rather than padding to the usual 4 with meaningless extra choices) is the honest shape here.
+function buildPrayogaOptions(item) {
+  const correct = item.prayoga;
+  const other = correct === 'कर्मणि' ? 'कर्तरि' : 'कर्मणि';
+  const options = shuffle([correct, other]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+function buildDhatuQuestionOptions(item) {
+  if (item.subtype === 'prayoga') return buildPrayogaOptions(item);
+  return buildDhatuOptions(item);
+}
+
+// ---- kṛt-pratyaya (kṛdanta) identification ----
+function buildKrdantaOptions(item) {
+  const correct = item.pratyaya;
+  const recentAnswers = recentAnswersByCode.KRT || [];
+  const pool = shuffle((walkItemPools.krt || []).filter(p => p !== correct));
+  const distractors = [];
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c) && !recentAnswers.includes(c)) distractors.push(c); }
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c)) distractors.push(c); }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.KRT = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+function buildKrdantaQuestionOptions(item) {
+  if (item.subtype === 'prayoga') return buildPrayogaOptions(item);
+  return buildKrdantaOptions(item);
+}
+
+// ---- taddhita-pratyaya identification (secondary nominal derivation) ----
+function buildTaddhitaOptions(item) {
+  const correct = item.pratyaya;
+  const recentAnswers = recentAnswersByCode.TAD || [];
+  const pool = shuffle((walkItemPools.taddhita || []).filter(p => p !== correct));
+  const distractors = [];
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c) && !recentAnswers.includes(c)) distractors.push(c); }
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c)) distractors.push(c); }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.TAD = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+// ---- kāraka (syntactic role) — externally sourced (see build_karaka_data.js), not classified
+// in-house. Same shape as taddhita: 4 options drawn from the chapter's own closed 6-role universe.
+// समानाधिकरणम् is the merged label for कर्तृ-/कर्मसमानाधिकरणम् when only one of the two occurs in a
+// verse (see build_karaka_data.js) — but when BOTH occur, the verse keeps them distinct instead of
+// folding, so the chapter-wide pool can carry all three strings at once. They must never appear
+// together in one question (as correct answer + distractor either way): समानाधिकरणम् is really just
+// "agrees with something, subtype unspecified" — offering it alongside the specific कर्तृ/कर्म
+// subtype isn't a real wrong answer, it's an ambiguous near-duplicate of the right one. Per Harsha
+// (2026-08-05).
+const KARAKA_MUTUALLY_EXCLUSIVE_GROUPS = [
+  ['समानाधिकरणम्', 'कर्तृसमानाधिकरणम्', 'कर्मसमानाधिकरणम्'],
+];
+function karakaConflictsWith(role) {
+  const group = KARAKA_MUTUALLY_EXCLUSIVE_GROUPS.find(g => g.includes(role));
+  return group ? new Set(group.filter(r => r !== role)) : new Set();
+}
+// Verb/voice "broader view" opener (Phase 2 step 4): a fixed 3-way choice — कर्तरि / कर्मणि / भावे.
+// Fixed universe (not a corpus-derived pool), same spirit as the dhātu-prayoga voice question; the
+// correct value is Zenodo's own voice tag baked in at build time (build_reading_walk.js's opener).
+function buildVerbVoiceOptions(item) {
+  const options = ['कर्तरि', 'कर्मणि', 'भावे'];
+  return { options, correctIndex: options.indexOf(item.voice) };
+}
+// A समानाधिकरण word (कर्तृ-/कर्मसमानाधिकरणम्, or the merged समानाधिकरणम्) genuinely IS the core kāraka
+// it agrees with — the corpus's "primary कर्म vs. agreeing कर्म" split is largely an annotation
+// artifact, not a grammatical difference worth marking wrong (see expectedSetForStep's note, Harsha
+// 2026-08-16, found live via BG 4.1: इमम् tagged कर्म, योगम् tagged कर्मसमानाधिकरणम् — same referent,
+// "this yoga"). The tutorial neutralizes this by pooling both into one accepted set; read-a-verse's
+// per-word role question can't pool (it quizzes each word separately), so instead a role question on
+// a समानाधिकरण word ALSO accepts its base kāraka as correct — carrying the tutorial's fix across
+// (Harsha, 2026-08-18). The merged समानाधिकरणम् label (emitted when only one of कर्तृ/कर्म agreement
+// occurs in the verse — see build_karaka_data.js) has lost which base it was, so it accepts either.
+function karakaAlsoAcceptedRoles(role) {
+  if (role === 'कर्मसमानाधिकरणम्') return ['कर्म'];
+  if (role === 'कर्तृसमानाधिकरणम्') return ['कर्ता'];
+  if (role === 'समानाधिकरणम्') return ['कर्म', 'कर्ता'];
+  return [];
+}
+function buildKarakaOptions(item) {
+  const correct = item.role;
+  const recentAnswers = recentAnswersByCode.KAR || [];
+  const excluded = karakaConflictsWith(correct);
+  const pool = shuffle((walkItemPools.karaka || []).filter(r => r !== correct && !excluded.has(r)));
+  const distractors = [];
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c) && !recentAnswers.includes(c)) distractors.push(c); }
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c)) distractors.push(c); }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.KAR = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  const also = new Set(karakaAlsoAcceptedRoles(correct));
+  const acceptIndices = also.size ? options.map((o, i) => (also.has(o) ? i : -1)).filter(i => i >= 0) : [];
+  return { options, correctIndex: options.indexOf(correct), acceptIndices };
+}
+// सुप्_समुच्चितम् ("which word does this go with?") — options are real words from the SAME verse,
+// baked in at build time (build_karaka_data.js), same shape as buildSpotOptions: no chapter-wide
+// pool, since an unrelated word from a different verse would make the question meaningless (and,
+// specific to this axis, the build-time exclusion already keeps out any word from the target's own
+// referential cluster — see that script's own comment for why).
+function buildKarakaAssociateOptions(item) {
+  const correct = item.targetWord;
+  const options = shuffle([correct, ...item.distractorWords]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+// ---- "spot the word" (basic tier for kṛdanta/taddhita — recognition, not yet naming the
+// pratyaya): options are real OTHER words from the SAME sentence, baked in at build time
+// (build_reading_walk.js), not drawn from a chapter-wide pool — an unrelated word from a
+// different verse would make the question meaningless. Only the display order is randomized here.
+function buildSpotOptions(item) {
+  const correct = item.targetWord;
+  const options = shuffle([correct, ...item.distractorWords]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+// ---- word-meaning (fallback axis) ----
+function buildMeaningOptions(item) {
+  const correct = item.meaning;
+  const recentAnswers = recentAnswersByCode.MNG || [];
+  const pool = shuffle((walkItemPools.meaning || []).filter(m => m !== correct));
+  const distractors = [];
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c) && !recentAnswers.includes(c)) distractors.push(c); }
+  for (const c of pool) { if (distractors.length >= 3) break; if (!distractors.includes(c)) distractors.push(c); }
+  const shown = [correct, ...distractors];
+  recentAnswersByCode.MNG = [...shown, ...recentAnswers].slice(0, RECENT_ANSWER_WINDOW);
+  const options = shuffle(shown);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+// ---- sandhi lopa recognition (VSL/PVR sub-question: "what was elided here?") ----
+const LOPA_DESCRIPTIONS = {
+  VSL: 'the visarga (ः) — nothing replaces it',
+  PVR: 'the next word’s leading अ — absorbed, nothing replaces it',
+};
+const LOPA_FOILS = [
+  'nothing was elided — this is a plain word boundary',
+  'the first word’s final vowel — replaced by a different vowel',
+  'the next word’s leading consonant — replaced by a different consonant',
+];
+function buildLopaOptions(item) {
+  const correct = LOPA_DESCRIPTIONS[item.code] || 'a sound was elided here';
+  const otherCode = item.code === 'VSL' ? 'PVR' : 'VSL';
+  const pool = [LOPA_DESCRIPTIONS[otherCode], ...LOPA_FOILS].filter(d => d !== correct);
+  const distractors = shuffle(pool).slice(0, 3);
+  const options = shuffle([correct, ...distractors]);
+  return { options, correctIndex: options.indexOf(correct) };
+}
+
+function loadProgress() {
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { p = {}; }
+  for (const code of CODES) if (!p[code]) p[code] = { streak: 0, best: 0, mastered: false };
+  return p;
+}
+function saveProgress(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+let progress = loadProgress();
+
+// Lazy axis codes (see AXIS_MANIFEST above) are listed in CODES from page load so their card
+// renders, but have no itemsByCode entry until opened directly — excluded here so Mix it
+// up/Practice never draws a code with nothing loaded to draw from yet.
+function pickWeightedNode() {
+  const loaded = CODES.filter(c => itemsByCode[c]);
+  const unmastered = loaded.filter(c => !progress[c].mastered);
+  const pool = unmastered.length ? unmastered : loaded;
+  if (unmastered.length) {
+    const weights = pool.map(c => MASTERY_TARGET + 1 - Math.min(progress[c].streak, MASTERY_TARGET));
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) return pool[i]; }
+    return pool[pool.length - 1];
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// 'mixed' = plain uniform shuffle across every node, ignoring mastery — for variety/review,
+// distinct from 'adaptive' which deliberately steers toward weak/unmastered nodes.
+function pickMixedNode() { const loaded = CODES.filter(c => itemsByCode[c]); return loaded[Math.floor(Math.random() * loaded.length)]; }
+
+function pickNode(mode, code) {
+  if (mode === 'adaptive') return pickWeightedNode();
+  if (mode === 'mixed') return pickMixedNode();
+  return code;
+}
+
+// ---- reading-walk: load, flatten, position, and step through a chosen chapter ----
+// Resume position is keyed by chapterKey ALONE for the default 'both' scope (preserves every
+// existing saved resume point unchanged), and by `${chapterKey}::${scope}` for the 'mula'/'bhasya'
+// scopes — those walk a DIFFERENT, differently-sized steps array (see flattenWalk), so a stepIdx
+// saved under one scope would silently point at an unrelated word position under another.
+function readingProgressKey(chapterKey, scope) { return (!scope || scope === 'both') ? chapterKey : `${chapterKey}::${scope}`; }
+function loadReadingProgress(chapterKey, scope) {
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem(READING_KEY)) || {}; } catch (e) {}
+  return p[readingProgressKey(chapterKey, scope)] || null;
+}
+function saveReadingProgress(chapterKey, scope, pos) {
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem(READING_KEY)) || {}; } catch (e) {}
+  p[readingProgressKey(chapterKey, scope)] = pos;
+  localStorage.setItem(READING_KEY, JSON.stringify(p));
+}
+function loadWalkDataScript(chapterKey, file) {
+  return new Promise((resolve, reject) => {
+    if (window.WALK_DATA && window.WALK_DATA[chapterKey]) return resolve();
+    const s = document.createElement('script');
+    s.src = file;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('failed to load ' + file));
+    document.head.appendChild(s);
+  });
+}
+// scope: 'both' (default) | 'mula' | 'bhasya' — per Harsha's request to read mūla-only or
+// bhāṣya-only, not always both interleaved per verse.
+function flattenWalk(chapterKey, scope) {
+  const ch = window.WALK_DATA[chapterKey];
+  const sections = scope === 'mula' ? ['mula'] : scope === 'bhasya' ? ['bhasya'] : ['mula', 'bhasya'];
+  const out = [];
+  for (const v of ch.verses) {
+    for (const section of sections) {
+      for (const s of v.sections[section].steps) {
+        const step = { verseRef: v.ref, verseLabel: v.label, moola: v.moola, section, ...s };
+        // Read-a-verse recursive samāsa: a flat `samasa` item whose compound is in the shared PEEL index
+        // (VC + analysed texts) becomes the guided vigraha→type peel sequence; others stay flat (Harsha, 2026-08-21).
+        if (Array.isArray(step.items) && window.SAMASA_PEEL) {
+          const exp = [];
+          for (const it of step.items) {
+            if (it.kind === 'samasa') {
+              const layers = window.SAMASA_PEEL[normW(it.word)];
+              const peel = layers ? samasaPeelItems(layers, { ref: it.ref, source: it.source, context: it.context, slug: it.slug }) : null;
+              if (peel && peel.length) { exp.push(...peel); continue; }
+            }
+            exp.push(it);
+          }
+          step.items = exp;
+        }
+        out.push(step);
+      }
+    }
+  }
+  return out;
+}
+// Closed value-universes for vibhakti/dhātu distractor generation, sourced from whatever's
+// actually in THIS loaded chapter (mirrors SAMASA_CATEGORIES' "derive from shipped data" spirit).
+function computeWalkPools() { walkItemPools = computeItemPools(walkSteps.flatMap(s => s.items)); }
+// A stable key for "the exact question this item asks" — same word + same axis/subtype + same
+// correct answer content, regardless of which sentence/verse the occurrence came from.
+function questionSignature(item) {
+  if (item.kind === 'vibhakti') {
+    if (item.subtype === 'stem') return `vib:stem:${item.word}:${item.lemma}`;
+    if (item.subtype === 'gender') return `vib:gender:${item.word}:${item.linga}`;
+    if (item.subtype === 'sarvanama') return `vib:sarvanama:${item.word}:${item.isSarvanama}`;
+    return `vib:case:${item.word}:${vibhaktiDescriptor(item)}`;
+  }
+  if (item.kind === 'dhatu') {
+    if (item.subtype === 'prayoga') return `dht:prayoga:${item.word}:${item.prayoga}`;
+    return `dht:${item.word}:${dhatuDescriptor(item)}`;
+  }
+  if (item.kind === 'krdanta') {
+    if (item.subtype === 'prayoga') return `krt:prayoga:${item.word}:${item.prayoga}`;
+    return `krt:${item.word}:${item.pratyaya}`;
+  }
+  if (item.kind === 'taddhita') return `tad:${item.word}:${item.pratyaya}`;
+  if (item.kind === 'karaka' && item.subtype === 'associate') return `kar:assoc:${item.ref}:${item.word}:${item.targetWord}`;
+  if (item.kind === 'karaka' && item.subtype === 'governor') return `kar:gov:${item.ref}:${item.word}:${item.targetWord}`;
+  // `wordIndex` (not just word text) disambiguates a repeated GOVERNING word (BG 4.17's triple
+  // बोद्धव्यम्, each with its own elided "(तत्त्वम्)") — item.word alone is identical text for all
+  // three occurrences and would otherwise collide, same collision class as the जन्म fix above.
+  if (item.kind === 'karaka' && item.subtype === 'implied') return `kar:implied:${item.ref}:${item.wordIndex}:${item.role}:${item.targetWord}`;
+  // `ref` (not just word+role) and occurrenceIndex both matter here: without `ref`, the same
+  // word+role recurring in a LATER verse (e.g. सः as कर्ता in two different verses) would collide
+  // and silently never be asked a second time; without occurrenceIndex, two occurrences of the SAME
+  // word+role WITHIN one verse (e.g. BG 4.4's जन्म, कर्ता at both word 2 and word 4 — see
+  // annotateKarakaOccurrences in build_reading_walk.js) would do the same. Absent for the (common)
+  // non-repeating case, so `|| 1` there changes nothing about existing signatures.
+  if (item.kind === 'karaka') return `kar:${item.ref}:${item.word}:${item.role}:${item.occurrenceIndex || 1}`;
+  if (item.kind === 'spot') return `spot:${item.subtype}:${item.ref}:${item.targetWord}`;
+  if (item.kind === 'verbvoice') return `vvc:${item.ref}:${item.verb}:${item.voice}`;
+  if (item.kind === 'meaning') return `mng:${item.word}:${item.meaning}`;
+  if (item.kind === 'samasa') return `sam:${item.word}:${item.category}`;
+  if (item.kind === 'samasaVigraha') return `samv:${item.word}:${item.vigrahaOptions[0]}`;
+  if (item.kind === 'samasaType') return `samt:${item.word}:${item.correctType}`;
+  if (item.kind === 'samasaLeaf') return `saml:${item.word}:${item.leafType}`;
+  if (item.subtype === 'spotlopa') return `spotlopa:${item.ref}:${item.targetWord}`;
+  if (item.subtype === 'lopa') return `lopa:${item.code}:${item.before.join('+')}`;
+  if (item.subtype === 'fullsplit') return `pch:${item.ref}:${item.surface}`;
+  return `sdh:${item.code}:${item.before.join('+')}:${item.after}`;
+}
+// A stable key identifying THIS specific question for report/hide purposes — distinct from
+// questionSignature() alone because reading-walk and global-pool items need different
+// disambiguation (see PLANS.md's "report wrong answer" design): reading-walk items are keyed by
+// chapter + signature (questionSignature alone can collide across different texts' same `ref`);
+// global-pool items use their own `id` when present (existing field from build_items.js/
+// build_samasa_items.js), falling back to code + signature for the rare item without one.
+function reportKey(item, code) {
+  if (session && session.mode === 'reading') return `${session.chapterKey}:${questionSignature(item)}`;
+  return item.id ? item.id : `${code}:${questionSignature(item)}`;
+}
+function pickNextWalkItem() {
+  let step = walkSteps[walkPos.stepIdx];
+  while (step) {
+    const eligible = eligibleIndices(step); // respects enabledSkills — see its own comment
+    if (eligible.length) {
+      if (session.deep) {
+        const idx = eligible.find(i => i >= walkPos.itemIdx);
+        const realIdx = idx !== undefined ? idx : eligible[0];
+        walkPos.itemIdx = realIdx; // normalize past any disabled-kind items sitting before it
+        const item = step.items[realIdx];
+        askedSignatures.add(questionSignature(item));
+        return { item, code: item.code, moola: step.moola, verseLabel: step.verseLabel };
+      }
+      // kāraka items are unlike every other kind here: each one names a DIFFERENT underlying
+      // sub-word within a fused corpus token (e.g. "प्रोक्तवानहमव्ययम्" = प्रोक्तवान्+अहम्+अव्ययम्,
+      // each with its own role) rather than another facet of the SAME word — so once the step's
+      // one guaranteed (default-rotation) question is spent, remaining unasked kāraka items jump
+      // the queue ahead of other kinds' facets (see the matching stepHasMoreKaraka gate in
+      // advanceWalk/peekNextVerseCrossing that keeps the walk on this step until they're asked).
+      const rest = eligible.filter(i => i !== step.defaultItemIndex);
+      const leadFirst = rest.filter(i => LEAD_KINDS.has(step.items[i].kind));
+      const others = rest.filter(i => !LEAD_KINDS.has(step.items[i].kind));
+      const order = eligible.includes(step.defaultItemIndex)
+        ? [step.defaultItemIndex, ...leadFirst, ...others]
+        : [...leadFirst, ...others];
+      const itemIdx = order.find(i => !askedSignatures.has(questionSignature(step.items[i])));
+      if (itemIdx !== undefined) {
+        const item = step.items[itemIdx];
+        askedSignatures.add(questionSignature(item));
+        return { item, code: item.code, moola: step.moola, verseLabel: step.verseLabel };
+      }
+    }
+    // Either every eligible axis at this word position has already been asked (its exact content,
+    // not just this occurrence — most common on frequent particles like च/एव/न recurring with an
+    // identical gloss), or NO axis here is currently enabled at all (e.g. a pure-meaning word with
+    // 'meaning' turned off). Either way, skip straight to the next word; persist immediately so a
+    // reload mid-skip resumes from the position actually being shown, not the one skipped past.
+    walkPos = { stepIdx: walkPos.stepIdx + 1, itemIdx: 0 };
+    saveReadingProgress(session.chapterKey, session.scope, walkPos);
+    step = walkSteps[walkPos.stepIdx];
+  }
+  return null; // chapter complete
+}
+// "Lead" kinds jump the per-step queue and keep the walk on a step until all of them are asked
+// (even outside deep mode): kāraka items, because each names a DIFFERENT sub-word of a fused token
+// (see pickNextWalkItem); verbvoice items, because the synthetic verse-opener step (Phase 2 step 4)
+// can hold one per finite verb and every verse's verb(s) should be asked, not just the first; and the
+// samāsa PEEL items (vigraha/type/leaf), because a compound must peel top-down back-to-back as a UNIT —
+// stopping after the outermost split defeats the peel (Harsha, 2026-08-22: "it doesn't peel").
+const LEAD_KINDS = new Set(['karaka', 'verbvoice', 'samasaVigraha', 'samasaType', 'samasaLeaf']);
+// See the comment in pickNextWalkItem: a step can hold several lead-kind items and none should be
+// skipped just because the step already yielded its one default-rotation question — so the step
+// isn't "done", even outside deep mode, while an eligible lead-kind item here hasn't been asked yet.
+function stepHasMoreLead(step) {
+  return eligibleIndices(step).some(i => LEAD_KINDS.has(step.items[i].kind) && !askedSignatures.has(questionSignature(step.items[i])));
+}
+// True if advancing past the CURRENT (not-yet-advanced) step/item would move into a different
+// verse, or run off the end of the chapter — decided BEFORE advancing so the answer-feedback
+// screen can choose the right terminal panel for the question just answered.
+function peekNextVerseCrossing() {
+  const curStep = walkSteps[walkPos.stepIdx];
+  if (!curStep) return true;
+  if (session.deep && eligibleIndices(curStep).some(i => i > walkPos.itemIdx)) return false;
+  if (!session.deep && stepHasMoreLead(curStep)) return false;
+  const nextStep = walkSteps[walkPos.stepIdx + 1];
+  return !nextStep || nextStep.verseRef !== curStep.verseRef;
+}
+function advanceWalk() {
+  const step = walkSteps[walkPos.stepIdx];
+  const nextEligible = step && session.deep ? eligibleIndices(step).find(i => i > walkPos.itemIdx) : undefined;
+  if (nextEligible !== undefined) walkPos.itemIdx = nextEligible;
+  else if (step && !session.deep && stepHasMoreLead(step)) { /* stay put — more lead-kind (kāraka/verbvoice) items remain at this step */ }
+  else { walkPos.stepIdx++; walkPos.itemIdx = 0; }
+  saveReadingProgress(session.chapterKey, session.scope, walkPos);
+}
+function continueReadingBatch() {
+  advanceWalk();
+  session.batchCount = 0;
+  session.batchCorrect = 0;
+  newQuestion();
+}
+function continueReadingFromCelebration() {
+  advanceWalk();
+  newQuestion();
+}
+function repeatCurrentVerse() {
+  const curStep = walkSteps[walkPos.stepIdx];
+  const verseRef = curStep ? curStep.verseRef : (walkSteps[walkSteps.length - 1] || {}).verseRef;
+  const firstIdx = walkSteps.findIndex(s => s.verseRef === verseRef);
+  walkPos = { stepIdx: firstIdx >= 0 ? firstIdx : 0, itemIdx: 0 };
+  saveReadingProgress(session.chapterKey, session.scope, walkPos);
+  session.batchCount = 0;
+  session.batchCorrect = 0;
+  newQuestion();
+}
+function startReading(chapterKey, opts) {
+  const entry = (window.WALK_MANIFEST || []).find(e => e.chapterKey === chapterKey);
+  if (!entry) return;
+  const scope = opts.scope || 'both';
+  loadWalkDataScript(chapterKey, entry.file).then(() => {
+    walkSteps = flattenWalk(chapterKey, scope);
+    computeWalkPools();
+    if (opts.verseRef) {
+      const idx = walkSteps.findIndex(s => s.verseRef === opts.verseRef);
+      walkPos = { stepIdx: idx >= 0 ? idx : 0, itemIdx: 0 };
+      askedSignatures = new Set(); // deliberate restart at a chosen point — repeats are fine again
+    } else if (opts.fromBeginning) {
+      walkPos = { stepIdx: 0, itemIdx: 0 };
+      askedSignatures = new Set();
+    } else {
+      // plain "continue" — same logical session as before, so keep askedSignatures as-is (it only
+      // resets on an actual page reload, since it's in-memory-only, same scope as recentByCode)
+      walkPos = loadReadingProgress(chapterKey, scope) || { stepIdx: 0, itemIdx: 0 };
+    }
+    if (walkPos.stepIdx >= walkSteps.length) walkPos = { stepIdx: 0, itemIdx: 0 }; // stale/out-of-range resume point (e.g. after a content rebuild)
+    session = { mode: 'reading', chapterKey, scope, deep: !!opts.deep, batchCount: 0, batchCorrect: 0 };
+    saveReadingProgress(chapterKey, scope, walkPos); // a verse-jump is itself a valid resume point, persist it immediately
+    newQuestion();
+  }).catch(err => {
+    app.innerHTML = `<div class="celebrate"><h2>⚠ couldn't load this chapter</h2><p>${esc(err.message)}</p>
+      <div class="next-choices"><button class="secondary" id="loadErrBackBtn">🏠 Dashboard</button></div></div>`;
+    document.getElementById('loadErrBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  });
+}
+
+function pickItem(code) {
+  const fullPool = itemsByCode[code];
+  const unhidden = fullPool.filter(it => !isReportHidden(reportKey(it, code)));
+  const pool = unhidden.length ? unhidden : fullPool; // fallback: don't let hiding empty out a node entirely
+  const recent = recentByCode[code] || [];
+  let candidates = pool.filter(it => !recent.includes(it.id));
+  if (!candidates.length) candidates = pool;
+  const it = candidates[Math.floor(Math.random() * candidates.length)];
+  recentByCode[code] = [it.id, ...recent].slice(0, RECENT_WINDOW);
+  return it;
+}
+
+// Lazy-seed: VIB/DHT/MNG (and any future dynamically-introduced code) only exist inside a
+// lazy-loaded walk, never in the eagerly-loaded CODES list loadProgress() pre-seeds from — so
+// both recordAnswer() AND renderQuiz() (which reads progress[code].streak for the header, even
+// before any answer has been recorded for a brand-new code) need this, not just one of them.
+function ensureProgress(code) {
+  if (!progress[code]) progress[code] = { streak: 0, best: 0, mastered: false };
+  return progress[code];
+}
+
+function recordAnswer(code, correct) {
+  const p = ensureProgress(code);
+  const wasMastered = p.mastered;
+  p.streak = correct ? p.streak + 1 : 0;
+  p.best = Math.max(p.best, p.streak);
+  if (p.streak >= MASTERY_TARGET) p.mastered = true;
+  saveProgress(progress);
+  return { justMastered: !wasMastered && p.mastered };
+}
+
+// ---- rendering ----
+
+const app = document.getElementById('app');
+// `session` tracks the current practice run (mode + a 10-question batch counter); `view` tracks
+// just the CURRENT question's render state. Split so "another batch" / mode switches reset the
+// counters cleanly without disturbing per-node mastery, which lives in `progress` regardless.
+let session = null; // {mode:'node'|'adaptive'|'mixed', fixedCode, batchCount, batchCorrect}
+let view = { screen: 'dashboard' };
+
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// Sandhi's 22 codes are cryptic 3-letter Pāṇini-sūtra abbreviations (SVD, GUN, VRD...) that
+// genuinely need the short code as the headline, with the fuller name as a secondary line — with
+// 22 of them, compact labels help scanning. Every OTHER kind currently has exactly one code, so
+// abbreviating it buys nothing and just adds an unexplained acronym (Harsha, 2026-08-11: "don't
+// abbreviate to 3 letters for anything outside sandhi... call it out as meaning, kāraka,
+// kṛdanta,..."). Non-sandhi cards show KIND_LABELS' full descriptive name as the headline instead,
+// dropping the secondary label line (would just repeat the same name).
+// ABT ("no-sandhi word boundary") and PCH ("padaccheda", the multi-word chain-splitting node)
+// aren't actual Pāṇini sandhi RULES the way SVD/GUṆ/VṚD/etc. are — they're structurally different
+// question types (spot where nothing happens; find every boundary in a chain) that just happen to
+// live under the sandhi kind. Harsha, 2026-08-11: give them their own full name too, same as every
+// non-sandhi kind, rather than an abbreviation that implies they're one more rule among 20 others.
+const SANDHI_FULL_NAME_CODES = new Set(['ABT', 'PCH']);
+function renderNodeCard(c) {
+  const p = progress[c];
+  const pct = Math.min(100, Math.round((p.streak / MASTERY_TARGET) * 100));
+  const kind = CODE_KIND[c] || 'sandhi';
+  const useCodeAbbrev = kind === 'sandhi' && !SANDHI_FULL_NAME_CODES.has(c);
+  const headline = useCodeAbbrev ? c : (CODE_LABEL_OVERRIDES[c] || (SANDHI_FULL_NAME_CODES.has(c) ? (LABELS[c] || c) : (KIND_LABELS[kind] || LABELS[c] || c)));
+  return `<div class="card${p.mastered ? ' mastered' : ''}" data-code="${c}">
+    <div class="card-top"><span class="code">${headline}</span>${p.mastered ? '<span class="badge">✓ mastered</span>' : ''}</div>
+    ${useCodeAbbrev ? `<div class="label">${LABELS[c] || ''}</div>` : ''}
+    <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="stats">streak ${p.streak} · best ${p.best}</div>
+  </div>`;
+}
+// Any kind with MORE THAN ONE code (sandhi's dozens of Pāṇini-sūtra codes, or a split axis like
+// vibhakti's VIB1/VIB2, meaning's MNG1/MNG2) collapses behind a native <details>/<summary> with an
+// aggregate progress bar across its codes — no JS state needed, accessible for free, and one
+// consistent place to see "how am I doing on vibhakti overall" without averaging two separate
+// cards yourself. A kind with just one code (kāraka, taddhita, kṛdanta, dhātu today) renders its
+// single card directly — wrapping one card in its own accordion would be a click to reveal
+// nothing extra, pure ceremony.
+function renderCategorySection(kind, codes) {
+  const mastered = codes.filter(c => progress[c].mastered).length;
+  // Same fraction the "X/22 mastered" text already reports, translated into the bar's fill % —
+  // consistent with every individual card's bar, which is also a single mastery-progress ratio,
+  // not e.g. an average streak (would conflate "barely started" with "not started" confusingly).
+  const pct = codes.length ? Math.round((mastered / codes.length) * 100) : 0;
+  return `<details class="category">
+      <summary>
+        <div class="category-head-row"><span>${esc(KIND_LABELS[kind] || kind)}</span><span class="category-stats">${mastered}/${codes.length} mastered</span></div>
+        <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+      </summary>
+      <div class="grid">${codes.map(renderNodeCard).join('')}</div>
+    </details>`;
+}
+function renderDashboard() {
+  // Fold समास-विच्छेद (SAMR peel) into the समास node as a child card, so समास becomes a PARENT (like
+  // sandhi) with two children — SAMASA (classify) + SAMR (peel). Peel also runs inside वाक्य-विग्रह;
+  // this card is the standalone back-to-back drill. Not added to CODES, so it never inflates the
+  // "N nodes mastered" count (peel has no finite mastery pool). (Harsha, 2026-08-22)
+  if (window.SAMASA_PEEL && Object.keys(window.SAMASA_PEEL).length) {
+    CODE_KIND.SAMR = 'samasa';
+    CODE_LABEL_OVERRIDES.SAMR = '🧅 समास-विच्छेद · peel';
+    ensureProgress('SAMR');
+    CODES_BY_KIND.samasa = CODES_BY_KIND.samasa || [];
+    if (!CODES_BY_KIND.samasa.includes('SAMR')) CODES_BY_KIND.samasa.push('SAMR');
+  }
+  // स्वाध्यायः · Read the texts — ONE entry per text (consolidated 2026-08-24; replaces the old
+  // duplicated मनन-bhāṣya + पदार्थ-mūla rows). Overlapping set (group 'prasthana') → the unified
+  // reading+manana page (मूलम् + भाष्यम्, build_unified_reading_view.js → reading-<slug>.html);
+  // prakaraṇa set → mūla-only padārtha hover (build_vc_reading_view.js). Kena is ONE entry — its
+  // pada + vākya bhāṣya are merged into reading-kena.html by the unified builder.
+  const READING_TEXTS = [
+    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya'], note: 'भाष्यम्: pada + vākya' },
+    { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'प्रश्न', lat: 'Praśna', file: 'reading-prashna.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
+  ];
+  const readOffers = t => '<div class="offers">'
+    + (t.offers.includes('mula') ? '<span class="pill mula">मूलम्</span>' : '')
+    + (t.offers.includes('bhasya') ? '<span class="pill bhasya">भाष्यम्</span>' : '')
+    + (t.note ? '<span class="rnote">' + t.note + '</span>' : '') + '</div>';
+  const readCard = t => `<a class="rcard" data-reflect="${t.file}"><div class="rtitle">${t.dv}</div><div class="rlat">${t.lat}</div>${readOffers(t)}</a>`;
+  const readGroup = g => READING_TEXTS.filter(t => t.group === g).map(readCard).join('');
+  const masteredN = CODES.filter(c => progress[c].mastered).length;
+  // Node-card order (Harsha, 2026-08-29): समास first, then सन्धि, then the rest alphabetical.
+  const KIND_PRIORITY = { samasa: 0, sandhi: 1 };
+  const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
+    const pa = KIND_PRIORITY[a] ?? 99, pb = KIND_PRIORITY[b] ?? 99;
+    if (pa !== pb) return pa - pb;
+    return (KIND_LABELS[a] || a).localeCompare(KIND_LABELS[b] || b);
+  });
+  const categorySections = [];
+  const flatCodes = [];
+  for (const kind of kinds) {
+    const codes = CODES_BY_KIND[kind];
+    if (codes.length > 1) categorySections.push(renderCategorySection(kind, codes));
+    else flatCodes.push(...codes);
+  }
+  // Two lanes: guided full-verse work (Read / वाक्य-विग्रह) vs MCQ drills (Mix / Practice + the topic
+  // nodes below). Separates the two paradigms that used to sit in one flat button row (Harsha, 2026-08-22).
+  app.innerHTML = `
+    <div class="dash-head"><div>${masteredN} / ${CODES.length} nodes mastered</div></div>
+    <div class="dash-lane">
+      <div class="lane-label">🧠 अभ्यास-मार्गाः · Three ways to study</div>
+      <div class="readgrid modegrid">
+        <a class="rcard modecard" id="readBtn"><div class="rtitle">📖 Read a verse</div><div class="modetag">know each word</div><div class="modedesc">Walk each word — recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the Drill pool.</div></a>
+        <a class="rcard modecard" id="tutorialBtn"><div class="rtitle">🧩 वाक्य-विग्रह</div><div class="modetag">parse the sentence</div><div class="modedesc">How the words relate across the whole sentence — kāraka, qualifier-of, coordination, clauses, uddeśya–vidheya, samāsa vigraha.</div></a>
+        <a class="rcard modecard" id="clauseBtn"><div class="rtitle">🪢 वाक्य-विभाग</div><div class="modetag">carve the clauses</div><div class="modedesc">Split the verse into clauses (वाक्य): find each clause-head, group its words, then supply the अध्याहार — the unstated कर्ता and any implied verb. The step before वाक्य-विग्रह.</div></a>
+      </div>
+    </div>
+    <div class="dash-lane">
+      <div class="lane-label">🪷 स्वाध्यायः · Read the texts</div>
+      <div class="lane-sub">Each text opens its reading page. <span class="mulahue">मूलम्</span> = word-by-word hover (kāraka · vibhakti · samāsa) · <span class="bhasyahue">भाष्यम्</span> = Śāṅkara-bhāṣya.</div>
+      <div class="readgroup">
+        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 · मूलम् + भाष्यम्</span></div>
+        <div class="readgrid">${readGroup('prasthana')}</div>
+      </div>
+      <div class="readgroup">
+        <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">4 · मूलम्</span></div>
+        <div class="readgrid">${readGroup('prakarana')}</div>
+      </div>
+    </div>
+    <div class="dash-lane">
+      <div class="lane-label">🎯 साधना · Disciplined drill</div>
+      <div class="dash-actions">
+        <button class="secondary" id="mixBtn">🔀 Mix it up</button>
+        <button class="secondary" id="adaptiveBtn">Practice</button>
+      </div>
+    </div>
+    ${categorySections.join('')}
+    <div class="grid">
+      ${flatCodes.map(renderNodeCard).join('')}
+    </div>
+    <div class="dash-lane">
+      <div class="lane-label">🔎 उपकरणानि · Other tools</div>
+      <div class="readgrid modegrid">
+        <a class="rcard modecard" href="https://vyakarana-corpus-chat.onrender.com/" target="_blank" rel="noopener"><div class="rtitle">🔎 जिज्ञासा · Ask the corpus</div><div class="modetag">query all 15 texts</div><div class="modedesc">Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed.</div></a>
+        <a class="rcard modecard" href="https://constrainedrandomvar.github.io/prasthanatrayi-search/" target="_blank" rel="noopener"><div class="rtitle">🔦 अन्वेषण · Full-text search</div><div class="modetag">find any phrase</div><div class="modedesc">Search the source texts &amp; commentaries for any word or phrase, with page-linked results.</div></a>
+      </div>
+    </div>`;
+  document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
+  document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
+  document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
+  document.getElementById('tutorialBtn').onclick = () => { tutorialMode = 'vigraha'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
+  { const cb = document.getElementById('clauseBtn'); if (cb) cb.onclick = () => { tutorialMode = 'clause'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); }; }
+  app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
+  app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
+}
+
+// Groups WALK_MANIFEST entries (one per chapter) by their text `slug` — `title` is the text-level
+// part of the build-time-authored label ("भगवद्गीता (Bhagavad Gītā) · अध्याय 4" -> the part before
+// " · "), so the picker never needs its own hardcoded text-name table.
+function groupManifestByText(manifest) {
+  const bySlug = new Map();
+  for (const e of manifest) {
+    if (!bySlug.has(e.slug)) bySlug.set(e.slug, { slug: e.slug, title: e.label.split(' · ')[0], chapters: [] });
+    bySlug.get(e.slug).chapters.push(e);
+  }
+  for (const t of bySlug.values()) t.chapters.sort((a, b) => a.chapter - b.chapter);
+  // texts listed lexicographically (by romanized slug) in the read-a-verse picker — independent of the
+  // build-emitted manifest order, which is churn-prone (Harsha, 2026-08-28).
+  return [...bySlug.values()].sort((a, b) => a.slug.toLowerCase().localeCompare(b.slug.toLowerCase()));
+}
+// Every ref of a text in reading order (across its chapters) — the input to the shared ReadingNav cascade.
+function textAllRefs(text) { return text.chapters.flatMap(c => (c.verses || []).map(v => String(v.ref))); }
+// Which walk chapter (chapterKey) contains a given ref — so a ReadingNav pick maps back to startReading().
+function chapterKeyForRef(text, ref) {
+  for (const c of text.chapters) if ((c.verses || []).some(v => String(v.ref) === String(ref))) return c.chapterKey;
+  return (text.chapters[0] || {}).chapterKey || null;
+}
+// A chapter's verse list carries an extra sub-level (e.g. Kaṭha's adhyāya.vallī.mantra, refs like
+// "1.2.3") when every ref has 3+ dot-segments — group by the 2nd segment in that case so the picker
+// can offer it as its own step. Flat chapters (Gītā's "4.1", 2 segments) return null: no sub-level,
+// go straight from chapter to verse.
+function groupVersesBySection(chapterEntry) {
+  const verses = chapterEntry.verses || [];
+  if (!verses.length || !verses.every(v => v.ref.split('.').length >= 3)) return null;
+  const bySection = new Map();
+  for (const v of verses) {
+    const key = v.ref.split('.')[1];
+    if (!bySection.has(key)) bySection.set(key, []);
+    bySection.get(key).push(v);
+  }
+  return [...bySection.entries()].map(([key, vs]) => ({ key, verses: vs }));
+}
+function renderReadingPicker() {
+  const manifest = window.WALK_MANIFEST || [];
+  const texts = groupManifestByText(manifest);
+  const p = view.picker || (view.picker = { slug: null, curRef: null, contentScope: 'both' });
+  const selectedText = texts.find(t => t.slug === p.slug) || null;
+  // Context-drive the mūlam/bhāṣyam source picker: only offer bhāṣyam options for a text whose read-a-verse
+  // WALK actually has bhāṣya content (walk-manifest `hasBhasya` — today only the Gītā). For a mūla-only text
+  // the 3-way toggle is meaningless (bhāṣyam-only → empty walk; mūlam+bhāṣyam == mūlam), so hide it and pin
+  // the scope to mūlam. (Harsha, 2026-08-29.)
+  const textHasBhasya = !!(selectedText && selectedText.chapters.some(c => c.hasBhasya));
+  if (!textHasBhasya && p.contentScope && p.contentScope !== 'both') p.contentScope = 'both';
+
+  app.innerHTML = `
+    <div class="picker-head">
+      <h2>📖 Choose a verse to read</h2>
+      <button class="link" id="pickerBackBtn">← dashboard</button>
+    </div>
+    ${!texts.length ? '<div class="stats">No chapters built yet.</div>' : `
+    <div class="picker-level">
+      <label>Text</label>
+      <select id="textSelect">
+        <option value="">Choose a text…</option>
+        ${texts.map(t => `<option value="${esc(t.slug)}"${t.slug === p.slug ? ' selected' : ''}>${esc(t.title)}</option>`).join('')}
+      </select>
+    </div>
+    ${selectedText ? `<div class="picker-level nav-verse">
+      <style>${(window.ReadingNav && window.ReadingNav.STYLE) || ''}</style>
+      <label>Verse</label>
+      <div id="readingNavHost"></div>
+    </div>
+    <div class="reading-actions" id="readingActions"></div>` : ''}`}
+    ${textHasBhasya ? `<div class="scope-toggle">
+      <div class="scope-head">Read</div>
+      <label><input type="radio" name="scopeRadio" value="both" ${p.contentScope === 'both' ? 'checked' : ''}> mūlam + bhāṣyam</label>
+      <label><input type="radio" name="scopeRadio" value="mula" ${p.contentScope === 'mula' ? 'checked' : ''}> mūlam only</label>
+      <label><input type="radio" name="scopeRadio" value="bhasya" ${p.contentScope === 'bhasya' ? 'checked' : ''}> bhāṣyam only</label>
+    </div>` : ''}
+    <div class="deep-toggle"><label><input type="checkbox" id="deepToggle"> Go deep — ask every applicable question per word, not just one</label></div>
+    <div class="skills-toggle">
+      <div class="skills-head">Which skills do you want to be quizzed on?</div>
+      ${SKILL_KINDS.map(s => `<label><input type="checkbox" class="skill-cb" data-kind="${s.kind}" ${enabledSkills[s.kind] !== false ? 'checked' : ''}> ${esc(s.label)}</label>`).join('')}
+    </div>`;
+  document.getElementById('pickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  const textSelect = document.getElementById('textSelect');
+  if (textSelect) textSelect.onchange = e => { p.slug = e.target.value || null; p.curRef = null; renderReadingPicker(); };
+  // Re-render on scope change — the Continue/Start-over affordance depends on which scope has its OWN saved
+  // resume point (see readingProgressKey).
+  app.querySelectorAll('input[name="scopeRadio"]').forEach(r => r.onchange = () => { p.contentScope = r.value; renderReadingPicker(); });
+  // Chapter/verse navigation is the ONE shared ReadingNav component (identical to svādhyāya), in 'callback'
+  // mode: a pick just reports the ref, which we map back to its walk chapter for startReading. The extra
+  // context-sensitive read-a-verse options (mūlam/bhāṣyam scope, deep, skills) layer on top, unchanged.
+  if (selectedText && window.ReadingNav) {
+    const host = document.getElementById('readingNavHost');
+    const actionsEl = document.getElementById('readingActions');
+    const refs = textAllRefs(selectedText);
+    const scope = textHasBhasya ? p.contentScope : 'both';   // mūla-only texts: scope toggle hidden → pin to mūlam
+    const updateActions = (ref) => {
+      p.curRef = ref;
+      const ck = chapterKeyForRef(selectedText, ref);
+      const hasProg = ck && !!loadReadingProgress(ck, scope);
+      actionsEl.innerHTML =
+        (hasProg ? `<button class="primary" data-act="continue">Continue</button>` : '') +
+        `<button class="${hasProg ? 'secondary' : 'primary'}" data-act="start">▶ Read from ${esc(ref)}</button>`;
+      actionsEl.querySelectorAll('[data-act]').forEach(btn => btn.onclick = () => {
+        const deep = document.getElementById('deepToggle').checked;
+        if (btn.dataset.act === 'continue') startReading(ck, { deep, scope });
+        else startReading(ck, { deep, scope, verseRef: ref });
+      });
+    };
+    const ctrl = window.ReadingNav.mount(host, { slug: selectedText.slug, refs, curRef: p.curRef, mode: 'callback', onSelect: updateActions });
+    updateActions(ctrl.getRef());
+  }
+  // At least one skill must stay enabled, or a reading session would have nothing to ask —
+  // revert the checkbox rather than let the picker save an all-off state (undoes the click itself,
+  // not a confirm dialog — cheap correction fits the "keep tempo up" spirit of this session's
+  // other change).
+  app.querySelectorAll('.skill-cb').forEach(cb => cb.onchange = () => {
+    const wouldBeAllOff = SKILL_KINDS.every(s => (s.kind === cb.dataset.kind ? cb.checked : enabledSkills[s.kind] !== false) === false);
+    if (wouldBeAllOff) { cb.checked = true; return; }
+    enabledSkills[cb.dataset.kind] = cb.checked;
+    saveEnabledSkills(enabledSkills);
+  });
+}
+
+function renderReadingComplete() {
+  app.innerHTML = `
+    <div class="celebrate">
+      <h2>📖 Chapter complete!</h2>
+      <p>You've walked every question in this chapter.</p>
+      <div class="next-choices">
+        <button class="primary" id="rcPickAgainBtn">📖 Pick again</button>
+        <button class="secondary" id="rcDashBtn">🏠 Dashboard</button>
+      </div>
+    </div>`;
+  document.getElementById('rcPickAgainBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
+  document.getElementById('rcDashBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+}
+
+// The question just left, snapshotted at CREATION time (see newQuestion()) so "flag previous
+// question" (see PLANS.md's report-feature design, extended 2026-08-11 for the two flows Harsha
+// identified: an expert spotting a broken question before even answering it, and wanting to flag
+// the PREVIOUS question once the app has already moved on) always reports the right content/session
+// context even if the session itself has since changed (e.g. the user picked a brand-new quiz mode
+// — reportKey()/chapterKey are computed once, up front, not re-derived later from a possibly-stale
+// live `session`).
+let lastQuestion = null;
+// Safety net (Harsha, 2026-08-11, live report of a citation-abbreviation-derived ABT item — "छा +
+// उ" — rendered with only its correct answer and zero distractors): "we shouldn't have questions
+// that have only one option, there is no point." A degenerate item (too little real content to
+// generate any wrong answer from) should never reach the learner regardless of WHICH bug produced
+// it — this is a general backstop, not a fix for any one root cause. Bounded retry count avoids an
+// infinite loop in the theoretical worst case where an entire pool is degenerate; MAX_OPTION_RETRIES
+// attempts is far more than any real (non-buggy) pool should ever need.
+const MAX_OPTION_RETRIES = 20;
+function newQuestion() {
+  if (view.screen === 'quiz') {
+    lastQuestion = {
+      item: view.item, code: view.code, options: view.options, correctIndex: view.correctIndex, acceptIndices: view.acceptIndices,
+      key: view.key, chapterKeyForReport: view.chapterKeyForReport, moola: view.moola, verseLabel: view.verseLabel,
+      answered: view.answered, picked: view.picked,
+    };
+  }
+  if (session.mode === 'reading') {
+    let picked, built;
+    for (let attempt = 0; attempt < MAX_OPTION_RETRIES; attempt++) {
+      picked = pickNextWalkItem();
+      if (!picked) { view = { screen: 'readingComplete' }; renderReadingComplete(); return; }
+      built = buildOptions(picked.item, picked.code);
+      if (built.options && built.options.length >= 2) break;
+    }
+    const { item, code, moola, verseLabel } = picked;
+    const { options, correctIndex, acceptIndices = [] } = built;
+    const key = reportKey(item, code), chapterKeyForReport = session.chapterKey;
+    view = { screen: 'quiz', code, item, options, correctIndex, acceptIndices, answered: false, picked: -1, justMastered: false, crossingVerse: false, key, chapterKeyForReport, moola, verseLabel, hintRevealed: false };
+    renderQuiz();
+    return;
+  }
+  if (session.mode === 'samasa') {
+    let item, built, compoundDone;
+    for (let guard = 0; guard < 5000; guard++) {
+      if (!session.peel || session.peelIdx >= session.peel.length) {
+        if (!session.queue.length) session.queue = shuffle(samrPoolKeys()); // wrap around
+        session.peel = samasaPeelItems(window.SAMASA_PEEL[session.queue.pop()], {});
+        session.peelIdx = 0;
+        if (!session.peel.length) { session.peel = null; continue; }   // compound with no quizzable layer
+      }
+      item = session.peel[session.peelIdx++];
+      compoundDone = session.peelIdx >= session.peel.length;   // this item is the LAST of its compound
+      built = buildOptions(item, item.code);
+      if (built.options && built.options.length >= 2) break;
+    }
+    view = { screen: 'quiz', code: 'SAMR', item, options: built.options, correctIndex: built.correctIndex, acceptIndices: built.acceptIndices || [], answered: false, picked: -1, justMastered: false, crossingVerse: false, key: reportKey(item, 'SAMR'), chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false, compoundDone };
+    renderQuiz();
+    return;
+  }
+  const c = pickNode(session.mode, session.fixedCode);
+  let item, built;
+  for (let attempt = 0; attempt < MAX_OPTION_RETRIES; attempt++) {
+    item = pickItem(c);
+    built = buildOptions(item, c);
+    if (built.options && built.options.length >= 2) break;
+  }
+  const { options, correctIndex, acceptIndices = [] } = built;
+  const key = reportKey(item, c);
+  view = { screen: 'quiz', code: c, item, options, correctIndex, acceptIndices, answered: false, picked: -1, justMastered: false, key, chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false };
+  renderQuiz();
+}
+
+// 🧅 समास-विच्छेद Practise source filter: 'all' | 'mula' | 'bhasya'. Bhāṣya compounds come from the
+// 2026-08-20 batch's bhāṣya samāsa (source-tagged in SAMASA_PEEL_SRC); this lets a learner drill only
+// mūla compounds, only bhāṣya compounds, or both. Persisted.
+let samrSrc = 'all';
+try { samrSrc = localStorage.getItem('vv_samr_src') || 'all'; } catch (e) {}
+function samrPoolKeys() {
+  const P = window.SAMASA_PEEL || {}, S = window.SAMASA_PEEL_SRC || {};
+  let ks = Object.keys(P);
+  if (samrSrc === 'mula') ks = ks.filter(k => /^mula/.test(S[k] || 'mula'));
+  else if (samrSrc === 'bhasya') ks = ks.filter(k => /^bhasya/.test(S[k] || ''));
+  return ks.length ? ks : Object.keys(P);   // never leave an empty pool
+}
+
+function startQuiz(mode, code) {
+  walkItemPools = computeItemPools(window.QUIZ_ITEMS); // reset from any leftover chapter-scoped reading pools
+  session = { mode, fixedCode: code, batchCount: 0, batchCorrect: 0 };
+  // recursive-samāsa Practise: a shuffled queue of ALL analyzed compounds (in the chosen source filter);
+  // each is peeled fully, back-to-back, until a batch crosses BATCH_SIZE questions AND the compound is done.
+  if (mode === 'samasa') { session.queue = shuffle(samrPoolKeys()); session.peel = null; session.peelIdx = 0; }
+  newQuestion();
+}
+// A lazy axis card (see AXIS_MANIFEST) needs its data fetched before a node session can start —
+// shows a brief loading state on the clicked card only, matching this codebase's no-framework
+// re-render-the-whole-screen convention elsewhere (a full dashboard re-render mid-fetch would lose
+// the click target and any scroll position for no benefit here).
+function onNodeCardClick(code) {
+  // समास-विच्छेद peel is folded in as a child card of the समास node; it runs the SAMASA_PEEL-driven
+  // session, not the standard node pool (Harsha, 2026-08-22).
+  if (code === 'SAMR') { if (window.SAMASA_PEEL && Object.keys(window.SAMASA_PEEL).length) startQuiz('samasa', 'SAMR'); else alert('Samāsa-peel data not loaded.'); return; }
+  const el = app.querySelector(`.card[data-code="${code}"]`);
+  if (!itemsByCode[code] && el) el.classList.add('loading');
+  ensureAxisLoaded(code).then(() => startQuiz('node', code)).catch(() => {
+    if (el) { el.classList.remove('loading'); }
+    alert('Could not load this content — check your connection and try again.');
+  });
+}
+function nextQuestion() { newQuestion(); }
+// Timer handle for the single-click auto-advance (see AUTO_ADVANCE_DELAY_* above) — cleared
+// whenever the user navigates away mid-countdown (e.g. "← dashboard") so a stale advance can't
+// fire into whatever screen they've moved to since.
+let pendingAdvanceTimer = null;
+function goToNextQuestion(mode) {
+  clearTimeout(pendingAdvanceTimer);
+  if (mode === 'reading') advanceWalk();
+  nextQuestion();
+}
+
+const CELEBRATE_EMOJI = ['⭐', '✨', '🎉', '🎆', '🌟', '💫'];
+const FIREWORK_EMOJI = ['🎆', '🎇', '💥', '✨', '⭐'];
+const STAR_SHOWER_EMOJI = ['⭐', '✨', '🌟', '💫'];
+// Batch-of-10-complete effect: a few staggered radial "firework" bursts (reuses the existing
+// .burst/burst-fly radial mechanic, just from several origin points instead of renderCelebration's
+// single center-top one) layered under a wider "star shower" of stars drifting down the whole card
+// (.star-fall/star-fall-drift) — deliberately a different look from renderCelebration's single burst,
+// so mastering a node and finishing a batch don't feel like the same animation.
+function renderFireworksStarShower() {
+  const origins = [{ left: 22, top: 18 }, { left: 50, top: 8 }, { left: 78, top: 20 }];
+  const fireworks = origins.map((o, gi) => Array.from({ length: 8 }, () => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 90;
+    const dx = Math.round(Math.cos(angle) * dist);
+    const dy = Math.round(Math.sin(angle) * dist);
+    const delay = (gi * 0.25 + Math.random() * 0.15).toFixed(2);
+    const emoji = FIREWORK_EMOJI[Math.floor(Math.random() * FIREWORK_EMOJI.length)];
+    return `<span class="burst" style="left:${o.left}%;top:${o.top}px;--dx:${dx}px;--dy:${dy}px;animation-delay:${delay}s">${emoji}</span>`;
+  }).join('')).join('');
+  const stars = Array.from({ length: 18 }, () => {
+    const left = Math.round(Math.random() * 100);
+    const drift = Math.round((Math.random() - 0.5) * 60);
+    const delay = (Math.random() * 0.7).toFixed(2);
+    const duration = (1.4 + Math.random() * 0.9).toFixed(2);
+    const emoji = STAR_SHOWER_EMOJI[Math.floor(Math.random() * STAR_SHOWER_EMOJI.length)];
+    return `<span class="star-fall" style="left:${left}%;--drift:${drift}px;animation-delay:${delay}s;animation-duration:${duration}s">${emoji}</span>`;
+  }).join('');
+  return fireworks + stars;
+}
+function renderCelebration(code) {
+  const particles = Array.from({ length: 24 }, () => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 70 + Math.random() * 150;
+    const dx = Math.round(Math.cos(angle) * dist);
+    const dy = Math.round(Math.sin(angle) * dist);
+    const delay = (Math.random() * 0.2).toFixed(2);
+    const emoji = CELEBRATE_EMOJI[Math.floor(Math.random() * CELEBRATE_EMOJI.length)];
+    return `<span class="burst" style="--dx:${dx}px;--dy:${dy}px;animation-delay:${delay}s">${emoji}</span>`;
+  }).join('');
+  const readingBtn = session && session.mode === 'reading'
+    ? '<button class="secondary" id="continueReadingBtn2">📖 Continue reading</button>' : '';
+  return `
+    <div class="celebrate">
+      ${particles}
+      <h2>🎉 ${code} mastered!</h2>
+      <p>10 correct in a row. What next?</p>
+      <div class="next-choices">
+        <button class="primary" id="mixBtn2">🔀 Mix it up</button>
+        <button class="secondary" id="sameBtn2">🔁 Practice ${code} again</button>
+        <button class="secondary" id="dashBtn2">🏠 Dashboard</button>
+        ${readingBtn}
+      </div>
+    </div>`;
+}
+
+function renderBatchReport() {
+  const { batchCount, batchCorrect, mode, fixedCode } = session;
+  const repeatLabel = mode === 'node' ? `🔁 Another batch (${fixedCode})` : mode === 'reading' ? '🔁 Continue' : '🔁 Another batch';
+  return `
+    <div class="celebrate">
+      ${renderFireworksStarShower()}
+      <h2>📊 Batch complete</h2>
+      <p>${batchCorrect} / ${batchCount} correct</p>
+      <div class="next-choices">
+        <button class="primary" id="mixBtn3">🔀 Mix it up</button>
+        <button class="secondary" id="repeatBtn3">${repeatLabel}</button>
+        <button class="secondary" id="dashBtn3">🏠 Dashboard</button>
+      </div>
+    </div>`;
+}
+
+// Reading-mode-only terminal screen: shown whenever the NEXT step would cross into a different
+// verse, regardless of whether the 10-question batch cap was also hit — a verse boundary always
+// ends the current run of questions (see peekNextVerseCrossing/advanceWalk).
+function renderVerseComplete() {
+  const { batchCount, batchCorrect } = session;
+  const curStep = walkSteps[walkPos.stepIdx];
+  const verseRef = curStep ? curStep.verseRef : null;
+  const chapterDone = !walkSteps[walkPos.stepIdx + 1];
+  return `
+    <div class="celebrate">
+      <h2>📖 ${chapterDone ? 'Chapter complete!' : 'Verse ' + esc(verseRef || '') + ' complete'}</h2>
+      <p>${batchCorrect} / ${batchCount} correct this verse</p>
+      <div class="next-choices">
+        ${chapterDone ? '' : '<button class="primary" id="nextVerseBtn">➡ Next verse</button>'}
+        <button class="secondary" id="repeatVerseBtn">🔁 Try this verse again</button>
+        <button class="secondary" id="pickAgainBtn">📖 Pick again</button>
+      </div>
+    </div>`;
+}
+
+// Three distinct question shapes share the same options/feedback/bottom layout, differing only
+// in what's asked: samāsa classification (show a word, ask its type), no-sandhi word-boundary
+// (show a fused string, ask where it splits), and the default sandhi question (show two words,
+// ask for the joined form).
+function renderPrompt(item) {
+  const srcLine = `<div class="src">${item.source === 'mula' ? 'mūla' : 'bhāṣya'}${item.ref ? ' · ' + esc(item.ref) : ''}</div>`;
+  const ctxLine = item.context ? `<div class="context">${esc(item.context)}</div>` : '';
+  if (item.kind === 'verbvoice') {
+    // The verse-opener "broader view first" question: identify the verb's voice before diving into
+    // the word-by-word questions. Naming the root orients the learner to WHICH verb governs the line.
+    const rootBit = item.root ? ` (√${esc(item.root)})` : '';
+    return `<div class="prompt">${esc(item.verb)}${rootBit}</div>
+      <div class="prompt-hint">This is the verse's verb. Is it कर्तरि (active), कर्मणि (passive), or भावे (impersonal)? — this fixes which word will be the कर्ता/कर्म and in which case.</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'samasa') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">What type of samāsa is this?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'samasaVigraha') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">How does this compound split (विग्रह)? Pick the correct relation.</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'samasaType') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">What type of samāsa is this?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'samasaLeaf') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">This is the प्रातिपदिक (base stem). How is it derived — कृदन्त (from a verb root) or तद्धित (from a nominal)?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'vibhakti') {
+    const hint = item.subtype === 'stem' ? 'What is this word’s prātipadika (stem)?'
+      : item.subtype === 'gender' ? 'Is this word masculine, feminine, or neuter?'
+      : item.subtype === 'sarvanama' ? 'Is this word’s prātipadika a sarvanāma (from the closed pronoun class)?'
+      : 'What case and number is this?';
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">${hint}</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'dhatu') {
+    const hint = item.subtype === 'prayoga' ? 'Is this verb कर्तरि (active) or कर्मणि (passive/impersonal)?'
+      : 'What tense/person/number/voice is this verb form?';
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">${hint}</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'krdanta') {
+    const hint = item.subtype === 'prayoga' ? 'Is this participle कर्तरि (active) or कर्मणि (passive/impersonal)?'
+      : 'Which kṛt-pratyaya formed this word?';
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">${hint}</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'taddhita') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">Which taddhita-pratyaya (secondary derivation) formed this word?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka' && item.subtype === 'associate') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">This word is conjoined (सुप्_समुच्चितम्) with another word in the verse via "and" — which one?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka' && item.subtype === 'governor') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">This word's kāraka role is defined relative to a verb or participle elsewhere in the verse — which one does it attach to?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka' && item.subtype === 'implied') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">This word's ${esc(item.role)} is elided — implied by context, not printed anywhere in this verse. Which word (absent from the text below) supplies it?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'karaka') {
+    const occHint = item.occurrenceTotal > 1
+      ? ` (${ordinal(item.occurrenceIndex)} of ${item.occurrenceTotal} occurrences of "${esc(item.word)}" in this verse${item.line ? `, line ${item.line}` : ''})`
+      : '';
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">What is this word's syntactic relation (kāraka or otherwise) to the rest of the sentence?${occHint}</div>${ctxLine}${srcLine}`;
+  }
+  if (item.kind === 'spot') {
+    const hint = item.subtype === 'krdanta' ? 'Which word here is a kṛdanta (participle)?' : 'Which word here is taddhita-derived (secondary derivation)?';
+    return `<div class="prompt spot-prompt">${esc(item.context)}</div>
+      <div class="prompt-hint">${hint}</div>${srcLine}`;
+  }
+  if (item.kind === 'meaning') {
+    return `<div class="prompt">${esc(item.word)}</div>
+      <div class="prompt-hint">What does this word mean?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.subtype === 'fullsplit') {
+    return `<div class="prompt">${esc(item.surface)}</div>
+      <div class="prompt-hint">Split this into all its original words.</div>${ctxLine}${srcLine}`;
+  }
+  if (item.subtype === 'spotlopa') {
+    const hint = item.code === 'VSL' ? 'Which word here is missing its visarga (due to sandhi with the next word)?'
+      : 'Which word here has silently absorbed a leading vowel from the previous word?';
+    return `<div class="prompt spot-prompt">${esc(item.context)}</div>
+      <div class="prompt-hint">${hint}</div>${srcLine}`;
+  }
+  if (item.subtype === 'lopa') {
+    return `<div class="prompt">${esc(item.before[0])} <span class="plus">+</span> ${esc(item.before[1])}</div>
+      <div class="prompt-hint">What was elided (lost) at this junction?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.code === 'ABT') {
+    return `<div class="prompt">${esc(item.after)}</div>
+      <div class="prompt-hint">Where's the word boundary?</div>${ctxLine}${srcLine}`;
+  }
+  if (item.askSplit) {
+    return `<div class="prompt">${esc(item.after)}</div>
+      <div class="prompt-hint">What are the two original words (before sandhi)?</div>${ctxLine}${srcLine}`;
+  }
+  // Plain join-direction sandhi question (global mastery/mix-it-up pool, not reading-walk —
+  // those set askSplit and are handled above). No context line here: the fused word appearing
+  // in context would just hand the answer over.
+  return `<div class="prompt">${esc(item.before[0])} <span class="plus">+</span> ${esc(item.before[1])} <span class="arrow">→</span> ?</div>
+    ${srcLine}`;
+}
+function displayOption(item, opt) { return item.kind === 'samasa' ? samasaLabel(opt) : opt; }
+
+// Truncate long bhāṣya context so the resulting GitHub issue URL doesn't run into browser/GitHub
+// length limits (~8k chars) — the report body only needs enough context to locate the question,
+// not the full clause.
+function truncateForReport(s, max) { return !s ? s : s.length > max ? s.slice(0, max) + '…' : s; }
+// Pulls the actual question text/prompt out of renderPrompt()'s HTML (via a detached element,
+// not by re-deriving the per-kind hint strings a second time) so the report body shows exactly
+// what the learner saw, and stays in sync automatically if renderPrompt's wording ever changes.
+function extractPromptText(item) {
+  const div = document.createElement('div');
+  div.innerHTML = renderPrompt(item);
+  const word = div.querySelector('.prompt');
+  const hint = div.querySelector('.prompt-hint');
+  return { word: word ? word.textContent.trim() : '', question: hint ? hint.textContent.trim() : '' };
+}
+// target: {item, code, options, correctIndex, key, chapterKeyForReport, moola, verseLabel, answered, picked}
+// Pure function of `target` alone (no name/email/comments — those are separate form fields) —
+// this is what PRE-FILLS the report textarea (same spirit as the GitHub issue link's own
+// pre-filled body: the reporter sees exactly what's about to be sent and can edit/add to it,
+// rather than it being assembled invisibly only at submit time).
+// The service-worker cache actually serving THIS client — surfaced in reports so a stale cache (a
+// report expecting an answer already fixed in a newer deploy) is instantly obvious (Harsha,
+// 2026-08-18). Populated async on load; after activate the SW keeps exactly one 'sandhi-quiz-v*'
+// cache (older ones are deleted), so this normally reads a single version.
+let ACTIVE_CACHE = 'pending';
+try {
+  if (typeof caches !== 'undefined' && caches.keys) {
+    caches.keys().then(ks => {
+      const c = ks.filter(k => /vyakarana|sandhi-quiz/.test(k));   // cache prefix is now 'vyakarana-<hash>'
+      ACTIVE_CACHE = c.length ? c.join(',') : 'none';
+    }).catch(() => { ACTIVE_CACHE = 'unknown'; });
+  } else { ACTIVE_CACHE = 'no-sw'; }
+} catch (e) { ACTIVE_CACHE = 'unknown'; }
+
+// Device/OS/browser summary for issue reports (Harsha, 2026-08-17) — this whole session turned on
+// "Android phone vs desktop", and reports carried nothing to tell them apart. Parsed from
+// navigator.userAgent (crude but enough to triage phone/tablet/laptop + OS + browser), plus the raw
+// UA and viewport for the awkward cases. Best-effort: never throws, degrades to 'unknown'.
+// The actually-running app bundle hash, read from its own <script src="app.<hash>.js"> — the DEFINITIVE
+// "which code is executing" signal for bug reports. A stale service-worker/CDN copy reports an OLD hash
+// even when the deploy is current, so this instantly separates "stale cache" from "real bug" (Harsha,
+// 2026-08-22). Compare against the live bundle hash to tell if the reporter is up to date.
+function appBuildId() {
+  try {
+    for (const s of document.getElementsByTagName('script')) {
+      const m = (s.src || '').match(/app\.([0-9a-f]{10})\.js/);
+      if (m) return m[1];
+    }
+  } catch (e) {}
+  return 'unknown';
+}
+function deviceInfoLine() {
+  try {
+    const ua = (navigator && navigator.userAgent) || '';
+    const os = /Android/i.test(ua) ? 'Android'
+      : /iPhone|iPod/i.test(ua) ? 'iOS' : /iPad/i.test(ua) ? 'iPadOS'
+      : /Windows/i.test(ua) ? 'Windows' : /Mac OS X|Macintosh/i.test(ua) ? 'macOS'
+      : /CrOS/i.test(ua) ? 'ChromeOS' : /Linux/i.test(ua) ? 'Linux' : 'unknown OS';
+    const device = /iPad|Tablet/i.test(ua) ? 'tablet' : /Mobi|Android|iPhone|iPod/i.test(ua) ? 'phone' : 'desktop/laptop';
+    const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome'
+      : /Firefox\//.test(ua) ? 'Firefox' : /Version\/.*Safari/.test(ua) ? 'Safari' : 'unknown browser';
+    const vp = `${window.innerWidth || 0}×${window.innerHeight || 0}`;
+    const ctrl = (navigator.serviceWorker && navigator.serviceWorker.controller) ? 'sw-controlled' : 'no-controller';
+    return `build: app.${appBuildId()}\ndevice: ${device} · ${os} · ${browser} · viewport ${vp}\napp cache: ${ACTIVE_CACHE} (${ctrl})\nuser-agent: ${ua}`;
+  } catch (e) { return `build: app.${appBuildId()}\napp cache: ${ACTIVE_CACHE}\ndevice: (unavailable)`; }
+}
+function buildReportDetails(target) {
+  const { item, code, options, correctIndex, acceptIndices = [], key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
+  const { word: promptWord, question } = extractPromptText(item);
+  const wordLabel = item.word || (item.before ? item.before.join(' + ') : promptWord || key);
+  const yourAnswer = answered && picked >= 0 && options[picked] !== undefined ? displayOption(item, options[picked]) : '(not answered — flagged before choosing)';
+  const details = [
+    `report-key: ${key}`,
+    `kind: ${item.kind || 'sandhi'}${item.subtype ? ' / subtype: ' + item.subtype : ''}`,
+    `code: ${code}`,
+    chapterKeyForReport ? `chapterKey: ${chapterKeyForReport}` : null,
+    item.ref ? `ref: ${item.ref}` : null,
+    item.source ? `source: ${item.source}` : null,
+    item.slug ? `slug: ${item.slug}` : null,
+    verseLabel ? `verse: ${verseLabel}` : null,
+    `word: ${wordLabel}`,
+    '',
+    `question: ${question || '(n/a)'}`,
+    moola && moola !== item.context ? `mūlam: ${truncateForReport(moola, 400)}` : null,
+    item.context ? `${item.source === 'mula' ? 'mūlam' : 'bhāṣyam'} line: ${truncateForReport(item.context, 400)}` : null,
+    '',
+    `choices shown: ${options.map((o, i) => `${i === correctIndex ? '✓ ' : acceptIndices.includes(i) ? '(✓) ' : ''}${displayOption(item, o)}`).join(' | ')}`,
+    `your answer: ${yourAnswer}`,
+    '',
+    deviceInfoLine(),
+  ].filter(x => x !== null).join('\n');
+  const subject = `Wrong answer: ${code} — ${wordLabel}`;
+  return { subject, details };
+}
+// The structured details are ALWAYS re-derived fresh from `target` here, never taken from the
+// editable textarea — a reporter could otherwise tamper with report-key/ref/choices/etc. before
+// submitting. `userComment` is the one genuinely free-text field (their own remarks), prepended.
+function composeReportMessage(target, userComment) {
+  const { details } = buildReportDetails(target);
+  return userComment ? `Comments: ${userComment}\n\n${details}` : details;
+}
+function buildReportIssueUrl(target, name, email, message) {
+  const { subject } = buildReportDetails(target);
+  const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n\n${message}`;
+  const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
+  url.searchParams.set('title', subject);
+  url.searchParams.set('body', fullBody);
+  return url.toString();
+}
+// Primary, low-friction report path: a plain fetch() POST straight to Formspree, no SDK/CDN
+// script (this app is offline-capable via a service worker and otherwise has zero runtime
+// dependencies — pulling in @formspree/ajax would silently break offline and break that
+// convention for one feature). Formspree treats `name`/`email`/`_subject` specially; everything
+// else goes in `message`. Returns true/false rather than throwing — callers decide the fallback
+// (the GitHub issue link) themselves.
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mnpadval';
+async function submitReportToFormspree(target, name, email, message) {
+  const { subject } = buildReportDetails(target);
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message }),
+    });
+    return res.ok;
+  } catch (e) { return false; } // offline, or Formspree unreachable — caller falls back to the GitHub link
+}
+// Which question a report targets — 'current' (the one on screen right now, answered or not: an
+// expert may spot that the right answer isn't even offered before ever picking one) or 'previous'
+// (the one just left, for when the app has already auto-advanced by the time someone wants to
+// flag it). Both shapes match buildReportIssueUrl's expected `target`.
+function reportTargetData(which) {
+  if (which === 'previous') return lastQuestion;
+  const { item, code, options, correctIndex, acceptIndices, key, chapterKeyForReport, moola, verseLabel, answered, picked } = view;
+  return { item, code, options, correctIndex, acceptIndices, key, chapterKeyForReport, moola, verseLabel, answered, picked };
+}
+// Shows the located mūlam/bhāṣyam line(s) + verse ref right in the report form, so the reporter
+// can confirm what they're actually flagging before submitting — not just baked invisibly into
+// the eventual GitHub issue body. Node-pool (mixed/practice) items only ever carry ONE located
+// line (mūlam if source==='mula', bhāṣyam if source==='bhashya' — build_items.js never pairs a
+// bhāṣya item back to its own verse's mūlam text); reading-walk items can carry both (the step's
+// own `moola` alongside the item's bhāṣya-clause `context`), so show whichever is available.
+function renderReportBreadcrumb(target) {
+  const { item, options, correctIndex, acceptIndices = [], answered, picked, verseLabel, moola } = target;
+  const ref = verseLabel || item.ref || null;
+  const lines = [];
+  if (moola && moola !== item.context) lines.push(`<div>mūlam: ${esc(truncateForReport(moola, 200))}</div>`);
+  if (item.context) lines.push(`<div>${item.source === 'mula' ? 'mūlam' : 'bhāṣyam'} line: ${esc(truncateForReport(item.context, 200))}</div>`);
+  // Shown for BOTH 'current' and 'previous' targets — a reporter recalling the PREVIOUS question
+  // (already scrolled past by the time they click "flag previous question") otherwise has no way
+  // to see what was actually asked/offered without digging through the pre-filled textarea below;
+  // this makes it visible at a glance, matching what's already going into the report (found via
+  // Harsha's real usage: "the user doesn't know that the full context is being given back").
+  if (options && options.length) {
+    const choices = options.map((o, i) => `${i === correctIndex ? '✓ ' : acceptIndices.includes(i) ? '(✓) ' : ''}${esc(displayOption(item, o))}`).join(' | ');
+    lines.push(`<div>choices: ${choices}</div>`);
+    if (answered && picked >= 0 && options[picked] !== undefined) {
+      lines.push(`<div>your answer: ${esc(displayOption(item, options[picked]))}</div>`);
+    }
+  }
+  if (!ref && !lines.length) return '<div class="report-breadcrumb">(no located verse/context for this item)</div>';
+  return `<div class="report-breadcrumb">${ref ? `<div class="ref">${esc(ref)}</div>` : ''}${lines.join('')}</div>`;
+}
+function renderReportArea() {
+  if (view.reportOpen) {
+    const targetLabel = view.reportOpen === 'previous' ? 'the previous question' : 'this question';
+    const target = reportTargetData(view.reportOpen);
+    const status = view.reportSubmitError
+      ? `<div class="report-status error">Couldn't send — check your connection and try again, or use the GitHub issue link below.</div>`
+      : '';
+    return `<div class="report-area">
+      <div class="report-target-label">Reporting ${esc(targetLabel)}: <span class="report-autosent-note">(the details below will be auto-sent with your report)</span></div>
+      ${renderReportBreadcrumb(target)}
+      <label>Report details (auto-sent; select-all &amp; copy to paste elsewhere)
+        <textarea class="report-copy" readonly rows="10" onclick="this.select()">${esc(buildReportDetails(target).details)}</textarea>
+      </label>
+      <label>Your name <input type="text" id="reportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
+      <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
+      <label>Add your own comments
+        <textarea id="reportReason" placeholder="optional — why do you think this is wrong?"></textarea>
+      </label>
+      ${status}
+      <button class="secondary" id="reportSubmitBtn" ${view.reportSubmitting ? 'disabled' : ''}>${view.reportSubmitting ? 'Sending…' : 'Submit report'}</button>
+      <button class="link" id="reportCancelBtn">cancel</button>
+      <div class="report-fallback"><button class="link" id="reportGithubBtn">or file a GitHub issue instead ↗</button></div>
+    </div>`;
+  }
+  const parts = [];
+  parts.push(view.reportedCurrent
+    ? `<span class="report-area reported">🚩 reported — hidden from your practice. Thank you!</span>`
+    : `<button class="link" id="reportCurrentBtn">🚩 report this question</button>`);
+  if (lastQuestion) {
+    parts.push(view.reportedPrevious
+      ? `<span class="report-area reported">🚩 previous question flagged. Thank you!</span>`
+      : `<button class="link" id="reportPreviousBtn">🚩 flag previous question</button>`);
+  }
+  return parts.join(' ');
+}
+
+function renderQuiz() {
+  const { code, item, options, correctIndex, acceptIndices = [], answered, picked, justMastered, crossingVerse } = view;
+  const isCorrectIdx = (i) => i === correctIndex || acceptIndices.includes(i);
+  const { mode, batchCount } = session;
+  const p = ensureProgress(code);
+  const modeTag = mode === 'mixed' ? ' · 🔀 mixed' : mode === 'adaptive' ? ' · adaptive'
+    : mode === 'reading' ? ` · 📖 ${esc(item.ref || '')}` : '';
+  // recursive-samāsa: never end a batch mid-compound — require ≥ BATCH_SIZE AND the compound is finished.
+  const batchDone = answered && batchCount >= BATCH_SIZE && (mode !== 'samasa' || view.compoundDone);
+  const verseComplete = answered && mode === 'reading' && crossingVerse;
+  const bottom = !answered ? '' : justMastered
+    ? renderCelebration(code)
+    : verseComplete ? renderVerseComplete()
+    : batchDone ? renderBatchReport()
+    : '<button class="primary" id="nextBtn">Next question →</button>';
+  // Mix-it-up, reading-walk, AND adaptive ("Practice") mode are all partly a "which node is this
+  // even testing?" challenge — showing the code/label upfront (e.g. "GUN · guṇa") hands that away
+  // before the learner has looked at the question at all. Adaptive draws a weighted-random code
+  // across ALL nodes each question (pickWeightedNode) — the learner hasn't chosen a specific node
+  // for THIS question any more than mixed mode has, so it gets the same treatment (Harsha,
+  // 2026-08-11: caught this after shipping the mixed/reading fix). Applies uniformly to every node
+  // kind, gated behind an explicit hint click. Only 'node' mode (a single fixed code deliberately
+  // chosen from the dashboard) still shows it plainly, since there's nothing to hide there.
+  const showNodeLabel = mode === 'node' || view.hintRevealed;
+  const nodeLabelHtml = showNodeLabel
+    ? `<span class="code">${code}</span> <span class="label">${LABELS[code] || ''}</span>`
+    : `<button class="link" id="hintBtn">💡 hint</button>`;
+  app.innerHTML = `
+    <div class="quiz-head">
+      <button class="link" id="backBtn">← dashboard</button>
+      ${nodeLabelHtml}<span class="mode-tag">${modeTag}</span>
+      <span class="batch">${mode === 'samasa' ? `Q${batchCount + (answered ? 0 : 1)}` : `Q${Math.min(batchCount + (answered ? 0 : 1), BATCH_SIZE)}/${BATCH_SIZE}`}</span>
+      <span class="streak">streak ${p.streak} · best ${p.best}${p.mastered ? ' · ✓ mastered' : ''}</span>
+    </div>
+    ${code === 'SAMR' ? `<div class="samr-src muted" style="font-size:13px;margin:-4px 0 8px">peel from: ${[['all','सर्व'],['mula','मूल'],['bhasya','भाष्य']].map(([s,l])=>`<button class="link samr-src-btn" data-src="${s}"${samrSrc===s?' style="font-weight:700;text-decoration:underline"':''}>${l}</button>`).join(' · ')}</div>` : ''}
+    <div class="question">
+      ${renderPrompt(item)}
+    </div>
+    <div class="options">
+      ${options.map((opt, i) => {
+        let cls = '';
+        if (answered) {
+          // Highlight the canonical correct AND any accepted alternate (e.g. कर्म for a योगम् tagged
+          // समानाधिकरणम्) as green; a genuinely wrong pick stays red.
+          if (isCorrectIdx(i)) cls = 'correct';
+          else if (i === picked) cls = 'wrong';
+        }
+        return `<button class="opt ${cls}" data-i="${i}" ${answered ? 'disabled' : ''}>${esc(displayOption(item, opt))}</button>`;
+      }).join('')}
+    </div>
+    ${!answered ? `<div class="reveal-row"><button class="link" id="revealBtn">🔑 I don't know — reveal the answer</button></div>` : ''}
+    <div class="feedback">${answered ? (view.revealed
+        ? `🔑 revealed — the correct answer is highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`
+        : isCorrectIdx(picked)
+        ? `correct! ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`
+        : `not quite — correct answer highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`) : ''}</div>
+    ${renderReportArea()}
+    ${bottom}`;
+  document.getElementById('backBtn').onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
+  app.querySelectorAll('.samr-src-btn').forEach(b => b.onclick = () => {
+    samrSrc = b.dataset.src; try { localStorage.setItem('vv_samr_src', samrSrc); } catch (e) {}
+    startQuiz('samasa', 'SAMR');   // re-seed the queue from the chosen source pool
+  });
+  const hintBtn = document.getElementById('hintBtn');
+  if (hintBtn) hintBtn.onclick = () => { view = { ...view, hintRevealed: true }; renderQuiz(); };
+  const reportCurrentBtn = document.getElementById('reportCurrentBtn');
+  if (reportCurrentBtn) reportCurrentBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'current', reportSubmitError: false }; renderQuiz(); };
+  const reportPreviousBtn = document.getElementById('reportPreviousBtn');
+  if (reportPreviousBtn) reportPreviousBtn.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { ...view, reportOpen: 'previous', reportSubmitError: false }; renderQuiz(); };
+  const reportCancelBtn = document.getElementById('reportCancelBtn');
+  if (reportCancelBtn) reportCancelBtn.onclick = () => { view = { ...view, reportOpen: null, reportSubmitError: false }; renderQuiz(); };
+  const reportSubmitBtn = document.getElementById('reportSubmitBtn');
+  if (reportSubmitBtn) reportSubmitBtn.onclick = async () => {
+    const name = document.getElementById('reportName').value.trim();
+    const email = document.getElementById('reportEmail').value.trim();
+    const userComment = document.getElementById('reportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const wasCurrentUnanswered = view.reportOpen === 'current' && !answered;
+    const target = reportTargetData(view.reportOpen);
+    const message = composeReportMessage(target, userComment);
+    view = { ...view, reportSubmitting: true, reportSubmitError: false };
+    renderQuiz();
+    const ok = await submitReportToFormspree(target, name, email, message);
+    if (!ok) { view = { ...view, reportSubmitting: false, reportSubmitError: true }; renderQuiz(); return; }
+    hiddenReports.add(target.key);
+    saveHiddenReports(hiddenReports);
+    if (wasCurrentUnanswered) { nextQuestion(); return; } // don't make them answer a question they just flagged as broken
+    const flag = view.reportOpen === 'previous' ? 'reportedPrevious' : 'reportedCurrent';
+    view = { ...view, reportOpen: null, reportSubmitting: false, [flag]: true };
+    renderQuiz();
+  };
+  const reportGithubBtn = document.getElementById('reportGithubBtn');
+  if (reportGithubBtn) reportGithubBtn.onclick = () => {
+    const name = document.getElementById('reportName').value.trim();
+    const email = document.getElementById('reportEmail').value.trim();
+    const userComment = document.getElementById('reportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const target = reportTargetData(view.reportOpen);
+    const message = composeReportMessage(target, userComment);
+    window.open(buildReportIssueUrl(target, name, email, message), '_blank', 'noopener');
+    // Not marked reported/hidden here — opening the pre-filled page doesn't guarantee the visitor
+    // actually has a GitHub account and completes the submission on that tab.
+  };
+  if (answered && justMastered) {
+    document.getElementById('mixBtn2').onclick = () => startQuiz('mixed');
+    document.getElementById('sameBtn2').onclick = () => startQuiz('node', code);
+    document.getElementById('dashBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    const contBtn = document.getElementById('continueReadingBtn2');
+    if (contBtn) contBtn.onclick = () => continueReadingFromCelebration();
+  } else if (answered && verseComplete) {
+    const nextVerseBtn = document.getElementById('nextVerseBtn');
+    if (nextVerseBtn) nextVerseBtn.onclick = () => continueReadingBatch();
+    document.getElementById('repeatVerseBtn').onclick = () => repeatCurrentVerse();
+    document.getElementById('pickAgainBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
+  } else if (answered && batchDone) {
+    document.getElementById('mixBtn3').onclick = () => startQuiz('mixed');
+    document.getElementById('repeatBtn3').onclick = () => {
+      if (mode === 'reading') continueReadingBatch();
+      else startQuiz(session.mode, session.fixedCode);
+    };
+    document.getElementById('dashBtn3').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  } else if (answered) {
+    document.getElementById('nextBtn').onclick = () => goToNextQuestion(mode); // manual override, skips the auto-advance wait
+    // Don't auto-advance out from under someone mid-report — they cancel or submit to move on. Also
+    // don't auto-advance when the answer was REVEALED (Harsha, 2026-08-17): they chose not to guess
+    // precisely so they could read the answer, so let them move on with an explicit Next click.
+    if (!view.reportOpen && !view.revealed && autoAdvanceOn()) {
+      pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), isCorrectIdx(picked) ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
+    }
+  } else {
+    const revealBtn = document.getElementById('revealBtn');
+    if (revealBtn) revealBtn.onclick = () => {
+      // Reveal the answer without guessing (all MCQ modes: reading / node / mixed / adaptive). Counts
+      // as a miss for mastery (streak resets — honest: they didn't know it), advances the batch
+      // counter, but never auto-advances (handled above) so they can read the answer at their pace.
+      playAnswerSound(false);
+      recordAnswer(code, false);
+      session.batchCount++;
+      if (session.batchCount === BATCH_SIZE) setTimeout(playBatchCompleteSound, 400);
+      const crossing = mode === 'reading' ? peekNextVerseCrossing() : false;
+      view = { ...view, answered: true, picked: -1, revealed: true, justMastered: false, crossingVerse: crossing };
+      renderQuiz();
+    };
+    app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+      const i = +btn.dataset.i;
+      const correct = isCorrectIdx(i);
+      playAnswerSound(correct);
+      const { justMastered } = recordAnswer(code, correct);
+      // A 'spot' item built from a real kṛdanta+taddhita co-occurrence (creditBoth) tests telling
+      // BOTH categories apart, not just one — so it credits both nodes' streaks, not only the one
+      // named in its own `code`. (No second celebration screen if the other node also masters on
+      // this exact answer — that's an acceptable, deliberately unhandled rare coincidence, not a bug.)
+      if (item.kind === 'spot' && item.creditBoth) recordAnswer(code === 'KRT' ? 'TAD' : 'KRT', correct);
+      session.batchCount++;
+      if (correct) session.batchCorrect++;
+      if (session.batchCount === BATCH_SIZE) setTimeout(playBatchCompleteSound, 400);
+      const crossing = mode === 'reading' ? peekNextVerseCrossing() : false;
+      view = { ...view, answered: true, picked: i, justMastered, crossingVerse: crossing };
+      renderQuiz();
+    });
+  }
+}
+
+// ==== Guided kāraka tutorial (Gita mūla, one verse at a time) ====
+// Per-verse dependency-cluster walkthrough built from the UoHyd e-reader's own kāraka analysis
+// (searchtool/khan/build_karaka_tutorial.js), NOT the random-draw KAR node above — this teaches
+// the analysis PROCEDURE (find the verb, its voice, its कर्ता/कर्म, agreement, coordination,
+// modifiers, everything else) one verse at a time, click-based rather than multiple-choice, since
+// the answer is always a word already sitting in the sentence. See
+// /Users/hlakshmi/.claude/plans/woolly-orbiting-codd.md for the full design.
+const TUTORIAL_KEY = 'sandhiQuizTutorialProgress'; // { lastRef }
+const TUTORIAL_PROGRESS_KEY = 'sandhiQuizTutorialCompleted'; // { [ref]: {completedAt, correctSteps, totalSteps} }
+
+function loadTutorialProgress() {
+  try { return JSON.parse(localStorage.getItem(TUTORIAL_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveTutorialProgress(p) { localStorage.setItem(TUTORIAL_KEY, JSON.stringify(p)); }
+function loadTutorialCompletion() {
+  try { return JSON.parse(localStorage.getItem(TUTORIAL_PROGRESS_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveTutorialCompletionEntry(ref, correctSteps, totalSteps) {
+  const c = loadTutorialCompletion();
+  c[ref] = { completedAt: Date.now(), correctSteps, totalSteps };
+  localStorage.setItem(TUTORIAL_PROGRESS_KEY, JSON.stringify(c));
+}
+
+// Lazy-loaded exactly like ensureAxisLoaded above — TUTORIAL_DATA lives in its own global
+// namespace entirely, never merged into window.QUIZ_ITEMS/itemsByCode (this is a parallel mode,
+// not one more quiz axis).
+// Loads ONE text's tutorial data on demand (each text is a separate tutorial-data-<slug>.js file that
+// merges non-destructively into window.TUTORIAL_DATA). Pass a slug to load that text; omit it to load
+// the first manifest entry (Gita). Already-loaded texts resolve immediately; loads are de-duped per
+// slug so switching back and forth doesn't re-fetch.
+function ensureTutorialDataLoaded(slug) {
+  const manifest = window.TUTORIAL_MANIFEST || [];
+  const entry = slug ? manifest.find(m => m.slug === slug) : manifest[0];
+  if (!entry) return Promise.reject(new Error('no tutorial data available'));
+  if (window.TUTORIAL_DATA && window.TUTORIAL_DATA[entry.slug]) return Promise.resolve();
+  ensureTutorialDataLoaded._pending = ensureTutorialDataLoaded._pending || {};
+  if (ensureTutorialDataLoaded._pending[entry.slug]) return ensureTutorialDataLoaded._pending[entry.slug];
+  const p = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = entry.file;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('failed to load ' + entry.file));
+    document.head.appendChild(s);
+  });
+  ensureTutorialDataLoaded._pending[entry.slug] = p;
+  return p;
+}
+
+let tutorialVerses = [];
+let tutorialVerseIdx = 0;
+let tutorialSentIdx = 0;   // a verse can have >1 sentence — walked in order, independently clustered
+let tutorialSteps = [];    // flattened, cluster-major, for the CURRENT sentence only
+let tutorialStepIdx = 0;
+let tutorialScores = [];   // per-step scores this sentence, folded into per-verse completion
+// Which guided walk is running: 'vigraha' = the full कारक/role analysis (वाक्य-विग्रह, all texts);
+// 'clause' = वाक्य-विभाग, the segmentation-first walk (find clause-heads → group each clause's words →
+// supply the अध्याहार agent/verb). Clause mode runs ONLY on texts that carry gold `sentence.clauses`
+// (every Gemini text; NOT BG, whose e-reader source emitted no clause decomposition). (Harsha, 2026-08-27)
+let tutorialMode = 'vigraha';
+// Clause-mode discovery style: 'socratic' (default) walks EVERY non-nucleus word and asks which clause
+// it belongs to (the learner draws every boundary, no scaffolding); 'guided' asks per-clause "click this
+// clause's words". Switchable via ?cstyle=guided for comparison. (Harsha, 2026-08-27)
+let clauseStyle = 'socratic';
+// How many words the socratic pass asks: 'auto' (default) = ask EVERY non-nucleus word on short verses,
+// but only the BOUNDARY-ADJACENT ones once a verse has many (interior words are unambiguous — skip them);
+// 'all' = always every word; 'smart' = always boundary-adjacent only. Override with ?cskip=all|smart.
+let clauseSkip = 'auto';
+const CLAUSE_SMART_THRESHOLD = 18;   // verse longer than this many words ⇒ auto switches to smart-skip
+                                     // (keeps normal ślokas full; trims only long prose/dialogue verses)
+// the कारक cluster whose governor IS this clause's head — gives the head's voice / करण / कर्म etc.,
+// needed to teach the passive-agent (कर्मणि) supply questions.
+function clusterForClauseHead(sentence, cl) {
+  if (!cl || cl.headWordIndex == null) return null;
+  return (sentence.clusters || []).find(c => c.governorWordIndex === cl.headWordIndex) || null;
+}
+// A short morphology brief for a clause head, from what tutorial-data carries: case·वचन·लिङ्ग for a
+// declined participle/subject (wordCodes are [vibhakti][vacana] for nominals), plus kind + voice +
+// transitivity. The dhātu/root and the kṛt-affix name (क्त) and root-meaning are NOT in tutorial-data
+// (they live in the morph layer) — so they're not shown here. (Harsha, 2026-08-27)
+const CLAUSE_CASE_NAMES = { '1': 'प्रथमा', '2': 'द्वितीया', '3': 'तृतीया', '4': 'चतुर्थी', '5': 'पञ्चमी', '6': 'षष्ठी', '7': 'सप्तमी', '8': 'सम्बोधन' };
+const CLAUSE_VAC_NAMES = { '1': 'एकवचन', '2': 'द्विवचन', '3': 'बहुवचन' };
+// A finite verb's code is [पुरुष][वचन] (NOT [vibhakti][vacana]): 3 प्रथम, 2 मध्यम, 1 उत्तम. (2026-08-29)
+const CLAUSE_PURUSHA_NAMES = { '3': 'प्रथमपुरुष', '2': 'मध्यमपुरुष', '1': 'उत्तमपुरुष' };
+const CLAUSE_LINGA = { 'पुं': 'पुंलिङ्ग', 'स्त्री': 'स्त्रीलिङ्ग', 'नपुं': 'नपुंसकलिङ्ग' };
+function headMorphBrief(sentence, cl, cluster) {
+  const i = cl.headWordIndex;
+  const parts = [];
+  const code = (sentence.wordCodes || [])[i] || '';
+  const g = (sentence.wordGenders || [])[i];
+  const finite = cluster && cluster.isFiniteVerb;
+  if (!finite && /^[1-8][1-3]$/.test(code)) {   // declined word → [vibhakti][vacana]
+    const decl = [CLAUSE_CASE_NAMES[code[0]], CLAUSE_VAC_NAMES[code[1]], g && CLAUSE_LINGA[g]].filter(Boolean).join('·');
+    if (decl) parts.push(decl);
+  }
+  if (cl.type === 'nominal') parts.push('verbless subject (the nucleus)');
+  else if (finite) {
+    // finite तिङन्त: surface its लकार · पुरुष·वचन · पद (code here is [पुरुष][वचन]). (2026-08-29)
+    const pv = /^[1-3][1-3]$/.test(code) ? [CLAUSE_PURUSHA_NAMES[code[0]], CLAUSE_VAC_NAMES[code[1]]].filter(Boolean).join('·') : '';
+    const vb = [cluster && cluster.lakara, pv, cluster && cluster.pada].filter(Boolean).join(' · ');
+    parts.push('finite verb, तिङन्त' + (vb ? ' — ' + vb : ''));
+  }
+  else parts.push('कृदन्त participle acting as the clause’s verb');
+  if (cluster && cluster.voice) parts.push(cluster.voice);
+  if (cluster && /सकर्मक|द्विकर्मक/.test(cluster.transitivity || '')) parts.push('सकर्मक → governs a कर्म');
+  return parts.join('; ');
+}
+// index of the gold clause that contains a given word (or null) — the answer key for clause segmentation.
+function wordClauseIdx(sentence, wordIndex) {
+  const cls = sentence.clauses || [];
+  for (let i = 0; i < cls.length; i++) if ((cls[i].words || []).includes(wordIndex)) return i;
+  return null;
+}
+// a word sits AT a clause boundary if its clause differs from the previous or next word's clause (or it
+// is the verse's first/last word) — the pedagogically meaningful picks. Interior words are unambiguous,
+// so smart-skip asks only these on long verses (Harsha, 2026-08-27).
+function isClauseBoundaryWord(sentence, i) {
+  const ci = wordClauseIdx(sentence, i);
+  const prev = i > 0 ? wordClauseIdx(sentence, i - 1) : null;
+  const next = i < sentence.words.length - 1 ? wordClauseIdx(sentence, i + 1) : null;
+  return ci !== prev || ci !== next;
+}
+// Boundary boxes built from the GOLD clauses (for the post-clustering reveal), NOT from clusters. Returns
+// null when clauses interleave (non-contiguous spans can't be drawn as clean non-overlapping boxes).
+function clauseGroupsFromGold(sentence) {
+  const cls = sentence.clauses || [];
+  if (cls.length < 2) return null;
+  const spans = cls.map((cl, idx) => ({ min: Math.min(...cl.words), max: Math.max(...cl.words), topClusterIdx: idx })).sort((a, b) => a.min - b.min);
+  for (let k = 1; k < spans.length; k++) if (spans[k].min <= spans[k - 1].max) return null;   // overlapping/interleaved
+  return spans;
+}
+
+function currentTutorialSentence() {
+  return tutorialVerses[tutorialVerseIdx].sentences[tutorialSentIdx];
+}
+function currentTutorialStep() { return tutorialSteps[tutorialStepIdx]; }
+
+// Cluster-major flattening (Harsha, confirmed): finish one governing verb/participle's full
+// mini-sequence (voice if finite → कर्ता → कर्म → कर्तृ/कर्म-सामानाधिकरण्य → समुच्चय → modifiers → remaining)
+// before moving to the next cluster, rather than looping step-type-major across all clusters.
+// कर्म always renders even when empty (Harsha's ruling — "no कर्म here" IS the teaching moment for
+// intransitivity); every other step-type is skipped when its cluster has nothing to ask about.
+// कर्ता-case sub-question (Harsha, 2026-08-17): before letting the learner CLICK the कर्ता, first
+// ask which case it should even be in, given the voice already identified — प्रथमा for कर्तरि,
+// तृतीया for कर्मणि/भावे. षष्ठी (2.3.65 कारक-षष्ठी) is only offered as a distractor when the
+// governor is genuinely a कृदन्त — offering it for a plain finite verb would be a fake distractor, since
+// षष्ठी is never actually live there.
+// The vibhakti a PRESENT word actually stands in, read from its wordCode ([vibhakti][vacana]) — null if
+// absent/unknown. We honour the corpus's OWN coding rather than deriving case only from voice, so the
+// tutorial never contradicts the text it displays (fidelity).
+function actualVibhakti(sentence, i) {
+  const code = ((sentence && sentence.wordCodes) || [])[i] || '';
+  return CLAUSE_CASE_NAMES[code[0]] || null;
+}
+// The कारक-षष्ठी signal: does an अनभिहित कर्ता/कर्म of a कृत्/कृदन्त governor actually stand in षष्ठी here?
+// Returns that word index, else null. This is real in the corpus (e.g. कठ 1.1.27 वरणीयः → मे in षष्ठी by
+// 2.3.71; केन 2.1 मीमांस्यम्; VC 139 प्राप्तः) — the voice-derived प्रथमा/तृतीया would be the WRONG answer
+// there. Only fires when a role word is genuinely present and 6x-coded.
+function sashthiKaraka(indices, sentence) {
+  for (const i of (indices || [])) if (actualVibhakti(sentence, i) === 'षष्ठी') return i;
+  return null;
+}
+const VOICE_TO_KARTA_CASE = { 'कर्तरि': 'प्रथमा', 'कर्मणि': 'तृतीया', 'भावे': 'तृतीया' };
+function kartaCaseOptions(c, sentence) {
+  const base = VOICE_TO_KARTA_CASE[c.voice] || 'प्रथमा';
+  // Fidelity (कारक-षष्ठी): when the agent is actually PRESENT in षष्ठी — a कृत्/कृदन्त governor taking its
+  // अनभिहित कर्ता in षष्ठी (2.3.65; कृत्य forms optionally षष्ठी/तृतीया by 2.3.71; present-sense क्त by
+  // 2.3.67) — the voice-derived प्रथमा/तृतीया is NOT the case the text uses. Make षष्ठी correct and accept
+  // the voice default too (both attested), so we never mark the text's own case wrong.
+  const sIdx = sashthiKaraka(c.karta, sentence);
+  const correct = sIdx != null ? 'षष्ठी' : base;
+  const accept = sIdx != null ? ['षष्ठी', base] : [base];
+  const options = (c.karmaGovernorIsKrdanta || sIdx != null) ? ['प्रथमा', 'तृतीया', 'षष्ठी'] : ['प्रथमा', 'तृतीया'];
+  const tip = sIdx != null
+    ? `Here the agent stands in <b>षष्ठी</b> — कारक-षष्ठी with a कृत्/कृदन्त governor (2.3.65). कृत्य forms (तव्य/अनीय/यत्) allow either षष्ठी or तृतीया (2.3.71); present-sense क्त takes षष्ठी (2.3.67). But when a कर्म is also present, the agent instead goes तृतीया (2.3.66).`
+    : '';
+  return { correct, options, accept, tip };
+}
+// कर्म-case sub-question (Harsha, 2026-08-16), mirroring कर्ता-case above — कर्तरि leaves कर्म in its
+// plain द्वितीया (अनुक्त); कर्मणि promotes it to प्रथमा (अभिहित). No भावे entry: भावे प्रयोग is only
+// used with अकर्मक roots by definition, so there's never a real कर्म to ask about in भावे — this
+// step is gated on c.karma.length (a real object exists) same as kartaCaseOptions is gated on
+// c.karta.length, so भावे clusters simply never reach here. षष्ठी distractor rule is identical to
+// कर्ता's (2.3.65 कर्तृकर्मणोः कृति applies to BOTH कर्ता and कर्म of a कृदन्त governor, not just कर्ता).
+const VOICE_TO_KARMA_CASE = { 'कर्तरि': 'द्वितीया', 'कर्मणि': 'प्रथमा' };
+function karmaCaseOptions(c, sentence) {
+  const base = VOICE_TO_KARMA_CASE[c.voice] || 'द्वितीया';
+  // कारक-षष्ठी (2.3.65/2.3.66): a कृत् action-noun governs its अनभिहित object in षष्ठी; when an agent is
+  // also present only the OBJECT keeps षष्ठी (2.3.66). Honour the text's actual coding, as with कर्ता.
+  const sIdx = sashthiKaraka(c.karma, sentence);
+  const correct = sIdx != null ? 'षष्ठी' : base;
+  const accept = sIdx != null ? ['षष्ठी', base] : [base];
+  const options = (c.karmaGovernorIsKrdanta || sIdx != null) ? ['द्वितीया', 'प्रथमा', 'षष्ठी'] : ['द्वितीया', 'प्रथमा'];
+  const tip = sIdx != null
+    ? `Here the object stands in <b>षष्ठी</b> — कारक-षष्ठी (2.3.65): a कृत् governor takes its अनभिहित कर्म in षष्ठी. With an agent also present, only the object keeps षष्ठी; the agent then goes तृतीया (2.3.66).`
+    : '';
+  return { correct, options, accept, tip };
+}
+// Emphatic/quotative/simile निपात particles — never a कारक of the verb (अवधारण: they qualify the preceding
+// word). The VC/Gemini adapter already buckets these into `nipata`, but texts built by the older pipeline
+// (BG/Gita) leave them in `remaining`/`modifiers`, so they'd sit un-quizzed (BG 4.3 एव). Reclassify them
+// into `nipata` at the shared layer so every text poses the correct निपात question (Harsha, 2026-08-20).
+// Emphatic/asseverative/quotative particles the model routinely mis-tags as क्रियाविशेषणम् (its catch-all
+// for particles it can't place) → they land in `modifiers` and get asked as adverbs (Kaṭha 1.1 ह/नाम under
+// आस — Harsha, 2026-08-21). These are all निपात, never manner-adverbs; safe to reclassify since we only
+// move words ALREADY sitting in modifiers/remaining.
+const NIPATA_WORDS = new Set(['एव', 'हि', 'तु', 'वै', 'खलु', 'उ', 'इति', 'स्म', 'नु', 'इव', 'अपि', 'ह', 'नाम', 'किल', 'नूनम्', 'वत', 'बत', 'हन्त', 'अङ्ग', 'स्विद्', 'चन', 'चेत्']);
+function normalizeNipata(sentence) {
+  for (const c of (sentence.clusters || [])) {
+    if (!Array.isArray(c.nipata)) c.nipata = [];
+    const add = wi => { if (!c.nipata.includes(wi)) c.nipata.push(wi); };
+    if (Array.isArray(c.remaining)) {   // objects {wordIndex,...}
+      const keep = [];
+      for (const o of c.remaining) { const wi = (o && typeof o === 'object') ? o.wordIndex : o; if (NIPATA_WORDS.has(sentence.words[wi])) add(wi); else keep.push(o); }
+      c.remaining = keep;
+    }
+    if (Array.isArray(c.modifiers)) {   // plain indices
+      const keep = [];
+      for (const i of c.modifiers) { if (NIPATA_WORDS.has(sentence.words[i])) add(i); else keep.push(i); }
+      c.modifiers = keep;
+    }
+  }
+}
+// A word in the `genitives` bucket is a षष्ठीसम्बन्ध (possessor) by definition, so its case is षष्ठी. Some
+// stems are syncretic in पञ्चमी/षष्ठी singular (त-stems भवत्→भवतः, विवस्वत्→विवस्वतः; ऋ-stems पितुः) and the
+// morph picks पञ्चमी — showing "51" for a genitive (BG 4.4 भवतः/विवस्वतः, Harsha). Resolve 5x→6x for such
+// words at the shared layer (idempotent; no-op for VC, whose genitives are already 6x). vacana preserved.
+function normalizeGenitiveCase(sentence) {
+  if (!Array.isArray(sentence.wordCodes)) return;
+  for (const c of (sentence.clusters || [])) {
+    for (const g of (c.genitives || [])) {
+      const code = sentence.wordCodes[g.wordIndex];
+      if (/^5[0-9]$/.test(code || '')) sentence.wordCodes[g.wordIndex] = '6' + code[1];
+    }
+  }
+}
+// ---- verb-out kāraka-trace helpers (Harsha, 2026-08-28) — the socratic discovery is now a trace: for
+// each nucleus, establish its valence, then place its own कारक words (each pick draws the boundary AND
+// teaches the relation), then mop up the rest. Peripheral kārakas ARE traced (that's where the same-case
+// discrimination — करणम् vs हेतु vs adverbial — lives); qualifiers / gerund-sub-clusters / adverbs are
+// swept together in the mop-up. ----
+// ALL of the nucleus's own kāraka/relational roles are traced individually (Harsha, 2026-08-28) so the
+// mop-up is left with only genuinely non-kāraka words (adjectives, adverbs, particles, genitives, negation,
+// predicate-agreement). `sequence` (the absolutive time-relation) is deliberately NOT here — गerunds get
+// their own attach+trace sub-sequence.
+const CLAUSE_PERIPHERAL_ROLES = ['karana', 'sampradana', 'apadana', 'adhikarana', 'hetu', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana'];
+// [name, gloss] per peripheral role — shared by the nucleus (clausePeripheral) and gerund
+// (clauseGerundPeripheral) trace prompts.
+const CLAUSE_ROLE_LABEL = {
+  karana: ['करणम्', 'the means/instrument — “by what?” (तृतीया, 2.3.18)'],
+  sampradana: ['सम्प्रदानम्', 'the recipient/purpose — “for whom/what?” (चतुर्थी, 2.3.13)'],
+  apadana: ['अपादानम्', 'the source — “from what?” (पञ्चमी, 2.3.28)'],
+  adhikarana: ['अधिकरणम्', 'the locus — “where/when?” (सप्तमी, 2.3.36)'],
+  hetu: ['हेतु', 'the cause/motive — “because of what?” (तृतीया/पञ्चमी, 2.3.23)'],
+  satisaptami: ['सति-सप्तमी', 'a locative-absolute circumstance — “when/while …” (सप्तमी)'],
+  itthambhuta: ['इत्थम्भूत-लक्षण', 'the mark by which the agent is recognized (तृतीया, 2.3.21)'],
+  upamana: ['उपमानम्', 'the standard of comparison — “like ___” (इव/वत्)'],
+  upameya: ['उपमेयम्', 'the thing being compared (to the उपमान)'],
+  sambodhana: ['सम्बोधन', 'the one addressed / called out to (सम्बोधन)'],
+  nirdharana: ['निर्धारण', 'the group it is singled out from — “among ___” (षष्ठी/सप्तमी, 2.3.41)'],
+};
+// The gerund/participle sub-clusters of a clause = non-head, non-finite cluster governors whose governor is
+// one of the clause's words. These are subordinate verbal forms (absolutives क्त्वा/ल्यप्, participles) that
+// carry their own कारक frame — traced as mini-nuclei when the verse has ≥2 nuclei (so "which nucleus does it
+// attach to?" is a real question). Returns [{cluster, clusterIdx}].
+function clauseGerundClusters(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return [];
+  const words = new Set(cl.words || []);
+  const out = [];
+  (sentence.clusters || []).forEach((c, ci) => {
+    if (c.isFiniteVerb) return;
+    if (c.governorWordIndex === cl.headWordIndex) return;   // the clause head itself (incl. a क्त predicate head) — traced as the nucleus
+    if (!words.has(c.governorWordIndex)) return;
+    out.push({ cluster: c, clusterIdx: ci });
+  });
+  return out;
+}
+function clauseNucleiCount(sentence) {
+  return (sentence.clauses || []).filter(c => c.headWordIndex != null).length;
+}
+// role arrays are either plain indices (karta/karma/samuccaya*) or {wordIndex,…} objects (sweep roles).
+function roleIndices(cluster, role) {
+  return (cluster[role] || []).map(x => (x && typeof x === 'object') ? x.wordIndex : x).filter(i => i != null);
+}
+// the words a clause's trace explicitly asks for = its head + the head cluster's OWN कारक words.
+function clauseTracedIndices(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return new Set();
+  const hc = clusterForClauseHead(sentence, cl);
+  const s = new Set();
+  if (cl.headWordIndex != null) s.add(cl.headWordIndex);
+  // Mirror the trace-step GUARDS exactly (a step is generated only when its PRIMARY role is present) so
+  // `traced` never claims a word the trace didn't actually ask — otherwise an orphan समुच्चय co-agent/object
+  // (present when the primary कर्ता/कर्म is absent) would be excluded from mop-up yet never quizzed.
+  if (hc) {
+    if ((hc.karta || []).length) { for (const i of hc.karta) s.add(i); for (const i of (hc.samuccayaKarta || [])) s.add(i); }
+    if ((hc.karma || []).length) { for (const i of hc.karma) s.add(i); for (const i of (hc.samuccayaKarma || [])) s.add(i); }
+    for (const role of CLAUSE_PERIPHERAL_ROLES) for (const i of roleIndices(hc, role)) s.add(i);
+  }
+  // GERUND sub-clusters get their own attach + kāraka mini-trace — only when the verse has ≥2 nuclei (so
+  // "which nucleus?" is a real choice). Mirror those step guards: the gerund GOVERNOR is asked by the attach
+  // step (≥2 nuclei), and each of its कारक roles is asked when present. When <2 nuclei, the gerund + its
+  // deps fall through to the mop-up unchanged.
+  if (clauseNucleiCount(sentence) >= 2) {
+    for (const { cluster: gc } of clauseGerundClusters(sentence, clauseIdx)) {
+      s.add(gc.governorWordIndex);
+      if ((gc.karta || []).length) { for (const i of gc.karta) s.add(i); for (const i of (gc.samuccayaKarta || [])) s.add(i); }
+      if ((gc.karma || []).length) { for (const i of gc.karma) s.add(i); for (const i of (gc.samuccayaKarma || [])) s.add(i); }
+      for (const role of CLAUSE_PERIPHERAL_ROLES) for (const i of roleIndices(gc, role)) s.add(i);
+    }
+  }
+  return s;
+}
+// mop-up = the clause's PRESENT words that the trace didn't already ask for (qualifiers, gerund
+// sub-clusters + their own objects, adverbs, particles). One multi-select per clause (Harsha, 2026-08-28).
+function clauseMopUpIndices(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return new Set();
+  const traced = clauseTracedIndices(sentence, clauseIdx);
+  return new Set((cl.words || []).filter(i => !traced.has(i)));
+}
+// "same case, different कारक" teaching (Harsha, 2026-08-28): after a trace pick, name the OTHER words in
+// the verse that share the picked role's vibhakti but serve a DIFFERENT kāraka, each with its sūtra — so
+// the learner matches कारक to the verb, not just the case (करणम् 2.3.18 vs हेतु 2.3.23, etc.).
+const ROLE_LABEL_SUTRA = {
+  karta: ['कर्ता (agent)', '2.3.18 कर्तृकरणयोस्तृतीया'], karana: ['करणम् (instrument)', '2.3.18 कर्तृकरणयोस्तृतीया'],
+  hetu: ['हेतु (cause)', '2.3.23 हेतौ'], karma: ['कर्म (object)', '2.3.2 कर्मणि द्वितीया'],
+  sampradana: ['सम्प्रदानम् (recipient/purpose)', '2.3.13 चतुर्थी सम्प्रदाने'],
+  apadana: ['अपादानम् (source)', '2.3.28 अपादाने पञ्चमी'], adhikarana: ['अधिकरणम् (locus)', '2.3.36 सप्तम्यधिकरणे'],
+};
+function sentenceRoleMap(sentence) {
+  const m = {};
+  for (const c of (sentence.clusters || [])) for (const r of Object.keys(ROLE_LABEL_SUTRA))
+    for (const i of roleIndices(c, r)) if (m[i] == null) m[i] = r;
+  return m;
+}
+function caseDiscriminationCallout(sentence, hc, role) {
+  const idxs = roleIndices(hc, role);
+  const vibs = [...new Set(idxs.map(i => actualVibhakti(sentence, i)).filter(Boolean))];
+  if (vibs.length !== 1) return '';   // no single clean vibhakti to contrast against
+  const V = vibs[0];
+  const rm = sentenceRoleMap(sentence);
+  const others = [];
+  (sentence.words || []).forEach((w, i) => {
+    if (idxs.includes(i) || actualVibhakti(sentence, i) !== V) return;
+    const r = rm[i];
+    if (r && r !== role && ROLE_LABEL_SUTRA[r]) others.push(`<b>${esc(w)}</b> = ${ROLE_LABEL_SUTRA[r][0]} (${ROLE_LABEL_SUTRA[r][1]})`);
+  });
+  if (!others.length) return '';
+  const self = ROLE_LABEL_SUTRA[role] ? ROLE_LABEL_SUTRA[role][0] : role;
+  return `Same case, different कारक: other <b>${esc(V)}</b> word(s) here are NOT the ${self} — ${others.join('; ')}. Match the कारक to the verb, not just the case.`;
+}
+// सामानाधिकरण्य framing (Harsha, 2026-08-28 — "a great way to teach"): when the कर्ता/कर्म has विशेषण
+// present in the clause, list ALL the co-referential same-case candidates of THIS clause and give the
+// विशेष्य-vs-विशेषण rule, so the learner reasons to the head instead of guessing यः-vs-विद्वान् at random.
+// Returns '' when there are no qualifiers (plain prompt stays). Question-specific: lists this clause's words.
+function samanadhikaranyaHint(sentence, hc, role) {
+  if (!hc) return '';
+  const heads = role === 'karta' ? [...(hc.karta || []), ...(hc.samuccayaKarta || [])] : [...(hc.karma || []), ...(hc.samuccayaKarma || [])];
+  const quals = role === 'karta' ? (hc.qualifierKarta || []) : (hc.qualifierKarma || []);
+  if (!quals.length || !heads.length) return '';
+  const cand = [...new Set([...heads, ...quals])].sort((a, b) => a - b).map(i => sentence.words[i]);
+  const lbl = role === 'karta' ? 'कर्ता' : 'कर्म';
+  const ent = role === 'karta' ? 'doer' : 'thing acted upon';
+  return `<div class="tut-explain">⚠ More than one word here shares the ${lbl}'s case (सामानाधिकरण्य): <b>${cand.map(esc).join(' · ')}</b>. Exactly one is the ${lbl} — the word that <b>names the ${ent}</b> (a pronoun / सर्वनाम, or the principal noun). The rest are <b>विशेषण</b> (adjectives — a quality or a derived word describing it), which agree with it and are placed in the mop-up. Which word <i>names</i> the ${ent}?</div>`;
+}
+// वाक्य-विभाग (clause mode) step sequence. GUIDED style keeps the "Core" recipe (segment, then supply).
+// SOCRATIC style (default) is now a VERB-OUT KĀRAKA TRACE (Harsha, 2026-08-28): per nucleus — (1) valence
+// (सकर्मक/अकर्मक), (2) place its own कारक words (कर्म+case, कर्ता, करणम्/अधिकरण/…), each drawing the
+// boundary + teaching the relation, (3) mop up the rest. THEN the supply phase (elided agents/copula).
+// Reads gold `sentence.clauses` + the head's कारक cluster; a verse with none falls back to just the heads.
+function buildClauseSteps(sentence) {
+  const clauses = sentence.clauses || [];
+  const nucleiCount = clauseNucleiCount(sentence);
+  const steps = [{ type: 'clauseHeads' }];
+  if (clauseStyle === 'socratic') {
+    // verb-out kāraka trace, clause by clause (reading order). Each nucleus: valence → its own कारक words
+    // (each pick draws the boundary) → mop-up. ELIDED agents/objects are NOT asked here (no present word to
+    // click) — they're supplied in the supply phase below.
+    clauses.forEach((cl, i) => {
+      const hc = clusterForClauseHead(sentence, cl);
+      // (1) valence — only for a genuine verb nucleus whose transitivity is known (skip verbless/nominal heads)
+      if (hc && hc.transitivity && cl.type !== 'nominal' && !hc.subjectIsHead) steps.push({ type: 'clauseValence', clauseIdx: i });
+      // (2a) the PRESENT object of a transitive head: its case, then the word (elided objects → supply phase)
+      if (hc && (hc.karma || []).length) { steps.push({ type: 'clauseKarmaCase', clauseIdx: i }); steps.push({ type: 'clauseKarma', clauseIdx: i }); }
+      // (2b) the PRESENT agent (an अनुक्त/elided agent has no word to click → asked in the supply phase)
+      if (hc && (hc.karta || []).length) steps.push({ type: 'clauseKartaTrace', clauseIdx: i });
+      // (2c) present peripheral kārakas — each teaches the same-case-vs-कारक discrimination
+      for (const role of CLAUSE_PERIPHERAL_ROLES) if (hc && roleIndices(hc, role).length) steps.push({ type: 'clausePeripheral', clauseIdx: i, role });
+      // (3) GERUND/participle sub-nuclei: attach each to its finite verb, then trace ITS own frame. Only when
+      // the verse has ≥2 nuclei (so the attach question — "which nucleus?" — is a real boundary choice).
+      if (nucleiCount >= 2) {
+        for (const { cluster: gc, clusterIdx: gci } of clauseGerundClusters(sentence, i)) {
+          steps.push({ type: 'clauseGerundAttach', clauseIdx: i, clusterIdx: gci });   // which nucleus does it hang on?
+          if (gc.transitivity) steps.push({ type: 'clauseGerundValence', clauseIdx: i, clusterIdx: gci });
+          if ((gc.karma || []).length) { steps.push({ type: 'clauseGerundKarmaCase', clauseIdx: i, clusterIdx: gci }); steps.push({ type: 'clauseGerundKarma', clauseIdx: i, clusterIdx: gci }); }
+          if ((gc.karta || []).length) steps.push({ type: 'clauseGerundKarta', clauseIdx: i, clusterIdx: gci });   // an absolutive rarely has its own कर्ता, but क्त/शतृ participles can
+          for (const role of CLAUSE_PERIPHERAL_ROLES) if (roleIndices(gc, role).length) steps.push({ type: 'clauseGerundPeripheral', clauseIdx: i, clusterIdx: gci, role });
+        }
+      }
+      // (4) mop-up — the remaining words of the clause (adjectives/विशेषण, adverbs, particles, genitives)
+      if (clauseMopUpIndices(sentence, i).size) steps.push({ type: 'clauseMopUp', clauseIdx: i });
+    });
+  } else {
+    clauses.forEach((cl, i) => steps.push({ type: 'clauseMembers', clauseIdx: i }));   // guided: one per clause
+  }
+  // supply phase: elided agents, then elided verbs — deduped on the supplied string so a repeated
+  // अहम्/अस्ति isn't asked twice (mirrors the vigraha-mode clause dedup).
+  // supply the elided कर्ता. PASSIVE (कर्मणि) clause: teach the agent's CASE (कर्मणि ⇒ तृतीया), THEN
+  // identify it among the तृतीया words — distinguishing the करणम् trap (a same-case instrument that ISN'T
+  // the agent, e.g. Māṇḍūkya 3.15 मृद्-लोह…आद्यैः). ACTIVE clause with an elided pronoun: the recipe-ladder
+  // MCQ (only when derivable). (Harsha, 2026-08-27 — a vedānta student SHOULD deduce श्रुत्या from कर्मणि.)
+  const seenActive = new Set();
+  clauses.forEach((cl, i) => {
+    const cluster = clusterForClauseHead(sentence, cl);
+    const correct = normalizeAgent(cl.anuktaKarta);
+    if (!correct || /copula/i.test(correct)) return;
+    if (cluster && cluster.voice === 'कर्मणि') {
+      steps.push({ type: 'clauseKartaCase', clauseIdx: i });   // कर्मणि ⇒ agent in तृतीया
+      steps.push({ type: 'clauseKarta', clauseIdx: i });       // which तृतीया word is the agent (vs करणम्)
+    } else if (clauseKartaOptions(sentence, i) && !seenActive.has(correct)) {
+      seenActive.add(correct);
+      steps.push({ type: 'clauseKarta', clauseIdx: i });
+    }
+  });
+  // a transitive (सकर्मक) clause head governs a कर्म: identify its case, then the word. GUIDED style only —
+  // the socratic trace already asked the PRESENT object above (as part of the verb-out kāraka trace).
+  if (clauseStyle !== 'socratic') clauses.forEach((cl, i) => {
+    const cluster = clusterForClauseHead(sentence, cl);
+    if (cluster && cluster.voice && (cluster.karma || []).length) {
+      steps.push({ type: 'clauseKarmaCase', clauseIdx: i });
+      steps.push({ type: 'clauseKarma', clauseIdx: i });
+    }
+  });
+  const seenElided = new Set();
+  clauses.forEach((cl, i) => {
+    const el = (cl.elided || []).join(' ');
+    if (!el || seenElided.has(el) || !clauseElidedOptions(sentence, i)) return;
+    if (el === normalizeAgent(cl.anuktaKarta)) return;   // the supplied word IS the agent — already asked as कर्ता, don't re-ask as an elided verb
+    seenElided.add(el);
+    steps.push({ type: 'clauseElided', clauseIdx: i });
+  });
+  return steps;
+}
+function buildTutorialSteps(sentence) {
+  if (tutorialMode === 'clause') return buildClauseSteps(sentence);
+  normalizeNipata(sentence);   // ensure निपात particles are quizzed as निपात in every text (idempotent)
+  normalizeGenitiveCase(sentence);   // possessor coded पञ्चमी (त/ऋ-stem syncretism) → षष्ठी
+  const steps = [{ type: 'verbs' }];
+  sentence.clusters.forEach((c, ci) => {
+    // Only ask the voice (कर्तरि/कर्मणि/भावे) step when the voice is actually known. Finite तिङन्त
+    // governors always carry it, but a कृदन्त clause-head (क्त/शतृ/…) can leave voice null when its
+    // root's transitivity is genuinely undecidable — asking then showed a broken "(unknown)" step
+    // that graded even a correct answer wrong (Harsha, BG 4.3 प्रोक्तः, 2026-08-19). Skip it cleanly.
+    if (c.isFiniteVerb && c.voice) steps.push({ type: 'voice', clusterIdx: ci });
+    if (c.isFiniteVerb && c.lakara) steps.push({ type: 'verbLakara', clusterIdx: ci });   // लकार (tense/mood) MCQ (2026-08-29)
+    const canKartaCase = c.voice && c.karta.length;
+    const canKarmaCase = c.voice && c.karma.length;
+    let showKartaCase = canKartaCase, showKarmaCase = canKarmaCase;
+    if (canKartaCase && canKarmaCase) {
+      // Alternate instead of asking both every time (Harsha, 2026-08-16: "we can alternate them in
+      // case it becomes repetitive"). Deterministic per-cluster, based on the governor's own word
+      // position — NOT a running session counter (tried that first; it starts at 0 on every page
+      // load/verse-jump, so the FIRST both-eligible cluster in any fresh session always resolved to
+      // kartaCase, and jumping straight to a specific verse from the picker each time never
+      // accumulated enough occurrences within one session to ever reach karmaCase — found live,
+      // 2026-08-16, via Harsha's own spot-checking never once hitting it). This is reload-
+      // independent and naturally varies across verses since governor positions vary.
+      if (c.governorWordIndex % 2 === 0) showKarmaCase = false; else showKartaCase = false;
+    }
+    if (c.karta.length) {
+      if (showKartaCase) steps.push({ type: 'kartaCase', clusterIdx: ci });
+      steps.push({ type: 'karta', clusterIdx: ci });
+    }
+    // कर्म step only when a कर्म is actually tagged (symmetric with कर्ता above). Was unconditional, so a
+    // nominal-predication head (a noun subject, e.g. VC 2 नरजन्म) or an अकर्मक copula (VC 1 अस्मि) got a
+    // spurious "which is the कर्म? — (none)" step (Harsha, 2026-08-19). An अकर्मक/nominal head governs no कर्म.
+    if (c.karma.length) {
+      if (showKarmaCase) steps.push({ type: 'karmaCase', clusterIdx: ci });
+      steps.push({ type: 'karma', clusterIdx: ci });
+    }
+    // Fire the सामानाधिकरण्य (predicative-agreement) question ONLY when there's a genuinely
+    // corpus-tagged agreement member. A qualifier-ONLY cluster is already asked "which word qualifies
+    // X?" (qualifierKarta step below), and since expectedSetForStep unions agreement+qualifier, the
+    // agreement question would resolve to the SAME word with only a reworded prompt — a dup (Harsha,
+    // 2026-08-18, BG 4.2: agreementKarta=[] but qualifierKarta=[सः] made both ask about सः). When real
+    // agreement IS tagged, this still fires (and accepts qualifiers too, being "generous and open").
+    // ...and only when there is a REAL कर्ता/कर्म for it to agree WITH (an explicit कर्ता/कर्म, a
+    // समुच्चय co-argument, or — for a verbless predication — the head subject). Without one, "which word
+    // agrees with the कर्ता of X?" references a कर्ता the learner can't see (VC 2 लभ्यते, कर्ता elided).
+    const hasKartaRef = c.karta.length || c.samuccayaKarta.length || c.subjectIsHead;
+    const hasKarmaRef = c.karma.length || c.samuccayaKarma.length;
+    // उद्देश्य–विधेय: a verbless nominal predication ("X [is] Y" — subjectIsHead) whose head has a real
+    // विधेय (agreementKarta, a co-referential प्रथमा word). Ask the learner to spot the उद्देश्य (subject)
+    // FIRST — the head is otherwise only ever NAMED (in agreementKarta / genderCheck / qualifier prompts),
+    // never itself a click-target. Fired only when there's a genuine predicate nominal, so it's a real
+    // "X is Y" and not a bare genitive head (Harsha, 2026-08-24). Goes before agreementKarta (उद्देश्य→विधेय).
+    if (c.subjectIsHead && c.governorWordIndex != null && c.agreementKarta.length) steps.push({ type: 'nominalSubject', clusterIdx: ci });
+    if (c.agreementKarta.length && hasKartaRef) steps.push({ type: 'agreementKarta', clusterIdx: ci });
+    if (c.agreementKarma.length && hasKarmaRef) steps.push({ type: 'agreementKarma', clusterIdx: ci });
+    if (c.qualifierKarta.length) steps.push({ type: 'qualifierKarta', clusterIdx: ci });
+    if (c.qualifierKarma.length) steps.push({ type: 'qualifierKarma', clusterIdx: ci });
+    // genderCheck: one MCQ per agreement/qualifier word, right after its click-question — only
+    // when BOTH the word's own gender and the qualified argument's gender are extractable (skip
+    // rather than fabricate when either is unknown, e.g. an अस्मद्/युष्मद् pronoun in the mix).
+    for (const side of ['karta', 'karma']) {
+      const qualifiedIdx = coreArgIndices(c, side)[0];
+      if (qualifiedIdx == null || !sentence.wordGenders[qualifiedIdx]) continue;
+      const argGender = sentence.wordGenders[qualifiedIdx];
+      const members = side === 'karta' ? [...c.agreementKarta, ...c.qualifierKarta] : [...c.agreementKarma, ...c.qualifierKarma];
+      for (const wordIndex of members) {
+        // Only ask "shares which लिङ्ग" when the member's gender is known AND actually matches the arg's.
+        // A predicate-identity समानाधिकरणम् can equate unlike-gender nouns (e.g. नियता-अवस्था f ≡ शमः m),
+        // where gender need NOT agree — a genderCheck there is unanswerable (e-reader audit, Class 4).
+        // never compare a word to ITSELF (guards the case where coreArgIndices[0] resolved to this very
+        // agreement member — an elided-कर्ता cluster whose only "core" is the agreement word).
+        if (wordIndex !== qualifiedIdx && sentence.wordGenders[wordIndex] && sentence.wordGenders[wordIndex] === argGender) steps.push({ type: 'genderCheck', clusterIdx: ci, wordIndex, side });
+      }
+    }
+    // समुच्चयKarta/Karma no longer get their OWN step (Harsha, 2026-08-17, "Option A"): coordinated
+    // co-agents/objects are now selected together IN the कर्ता/कर्म step itself (which is multi-select
+    // and whose accepted set already unions समुच्चयKarta/Karma via coreArgIndices) — grammatically a
+    // समुच्चय is one collective कारक realized by several coordinated words, not several separate
+    // कारकs, so asking "which OTHER words join X" after the learner has already picked them was a
+    // redundant, artificial split. The concept is instead taught passively via tutorialSamuccayaCallout
+    // shown in that step's feedback. The GENERIC `samuccaya` step (the च coordinator / non-कर्ता/कर्म
+    // coordinated items) is unrelated and stays.
+    if (c.samuccaya.length) steps.push({ type: 'samuccaya', clusterIdx: ci });
+    if (c.modifiers.length) steps.push({ type: 'modifiers', clusterIdx: ci });
+    if ((c.pratishedha || []).length) steps.push({ type: 'pratishedha', clusterIdx: ci });
+    if ((c.nipata || []).length) steps.push({ type: 'nipata', clusterIdx: ci });
+    if ((c.hetu || []).length) steps.push({ type: 'hetu', clusterIdx: ci });
+    if ((c.sequence || []).length) steps.push({ type: 'sequence', clusterIdx: ci });
+    if (c.karana.length) steps.push({ type: 'karana', clusterIdx: ci });
+    if (c.sampradana.length) steps.push({ type: 'sampradana', clusterIdx: ci });
+    if (c.apadana.length) steps.push({ type: 'apadana', clusterIdx: ci });
+    if (c.adhikarana.length) steps.push({ type: 'adhikarana', clusterIdx: ci });
+    if (c.satisaptami.length) steps.push({ type: 'satisaptami', clusterIdx: ci });
+    if ((c.itthambhuta || []).length) steps.push({ type: 'itthambhuta', clusterIdx: ci });
+    if ((c.upamana || []).length) steps.push({ type: 'upamana', clusterIdx: ci });
+    if ((c.upameya || []).length) steps.push({ type: 'upameya', clusterIdx: ci });
+    if (c.sambodhana.length) steps.push({ type: 'sambodhana', clusterIdx: ci });
+    if (c.nirdharana.length) steps.push({ type: 'nirdharana', clusterIdx: ci });
+    // qualifier-of-peripheral: one step per qualified peripheral word (e.g. महता → कालेन/हेतु).
+    for (const ti of [...new Set((c.peripheralQualifiers || []).map(q => q.targetIndex))]) {
+      const q0 = c.peripheralQualifiers.find(q => q.targetIndex === ti);
+      steps.push({ type: 'qualifierOf', clusterIdx: ci, targetIndex: ti, targetRole: q0.targetRole });
+    }
+    // genitive (षष्ठी) possessor — one step per possessed noun (मे → वचः).
+    for (const ti of [...new Set((c.genitives || []).map(g => g.targetIndex))]) {
+      steps.push({ type: 'genitiveOf', clusterIdx: ci, targetIndex: ti });
+    }
+    // `remaining` is the catch-all for roles we don't yet bucket properly — do NOT quiz it (asking
+    // "which words relate to X" / an adverbial question on a non-verb produces a wrong question). Such
+    // words fall through silently; fallthrough_report.js tags them so we can add real buckets over time
+    // (Harsha, 2026-08-20). The remaining[] data is still carried for that report.
+  });
+  // ---- clause-structure questions (verse-level; only for multi-clause verses) — type, subordination,
+  // elided predicate. Guarded on the option-builders so degenerate MCQs (too few options) are skipped. ----
+  if ((sentence.clauses || []).length > 1) {
+    // Dedup so a list-verse (e.g. VC 2's 10 nominal clauses all eliding "दुर्लभम् अस्ति") doesn't ask the
+    // same clauseType/clauseElided 10× — one question per DISTINCT type / DISTINCT elided predicate.
+    // Subordination IS per-clause (each subordinate relationship is individually informative).
+    const seenType = new Set(), seenElided = new Set();
+    sentence.clauses.forEach((cl, i) => {
+      if (!seenType.has(cl.type)) { seenType.add(cl.type); steps.push({ type: 'clauseType', clauseIdx: i }); }
+      if (cl.subordinateTo && clauseSubordinateOptions(sentence, i)) steps.push({ type: 'clauseSubordinate', clauseIdx: i });
+      const el = (cl.elided || []).join(' ');
+      if (el && !seenElided.has(el) && clauseElidedOptions(sentence, i)) { seenElided.add(el); steps.push({ type: 'clauseElided', clauseIdx: i }); }
+    });
+  }
+  // ---- guided recursive samāsa peel (verse-level; per compound word, layers outermost-first = the peel
+  // order). Ask vigraha (split) then type for each COMPOUND layer; kṛt/taddhita/प्रातिपदिक leaves are not
+  // quizzed (their derivation shows only as a tip). vigraha is skipped when there aren't enough distractors. ----
+  const seenLayer = new Set();   // don't peel the same sub-compound twice (e.g. गोचर under both गोचरम् and अगोचरम्)
+  (sentence.samasa || []).forEach((sm, si) => {
+    // "Always start at the top": only pose vigraha (peel/split) questions if the OUTERMOST compound layer
+    // itself can be quizzed — otherwise the first peel question would begin MIDWAY on an inner layer
+    // (e.g. PD 1.1 श्रीशङ्करानन्द…जन्मने: the top बहुव्रीहि has no same-member distractors, so we must NOT
+    // jump to peeling the inner गुरुपाद). Type questions still peel top-down regardless. (Harsha, 2026-08-21)
+    const topIdx = (sm.layers || []).findIndex(L => isCompoundSamasaType(L.type));
+    const allowVigraha = topIdx >= 0 && !!buildVigrahaOptions(sentence, si, topIdx);
+    // Peel order: compound (vigraha→type), then each terminal member THAT split exposes — so a
+    // taddhita/kṛt leaf (e.g. परता in वैदिकधर्ममार्गपरता) is classified right after the split that
+    // reveals it. Leaves are quizzed here too, keeping read-a-verse in sync with the SAMR Practise
+    // node (samasaPeelItems), which already drilled them (Harsha, 2026-08-22).
+    for (const { layer: L, idx: li, leaf } of orderedPeelLayers(sm.layers)) {
+      const key = `${L.c}|${L.vigraha}|${L.type}`;
+      if (seenLayer.has(key)) continue;
+      seenLayer.add(key);
+      if (leaf) { steps.push({ type: 'samasaLeaf', samasaIdx: si, layerIdx: li }); continue; }
+      if (allowVigraha && buildVigrahaOptions(sentence, si, li)) steps.push({ type: 'samasaVigraha', samasaIdx: si, layerIdx: li });
+      steps.push({ type: 'samasaType', samasaIdx: si, layerIdx: li });
+    }
+  });
+  return steps;
+}
+// The step-1 "which words are the verbs" answer set. `sentence.verbs` holds only what its SOURCE
+// tagged: the UoHyd e-reader (BG) already folds कृत्-participle clause-heads that govern an argument
+// into `verbs` (476 of them — हत्वा, दृष्ट्वा, प्रवृत्ते …), but the Gemini adapter (every other text)
+// put ONLY finite तिङन्त there — so a genuine कृत्-participle acting as its clause's verb (Māṇḍūkya
+// 3.15 चोदिता — कर्मणि, कर्म=सृष्टिः) was graded wrong even though the walk then turns around and asks
+// its voice/कर्मCase (Harsha, 2026-08-27). The grading must be source-independent — identical whether
+// a verse came from the e-reader or Gemini — so union in the कृदन्त clause-governors here at runtime.
+// Predicate = `karmaGovernorIsKrdanta` (the corpus's explicit "this governor is a कृत् form" flag)
+// AND it governs a कर्ता/कर्म. That flag is the ONLY clean discriminator: `voice` alone admits
+// copular subject-nouns Gemini mis-tags कर्तरि (जन्मजराकार्श्यलयादयः, ब्रह्म), and `कर्ता/कर्म` alone
+// admits noun/pronoun heads with a spuriously-tagged कर्म (Māṇḍūkya 2.27 तत्-विदः/लैङ्गाः/अपरे). This
+// is a strict superset of `sentence.verbs`, so BG (already complete) is unchanged. Excludes participles
+// used as a noun/adjective (जाग्रत्/जायमानम् — no governed argument), per the step's own prompt.
+function verbsIndicesFor(sentence) {
+  // वाक्य-विग्रह's step-1 is ROLE/GOVERNOR analysis (broad): a word is a "verb" here if it is a finite
+  // तिङन्त OR any कृत् form that governs its own कारक (कर्ता/कर्म) — this INCLUDES gerunds/absolutives
+  // (क्त्वा/ल्यप् विदित्वा/प्रणोद्य) and predicate participles (क्त चोदिता). We deliberately keep gerunds
+  // here because the per-cluster walk later ASKS their कर्म (विदित्वा → त्रयम्), so step-1 must agree with
+  // the walk or it contradicts itself (Harsha, 2026-08-28). This differs on purpose from वाक्य-विभाग's
+  // clauseHeads, which asks for clause NUCLEI (finite/predicate heads only) — a gerund is a verbal governor
+  // but NOT a nucleus; there it goes to the mop-up. Two lenses, each internally consistent.
+  const set = new Set(sentence.verbs || []);
+  for (const c of sentence.clusters || []) {
+    if (c.isFiniteVerb) continue;   // finite governors are already in sentence.verbs
+    if (c.karmaGovernorIsKrdanta && ((c.karta && c.karta.length) || (c.karma && c.karma.length))) set.add(c.governorWordIndex);
+  }
+  // never contradict an explicit step1Hint (a word flagged as a verb-lookalike that ISN'T a verb here)
+  for (const h of (sentence.step1Hints || [])) set.delete(h.wordIndex);
+  return set;
+}
+// Sweep-role arrays (करण/सम्प्रदान/अपादान/अधिकरण/सतिसप्तमी/remaining) hold {wordIndex, role,
+// upapada, upapadaCase} objects, same shape as `remaining` always had — not plain indices.
+function expectedSetForStep(sentence, step) {
+  if (step.type === 'verbs') return verbsIndicesFor(sentence);
+  // वाक्य-विभाग word-select steps — graded against the gold `clauses` (no cluster involved)
+  if (step.type === 'clauseHeads') return new Set((sentence.clauses || []).map(cl => cl.headWordIndex).filter(i => i != null));
+  if (step.type === 'clauseMembers') return new Set((((sentence.clauses || [])[step.clauseIdx]) || {}).words || []);
+  if (step.type === 'clauseKarma') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set([...((cluster && cluster.karma) || []), ...((cluster && cluster.samuccayaKarma) || [])]); }
+  if (step.type === 'clauseKartaTrace') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set([...((cluster && cluster.karta) || []), ...((cluster && cluster.samuccayaKarta) || [])]); }
+  if (step.type === 'clausePeripheral') { const cluster = clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]); return new Set(cluster ? roleIndices(cluster, step.role) : []); }
+  if (step.type === 'clauseGerundKarma') { const gc = sentence.clusters[step.clusterIdx]; return new Set([...((gc && gc.karma) || []), ...((gc && gc.samuccayaKarma) || [])]); }
+  if (step.type === 'clauseGerundKarta') { const gc = sentence.clusters[step.clusterIdx]; return new Set([...((gc && gc.karta) || []), ...((gc && gc.samuccayaKarta) || [])]); }
+  if (step.type === 'clauseGerundPeripheral') { const gc = sentence.clusters[step.clusterIdx]; return new Set(gc ? roleIndices(gc, step.role) : []); }
+  if (step.type === 'clauseMopUp') return clauseMopUpIndices(sentence, step.clauseIdx);
+  const c = sentence.clusters[step.clusterIdx];
+  // करता/कर्म and their agreementKarta/Karma questions all share ONE full accepted-answer set per
+  // argument (Harsha, 2026-08-16, found live via BG 4.1: इमम् is tagged कर्म; योगम् — तagged
+  // कर्मसमानाधिकरणम्, target=the verb — names the EXACT SAME referent, "this yoga"; अव्ययम् —
+  // विशेषणम् targeting योगम् — qualifies that same referent too). Which one the corpus calls the
+  // "primary" कर्म vs. an "agreeing"/"qualifying" word is largely an artifact of annotation
+  // convention (often just which word got there first), not a real grammatical difference the
+  // learner should be quizzed on — marking इमम् wrong on "what agrees with कर्म" (or योगम्/अव्ययम्
+  // wrong on "what is the कर्म") would be relying on that arbitrary tag choice rather than the
+  // underlying grammar. करता/कर्म and agreementKarta/Karma stay separate QUESTIONS (different
+  // prompts — "what/who is X" vs. "what shares case/gender/number with X") but accept the same
+  // click-targets; qualifierKarta/Karma stays narrower (just the attributive विशेषणम् members) since
+  // that question is specifically about the qualifier-qualified framing, not the full set.
+  // समुच्चयKarta/Karma (JOINT agents/objects, e.g. BG 1.1's "मामकाः पाण्डवाः च" — "my sons AND the
+  // Pāṇḍavas," both genuinely doing the action) join the full set too, by the same logic — a
+  // co-equal coordinated agent is not a "describing" word like a qualifier, it's just as much the
+  // कर्ता/कर्म as the corpus's "primary"-tagged one (Harsha, 2026-08-16).
+  const kartaFullSet = () => new Set([...coreArgIndices(c, 'karta'), ...c.qualifierKarta]);
+  const karmaFullSet = () => new Set([...coreArgIndices(c, 'karma'), ...c.qualifierKarma]);
+  // उद्देश्य = the head subject + any coordinated co-subjects (NOT the विधेय — that's agreementKarta,
+  // asked in its own step). Distinguishing उद्देश्य from विधेय is the whole point of this question.
+  if (step.type === 'nominalSubject') return new Set([c.governorWordIndex, ...c.samuccayaKarta]);
+  if (step.type === 'karta' || step.type === 'agreementKarta') return kartaFullSet();
+  if (step.type === 'karma' || step.type === 'agreementKarma') return karmaFullSet();
+  if (step.type === 'qualifierKarta') return new Set(c.qualifierKarta);
+  if (step.type === 'qualifierKarma') return new Set(c.qualifierKarma);
+  if (step.type === 'samuccayaKarta') return new Set(c.samuccayaKarta);
+  if (step.type === 'samuccayaKarma') return new Set(c.samuccayaKarma);
+  if (step.type === 'samuccaya') return new Set(c.samuccaya);
+  if (step.type === 'modifiers') return new Set(c.modifiers);
+  if (step.type === 'pratishedha') return new Set(c.pratishedha || []);
+  if (step.type === 'nipata') return new Set(c.nipata || []);
+  if (step.type === 'karana') return new Set(c.karana.map(r => r.wordIndex));
+  if (step.type === 'sampradana') return new Set(c.sampradana.map(r => r.wordIndex));
+  if (step.type === 'apadana') return new Set(c.apadana.map(r => r.wordIndex));
+  if (step.type === 'adhikarana') return new Set(c.adhikarana.map(r => r.wordIndex));
+  if (step.type === 'satisaptami') return new Set(c.satisaptami.map(r => r.wordIndex));
+  if (step.type === 'itthambhuta') return new Set((c.itthambhuta || []).map(r => r.wordIndex));
+  if (step.type === 'upamana') return new Set((c.upamana || []).map(r => r.wordIndex));
+  if (step.type === 'upameya') return new Set((c.upameya || []).map(r => r.wordIndex));
+  if (step.type === 'sambodhana') return new Set(c.sambodhana.map(r => r.wordIndex));
+  if (step.type === 'nirdharana') return new Set(c.nirdharana.map(r => r.wordIndex));
+  if (step.type === 'hetu') return new Set((c.hetu || []).map(r => r.wordIndex));
+  if (step.type === 'sequence') return new Set((c.sequence || []).map(r => r.wordIndex));
+  if (step.type === 'qualifierOf') return new Set((c.peripheralQualifiers || []).filter(q => q.targetIndex === step.targetIndex).map(q => q.wordIndex));
+  if (step.type === 'genitiveOf') return new Set((c.genitives || []).filter(g => g.targetIndex === step.targetIndex).map(g => g.wordIndex));
+  if (step.type === 'remaining') return new Set(c.remaining.map(r => r.wordIndex));
+  return new Set();
+}
+
+// Multi-clause verses (Gita 4.1: प्रोक्तवान्/प्राह/अब्रवीत् are three separate clauses strung
+// together with no punctuation between them) show all of a sentence's words for every per-cluster
+// step, with nothing marking which words belong to which clause — found live (Harsha, 2026-08-12)
+// asking about प्राह's remaining relations while looking at all 14 words of the full verse.
+// A cluster whose OWN governor shows up as a MEMBER of another cluster (e.g. 4.1's योगम् cluster —
+// governor idx 2 — is itself the agreement-member of प्रोक्तवान्'s cluster) is a nested sub-phrase,
+// not a sibling clause; folding it into its parent's span is what makes the three clause boxes in
+// 4.1 come out clean and contiguous (0-5 / 6-9 / 10-13) instead of a spurious 4th box for योगम्.
+function computeClauseGroups(sentence) {
+  const clusters = sentence.clusters;
+  // सम्बोधन (vocative address, e.g. परन्तप) is deliberately EXCLUDED here (Harsha, 2026-08-16,
+  // found live via BG 4.2): a vocative is a discourse-level address, not clause-internal — it
+  // commonly sits at the very end of a sentence regardless of which clause it's grammatically
+  // tagged to. 4.2 tags परन्तप (idx 12, the sentence's last word) as सम्बोधन of विदुः (cluster 0,
+  // whose own natural members only span idx 0-5) — including it in the span calculation stretched
+  // cluster 0 all the way to idx 12, completely swallowing cluster 1's own span (idx 6-11, सः...
+  // नष्टः) inside it, so the two clauses could never render as separate, non-overlapping boxes.
+  // सम्बोधन is still fully graded via its own dedicated step (buildTutorialSteps/expectedSetForStep
+  // read cluster.sambodhana directly, unaffected by this) — only the VISUAL boundary excludes it.
+  const memberIndices = c => [
+    ...c.karta, ...c.karma, ...c.agreementKarta, ...c.agreementKarma, ...c.qualifierKarta, ...c.qualifierKarma,
+    ...c.samuccaya, ...c.samuccayaKarta, ...c.samuccayaKarma, ...c.modifiers,
+    ...c.karana.map(r => r.wordIndex), ...c.sampradana.map(r => r.wordIndex),
+    ...c.apadana.map(r => r.wordIndex), ...c.adhikarana.map(r => r.wordIndex),
+    ...c.satisaptami.map(r => r.wordIndex), ...c.nirdharana.map(r => r.wordIndex),
+    ...c.remaining.map(r => r.wordIndex),
+  ];
+  const byGovernor = new Map(clusters.map((c, ci) => [c.governorWordIndex, ci]));
+  const nestedUnder = new Map(); // child clusterIdx -> parent clusterIdx
+  clusters.forEach((c, ci) => {
+    memberIndices(c).forEach(idx => {
+      const childCi = byGovernor.get(idx);
+      if (childCi !== undefined && childCi !== ci) nestedUnder.set(childCi, ci);
+    });
+  });
+  function topAncestor(ci) {
+    let cur = ci; const seen = new Set();
+    while (nestedUnder.has(cur) && !seen.has(cur)) { seen.add(cur); cur = nestedUnder.get(cur); }
+    return cur;
+  }
+  const groups = new Map(); // topClusterIdx -> {min, max, clusterIdxs}
+  clusters.forEach((c, ci) => {
+    const top = topAncestor(ci);
+    const idxs = [c.governorWordIndex, ...memberIndices(c)];
+    const min = Math.min(...idxs), max = Math.max(...idxs);
+    if (!groups.has(top)) groups.set(top, { min, max, clusterIdxs: [] });
+    const g = groups.get(top);
+    g.min = Math.min(g.min, min); g.max = Math.max(g.max, max);
+    g.clusterIdxs.push(ci);
+  });
+  return [...groups.entries()].map(([topClusterIdx, g]) => ({ ...g, topClusterIdx })).sort((a, b) => a.min - b.min);
+}
+
+// ---- explanatory prose (Harsha, 2026-08-12: conversational tone; draft mine, flagged for review
+// — this is pedagogical framing, not derived from data, per the plan's open question). English
+// prose throughout (Harsha, 2026-08-12), with Sanskrit kāraka/grammar terms kept in Devanāgarī
+// inline — matches the rest of this app's convention (Devanāgarī verse text + English UI chrome),
+// not the terminal/IAST convention from the sentence-analysis skill (this is a rendered browser
+// page, not a terminal that mangles combining marks). ----
+// The actual कर्ता/कर्म word(s) for this cluster (own tag + agreementKarta/Karma, but NOT
+// qualifierKarta/Karma itself) — used to name them directly in the qualifierKarta/Karma question
+// (Harsha, 2026-08-16: "include the कर्म/कर्ता in the question itself... so the user has context and
+// can give the right answer for that specific question" — "the कर्ता of X" alone forced the learner
+// to already know which word that was from an earlier step, purely from memory).
+function coreArgIndices(c, side) {
+  if (side === 'karta') {
+    const base = [...c.karta, ...c.agreementKarta, ...c.samuccayaKarta];
+    // a verbless nominal-predication head IS the कर्ता (subject); its agreement/gender members compare
+    // against IT, not against each other. Prepend the head so coreArgIndices[0] is the real subject.
+    if (c.subjectIsHead && !base.includes(c.governorWordIndex)) return [c.governorWordIndex, ...base];
+    return base;
+  }
+  return [...c.karma, ...c.agreementKarma, ...c.samuccayaKarma];
+}
+function coreArgWords(c, sentence, side) {
+  return coreArgIndices(c, side).map(i => sentence.words[i]).join('/');
+}
+// Maps the corpus's short गender tag (पुं/स्त्री/नपुं, as extracted by build_karaka_tutorial.js's
+// wordGender) to the same full-form labels the rest of this app already uses for gender MCQs
+// (see GENDER_OPTIONS above, for the VIB node) — keeps the two gender-quiz UIs consistent.
+const GENDER_FULL_LABEL = { 'पुं': 'पुंलिङ्ग', 'स्त्री': 'स्त्रीलिङ्ग', 'नपुं': 'नपुंसकलिङ्ग' };
+// genderCheck MCQ (Harsha, 2026-08-16): a विशेषण/समानाधिकरण word must share GENDER with the word
+// it qualifies/agrees with, same as case/number — but nothing tested that dimension specifically
+// until now (qualifierKarta/Karma and agreementKarta/Karma only tested identifying the word, not
+// confirming what gender it shares). correct = the qualified argument's own gender (sentence's own
+// wordGenders, extracted from morph_in_context at build time).
+function genderCheckOptions(sentence, c, side) {
+  const qualifiedIdx = coreArgIndices(c, side)[0];
+  const rawGender = qualifiedIdx != null ? sentence.wordGenders[qualifiedIdx] : null;
+  const correct = rawGender ? GENDER_FULL_LABEL[rawGender] : null;
+  return { correct, qualifiedIdx, options: GENDER_OPTIONS };
+}
+// ---- New question types (2026-08-20): guided recursive samāsa peel + clause-structure questions,
+// leveraging the Gemini morph/kāraka data (words[].samasa, clauses[]) the adapter now threads through.
+// All are single-select MCQ, rendered by the shared block in renderTutorial (view.mcqPicked). ----
+
+// deterministic option ordering (so the correct answer isn't always first, without Math.random)
+function seedRotate(arr, seedStr) {
+  if (arr.length <= 1) return arr;
+  let s = 0; for (const ch of String(seedStr || '')) s = (s + ch.charCodeAt(0)) % 100003;
+  const k = s % arr.length;
+  return arr.slice(k).concat(arr.slice(0, k));
+}
+// a samāsa layer is an actual COMPOUND split (worth a type/vigraha question) vs a kṛt/taddhita/प्रातिपदिक leaf
+const isCompoundSamasaType = t => /तत्पुरुष|कर्मधारय|बहुव्रीहि|द्वन्द्व|अव्ययीभाव|द्विगु/.test(t || '');
+const isTPSubtypeDeva = t => /तत्पुरुष$/.test(t || '') && t !== 'तत्पुरुष';
+// distractor pool, priority-ordered by real corpus frequency (keep distractors common — not rare forms)
+const SAMASA_TYPE_POOL = ['षष्ठी-तत्पुरुष', 'कर्मधारय', 'बहुव्रीहि', 'तृतीया-तत्पुरुष', 'नञ्-तत्पुरुष', 'द्वन्द्व', 'अव्ययीभाव', 'सप्तमी-तत्पुरुष', 'उपपद-तत्पुरुष', 'द्विगु'];
+function samasaTypeOptions(correct) {
+  let pool = SAMASA_TYPE_POOL.filter(t => t !== correct);
+  // don't pair a TP subtype with the bare parent "तत्पुरुष" (a subtype genuinely IS a तत्पुरुष — misleading)
+  if (isTPSubtypeDeva(correct)) pool = pool.filter(t => t !== 'तत्पुरुष');
+  else if (correct === 'तत्पुरुष') pool = pool.filter(t => !isTPSubtypeDeva(t));
+  const distract = pool.slice(0, 3);
+  return { correct, options: seedRotate([correct, ...distract], correct) };
+}
+// Recursive-samāsa PEEL items — expand a compound's layers into a back-to-back vigraha→type MCQ sequence,
+// one per COMPOUND layer (kṛt/taddhita/prātipadika leaves skipped). Used by Read-a-verse (a matched
+// `samasa` item becomes this sequence) and Practise (recursive node). Options come from buildOptions via
+// the samasaType/samasaVigraha branches. ctx carries ref/source/context/slug (Harsha, 2026-08-21).
+function normW(w) { return (w || '').replace(/[-\s‌‍]/g, ''); }
+const isLeafSamasaType = t => /कृत्|कृदन्त|तद्धित/.test(t || '');
+// Reorder a compound's flat `layers` (stored as a pre-order DFS down the LEFT spine, with right-side
+// leaves appended LAST) into true PEEL order: each compound layer, immediately followed by the
+// leaf-classification of any terminal member THAT split exposes — so a taddhita/kṛt member like परता
+// (the right member of the top split of वैदिकधर्ममार्गपरता) is classified right after the split that
+// reveals it, not deferred to the very end (Harsha, 2026-08-22). A leaf attaches to the DEEPEST
+// compound whose `c` contains it (its nearest ancestor split); leaves under the same compound keep
+// reading order (by position in that compound's `c`). Returns [{layer, idx, leaf}] in peel order.
+function orderedPeelLayers(layers) {
+  const arr = layers || [];
+  const compounds = arr.filter(L => isCompoundSamasaType(L.type));
+  const leaves = arr.filter(L => isLeafSamasaType(L.type));
+  const parentOf = Lf => {
+    const containing = compounds.filter(K => (K.c || '').includes(Lf.c || ''));
+    // deepest ancestor = shortest containing `c`; if none contain it, no parent (append at end)
+    return containing.sort((a, b) => (a.c || '').length - (b.c || '').length)[0] || null;
+  };
+  const out = [];
+  const placed = new Set();
+  for (const C of compounds) {
+    out.push({ layer: C, idx: arr.indexOf(C), leaf: false });
+    leaves
+      .filter(Lf => parentOf(Lf) === C)
+      .sort((a, b) => (C.c || '').indexOf(a.c || '') - (C.c || '').indexOf(b.c || ''))
+      .forEach(Lf => { out.push({ layer: Lf, idx: arr.indexOf(Lf), leaf: true }); placed.add(Lf); });
+  }
+  for (const Lf of leaves) if (!placed.has(Lf)) out.push({ layer: Lf, idx: arr.indexOf(Lf), leaf: true });
+  return out;
+}
+function samasaPeelItems(layers, ctx) {
+  const items = [], seen = new Set();
+  // "Always start at the top" (Harsha, 2026-08-21): only quiz vigraha if the OUTERMOST compound layer can
+  // be quizzed — else the peel would begin midway on an inner layer. Types still peel top-down. Shared by
+  // read-a-verse (flattenWalk) AND the समास-विच्छेद Practise node, so both honour the invariant.
+  const top = (layers || []).find(L => isCompoundSamasaType(L.type));
+  const allowVigraha = !!(top && Array.isArray(top.vigrahaOptions) && top.vigrahaOptions.length >= 3);
+  for (const { layer: L, leaf } of orderedPeelLayers(layers)) {
+    const key = `${L.c}|${L.vigraha}|${L.type}`; if (seen.has(key)) continue; seen.add(key);
+    if (!leaf) {
+      if (allowVigraha && Array.isArray(L.vigrahaOptions) && L.vigrahaOptions.length >= 3) items.push({ kind: 'samasaVigraha', word: L.c, vigrahaOptions: L.vigrahaOptions, code: 'SAMASA', ...(ctx || {}) });
+      items.push({ kind: 'samasaType', word: L.c, correctType: L.type, code: 'SAMASA', ...(ctx || {}) });
+    } else {
+      // go all the way down to the प्रातिपदिक: identify the leaf's derivation कृदन्त vs तद्धित (Harsha, 2026-08-21)
+      items.push({ kind: 'samasaLeaf', word: L.c, leafType: /तद्धित/.test(L.type) ? 'तद्धित' : 'कृदन्त', pratyaya: L.pratyaya || '', vigraha: L.vigraha || '', code: 'SAMASA', ...(ctx || {}) });
+    }
+  }
+  return items;
+}
+LABELS.SAMR = 'समास-विच्छेद (recursive peel)';
+// vigraha MCQ — options are PRECOMPUTED at build time (adapter.js buildVigrahaOpts, using the śabda
+// declension tables): same-member re-analyses of THIS compound under different समास relations
+// (बाह्यार्थसुखस्य / -ेन / -ात् स्पृहा …), so every option starts with the same members and the question
+// tests the relation, not "spot the unrelated phrase" (Harsha, 2026-08-20). Skipped (→ type-only) when
+// the adapter couldn't generate ≥2 distractors (unknown stem / too shallow), i.e. no L.vigrahaOptions.
+function buildVigrahaOptions(sentence, samasaIdx, layerIdx) {
+  const sm = sentence.samasa[samasaIdx];
+  const L = sm && sm.layers && sm.layers[layerIdx];
+  const vo = L && L.vigrahaOptions;
+  if (!vo || vo.length < 3) return null;
+  const correct = vo[0];
+  return { correct, options: seedRotate([...new Set(vo)], correct + 'v') };
+}
+// Each label pairs the Sanskrit term with a short English gloss (· separator) so learners unfamiliar
+// with the technical vocabulary can still answer (Harsha, 2026-08-22). Used as MCQ options AND in
+// clauseHandle for the subordination question, so both stay bilingual.
+const CLAUSE_TYPE_LABELS = {
+  main: 'मुख्य वाक्य · main clause', nominal: 'नाम-वाक्य · nominal (verbless) clause',
+  relative: 'यद्-वाक्य · relative clause', correlative: 'तद्-वाक्य · correlative clause',
+  subordinate: 'आश्रित वाक्य · subordinate clause', quotation: 'उद्धरण-वाक्य · quotation clause',
+};
+const clauseTypeLabel = t => CLAUSE_TYPE_LABELS[t] || t || 'वाक्य';
+function clauseTypeOptions(correctType) {
+  const correct = clauseTypeLabel(correctType);
+  const pool = Object.values(CLAUSE_TYPE_LABELS).filter(l => l !== correct);
+  const distract = seedRotate(pool, correct).slice(0, 3);
+  return { correct, options: seedRotate([correct, ...distract], correct) };
+}
+// name a clause to the learner by its type + head word (so options are self-describing)
+function clauseHandle(sentence, cl) {
+  const h = cl.headWordIndex != null ? sentence.words[cl.headWordIndex]
+    : (cl.words && cl.words[0] != null ? sentence.words[cl.words[0]] : '?');
+  return `the ${clauseTypeLabel(cl.type)} (${h})`;
+}
+function clauseSubordinateOptions(sentence, clauseIdx) {
+  const cl = sentence.clauses[clauseIdx];
+  const target = (sentence.clauses || []).find(x => x.id === cl.subordinateTo);
+  if (!target) return null;
+  const correct = clauseHandle(sentence, target);
+  const others = (sentence.clauses || []).filter(x => x.id !== cl.id && x.id !== target.id).map(x => clauseHandle(sentence, x));
+  const distract = seedRotate([...new Set(others)], correct).slice(0, 3);
+  const options = [...new Set([correct, ...distract])];
+  if (options.length < 2) return null;   // degenerate MCQ (2-clause verse) — skip
+  return { correct, options: seedRotate(options, correct) };
+}
+// The अस् (to-be) paradigm — for building AGREEMENT-mismatched distractors on a copula-supply question.
+// The learner must pick the form that agrees with the subject (सः → अस्ति), so distractors are other
+// person/number forms (स्तः dual, सन्ति plural, अस्मि 1st…) that are clearly WRONG. We deliberately do NOT
+// offer भवति: it's a synonym of अस्ति and would be an unfair (arguably also-correct) distractor — the
+// question tests AGREEMENT, not अस् vs भू. (Harsha, 2026-08-27: "make the other options more implausible.")
+const ASTI_PARADIGM = ['अस्मि', 'असि', 'अस्ति', 'स्वः', 'स्थः', 'स्तः', 'स्मः', 'स्थ', 'सन्ति'];
+function clauseElidedOptions(sentence, clauseIdx) {
+  const cl = sentence.clauses[clauseIdx];
+  const correct = (cl.elided || []).join(' ');
+  if (!correct) return null;
+  let pool;
+  if (ASTI_PARADIGM.includes(correct)) {
+    pool = ASTI_PARADIGM.filter(f => f !== correct);   // agreement-wrong forms of the SAME verb
+  } else {
+    const sibs = [];
+    (sentence.clauses || []).forEach(x => { const e = (x.elided || []).join(' '); if (e && e !== correct && !sibs.includes(e)) sibs.push(e); });
+    pool = [...new Set([...sibs, 'अस्ति', 'सन्ति', 'दुर्लभम् अस्ति'].filter(e => e !== correct))];
+  }
+  const distract = seedRotate([...new Set(pool)], correct).slice(0, 3);
+  if (!distract.length) return null;
+  return { correct, options: seedRotate([...new Set([correct, ...distract])], correct) };
+}
+// अनुक्त-कर्ता (elided agent) MCQ for वाक्य-विभाग. Gold = the clause's `anuktaKarta`. Skip a "(copula …
+// implied)" note (that's an elided VERB, asked by clauseElided, not an agent) and the empty case.
+// Distractors: the ladder of common elided agents + any sibling clause's own anuktaKarta.
+const KARTA_FALLBACK = ['अहम्', 'वयम्', 'त्वम्', 'यूयम्', 'सः', 'कश्चित्', '(impersonal)'];
+// The recipe's कर्ता-ladder only predicts a PRONOUN agent (from the verb's person/mood/voice) or a
+// subject carried from another clause of the SAME verse. A कर्मणि/context agent that is a specific
+// EXTERNAL noun — e.g. Māṇḍūkya 3.15 चोदिता's श्रुत्या ("declared BY scripture"), which never appears
+// in the verse — is NOT recipe-derivable; quizzing it would be unfair (the learner would have to know
+// the commentary). So we only pose the कर्ता-supply MCQ when the answer is recipe-derivable; otherwise
+// skip it. (Harsha, 2026-08-27 — "श्रुत्या is not part of the … clause".)
+// the gold anuktaKarta is sometimes parenthesized ("(श्रुत्या)") — strip the parens to the bare word, but
+// KEEP marker forms "(impersonal)"/"(copula … implied)" as-is (they're not real word answers).
+function normalizeAgent(a) {
+  a = (a || '').trim();
+  const m = a.match(/^\((.+)\)$/);
+  return (m && !/impersonal|copula/i.test(m[1])) ? m[1].trim() : a;
+}
+const LADDER_AGENTS = new Set(['अहम्', 'वयम्', 'त्वम्', 'यूयम्', 'सः', 'सा', 'तत्', 'एतत्', 'कश्चित्', '(impersonal)']);
+function kartaIsRecipeDerivable(sentence, correct) {
+  const c = (correct || '').trim();
+  if (LADDER_AGENTS.has(c)) return true;                       // ladder pronoun / impersonal
+  if ((sentence.words || []).some(w => w === c)) return true;  // subject stated elsewhere in the verse (rung 5)
+  return false;                                                // external context/commentary noun (श्रुत्या) — not derivable
+}
+function clauseKartaOptions(sentence, clauseIdx) {
+  const cl = sentence.clauses[clauseIdx];
+  const correct = normalizeAgent(cl.anuktaKarta);
+  if (!correct || /copula/i.test(correct)) return null;
+  if (!kartaIsRecipeDerivable(sentence, correct)) return null;   // don't quiz an un-derivable external agent
+  const sibs = [];
+  (sentence.clauses || []).forEach(x => { const a = (x.anuktaKarta || '').trim(); if (a && !/copula/i.test(a) && a !== correct && !sibs.includes(a)) sibs.push(a); });
+  const pool = [...new Set([...sibs, ...KARTA_FALLBACK.filter(a => a !== correct)])];
+  const distract = seedRotate(pool, correct).slice(0, 3);
+  if (!distract.length) return null;
+  return { correct, options: seedRotate([...new Set([correct, ...distract])], correct) };
+}
+function clauseKartaTip(cl) {
+  return `This clause states no agent — its कर्ता is supplied by <b>अध्याहार</b> as <b>${esc(normalizeAgent(cl.anuktaKarta))}</b> (अनुक्त-कर्ता, the unexpressed doer).`;
+}
+// Passive-clause agent MCQ: the कर्ता (agent) is in तृतीया. Options = the elided agent (correct) + the
+// SAME-CASE करणम् trap (an instrument in तृतीया that is NOT the agent) + the कर्म — so the learner learns
+// that not every तृतीया is the agent. Teaches Māṇḍūkya 3.15: श्रुत्या (agent) vs मृद्-लोह…आद्यैः (करणम्).
+function clauseAgentSpec(sentence, clauseIdx, cl, cluster) {
+  const correct = normalizeAgent(cl.anuktaKarta);
+  const roleWords = arr => (arr || []).map(r => sentence.words[(r && typeof r === 'object') ? r.wordIndex : r]).filter(Boolean);
+  const karana = roleWords(cluster.karana);   // instrument (तृतीया) — a trap
+  const hetu = roleWords(cluster.hetu);        // cause/motive (हेतु-तृतीया) — a trap
+  const karma = roleWords(cluster.karma);      // object (प्रथमा under passive)
+  let pool = [...new Set([...karana, ...hetu, ...karma])].filter(o => o && o !== correct);
+  if (pool.length < 2) pool = [...new Set([...pool, 'तेन', 'देवेन'])].filter(o => o !== correct);   // ensure ≥3 options
+  const distract = seedRotate(pool, correct).slice(0, 3);
+  const options = seedRotate([...new Set([correct, ...distract])], correct);
+  let tip = `<b>${esc(correct)}</b> is the कर्ता (agent), supplied by अध्याहार (not stated in the verse).`;
+  const traps = [];
+  if (karana.length) traps.push(`<b>${esc(karana.join('/'))}</b> is <b>करणम्</b> (the instrument/means)`);
+  if (hetu.length) traps.push(`<b>${esc(hetu.join('/'))}</b> is <b>हेतु-तृतीया</b> (the cause/motive — तृतीया by 2.3.23 हेतौ), NOT the अनभिहित-कर्ता`);
+  if (traps.length) tip += ` Beware the other तृतीया word(s) that are NOT the agent: ${traps.join('; ')} — same case, different कारक.`;
+  if (karma.length) tip += ` <b>${esc(karma.join('/'))}</b> is the कर्म (प्रथमा under the passive, अभिहित).`;
+  return { correct, options, highlight: new Set(cl.words), explainHtml: tip };
+}
+// teaching tips shown after answering
+function samasaTip(L) {
+  let s = `<b>${esc(L.c)}</b> = ${esc(L.vigraha)} — <b>${esc(L.type)}</b>`;
+  if (L.sutra) s += ` <span class="muted">(${esc(L.sutra.num)} — ${esc(L.sutra.text)})</span>`;
+  if (L.pratyaya) s += ` <span class="muted">[प्रत्यय ${esc(L.pratyaya)}]</span>`;
+  // तदर्थ (nitya-samāsa) चतुर्थी: keyed on Gemini's OWN signal — a चतुर्थी-तत्पुरुष type, or a vigraha of
+  // the specific "X-आय इदम्" (dative + इदम्) shape — the "for the sake of / made-for" compound (e.g.
+  // दर्शनार्थम् = दर्शनाय इदम्). NOT plain इदम् (that also appears in taddhita "X-नः/याः इदम्" possessives)
+  // and NOT generic नित्य (मात्र-compounds मृत् एव are नित्यसमास but not तदर्थ). Display note only. (Harsha, 2026-08-22)
+  const tadarthaVigraha = /(आय|यै|ने|वे|भ्यः|भ्याम्|अस्मै|तस्मै|यस्मै)\s*इदम्/.test(L.vigraha || '');
+  if ((/चतुर्थी-तत्पुरुष/.test(L.type || '') || tadarthaVigraha) && !/तद्धित|कृत्|कृदन्त/.test(L.type || '')) {
+    s += `<div class="muted" style="margin-top:4px">तदर्थ (नित्य-समास) — “for the sake of / made for”: the vigraha <b>X-आय इदम्</b> shows the purpose चतुर्थी — चतुर्थी तदर्थार्थबलिहितसुखरक्षितैः (2.1.36).</div>`;
+  }
+  return s;
+}
+function samasaLeafTip(L) {
+  const kind = /तद्धित/.test(L.type)
+    ? 'a <b>तद्धित</b> (secondary derivation — formed from a nominal stem)'
+    : 'a <b>कृदन्त</b> (primary derivation — formed from a verb root)';
+  let s = `<b>${esc(L.c)}</b> is not a compound — it is a प्रातिपदिक derived as ${kind}`;
+  if (L.pratyaya) s += ` by the प्रत्यय <b>${esc(L.pratyaya)}</b>`;
+  if (L.vigraha) s += ` <span class="muted">(${esc(L.vigraha)})</span>`;
+  if (L.sutra) s += ` <span class="muted">[${esc(L.sutra.num)} — ${esc(L.sutra.text)}]</span>`;
+  return s + '.';
+}
+function clauseElidedTip(cl) {
+  let s = `The words <b>${esc((cl.elided || []).join(' '))}</b> are supplied by <b>अध्याहार</b> — understood here though left unstated.`;
+  if (cl.anuktaKarta) s += ` Unexpressed agent (अनुक्त-कर्ता): <b>${esc(cl.anuktaKarta)}</b>.`;
+  return s;
+}
+// per-step MCQ spec (options/correct/highlight/explain) for the new samāsa + clause question types
+function tutorialMcqSpec(step, sentence) {
+  if (step.type === 'verbLakara') {
+    const c = sentence.clusters[step.clusterIdx];
+    return { ...lakaraOptions(c.lakara), highlight: new Set([c.governorWordIndex]), explainHtml: lakaraTip(c.lakara) };
+  }
+  if (step.type === 'samasaType') {
+    const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
+    return { ...samasaTypeOptions(L.type), highlight: new Set([sm.wordIndex]), explainHtml: samasaTip(L) };
+  }
+  if (step.type === 'samasaVigraha') {
+    const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
+    const r = buildVigrahaOptions(sentence, step.samasaIdx, step.layerIdx) || { correct: L.vigraha, options: [L.vigraha] };
+    return { ...r, highlight: new Set([sm.wordIndex]), explainHtml: '' };
+  }
+  if (step.type === 'samasaLeaf') {
+    const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
+    const correct = /तद्धित/.test(L.type) ? 'तद्धित' : 'कृदन्त';
+    return { correct, options: seedRotate(['कृदन्त', 'तद्धित', 'मूल-प्रातिपदिक'], L.c), highlight: new Set([sm.wordIndex]), explainHtml: samasaLeafTip(L) };
+  }
+  if (step.type === 'clauseType') {
+    const cl = sentence.clauses[step.clauseIdx];
+    return { ...clauseTypeOptions(cl.type), highlight: new Set(cl.words), explainHtml: cl.gloss ? `“${esc(cl.gloss)}”` : '' };
+  }
+  if (step.type === 'clauseSubordinate') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const r = clauseSubordinateOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
+    return { ...r, highlight: new Set(cl.words), explainHtml: cl.gloss ? `“${esc(cl.gloss)}”` : '' };
+  }
+  if (step.type === 'clauseElided') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const r = clauseElidedOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
+    return { ...r, highlight: new Set(cl.words), explainHtml: clauseElidedTip(cl) };
+  }
+  if (step.type === 'clauseKartaCase') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const cluster = clusterForClauseHead(sentence, cl) || {};
+    const r = kartaCaseOptions(cluster, sentence);   // कर्मणि ⇒ correct तृतीया (reuses वाक्य-विग्रह's own logic); कारक-षष्ठी honoured
+    // highlight only the HEAD verb (like वाक्य-विग्रह's kartaCase), NOT the whole clause — highlighting
+    // every word paints them "correct"-green and prematurely reveals the boundary the trace is discovering.
+    return { ...r, highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: r.tip || `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
+  }
+  if (step.type === 'clauseKarmaCase') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const cluster = clusterForClauseHead(sentence, cl) || {};
+    const r = karmaCaseOptions(cluster, sentence);
+    const tip = r.tip || (cluster.voice === 'कर्मणि'
+      ? `Under <b>कर्मणि</b> (passive) the कर्म is <b>अभिहित</b> — expressed by the verb — so it stands in <b>प्रथमा</b>, not द्वितीया.`
+      : `Under <b>कर्तरि</b> (active) the कर्म is <b>अनुक्त</b> — so it stands in its plain <b>द्वितीया</b>.`);
+    return { ...r, highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: tip };
+  }
+  if (step.type === 'clauseKarta') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const cluster = clusterForClauseHead(sentence, cl);
+    if (cluster && cluster.voice === 'कर्मणि') return clauseAgentSpec(sentence, step.clauseIdx, cl, cluster);
+    const r = clauseKartaOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
+    return { ...r, highlight: new Set(cl.words), explainHtml: clauseKartaTip(cl) };
+  }
+  if (step.type === 'clauseValence') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const hc = clusterForClauseHead(sentence, cl) || {};
+    const head = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '';
+    const correct = /अकर्मक/.test(hc.transitivity || '') ? 'अकर्मक' : 'सकर्मक';
+    const tip = correct === 'सकर्मक'
+      ? `<b>${esc(head)}</b> is <b>सकर्मक</b> (transitive) — its action reaches out to a कर्म. So look for the word it acts upon: that कर्म (and its vibhakti) draws this clause's boundary.`
+      : `<b>${esc(head)}</b> is <b>अकर्मक</b> (intransitive) — it takes no कर्म. Its कर्ता alone completes the action; a द्वितीया word here would belong to some other verb, not to ${esc(head)}.`;
+    return { correct, options: ['सकर्मक', 'अकर्मक'], highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: tip };
+  }
+  if (step.type === 'clauseGerundAttach') {
+    const cl = sentence.clauses[step.clauseIdx];
+    const gc = sentence.clusters[step.clusterIdx] || {};
+    const gw = gc.governorWord || '';
+    const headOf = idx => (sentence.clauses[idx] && sentence.clauses[idx].headWordIndex != null) ? sentence.words[sentence.clauses[idx].headWordIndex] : `clause ${idx + 1}`;
+    const correct = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '';
+    const options = seedRotate([...new Set((sentence.clauses || []).map((_, idx) => headOf(idx)))], correct);
+    return { correct, options, highlight: new Set(gc.governorWordIndex != null ? [gc.governorWordIndex] : []), explainHtml: `<b>${esc(gw)}</b> is an absolutive/participle (कृत्) — not a clause of its own; it hangs on a finite verb, whose action it precedes or accompanies (and whose कर्ता it shares). Here it attaches to <b>${esc(correct)}</b>.` };
+  }
+  if (step.type === 'clauseGerundValence') {
+    const gc = sentence.clusters[step.clusterIdx] || {};
+    const gw = gc.governorWord || '';
+    const correct = /अकर्मक/.test(gc.transitivity || '') ? 'अकर्मक' : 'सकर्मक';
+    const tip = correct === 'सकर्मक'
+      ? `<b>${esc(gw)}</b> is <b>सकर्मक</b> (transitive) — it governs its own कर्म, distinct from the finite verb's. Find that कर्म next.`
+      : `<b>${esc(gw)}</b> is <b>अकर्मक</b> (intransitive) — it takes no कर्म of its own.`;
+    return { correct, options: ['सकर्मक', 'अकर्मक'], highlight: new Set(gc.governorWordIndex != null ? [gc.governorWordIndex] : []), explainHtml: tip };
+  }
+  if (step.type === 'clauseGerundKarmaCase') {
+    const gc = sentence.clusters[step.clusterIdx] || {};
+    const r = karmaCaseOptions(gc, sentence);
+    return { ...r, highlight: new Set(gc.governorWordIndex != null ? [gc.governorWordIndex] : []), explainHtml: r.tip || `A gerund/participle governs its own कर्म in the usual <b>द्वितीया</b> (2.3.2) — the कारक-षष्ठी (2.3.65) is blocked for absolutives/निष्ठा/शतृ forms (2.3.69).` };
+  }
+  if (step.type === 'clauseAssign') {
+    const ci = wordClauseIdx(sentence, step.wordIndex);
+    const cl = (sentence.clauses || [])[ci] || {};
+    const headOf = idx => (sentence.clauses[idx] && sentence.clauses[idx].headWordIndex != null) ? sentence.words[sentence.clauses[idx].headWordIndex] : `clause ${idx + 1}`;
+    const correct = headOf(ci);
+    const options = seedRotate([...new Set((sentence.clauses || []).map((_, idx) => headOf(idx)))], correct);
+    const tip = `<b>${esc(sentence.words[step.wordIndex])}</b> belongs to the <b>${esc(clauseTypeLabel(cl.type))}</b> (headed by <b>${esc(correct)}</b>)${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}.`;
+    return { correct, options, highlight: new Set([step.wordIndex]), explainHtml: tip };
+  }
+  return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
+}
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase', 'verbLakara']);
+// लकार (tense/mood) MCQ: distractors from the lakāras a learner actually meets (present/future/imperative/
+// optative/past/perfect); the correct one is always included even if rarer. (2026-08-29)
+const LAKARA_DISTRACT_POOL = ['लट्', 'लृट्', 'लोट्', 'विधिलिङ्', 'लङ्', 'लिट्'];
+function lakaraOptions(correct) {
+  const distract = seedRotate(LAKARA_DISTRACT_POOL.filter(l => l !== correct), correct + 'l').slice(0, 3);
+  return { correct, options: seedRotate([correct, ...distract], correct) };
+}
+const LAKARA_SENSE = {
+  'लट्': 'वर्तमाने — present ("does")', 'लङ्': 'अनद्यतने भूते — past ("did")',
+  'लिट्': 'परोक्षे भूते — remote past', 'लुङ्': 'भूते — past (aorist)',
+  'लृट्': 'भविष्यति — future ("will do")', 'लुट्': 'अनद्यतने भविष्यति — future',
+  'लोट्': 'आज्ञायाम् — command ("let / do!")', 'विधिलिङ्': 'विधौ — "should / may"',
+  'आशीर्लिङ्': 'आशीषि — blessing ("may …")', 'लृङ्': 'क्रियातिपत्तौ — conditional ("would have")',
+};
+const lakaraTip = l => `<b>${esc(l)}</b> — ${esc(LAKARA_SENSE[l] || 'a लकार (tense/mood) of the verb')}.`;
+
+// Bubble a negation (प्रतिषेध) hint onto verb-governed questions so the learner reads the clause as
+// negated while reasoning about voice/kāraka. The न/मा itself is still asked for in its own pratishedha
+// step, so this is excluded there (and on nipata) to avoid leaking that answer (Harsha, 2026-08-22).
+const VERB_NEG_STEP = new Set(['voice', 'kartaCase', 'karmaCase', 'karta', 'karma']);
+function tutorialStepLabel(step, sentence) {
+  const base = tutorialStepLabelBase(step, sentence);
+  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
+  if (c && VERB_NEG_STEP.has(step.type) && (c.pratishedha || []).length) {
+    const negs = c.pratishedha.map(i => sentence.words[i]).filter(Boolean);
+    if (negs.length) return `${base}<div class="tut-explain">⚠ Note: this clause is negated (प्रतिषेध) by <b>${esc(negs.join(' '))}</b> — read the verb as negated.</div>`;
+  }
+  return base;
+}
+function tutorialStepLabelBase(step, sentence) {
+  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
+  const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
+  switch (step.type) {
+    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any verbal (कृत्) form that <b>governs its own कारक</b> (कर्ता/कर्म)? This <b>includes gerunds/absolutives</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य, which take their own कर्म) and predicate participles (क्त — e.g. चोदिता). Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${verbsIndicesFor(sentence).size})`;
+    case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
+    case 'verbLakara': return `${gov} — which लकार (tense/mood) is this verb in?`;
+    case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
+    case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
+    // उद्देश्य–विधेय (verbless nominal predication). Name the विधेय explicitly so the task is fair —
+    // both stand in the same प्रथमा (सामानाधिकरण्य), so without the cue "pick the subject" would be an
+    // ambiguous guess between two co-referential words (cf. [[feedback_quiz_question_framing]]).
+    case 'nominalSubject': {
+      const vidheya = [...new Set(c.agreementKarta)].map(i => sentence.words[i]).filter(Boolean).join('/');
+      return `This clause has no finite verb — an <b>अस्ति/भवति</b> ("is") is implied, so it is a सामानाधिकरण्य (appositional) predication in which two words share one प्रथमा: the <b>उद्देश्य</b> (the subject — what the statement is <i>about</i>, the logical कर्ता) and the <b>विधेय</b>${vidheya ? ` (here <b>${esc(vidheya)}</b> — what is asserted of it)` : ' (what is asserted of it)'}. Which word is the <b>उद्देश्य</b>? Pick every word that shares the role — including any joined by च (समुच्चय).`;
+    }
+    case 'karta': return `For ${gov}, which word(s) together are the कर्ता (the doer — "who?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is none, choose "None of these" below.`;
+    case 'karma': return `For ${gov}, which word(s) together are the कर्म (what the action is done to — "whom/what?")? Pick every word that shares the role — including any joined by च (समुच्चय). If there is no कर्म, choose "None of these" below.`;
+    // Name the word being agreed with DIRECTLY ("agrees with <नर-जन्म>?") rather than "the कर्ता/कर्म of
+    // <governor>" — the latter mis-frames a verbless nominal predication (VC 2: नर-जन्म IS the subject
+    // head, has no separate कर्ता) and needlessly abstracts the concrete referent (Harsha, 2026-08-23).
+    // The reference is the कर्ता/कर्म core EXCLUDING the agreement members themselves (those are the
+    // answer — coreArgWords would fold them in and leak दुर्लभम्); subjectIsHead → the governor is it.
+    case 'agreementKarta': { const idx = [...(c.subjectIsHead ? [c.governorWordIndex] : []), ...c.karta, ...c.samuccayaKarta];
+      const w = [...new Set(idx)].map(i => sentence.words[i]).join('/');
+      return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) ${w ? `<b>${esc(w)}</b>` : 'the कर्ता'}?`; }
+    case 'agreementKarma': { const idx = [...c.karma, ...c.samuccayaKarma];
+      const w = [...new Set(idx)].map(i => sentence.words[i]).join('/');
+      return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) ${w ? `<b>${esc(w)}</b>` : 'the कर्म'}?`; }
+    case 'qualifierKarta': {
+      const w = coreArgWords(c, sentence, 'karta');
+      // when the कर्ता IS the governor (a verbless nominal-predication head, e.g. VC 2), don't append the
+      // self-referential "(the कर्ता of X)" — just ask "qualify X?" (Harsha #1, 2026-08-20).
+      if (w && w === c.governorWord) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
+      return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्ता of ${gov})` : `the कर्ता of ${gov}`}?`;
+    }
+    case 'qualifierKarma': {
+      const w = coreArgWords(c, sentence, 'karma');
+      if (w && w === c.governorWord) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
+      return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्म of ${gov})` : `the कर्म of ${gov}`}?`;
+    }
+    case 'genderCheck': {
+      const qWord = `<b>${esc(sentence.words[step.wordIndex])}</b>`;
+      // Must reference the SAME word genderCheckOptions actually compares against
+      // (coreArgIndices(...)[0]) — not the full coreArgWords() set, which can include the very
+      // word being asked about itself (e.g. एकस्थम् is in its own cluster's agreementKarma).
+      const qualifiedIdx = coreArgIndices(c, step.side)[0];
+      const argWord = qualifiedIdx != null ? `<b>${esc(sentence.words[qualifiedIdx])}</b>` : '';
+      const argLabel = step.side === 'karta' ? 'कर्ता' : 'कर्म';
+      // when the compared arg IS the cluster head (a nominal-predication subject), gov and argWord are
+      // the same word — don't tack on the redundant "(the कर्ता of X)" clause.
+      if (qualifiedIdx === c.governorWordIndex) return `${qWord} must share which लिङ्ग (gender) with ${argWord}?`;
+      return `${qWord} must share which लिङ्ग (gender) with ${argWord} (the ${argLabel} of ${gov})?`;
+    }
+    case 'samuccayaKarta':
+    case 'samuccayaKarma': {
+      // Reference word deliberately excludes समुच्चयKarta/Karma itself (unlike coreArgIndices,
+      // which now includes it for grading purposes) — otherwise a cluster with no plain कर्ता/कर्म
+      // tag could self-reference the very word being asked about.
+      const side = step.type === 'samuccayaKarta' ? 'karta' : 'karma';
+      const primaryIdx = (side === 'karta' ? [...c.karta, ...c.agreementKarta] : [...c.karma, ...c.agreementKarma])[0];
+      const argWord = primaryIdx != null ? `<b>${esc(sentence.words[primaryIdx])}</b>` : '';
+      const argLabel = side === 'karta' ? 'कर्ता' : 'कर्म';
+      return `Which other word(s) join ${argWord} as a joint ${argLabel} of ${gov} (समुच्चय — coordination, e.g. "X and Y")?`;
+    }
+    case 'samuccaya': return `Which word is the coordinating particle (समुच्चयद्योतक — च "and", अपि "also/even", वा "or") that joins the words sharing ${gov}'s role? (Pick the connector, not the joined words.)`;
+    case 'modifiers':
+      // a verbless nominal-predication head has no action verb — the adverb qualifies the implied copula
+      if (c.subjectIsHead) return `In the predication about ${gov} (with an implied अस्ति/भवति), which word(s) adverbially qualify it (क्रियाविशेषण — where / when / how much)?`;
+      return `Which word(s) adverbially modify (क्रियाविशेषण) ${gov} — describing how/where/when the action happens? (A verb takes no विशेषण; those describe nouns.)`;
+    case 'pratishedha':
+      if (c.subjectIsHead) return `Which word negates the predication about ${gov} (प्रतिषेध — the न / नो / मा attaches to the implied अस्ति: "${esc(c.governorWord)} is NOT …")?`;
+      return `Which word negates ${gov} (प्रतिषेध — a negation particle such as न / नो / मा)?`;
+    case 'nipata': return `Which word(s) are particles (निपात) here — emphatic (एव, हि) or quotative (इति) — rather than a कारक of ${gov}?`;
+    case 'hetu': return `For ${gov}, which word is the हेतु — "due to what cause/reason" does this happen? (case: तृतीया or पञ्चमी, 2.3.23)`;
+    case 'sequence': return `For ${gov}, which word denotes the action done just before (पूर्वकाल) or alongside (समानकाल) it — a gerund/absolutive (e.g. -त्वा, -य, -शतृ)?`;
+    case 'genitiveOf': {
+      const t = sentence.words[step.targetIndex];
+      return `Which word is the possessor (षष्ठीसम्बन्ध — genitive "of X") of <b>${esc(t)}</b>?`;
+    }
+    case 'qualifierOf': {
+      const t = sentence.words[step.targetIndex];
+      const lbl = { 'हेतुः': 'हेतु', 'करणम्': 'करण', 'अधिकरणम्': 'अधिकरण', 'सम्प्रदानम्': 'सम्प्रदान', 'अपादानम्': 'अपादान' }[step.targetRole] || step.targetRole;
+      return `Which word(s) qualify (विशेषण) <b>${esc(t)}</b> (the ${esc(lbl)} of ${gov})?`;
+    }
+    case 'karana': return `For ${gov}, which word is the करण — "by what means/instrument" is this action done?`;
+    case 'sampradana': return `For ${gov}, which word is the सम्प्रदान — "for whom" or "for what purpose" (तादर्थ्य) is this कर्म/क्रिया being done?`;
+    case 'apadana': return `For ${gov}, which word is the अपादान — "from what" or "from where" does this action originate?`;
+    case 'adhikarana': return `For ${gov}, which word is the अधिकरण — "where" or "when" is this action happening?`;
+    case 'satisaptami': return `For ${gov}, which word names the circumstance under which this action happens (सति-सप्तमी — a locative-absolute clause, distinct from ordinary अधिकरण)?`;
+    case 'itthambhuta': return `For ${gov}, which word tells by what characteristic/mark the agent is recognized (इत्थम्भूतलक्षणे — तृतीया, 2.3.21 — "by virtue of being …")?`;
+    case 'upamana': return `Which word is the उपमान — the standard of comparison ("like / as ___", e.g. the moon in "face like the moon")?`;
+    case 'upameya': return `Which word is the उपमेय — the thing being compared (to the उपमान)?`;
+    case 'sambodhana': return `For ${gov}, which word is being directly addressed or called out to (सम्बोधन)?`;
+    case 'nirdharana': return `For ${gov}, compared to/singled out from which group is this true (निर्धारण)?`;
+    case 'remaining': return `Which remaining word(s) relate to ${gov} — a particle (निपात) or a connection not covered above? (Not necessarily षष्ठी — a true possessor is asked separately.)`;
+    case 'samasaVigraha': {
+      const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
+      return `Peel the compound <b>${esc(L.c)}</b> — how does it break apart (its विग्रह)?`;
+    }
+    case 'samasaType': {
+      const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
+      return `What type of समास is <b>${esc(L.c)}</b>?`;
+    }
+    case 'samasaLeaf': {
+      const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
+      return `<b>${esc(L.c)}</b> is a leaf of the peel — no longer a compound, but a प्रातिपदिक (base stem). How is it derived — <b>कृदन्त</b> (from a verb root), <b>तद्धित</b> (from a nominal), or a <b>मूल-प्रातिपदिक</b> (underived)?`;
+    }
+    case 'clauseHeads':
+      // Deliberately DON'T reveal the count — deriving "#nuclei = #clauses" is the lesson (revealed after).
+      return `<b>Recipe step 1 — find the nuclei.</b> Every clause (वाक्य) is built on exactly one nucleus: a <b>finite verb</b> (तिङन्त), or — in a verbless “X [is] Y” — the <b>subject</b>. A gerund/participle (ल्यप्/क्त्वा/शतृ/क्त…) is NOT a nucleus; it stays inside a finite verb's clause. Click every nucleus — how many you find is how many clauses the verse has.`;
+    case 'clauseMembers': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `<b>Recipe step 2 — draw this clause's boundary.</b> Starting from ${h}, click <b>every</b> word that belongs to its clause (include ${h}). Boundary signals: <b>या/यत्</b> opens a relative clause, <b>सः/तत्/तथा</b> its correlative, a quotation <b>इति</b> closes a quote, a <b>daṇḍa</b> ends the sentence — and a gerund/participle stays with its finite verb.`;
+    }
+    case 'clauseAssign': {
+      const w = sentence.words[step.wordIndex];
+      return `<b>Recipe step 2 — draw the boundaries, word by word.</b> Which clause does <b>${esc(w)}</b> belong to? Use the signals: <b>या/यत्</b> opens a relative clause, <b>सः/तत्/तथा</b> its correlative, <b>इति</b> closes a quotation, a <b>daṇḍa</b> ends the sentence — and a gerund/participle stays with its finite verb.`;
+    }
+    case 'clauseKartaCase': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this verb';
+      return `<b>Recipe step 3 — supply the unspoken agent.</b> ${h} is <b>कर्मणि</b> (passive). Before finding the agent, decide: in which <b>vibhakti</b> does the कर्ता (agent) of a passive verb stand?`;
+    }
+    case 'clauseKarta': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
+      const cluster = clusterForClauseHead(sentence, cl);
+      if (cluster && cluster.voice === 'कर्मणि')
+        return `Now find that agent. ${h} is passive, so its कर्ता is in <b>तृतीया</b> — but beware: not every तृतीया word is the agent (some are करणम् the instrument, or हेतु the cause). Which word is the <b>कर्ता (agent)</b>?`;
+      return `<b>Recipe step 3 — supply the unspoken agent.</b> The clause headed by ${h} states no कर्ता. Infer it from the signals: उत्तम-verb → अहम्, मध्यम → त्वम्, relative/optative → कश्चित्, existential/भावे → impersonal, else carry the main clause's subject. What is the अनुक्त-कर्ता here?`;
+    }
+    case 'clauseValence': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this nucleus';
+      return `<b>Trace step 1 — the nucleus's valence.</b> Look only at ${h}: does its action reach out to an object (<b>सकर्मक</b> — transitive, it wants a कर्म), or complete in itself (<b>अकर्मक</b> — intransitive, no कर्म)? This tells you which words to hunt for next.`;
+    }
+    case 'clauseKarmaCase': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const cluster = clusterForClauseHead(sentence, cl) || {};
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `<b>Trace step 2 — the object.</b> ${h} is <b>सकर्मक</b> (transitive)${cluster.voice ? `, ${esc(cluster.voice)}` : ''}, so it governs a कर्म. In which vibhakti does its कर्म stand?`;
+    }
+    case 'clauseKarma': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const hc = clusterForClauseHead(sentence, cl) || {};
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `Now identify it: which word is the <b>कर्म</b> (what the action is done to) of ${h}? Picking it draws part of ${h}'s clause boundary.${samanadhikaranyaHint(sentence, hc, 'karma')}`;
+    }
+    case 'clauseKartaTrace': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const hc = clusterForClauseHead(sentence, cl) || {};
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      const vibs = [...new Set((hc.karta || []).map(i => actualVibhakti(sentence, i)).filter(Boolean))];
+      const caseNote = vibs.length === 1 ? ` (it stands in <b>${esc(vibs[0])}</b>)` : '';
+      return `<b>Trace step 3 — the agent.</b> Whose action is ${h}? Click the <b>substantive head</b> that is its <b>कर्ता</b> (the doer)${caseNote} — a pronoun (यः/सः) or the principal noun, <b>not</b> its adjectives (a विशेषण agrees with the कर्ता in समानाधिकरण्य and is placed in the mop-up). Also beware a तृतीया word that is the <b>करणम्</b> (instrument) or <b>हेतु</b> (cause), not the agent — match the कारक to the verb.${samanadhikaranyaHint(sentence, hc, 'karta')}`;
+    }
+    case 'clausePeripheral': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      const L = CLAUSE_ROLE_LABEL[step.role] || [step.role, ''];
+      return `<b>Trace — a peripheral कारक.</b> For ${h}, which word is the <b>${esc(L[0])}</b>${L[1] ? ` — ${L[1]}` : ''}? Match by कारक, not just by case.`;
+    }
+    case 'clauseGerundAttach': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `<b>Trace — the gerund's anchor.</b> <b>${esc(gc.governorWord || '')}</b> is an absolutive/participle (कृत्, e.g. क्त्वा/ल्यप्) — it isn't a clause of its own; it hangs on a finite verb whose action it precedes or accompanies. Which nucleus does it attach to?`;
+    }
+    case 'clauseGerundValence': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `<b>Trace the gerund's own frame.</b> Is <b>${esc(gc.governorWord || '')}</b> <b>सकर्मक</b> (governs its own कर्म) or <b>अकर्मक</b> (none)?`;
+    }
+    case 'clauseGerundKarmaCase': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `<b>${esc(gc.governorWord || '')}</b> is <b>सकर्मक</b>, so it takes its own कर्म. In which vibhakti does that कर्म stand?`;
+    }
+    case 'clauseGerundKarma': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      const gw = `<b>${esc(gc.governorWord || '')}</b>`;
+      return `Which word is <b>${esc(gc.governorWord || '')}</b>'s <b>कर्म</b> (the thing <i>it</i> acts on — distinct from the finite verb's कर्म)?${samanadhikaranyaHint(sentence, gc, 'karma')}`;
+    }
+    case 'clauseGerundKarta': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      return `Which word is <b>${esc(gc.governorWord || '')}</b>'s own <b>कर्ता</b> (its doer)? Pick the substantive head, not its adjectives.${samanadhikaranyaHint(sentence, gc, 'karta')}`;
+    }
+    case 'clauseGerundPeripheral': {
+      const gc = sentence.clusters[step.clusterIdx] || {};
+      const L = CLAUSE_ROLE_LABEL[step.role] || [step.role, ''];
+      return `For the gerund <b>${esc(gc.governorWord || '')}</b>, which word is its <b>${esc(L[0])}</b>${L[1] ? ` — ${L[1]}` : ''}?`;
+    }
+    case 'clauseMopUp': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
+      return `<b>Trace step 4 — mop up the rest.</b> Which OTHER words belong to ${h}'s clause? An <b>adjective rides its noun</b>; a <b>gerund</b> (त्वा/य) and its own object <b>stay with the finite verb</b>; adverbs and particles attach to the verb. Pick every remaining word of this clause.`;
+    }
+    case 'clauseType': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this group';
+      return `This verse has more than one clause (वाक्य). What TYPE is the clause headed by ${h} (highlighted)?`;
+    }
+    case 'clauseSubordinate': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
+      return `The clause headed by ${h} (highlighted) is subordinate to — depends on — which clause?`;
+    }
+    case 'clauseElided': {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
+      return `Which word(s) must be supplied by अध्याहार — left unstated but understood — in the clause headed by ${h} (highlighted)?`;
+    }
+    default: return '';
+  }
+}
+// Voice callout (step 2's fixed teaching text, shown after answering, regardless of correctness) —
+// UoHyd p.7's rule: voice decides which kāraka is अभिहित (verbally-agreement-marked) and takes
+// प्रथमा; the other stays in its "unexpressed" (अनुक्त) default case.
+function tutorialVoiceCallout(voice) {
+  if (voice === 'कर्तरि') return 'In कर्तरि (active), the verb agrees with the कर्ता, and the कर्ता stays in प्रथमा (nominative — अभिहित/expressed) — if there is a कर्म, it stays in द्वितीया (accusative — अनुक्त/unexpressed).';
+  if (voice === 'कर्मणि') return 'In कर्मणि (passive), the verb agrees with the कर्म, and the कर्म moves to प्रथमा (अभिहित) — the कर्ता now goes to तृतीया (instrumental — अनुक्त).';
+  if (voice === 'भावे') return 'In भावे (impersonal), the verb is always 3rd person singular no matter who the doer is — here neither कर्ता nor कर्म is in प्रथमा; the कर्ता (if expressed) stays in तृतीया.';
+  return '';
+}
+// When a participle governor has no explicit तिङ् voice tag (क्तवतु/शतृ/etc. don't carry one), the
+// build script derives voice from the pratyaya's own fixed sense — flag WHY here, so it doesn't
+// look unmotivated to the learner.
+function tutorialVoiceInferredNote(pratyaya, voice) {
+  if (!pratyaya) return '';
+  const p = esc(pratyaya);
+  // क्त (निष्ठा) is the one affix whose voice depends on the ROOT, not the affix — so the note must
+  // match which way it resolved (3.4.72 कर्तरि for अकर्मक/गत्यर्थ vs 3.4.70 कर्मणि for सकर्मक). Every
+  // other kṛt affix has a fixed voice-sense.
+  if (pratyaya === 'क्त') {
+    return voice === 'कर्तरि'
+      ? `(No separate तिङ् voice-tag — it's a क्त participle of an intransitive/motion (अकर्मक/गत्यर्थ) root, which by 3.4.72 (गत्यर्थाकर्मक…) denotes the agent: कर्तरि. The word it agrees with stays in प्रथमा.)`
+      : `(No separate तिङ् voice-tag — it's a क्त participle of a transitive (सकर्मक) root, which by 3.4.70 (तयोरेव कृत्यक्तखलर्थाः) denotes the object: कर्मणि. Its agent takes तृतीया.)`;
+  }
+  if (pratyaya === 'क्तवतु') return `(No separate तिङ् voice-tag — क्तवतु is a past active participle: always कर्तरि, whatever the root.)`;
+  if (pratyaya === 'शतृ' || pratyaya === 'शानच्') return `(No separate तिङ् voice-tag — ${p} is a present participle: कर्तरि.)`;
+  // कृत्य affixes (यत्/ण्यत्/तव्य(त्)/अनीयर्/क्यप्/केलिमर्) + खल्.
+  return `(No separate तिङ् voice-tag — the कृत्य affix ${p} is inherently ${esc(voice)} in sense (3.4.70, तयोरेव कृत्यक्तखलर्थाः); its agent takes तृतीया.)`;
+}
+// Transitivity aside — folded into step 5's (कर्म) feedback per the plan, not its own step.
+function tutorialTransitivityAside(transitivity) {
+  if (transitivity === 'अकर्मकः') return 'This verb is used intransitively (अकर्मक) here — that\'s why there\'s no कर्म; it\'s not a gap, just how this verb is being used.';
+  if (transitivity === 'सकर्मकः') return 'This verb is transitive (सकर्मक) here — so it should have a कर्म.';
+  return '';
+}
+// qualifierKarta/qualifierKarma teaching callout (Harsha, 2026-08-16) — "be generous and open" about
+// सामानाधिकरण्य: general Pāṇinian grammar (2.1.49 विशेषणं विशेष्येण बहुलम् and the standard
+// treatment of case-agreement-via-shared-reference) treats a qualifier/qualified pair as sharing
+// case/gender/number for the same reason a predicate word does (both denote the same referent) —
+// i.e. this step and agreementKarta/Karma are the same underlying phenomenon. NOTE: this "same
+// phenomenon" framing is NOT itself asserted by the UoHyd tagging-guidelines PDF (§5.4, ex. 51-56,
+// confirmed by grepping the extracted text — "सामानाधिकरण्य" only ever appears baked into the
+// compound labels कर्तृ/कर्मसमानाधिकरणम्, never as a standalone umbrella term); the PDF only
+// documents THAT विशेषणम् vs. कर्तृ/कर्मसमानाधिकरणम् are distinguished by उद्देश्य/विधेय function,
+// not that they're grammatically the same phenomenon underneath. Keep these attributions separate
+// if this callout is ever revised.
+function tutorialQualifierCallout() {
+  return 'This is also a form of सामानाधिकरण्य — a qualifier (विशेषण) shares the same case/gender/number as the word it qualifies, for the same reason a predicate word does (both refer to the same thing). It gets its own question here because it directly describes the word itself, rather than being predicated through the verb.';
+}
+// नमः/स्वस्ति/स्वाहा/स्वधा/अलम्/वषट् take चतुर्थी by 2.3.16 (नमःस्वस्तिस्वाहास्वधालंवषड्योगाच्च). When a
+// सम्प्रदान question fires on a verse containing one of these, cite the trigger so the caturthī isn't read
+// as an ordinary "recipient" but as this specific योग-चतुर्थी (Harsha, 2026-08-22).
+const NAMAS_YOGA = /^(नमः|नमस्|अलम्|स्वस्ति|स्वाहा|स्वधा|वषट्)$/;
+function sampradanaYogaNote(sentence) {
+  const trigger = (sentence.words || []).find(w => NAMAS_YOGA.test(w));
+  if (!trigger) return '';
+  return `Note — the चतुर्थी here is governed by the indeclinable <b>${esc(trigger)}</b>, not an ordinary recipient: <b>नमःस्वस्तिस्वाहास्वधालंवषड्योगाच्च</b> (2.3.16) — नमस्/स्वस्ति/स्वाहा/स्वधा/अलम्/वषट् take चतुर्थी.`;
+}
+// "Honour + explain" callout for step 1 (verbs) — fired when a learner picks a word listed in
+// sentence.step1Hints: a word that ISN'T a verb here but is easy to mistake for one. The classic
+// case is भक्तः in BG 4.3 ("you ARE a devotee"): a क्त-कृदन्त, yes, but a PREDICATE noun completing
+// the copula असि — असि is the verb, भक्तः just names the कर्ता. Rather than a silent ding, name the
+// affix (when it is a participle), explain the role, and point to the step where the word IS the
+// answer. `hint` = {kind:'predicate'|'attributive', pratyaya, side, govIdx} from the build.
+function step1HintCallout(sentence, hint) {
+  const word = `<b>${esc(sentence.words[hint.wordIndex])}</b>`;
+  // hint.pratyaya is always set (the build only lists genuine कृदन्त here).
+  const lead = `${word} is indeed a ${esc(hint.pratyaya)}-कृदन्त, but here it does not govern its own कर्ता/कर्म`;
+  if (hint.kind === 'predicate') {
+    const gov = `<b>${esc(sentence.words[hint.govIdx])}</b>`;
+    const side = hint.side === 'karma' ? 'कर्म' : 'कर्ता';
+    return `${lead} — it is a <b>predicate noun/adjective</b> completing the copula ${gov} ("… ${gov} …", i.e. "is a ${esc(sentence.words[hint.wordIndex])}"). ${gov} is the verb; ${word} simply names/describes the ${side}. You'll pick ${word} in the "agrees with (समानाधिकरण्य) the ${side} of ${gov}" step — not here.`;
+  }
+  return `${lead} — it is an attributive adjective (विशेषण) describing another word, not the verb of a clause. You'll pick ${word} in the matching "which word(s) qualify …" step — not here.`;
+}
+// समुच्चय callout (Harsha, 2026-08-17, "Option A") — shown in the कर्ता/कर्म step's feedback whenever
+// that role's members include समुच्चय-coordinated words (मामकाः + पाण्डवाः च in BG 1.1). Names what
+// the learner just multi-selected and drives home the grammar established in that discussion: a
+// single finite verb has ONE कर्ता/कर्म role (in कर्तरि the abhihita agent takes प्रथमा), but that
+// one role can be borne by several words joined by च — they are a single collective कारक, not several
+// rival कारकs, and each stands in the same vibhakti. Returns '' when there's no समुच्चय member.
+function tutorialSamuccayaCallout(sentence, c, side) {
+  const samu = side === 'karta' ? c.samuccayaKarta : c.samuccayaKarma;
+  if (!samu || !samu.length) return '';
+  const roleLabel = side === 'karta' ? 'कर्ता' : 'कर्म';
+  const coreArg = side === 'karta' ? c.karta : c.karma;
+  const idxs = [...coreArg, ...samu];
+  const joined = idxs.map(i => `<b>${esc(sentence.words[i])}</b>`).join(' + ');
+  return `${joined} are joined by च (समुच्चय) — together they form a single collective ${roleLabel}, not separate ${roleLabel}s. Coordinated words share the one ${roleLabel} role, each standing in the same vibhakti.`;
+}
+// Override-trigger notes (Harsha's cross-checked frameworks + this session's Anusāraka/corpus
+// verification) — "why isn't this the plain default case," attached wherever cheaply detectable.
+// प्राग्दिशीय (5.3.x) pronominal adverbs — तद्धित-formed indeclinables (अव्यय) for place, from a
+// pronoun base + a locative suffix. Shown as a derivation tip when one appears (Harsha, 2026-08-18).
+const PRAGDISHIYA_TIP = {
+  'इह': 'इह ("here") = इदम् + the तद्धित suffix ह — इदमो हः (5.3.11), a special substitute (for the base इदम्) of the general locative suffix त्रल् (सप्तम्यास्त्रल्, 5.3.10, which gives तत्र/यत्र/कुत्र). इदम् reduces to इ (इदम इश्, 5.3.3): i + ha → इह. It is an अव्यय; its किम्-counterpart is क्व.',
+  'अत्र': 'अत्र ("here / in this") = इदम् + त्रल् (सप्तम्यास्त्रल्, 5.3.10; इदम् → अ) — an अव्यय.',
+  'तत्र': 'तत्र ("there / in that") = तद् + त्रल् (सप्तम्यास्त्रल्, 5.3.10) — an अव्यय.',
+  'यत्र': 'यत्र ("where / in which") = यद् + त्रल् (5.3.10) — an अव्यय.',
+  'सर्वत्र': 'सर्वत्र ("everywhere") = सर्व + त्रल् (5.3.10) — an अव्यय.',
+  'कुत्र': 'कुत्र ("where?") = किम् + त्रल् (5.3.10; किम् → कु) — an अव्यय.',
+  'क्व': 'क्व ("where?") = किम् + अत् (किमोऽत्, 5.3.12; किम् → कु) — the किम्-counterpart of इदम् → इह.',
+  'एकत्र': 'एकत्र ("in one place") = एक + त्रल् (5.3.10) — an अव्यय.',
+};
+// तसिल् pronominal ablatives — the पञ्चमी analogue of the त्रल् locatives above: तद्धित तसिल् added to a
+// pronoun base in पञ्चमी (ablative) sense → role अपादान, an अव्यय (Harsha, 2026-08-19). Shown in the अपादान step.
+const TASIL_ABLATIVE_TIP = {
+  'अतः': 'अतः ("hence / from this") = इदम् + the तद्धित suffix तसिल् (पञ्चम्यास्तसिल्, 5.3.7; इदम् → अ) — added to a pronominal base in पञ्चमी (ablative) sense, so its role is अपादान ("from"); an अव्यय. Its declined पञ्चमी counterpart is अस्मात्.',
+  'ततः': 'ततः ("thence / from that") = तद् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7) — पञ्चमी (ablative) sense → अपादान, an अव्यय. Declined पञ्चमी counterpart: तस्मात्.',
+  'यतः': 'यतः ("whence / from which") = यद् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7) — पञ्चमी sense → अपादान, an अव्यय. Counterpart: यस्मात्.',
+  'कुतः': 'कुतः ("whence? / from where?") = किम् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7; किम् → कु) — पञ्चमी sense → अपादान, an अव्यय. Counterpart: कस्मात्.',
+  'इतः': 'इतः ("from here / hence") = इदम् + तसिल् (पञ्चम्यास्तसिल्, 5.3.7; इदम् → इ) — पञ्चमी sense → अपादान, an अव्यय. Counterpart: अस्मात्.',
+};
+// कालवाचि निपात — irregularly-formed time-adverbs (अव्यय); कालाधिकरण (the "when" of the action), not a
+// declined सप्तमी. निपातन: काले अभिधेये स्वार्थे these words are निपात्यन्ते (Harsha, 2026-08-19, BG 4.3 अद्य).
+const KALA_NIPATA = {
+  'अद्य': 'today', 'सद्यः': 'this very day / at once', 'परुत्': 'last year', 'परारि': 'the year before last',
+  'ऐषमः': 'this year', 'परेद्यवि': 'on the following day', 'पूर्वेद्युः': 'on the previous day',
+  'अन्येद्युः': 'on another day', 'अन्यतरेद्युः': 'on one of the two days', 'इतरेद्युः': 'on the other day',
+  'अपरेद्युः': 'on a later day', 'अधरेद्युः': 'on an earlier day', 'उभयेद्युः': 'on both days',
+  'उत्तरेद्युः': 'on the following day',
+};
+// The सूत्र (a निपातन listing every कालवाचि word) — Aṣṭādhyāyī 5.3.22, verified against the
+// ashtadhyayi-com/data clone (see reference-ashtadhyayi-data-repo memory).
+const KALA_NIPATA_SUTRA = 'सद्यःपरुत्परार्यैषमःपरेद्यव्यद्यपूर्वेद्युरन्येद्युरन्यतरेद्युरितरेद्युरपरेद्युरधरेद्युरुभयेद्युरुत्तरेद्युः';
+function kalaNipataTip(word) {
+  const gloss = KALA_NIPATA[word];
+  if (!gloss) return null;
+  return `${word} ("${gloss}") is an अव्यय — a निपातित (irregularly-formed) time-word, so its role is कालाधिकरण (the "when" of the action), not a declined सप्तमी. It is one of the कालवाचि words निपातित by ${KALA_NIPATA_SUTRA} (अष्टाध्यायी 5.3.22); वृत्ति — काले अभिधेये स्वार्थे एते शब्दाः निपात्यन्ते: when time is the thing denoted, these words are irregularly formed in their own meaning.`;
+}
+// दा-affix time-adverbs: दा is added "in the sense of time" to सर्व/एक/अन्य/किम्/यत्/तद् (5.3.15). These
+// are कालाधिकरण (the "when"), not a declined सप्तमी. (सदा = सर्व+दा by 5.3.15 with सर्व→स.)
+const DA_KALA = {
+  'सदा': 'always (सर्व + दा)', 'सर्वदा': 'always (सर्व + दा)', 'यदा': 'when (यत् + दा)',
+  'तदा': 'then (तद् + दा)', 'कदा': 'when? (किम् + दा)', 'एकदा': 'once (एक + दा)', 'अन्यदा': 'at another time (अन्य + दा)',
+};
+const DA_KALA_SUTRA = 'सर्वैकान्यकिंयत्तदः काले दा';
+function daKalaTip(word) {
+  const gloss = DA_KALA[word];
+  if (!gloss) return null;
+  return `${word} — ${gloss} — is a कालवाचि अव्यय: the affix दा is added "in the sense of time" to a सर्व/एक/अन्य/किम्/यत्/तद् stem, by ${DA_KALA_SUTRA} (अष्टाध्यायी 5.3.15). So its role is कालाधिकरण (the "when" of the action), not a declined सप्तमी.`;
+}
+// चित्/चन indefinite particles: किम्-word + चित्/चन (निपात, चादयोऽसत्त्वे 1.4.57) → अनिर्दिष्ट (indefinite)
+// "some-/any-". With न they mean "no-/never". e.g. कदा→कदाचित्, कुत्र→क्वचित्, कः→कश्चित्.
+const CHIT_INDEF = {
+  'कदाचित्': ['कदा (when?)', 'sometime / ever'], 'कदाचन': ['कदा (when?)', 'ever'],
+  'क्वचित्': ['क्व/कुत्र (where?)', 'somewhere / anywhere'], 'कुत्रचित्': ['कुत्र (where?)', 'somewhere'], 'कुत्रचन': ['कुत्र (where?)', 'anywhere'],
+  'कश्चित्': ['कः (who?)', 'someone / a certain one'], 'कश्चन': ['कः (who?)', 'anyone'],
+  'काचित्': ['का (who? f.)', 'some woman'], 'काचन': ['का (who? f.)', 'any woman'],
+  'किञ्चित्': ['किम् (what?)', 'something / a little'], 'किञ्चन': ['किम् (what?)', 'anything'],
+  'कथञ्चित्': ['कथम् (how?)', 'somehow / with difficulty'], 'कथञ्चन': ['कथम् (how?)', 'somehow'],
+  'कतिचित्': ['कति (how many?)', 'a few'], 'कतिचन': ['कति (how many?)', 'some'],
+};
+function chitIndefTip(word) {
+  const e = CHIT_INDEF[word];
+  if (!e) return null;
+  return `${word} is ${e[0]} + the particle चित्/चन — a निपात (चादयोऽसत्त्वे 1.4.57) that turns a किम्-word into an INDEFINITE (अनिर्दिष्ट): "${e[1]}". So it doesn't ask a question — it means "some-/any-". (With न it flips to "no-/never".)`;
+}
+// Emphatic/connective निपात particles — they qualify the PRECEDING word (अवधारण), they are NOT a
+// कारक/षष्ठी relation to the verb. So when one lands in a "remaining"/"modifiers" question (e.g. BG 4.3
+// एव under प्रोक्तः), explain what it actually is instead of implying a relation (Harsha, 2026-08-20).
+const AVADHARANA = {
+  'एव': 'restriction / emphasis ("only, exactly, indeed")', 'हि': 'assurance or reason ("indeed, for")',
+  'तु': 'contrast ("but, however")', 'वै': 'emphasis ("truly, verily")', 'खलु': 'emphasis ("surely")',
+  'उ': 'emphasis / verse-filler (पादपूरण)',
+};
+function avadharanaTip(word) {
+  const g = AVADHARANA[word];
+  if (!g) return null;
+  return `${word} is an अव्यय निपात — ${g}. It is अवधारण: it emphasizes the word just before it, and does NOT itself take a कारक/षष्ठी relation to the verb.`;
+}
+function tutorialOverrideNote(sentence, step, wordIndex) {
+  const c = sentence.clusters[step.clusterIdx];
+  const tip = PRAGDISHIYA_TIP[sentence.words[wordIndex]];
+  if (tip) return tip;   // derivation of the pronominal place-adverb (इह etc.) takes precedence
+  const kt = kalaNipataTip(sentence.words[wordIndex]);
+  if (kt) return kt;     // कालवाचि निपात (अद्य etc.) — explains why it is कालाधिकरण, not a सप्तमी
+  const dk = daKalaTip(sentence.words[wordIndex]);
+  if (dk) return dk;     // दा-affix time-adverb (सदा/यदा/तदा/कदा …) → कालाधिकरण (5.3.15)
+  const ci = chitIndefTip(sentence.words[wordIndex]);
+  if (ci) return ci;     // चित्/चन indefinite (कदाचित्/क्वचित्/कश्चित् …) — किम् + चित् (1.4.57)
+  const at = TASIL_ABLATIVE_TIP[sentence.words[wordIndex]];
+  if (at) return at;     // तसिल् ablative (अतः/ततः …) — explains पञ्चम्यास्तसिल् → अपादान
+  const av = avadharanaTip(sentence.words[wordIndex]);
+  if (av) return av;     // एव/हि/तु … — emphatic निपात, not a कारक relation
+  if (sentence.words[wordIndex] === 'इति') return `इति is a quotative particle (निपात) — it closes the preceding quoted statement/idea ("… — thus"), marking an उद्धरण (quotation); it is not a कारक of the verb.`;
+  if (step.type === 'karta' && c.notes && c.notes[wordIndex] && c.notes[wordIndex].trigger === 'krtyaKarmani') {
+    return `${esc(sentence.words[wordIndex])} is in तृतीया, but not from a कर्मणि construction — ${esc(c.governorWord)} is itself a कृत्य-प्रत्यय form (${esc(c.notes[wordIndex].pratyaya)}); the agent of a कृत्य form takes तृतीया — or, optionally, षष्ठी (कृत्यानां कर्तरि वा, 2.3.71).`;
+  }
+  // कारक-षष्ठी note — corrected 2026-08-28 (Harsha): the old blanket "its कर्म can appear in षष्ठी (2.3.65)"
+  // fired on ~105 कृदन्त-governor clusters but is only true on ~2. षष्ठी is an अनभिहित rule (moot under
+  // कर्मणि, where the object is प्रथमा/अभिहित) and is BLOCKED for निष्ठा(past-क्त)/शतृ/शानच्/gerund/तृन्
+  // forms by 2.3.69. So: assert षष्ठी only when the object is ACTUALLY 6x-coded here (real 2.3.65/66);
+  // otherwise explain WHY it correctly stays द्वितीया.
+  if (step.type === 'karma' && c.karmaGovernorIsKrdanta && c.voice !== 'कर्मणि') {
+    const sIdx = sashthiKaraka(c.karma, sentence);
+    return sIdx != null
+      ? `Here ${esc(c.governorWord)}'s कर्म stands in <b>षष्ठी</b> — कारक-षष्ठी (2.3.65): a कृत् governor takes its अनभिहित object in षष्ठी. When an agent is also present, only the object keeps षष्ठी; the agent then goes तृतीया (2.3.66).`
+      : `${esc(c.governorWord)} is a कृदन्त, but its कर्म stays in <b>द्वितीया</b> here — the कारक-षष्ठी (2.3.65) does <b>not</b> apply to past-participle (निष्ठा), शतृ/शानच्, gerund (क्त्वा/ल्यप्) or तृन् forms (2.3.69).`;
+  }
+  const SWEEP_ARRAYS = ['karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'remaining'];
+  if (SWEEP_ARRAYS.includes(step.type)) {
+    const item = c[step.type].find(r => r.wordIndex === wordIndex);
+    if (item && item.upapada) return `${esc(sentence.words[wordIndex])} is in ${item.upapadaCase} here — because of ${esc(item.upapada)}, not from any general kāraka rule.`;
+    if (item && item.role === 'हेतुः') return `हेतु (cause/reason) can appear in either तृतीया or पञ्चमी (2.3.23) — look at the form of ${esc(sentence.words[wordIndex])} here to tell which one it is.`;
+    if (item && (item.role === 'कालाधिकरणम्' || item.role === 'देशाधिकरणम्' || item.role === 'विषयाधिकरणम्')) {
+      const kind = { 'कालाधिकरणम्': 'time (काल)', 'देशाधिकरणम्': 'place (देश)', 'विषयाधिकरणम्': 'topic/domain (विषय)' }[item.role];
+      return `Here the अधिकरण is specifically one of ${kind}.`;
+    }
+  }
+  return null;
+}
+
+// ---- report/feedback (tutorial-specific; the quiz's own report feature (buildReportDetails etc.,
+// above) is shaped around item/options/correctIndex, which doesn't fit a click-based multi-select
+// step or a per-cluster voice question — reuses the generic pieces (Formspree endpoint, reporter
+// name/email persistence, .report-area styling) but builds its own subject/details from the
+// tutorial's own state shape. No hide-from-pool behavior here (unlike the quiz): the tutorial
+// always walks the same fixed verse list in order, there's no pool to filter a flagged item out of.
+function buildTutorialReportDetails(target) {
+  const { verse, sentence, step, selectedWords, expectedWords, voicePicked, correctVoice, pct, mcqLabel, mcqCorrect, mcqPicked } = target;
+  const stepDesc = step.type + (step.clusterIdx != null ? ` (cluster ${step.clusterIdx}${sentence.clusters[step.clusterIdx] ? ', governor ' + sentence.clusters[step.clusterIdx].governorWord : ''})` : '');
+  const details = [
+    `text: ${verse.slug || '(unknown)'}`,
+    `verse: ${verse.ref}`,
+    `step: ${stepDesc}`,
+    `sentence: ${sentence.words.join(' ')}`,
+    NEW_MCQ_TYPES.has(step.type)
+      ? `question: ${mcqLabel || step.type}\ncorrect: ${mcqCorrect || '(?)'}\nyour answer: ${mcqPicked || '(not answered)'}`
+      : step.type === 'voice'
+        ? `correct voice: ${correctVoice || '(unknown)'}\nyour answer: ${voicePicked || '(not answered)'}`
+        : `expected words: ${expectedWords && expectedWords.length ? expectedWords.join(', ') : '(none)'}\nyour selection: ${selectedWords && selectedWords.length ? selectedWords.join(', ') : '(none)'}`,
+    pct != null ? `score: ${pct}%` : null,
+    '',
+    deviceInfoLine(),
+  ].filter(x => x !== null).join('\n');
+  const subject = `वाक्य-विग्रह issue: ${verse.slug || ''} ${verse.ref} — ${step.type}`;
+  return { subject, details };
+}
+// GitHub-issue fallback (Harsha, 2026-08-16: "there doesn't appear to be a way to file a ticket
+// through github directly (that we support elsewhere)") — the tutorial's report form only ever
+// posted to Formspree, unlike the quiz's own report area (buildReportIssueUrl above) which also
+// offers a pre-filled GitHub issue link for when Formspree is unreachable or someone just prefers
+// filing directly. Same target repo/URL shape, just built from the tutorial's own target fields.
+function buildTutorialReportIssueUrl(target, name, email, message) {
+  const { subject } = buildTutorialReportDetails(target);
+  const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n\n${message}`;
+  const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
+  url.searchParams.set('title', subject);
+  url.searchParams.set('body', fullBody);
+  return url.toString();
+}
+async function submitTutorialReport(target, name, email, userComment) {
+  const { subject, details } = buildTutorialReportDetails(target);
+  const message = userComment ? `Comments: ${userComment}\n\n${details}` : details;
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message }),
+    });
+    return res.ok;
+  } catch (e) { return false; }
+}
+function tutorialReportTarget(sentence, step, verse) {
+  const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
+  // New samāsa/clause MCQ steps carry no cluster/selectedIndices — capture the actual pick + correct
+  // + the (HTML-stripped) question so a report isn't content-free (review finding, 2026-08-20).
+  if (NEW_MCQ_TYPES.has(step.type)) {
+    const spec = tutorialMcqSpec(step, sentence);
+    return {
+      verse, sentence, step,
+      mcqLabel: tutorialStepLabel(step, sentence).replace(/<[^>]+>/g, ''),
+      mcqCorrect: spec.correct, mcqPicked: view.mcqPicked || null, pct: null,
+    };
+  }
+  const expected = expectedSetForStep(sentence, step);
+  const selected = view.selectedIndices || new Set();
+  return {
+    verse, sentence, step,
+    expectedWords: [...expected].map(i => sentence.words[i]),
+    selectedWords: [...selected].map(i => sentence.words[i]),
+    voicePicked: view.voicePicked,
+    correctVoice: c ? c.voice : null,
+    pct: view.checked ? Math.round(tutorialStepScore(selected, expected, ANY_VALID_STEP_TYPES.has(step.type)) * 100) : null,
+  };
+}
+function renderTutorialReportArea(sentence, step, verse) {
+  if (view.tutReportOpen) {
+    const target = tutorialReportTarget(sentence, step, verse);
+    const status = view.tutReportSubmitError
+      ? `<div class="report-status error">Couldn't send — check your connection and try again.</div>` : '';
+    return `<div class="report-area">
+      <div class="report-target-label">Reporting this step: <span class="report-autosent-note">(the details below will be auto-sent with your report)</span></div>
+      <label>Report details (auto-sent; select-all &amp; copy to paste elsewhere)
+        <textarea class="report-copy" readonly rows="9" onclick="this.select()">${esc(buildTutorialReportDetails(target).details)}</textarea>
+      </label>
+      <label>Your name <input type="text" id="tutReportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
+      <label>Your email <input type="email" id="tutReportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
+      <label>Add your own comments
+        <textarea id="tutReportReason" placeholder="optional — what looks wrong here?"></textarea>
+      </label>
+      ${status}
+      <button class="secondary" id="tutReportSubmitBtn" ${view.tutReportSubmitting ? 'disabled' : ''}>${view.tutReportSubmitting ? 'Sending…' : 'Submit report'}</button>
+      <button class="link" id="tutReportCancelBtn">cancel</button>
+      <div class="report-fallback"><button class="link" id="tutReportGithubBtn">or file a GitHub issue instead ↗</button></div>
+    </div>`;
+  }
+  return view.tutReported
+    ? `<span class="report-area reported">🚩 reported — thank you!</span>`
+    : `<button class="link" id="tutReportBtn">🚩 report this step</button>`;
+}
+function wireTutorialReportArea(sentence, step, verse, rerender) {
+  const openBtn = document.getElementById('tutReportBtn');
+  if (openBtn) openBtn.onclick = () => { view = { ...view, tutReportOpen: true, tutReportSubmitError: false }; rerender(); };
+  const cancelBtn = document.getElementById('tutReportCancelBtn');
+  if (cancelBtn) cancelBtn.onclick = () => { view = { ...view, tutReportOpen: false, tutReportSubmitError: false }; rerender(); };
+  const submitBtn = document.getElementById('tutReportSubmitBtn');
+  if (submitBtn) submitBtn.onclick = async () => {
+    const name = document.getElementById('tutReportName').value.trim();
+    const email = document.getElementById('tutReportEmail').value.trim();
+    const userComment = document.getElementById('tutReportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const target = tutorialReportTarget(sentence, step, verse);
+    view = { ...view, tutReportSubmitting: true, tutReportSubmitError: false };
+    rerender();
+    const ok = await submitTutorialReport(target, name, email, userComment);
+    if (!ok) { view = { ...view, tutReportSubmitting: false, tutReportSubmitError: true }; rerender(); return; }
+    view = { ...view, tutReportOpen: false, tutReportSubmitting: false, tutReported: true };
+    rerender();
+  };
+  const githubBtn = document.getElementById('tutReportGithubBtn');
+  if (githubBtn) githubBtn.onclick = () => {
+    const name = document.getElementById('tutReportName').value.trim();
+    const email = document.getElementById('tutReportEmail').value.trim();
+    const userComment = document.getElementById('tutReportReason').value.trim();
+    saveReporterName(name);
+    saveReporterEmail(email);
+    const target = tutorialReportTarget(sentence, step, verse);
+    const { details } = buildTutorialReportDetails(target);
+    const message = userComment ? `Comments: ${userComment}\n\n${details}` : details;
+    window.open(buildTutorialReportIssueUrl(target, name, email, message), '_blank', 'noopener');
+  };
+}
+
+// codes[i] is the sentence-analysis-skill grammatical code for word i — [vibhakti][vacana] for a
+// declined noun/pronoun/participle (e.g. "41" = caturthī singular), [puruṣa][vacana] for a finite
+// verb, "Y" for avyaya, or null/undefined when the source data didn't resolve one (left blank
+// rather than guessed — see wordGramCode's header comment in build_karaka_tutorial.js).
+// groups (optional): computeClauseGroups(sentence)'s output — sorted, non-overlapping [min,max]
+// spans. Only meaningful (and only passed by renderTutorial) when a sentence has more than one
+// top-level clause; a single-clause verse renders exactly as before. currentGroupTop marks the
+// group containing the step currently being asked about, for a visually stronger boundary.
+function renderClickableVerse(words, opts) {
+  const selected = opts.selected, disabled = opts.disabled, expected = opts.expected, codes = opts.codes;
+  const groups = opts.groups, currentGroupTop = opts.currentGroupTop;
+  const elidedAfter = opts.elidedAfter || {};   // wordIndex → [elided/understood words] shown bracketed after it
+  const wordHtml = (w, i) => {
+    const cls = ['tutword'];
+    if (disabled) {
+      if (expected && expected.has(i) && selected.has(i)) cls.push('correct');
+      else if (expected && expected.has(i)) cls.push('missed');
+      else if (selected.has(i)) cls.push('wrong');
+    } else if (selected.has(i)) cls.push('selected');
+    const code = codes && codes[i] ? `<sub class="tutcode">${esc(codes[i])}</sub>` : '';
+    return `<span class="${cls.join(' ')}" data-i="${i}">${esc(w)}${code}</span>`;
+  };
+  // elided/understood words for a clause are shown as a non-clickable bracketed span after the clause's
+  // last word — e.g. "अतः पुंस्त्वम् [दुर्लभम् अस्ति]" (Harsha, 2026-08-20).
+  const elid = i => (elidedAfter[i] && elidedAfter[i].length) ? ` <span class="tut-elided">[${esc(elidedAfter[i].join(' '))}]</span>` : '';
+  if (!groups || !groups.length) return words.map((w, i) => wordHtml(w, i) + elid(i)).join(' ');
+  let html = '', gi = 0, open = null;
+  for (let i = 0; i < words.length; i++) {
+    if (!open && gi < groups.length && i === groups[gi].min) {
+      open = groups[gi];
+      html += `<span class="clause-group${open.topClusterIdx === currentGroupTop ? ' current' : ''}">`;
+    }
+    html += wordHtml(words[i], i) + elid(i);
+    if (i < words.length - 1) html += ' ';
+    if (open && i === open.max) { html += '</span>'; gi++; open = null; }
+  }
+  return html;
+}
+
+// Jaccard similarity (|selected ∩ expected| / |selected ∪ expected|), not plain recall
+// (|intersection| / |expected|) — recall alone rewards over-selecting: clicking every word in the
+// sentence would score 100% as long as the true answers were included among them, since it never
+// counts against you for picking things you shouldn't have (found live, 2026-08-16: Harsha selected
+// एकस्थम्+कृत्स्नम्+प्रविभक्तम् for a question expecting only एकस्थम्, and got "100% correct (1/1)"
+// despite the extra two being marked wrong on the words themselves — a real contradiction between
+// the visual feedback and the score). Jaccard only reaches 100% on an exact match.
+// करता/कर्म/agreementKarta/agreementKarma are "any valid" buckets: their expected set holds
+// MULTIPLE co-referential names for the SAME underlying argument (e.g. BG 4.1's इमम्+योगम् both
+// name "this yoga") — finding ANY ONE of them, with no wrong picks, is a complete answer, not a
+// partial one (Harsha, 2026-08-16: selecting only योगम् out of {इमम्,योगम्} should score 100%, not
+// 50%). This is unlike modifiers/samuccaya/sweep buckets, where the task genuinely is to find
+// EVERY member (e.g. both कृत्स्नम् AND प्रविभक्तम् in qualifierKarma) — those keep plain Jaccard.
+const ANY_VALID_STEP_TYPES = new Set(['karta', 'karma', 'agreementKarta', 'agreementKarma']);
+function tutorialStepScore(selected, expected, anyValid) {
+  if (!expected.size && !selected.size) return 1;
+  const inter = [...selected].filter(i => expected.has(i)).length;
+  if (anyValid && selected.size > 0 && inter === selected.size) return 1; // non-empty, no wrong picks
+  const union = new Set([...selected, ...expected]).size;
+  return union ? inter / union : 0;
+}
+function checkTutorialStep() {
+  const sentence = currentTutorialSentence();
+  const step = currentTutorialStep();
+  const expected = expectedSetForStep(sentence, step);
+  const selected = view.selectedIndices;
+  tutorialScores.push(tutorialStepScore(selected, expected, ANY_VALID_STEP_TYPES.has(step.type)));
+  view = { ...view, checked: true, expected };
+  renderTutorial();
+}
+
+function advanceTutorialStep() {
+  tutorialStepIdx++;
+  view = { screen: 'tutorial', selectedIndices: new Set(), checked: false };
+  if (tutorialStepIdx >= tutorialSteps.length) {
+    const verse = tutorialVerses[tutorialVerseIdx];
+    if (tutorialSentIdx < verse.sentences.length - 1) {
+      tutorialSentIdx++;
+      tutorialSteps = buildTutorialSteps(currentTutorialSentence());
+      tutorialStepIdx = 0;
+      renderTutorial();
+    } else {
+      const avg = tutorialScores.length ? tutorialScores.reduce((a, b) => a + b, 0) / tutorialScores.length : 1;
+      saveTutorialCompletionEntry(verse.ref, Math.round(avg * tutorialScores.length * 100) / 100, tutorialScores.length);
+      saveTutorialProgress({ lastRef: verse.ref });
+      renderTutorialVerseComplete(avg);
+    }
+    return;
+  }
+  renderTutorial();
+}
+
+function startTutorialSentence() {
+  tutorialSteps = buildTutorialSteps(currentTutorialSentence());
+  tutorialStepIdx = 0;
+  tutorialScores = [];
+  view = { screen: 'tutorial', selectedIndices: new Set(), checked: false };
+  renderTutorial();
+}
+function startTutorialVerse(verseIdx) {
+  tutorialVerseIdx = verseIdx;
+  tutorialSentIdx = 0;
+  saveTutorialProgress({ lastRef: tutorialVerses[verseIdx].ref });
+  startTutorialSentence();
+}
+
+// Testing back-gate — jump straight to a verse's step instead of clicking through the whole
+// sequence. Use ?tut=<ref>[&step=<stepType>][&cluster=<n>] in the URL, or call jumpToTutorial()
+// from the console (exposed on window). ref accepts either the stored form "04.002" or "4.2". If the
+// requested step doesn't exist (e.g. it was removed by a fix — an empty modifiers step is skipped),
+// it lands on step 0 and reports that — itself a useful confirmation. Sentence 0 only.
+function jumpToTutorial(ref, stepType, clusterIdx, slug, mode) {
+  slug = slug || 'Gita';
+  tutorialMode = (mode === 'clause') ? 'clause' : 'vigraha';   // deep-link ?mode=clause selects वाक्य-विभाग
+  ensureTutorialDataLoaded(slug).then(() => {
+    tutorialVerses = window.TUTORIAL_DATA[slug].verses;
+    const idx = tutorialVerses.findIndex(v => v.ref === ref || formatVerseRef(v.ref) === ref || formatVerseRef(v.ref) === formatVerseRef(ref));
+    if (idx < 0) { alert('tutorial jump: verse not found: ' + ref); view = { screen: 'dashboard' }; renderDashboard(); return; }
+    startTutorialVerse(idx);   // builds tutorialSteps, resets to step 0, renders
+    if (stepType) {
+      // clusterIdx doubles as the clause index for clause-mode steps (they carry clauseIdx, not clusterIdx)
+      const si = tutorialSteps.findIndex(s => s.type === stepType && (clusterIdx == null || s.clusterIdx === clusterIdx || s.clauseIdx === clusterIdx));
+      if (si >= 0) { tutorialStepIdx = si; renderTutorial(); }
+      else console.warn(`tutorial jump: step "${stepType}"${clusterIdx != null ? ' (cluster ' + clusterIdx + ')' : ''} not present in ${ref} — likely skipped/empty (steps: ${tutorialSteps.map(s => s.type + (s.clusterIdx != null ? ':' + s.clusterIdx : '')).join(', ')})`);
+    }
+  }).catch(() => { view = { screen: 'dashboard' }; renderDashboard(); });
+}
+window.jumpToTutorial = jumpToTutorial;
+
+function renderTutorial() {
+  const sentence = currentTutorialSentence();
+  const verse = tutorialVerses[tutorialVerseIdx];
+  const step = currentTutorialStep();
+  const words = sentence.words;
+  let clauseGroups = computeClauseGroups(sentence);
+  // वाक्य-विभाग is ABOUT discovering the clause boundaries + the elided words, so during the DISCOVERY
+  // steps (find nuclei / assign words / select a clause's words) we render a FLAT verse — no boxes, no
+  // bracketed [अस्ति] supplied-words — and let the recipe guide the learner. THEN, once the verse is
+  // clustered, we REVEAL the gold clause boxes on the supply steps to demarcate what was found (Harsha,
+  // 2026-08-27: "once the words have been clustered, add the boundaries to demarcate it").
+  const clauseMode = tutorialMode === 'clause';
+  let showClauseGroups = clauseGroups.length > 1 && !clauseMode;
+  const currentGroup = step.clusterIdx != null ? clauseGroups.find(g => g.clusterIdxs.includes(step.clusterIdx)) : null;
+  let currentGroupTop = currentGroup ? currentGroup.topClusterIdx : null;
+  if (clauseMode) {
+    // SOCRATIC = verb-out trace: the verse stays FLAT during the trace steps, but each clause's box is
+    // REVEALED progressively as soon as its mop-up is answered (its boundary is now fully drawn). GUIDED
+    // keeps the older behaviour: flat during clauseHeads/clauseMembers, full boxes on the supply steps.
+    const TRACE_FLAT = new Set(['clauseHeads', 'clauseValence', 'clauseKarmaCase', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'clauseAssign', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase', 'clauseGerundKarma', 'clauseGerundKarta', 'clauseGerundPeripheral']);
+    const segmentLike = clauseStyle === 'socratic' ? TRACE_FLAT.has(step.type) : (step.type === 'clauseHeads' || step.type === 'clauseMembers');
+    if (segmentLike) {
+      let revealed = null;
+      if (clauseStyle === 'socratic') {
+        const done = new Set();
+        (sentence.clauses || []).forEach((cl, ci) => {
+          if (tutorialSteps.some((st, p) => st.type === 'clauseMopUp' && st.clauseIdx === ci && (p < tutorialStepIdx || (p === tutorialStepIdx && view.checked)))) done.add(ci);
+        });
+        if (done.size) { const gold = clauseGroupsFromGold(sentence); if (gold) revealed = gold.filter(g => done.has(g.topClusterIdx)); }
+      }
+      if (revealed && revealed.length) { clauseGroups = revealed; showClauseGroups = true; currentGroupTop = step.clauseIdx != null ? step.clauseIdx : null; }
+      else showClauseGroups = false;
+    } else {
+      const gold = clauseGroupsFromGold(sentence);
+      if (gold) { clauseGroups = gold; showClauseGroups = true; currentGroupTop = step.clauseIdx != null ? step.clauseIdx : null; }
+      else showClauseGroups = false;
+    }
+  }
+  // supplied/elided words per clause → shown bracketed after the clause's last word in the verse display.
+  // The pipeline sometimes records an implied copula in `anuktaKarta` as "(copula अस्ति implied)" rather
+  // than in `elided` (e.g. VC 85 देहः परार्थः [अस्ति]) — pull that out too so it's shown.
+  const elidedAfter = {};
+  const addSupplied = (cl, list) => {
+    if (!list.length || !cl.words || !cl.words.length) return;
+    const last = Math.max(...cl.words);
+    const arr = (elidedAfter[last] = elidedAfter[last] || []);
+    for (const w of list) if (!arr.includes(w)) arr.push(w);   // dedup across clauses sharing a position too
+  };
+  // the supplied words of a clause: its elided verb(s) + any supplied AGENT (a copula noted in
+  // anuktaKarta, or an external agent like श्रुत्या/अहम् that isn't itself in the verse).
+  const suppliedOf = cl => {
+    const out = [...(cl.elided || [])];
+    const raw = (cl.anuktaKarta || '').trim();
+    const m = raw.match(/copula\s+([^\s)]+)\s+implied/i);
+    if (m) { if (!out.includes(m[1])) out.push(m[1]); }
+    else {
+      const agent = normalizeAgent(raw);
+      if (agent && !/impersonal/i.test(agent) && !(sentence.words || []).includes(agent) && !out.includes(agent)) out.push(agent);
+    }
+    return out;
+  };
+  if (!clauseMode) {
+    (sentence.clauses || []).forEach(cl => addSupplied(cl, suppliedOf(cl)));
+  } else {
+    // वाक्य-विभाग: reveal a clause's adhyāhāra ONLY after its supply step has been answered, then keep it
+    // shown ("from this point on") bracketed inside that clause (Harsha, 2026-08-27, 3.16 सन्ति).
+    (sentence.clauses || []).forEach((cl, ci) => {
+      const done = tutorialSteps.some((st, p) => st.clauseIdx === ci && (st.type === 'clauseElided' || st.type === 'clauseKarta') &&
+        (p < tutorialStepIdx || (p === tutorialStepIdx && view.checked)));
+      if (done) addSupplied(cl, suppliedOf(cl));
+    });
+  }
+
+  if (step.type === 'voice') {
+    const c = sentence.clusters[step.clusterIdx];
+    const answered = view.checked;
+    const opts = ['कर्तरि', 'कर्मणि', 'भावे'];
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="options">
+          ${opts.map(o => `<button class="opt ${answered ? (o === c.voice ? 'correct' : (o === view.voicePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        ${answered ? `<div class="tut-explain">${tutorialVoiceCallout(c.voice)}</div>` : ''}
+        ${answered && c.voiceInferredFrom ? `<div class="tut-explain">${tutorialVoiceInferredNote(c.voiceInferredFrom, c.voice)}</div>` : ''}
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, voicePicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
+  if (step.type === 'kartaCase') {
+    const c = sentence.clusters[step.clusterIdx];
+    const { correct, options, accept, tip } = kartaCaseOptions(c, sentence);
+    const acc = new Set(accept || [correct]);
+    const answered = view.checked;
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="options">
+          ${options.map(o => `<button class="opt ${answered ? (acc.has(o) ? 'correct' : (o === view.kartaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        ${answered && tip ? `<div class="tut-explain">${tip}</div>` : ''}
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, kartaCasePicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
+  if (step.type === 'karmaCase') {
+    const c = sentence.clusters[step.clusterIdx];
+    const { correct, options, accept, tip } = karmaCaseOptions(c, sentence);
+    const acc = new Set(accept || [correct]);
+    const answered = view.checked;
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: new Set([c.governorWordIndex]), disabled: true, expected: new Set([c.governorWordIndex]), codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="options">
+          ${options.map(o => `<button class="opt ${answered ? (acc.has(o) ? 'correct' : (o === view.karmaCasePicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        ${answered && tip ? `<div class="tut-explain">${tip}</div>` : ''}
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, karmaCasePicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
+  if (step.type === 'genderCheck') {
+    const c = sentence.clusters[step.clusterIdx];
+    const { correct, qualifiedIdx, options } = genderCheckOptions(sentence, c, step.side);
+    const answered = view.checked;
+    const highlight = new Set([step.wordIndex, qualifiedIdx].filter(i => i != null));
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: highlight, disabled: true, expected: highlight, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="options">
+          ${options.map(o => `<button class="opt ${answered ? (o === correct ? 'correct' : (o === view.genderCheckPicked ? 'wrong' : '')) : ''}" data-o="${o}" ${answered ? 'disabled' : ''}>${o}</button>`).join('')}
+        </div>
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+        view = { ...view, checked: true, genderCheckPicked: btn.dataset.o };
+        renderTutorial();
+      });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
+  // New samāsa/clause MCQ types — single-select, rendered generically (mirrors the voice/genderCheck path).
+  if (NEW_MCQ_TYPES.has(step.type)) {
+    const spec = tutorialMcqSpec(step, sentence);
+    const answered = view.checked;
+    const acc = new Set(spec.accept || [spec.correct]);   // some case-MCQs accept >1 vibhakti (कारक-षष्ठी / कृत्य optionality)
+    app.innerHTML = `
+      <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+      <div class="question">
+        <div class="tutorial-verse prompt">${renderClickableVerse(words, { selected: spec.highlight, disabled: true, expected: spec.highlight, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter })}</div>
+        <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+        <div class="options">
+          ${spec.options.map((o, oi) => `<button class="opt ${answered ? (acc.has(o) ? 'correct' : (o === view.mcqPicked ? 'wrong' : '')) : ''}" data-oi="${oi}" ${answered ? 'disabled' : ''}>${esc(o)}</button>`).join('')}
+        </div>
+        ${answered && spec.explainHtml ? `<div class="tut-explain">${spec.explainHtml}</div>` : ''}
+        <div class="tutorial-actions">${answered ? '<button class="primary" id="tutNextBtn">Next →</button>' : ''}</div>
+        ${renderTutorialReportArea(sentence, step, verse)}
+      </div>`;
+    document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    if (!answered) {
+      // encode the chosen option by INDEX (data-oi) not value — option strings hold Devanāgarī/spaces and
+      // esc() doesn't escape quotes, so a value attribute could truncate; index round-trips cleanly.
+      app.querySelectorAll('.opt').forEach(btn => btn.onclick = () => { view = { ...view, checked: true, mcqPicked: spec.options[+btn.dataset.oi] }; renderTutorial(); });
+    } else {
+      document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+    }
+    wireTutorialReportArea(sentence, step, verse, renderTutorial);
+    return;
+  }
+
+  const expected = expectedSetForStep(sentence, step);
+  const multiSelect = ['clauseHeads', 'clauseMembers', 'clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseMopUp', 'clauseGerundKarma', 'clauseGerundKarta', 'clauseGerundPeripheral', 'karta', 'karma', 'verbs', 'nominalSubject', 'agreementKarta', 'agreementKarma', 'qualifierKarta', 'qualifierKarma', 'samuccaya', 'samuccayaKarta', 'samuccayaKarma', 'modifiers', 'pratishedha', 'nipata', 'karana', 'sampradana', 'apadana', 'adhikarana', 'satisaptami', 'itthambhuta', 'upamana', 'upameya', 'sambodhana', 'nirdharana', 'hetu', 'sequence', 'qualifierOf', 'genitiveOf', 'remaining'].includes(step.type);
+  const selected = view.selectedIndices;
+  const checked = view.checked;
+  // "None of these" is offered for EVERY multi-select word step (not just kartā/karma) so a question
+  // whose valid answer is the empty set is answerable — e.g. step-1 verbs on a verbless नमः-invocation
+  // (PD 1.1), or an absent kāraka. Shown ALWAYS (independent of whether the answer is actually none),
+  // else its mere presence would leak the answer (Harsha, 2026-08-21).
+  const showNone = multiSelect && !checked;
+  const anyValid = ANY_VALID_STEP_TYPES.has(step.type);
+  const inter = [...selected].filter(i => expected.has(i)).length;
+  // A fully-valid subset (any-valid buckets only, e.g. picking just योगम् out of {इमम्,योगम्})
+  // scores 100% — don't then mark the OTHER valid alternatives as "missed" (misleading next to a
+  // 100% score); show only what was actually picked as correct instead.
+  const fullyValidSubset = anyValid && selected.size > 0 && inter === selected.size;
+  const displayExpected = checked ? (fullyValidSubset ? selected : expected) : null;
+  const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: displayExpected, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter });
+
+  let feedbackHtml = '';
+  if (checked) {
+    const pct = Math.round(tutorialStepScore(selected, expected, anyValid) * 100);
+    feedbackHtml += `<div class="feedback">${pct}% correct${expected.size && !fullyValidSubset ? ` (${inter} / ${expected.size})` : ''}</div>`;
+    if (step.type === 'karma') feedbackHtml += `<div class="tut-explain">${tutorialTransitivityAside(sentence.clusters[step.clusterIdx].transitivity)}</div>`;
+    if (step.type === 'sampradana') { const yn = sampradanaYogaNote(sentence); if (yn) feedbackHtml += `<div class="tut-explain">${yn}</div>`; }
+    if (step.type === 'karta' || step.type === 'karma') {
+      const sc = tutorialSamuccayaCallout(sentence, sentence.clusters[step.clusterIdx], step.type);
+      if (sc) feedbackHtml += `<div class="tut-explain">${sc}</div>`;
+    }
+    if (step.type === 'qualifierKarta' || step.type === 'qualifierKarma') feedbackHtml += `<div class="tut-explain">${tutorialQualifierCallout()}</div>`;
+    // उद्देश्य–विधेय callout: reinforce the concept, and if the learner picked the विधेय (a reasonable
+    // slip — both words are प्रथमा), name it honourably rather than just "wrong" ([[feedback_quiz_question_framing]]).
+    if (step.type === 'nominalSubject') {
+      const c = sentence.clusters[step.clusterIdx];
+      const pickedVidheya = [...selected].filter(i => (c.agreementKarta || []).includes(i)).map(i => sentence.words[i]).filter(Boolean);
+      const udWord = sentence.words[c.governorWordIndex];
+      let msg = `उद्देश्य (subject) and विधेय (predicate) both stand in the <b>same प्रथमा</b> — that co-reference is सामानाधिकरण्य. The उद्देश्य <b>${esc(udWord)}</b> is what the sentence is <i>about</i>; the विधेय is what is asserted of it.`;
+      if (pickedVidheya.length) msg += ` You picked <b>${esc(pickedVidheya.join('/'))}</b> — that's the विधेय (predicate), a fair confusion since it shares the case; the next question asks for it directly.`;
+      feedbackHtml += `<div class="tut-explain">${msg}</div>`;
+    }
+    // वाक्य-विभाग reveals (the recipe made explicit AFTER the learner answers, since the boundaries were
+    // deliberately not pre-drawn). clauseHeads: tie #nuclei → #clauses. clauseMembers: name the clause
+    // TYPE (the boundary signal) + its gloss — taught, not quizzed (Core scope).
+    if (step.type === 'clauseHeads') {
+      const cls = sentence.clauses || [];
+      const lines = cls.map(cl => {
+        const w = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '?';
+        const cluster = clusterForClauseHead(sentence, cl);
+        const gloss = cl.gloss ? ` <span class="muted">“${esc(cl.gloss)}”</span>` : '';
+        return `<b>${esc(w)}</b> — ${headMorphBrief(sentence, cl, cluster)}.${gloss}`;
+      });
+      feedbackHtml += `<div class="tut-explain">You found <b>${cls.length}</b> nuclei ⇒ this verse has <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}:<br>• ${lines.join('<br>• ')}<br>Next: trace each one's boundary, then supply what each leaves unspoken.</div>`;
+    }
+    if (step.type === 'clauseMembers') {
+      const cl = sentence.clauses[step.clauseIdx];
+      feedbackHtml += `<div class="tut-explain">This is the <b>${esc(clauseTypeLabel(cl.type))}</b>${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}.</div>`;
+    }
+    // verb-out trace: after a कारक pick (nucleus OR gerund sub-nucleus), surface the "same case, different
+    // कारक" traps with their sūtras, and honour a विशेषण-instead-of-head slip.
+    if (['clauseKarma', 'clauseKartaTrace', 'clausePeripheral', 'clauseGerundKarma', 'clauseGerundKarta', 'clauseGerundPeripheral'].includes(step.type)) {
+      const hc = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : clusterForClauseHead(sentence, sentence.clauses[step.clauseIdx]);
+      const isKarma = /Karma/.test(step.type), isKarta = /Karta/.test(step.type);
+      const role = isKarma ? 'karma' : isKarta ? 'karta' : step.role;
+      const cd = hc ? caseDiscriminationCallout(sentence, hc, role) : '';
+      if (cd) feedbackHtml += `<div class="tut-explain">${cd}</div>`;
+      // Honour a reasonable slip: the learner picked a विशेषण (adjective) OF the कर्ता/कर्म instead of the
+      // head word itself — name it, don't just fail it ([[feedback_quiz_question_framing]]). Same referent,
+      // but the कारक slot is filled by the head noun; its adjective rides it and is placed in the mop-up.
+      if (hc && (isKarta || isKarma)) {
+        const qual = isKarta ? (hc.qualifierKarta || []) : (hc.qualifierKarma || []);
+        const picked = [...selected].filter(i => qual.includes(i) && !expected.has(i)).map(i => sentence.words[i]);
+        if (picked.length) {
+          const rl = isKarta ? 'कर्ता' : 'कर्म';
+          const headW = [...expected].map(i => sentence.words[i]).join('/');
+          feedbackHtml += `<div class="tut-explain"><b>${esc(picked.join('/'))}</b> is a <b>विशेषण</b> (adjective) of the ${rl}${headW ? ` <b>${esc(headW)}</b>` : ''}, not the ${rl} itself — an adjective rides its noun. The ${rl} slot is the head word${headW ? ` (<b>${esc(headW)}</b>)` : ''}; you'll place <b>${esc(picked.join('/'))}</b> in the mop-up step.</div>`;
+        }
+      }
+    }
+    // mop-up reveal: name the clause type + gloss, and make the ride-your-noun / gerund-stays rule explicit
+    // on the very words just clustered (the boundary is now drawn — its box is revealed alongside).
+    if (step.type === 'clauseMopUp') {
+      const cl = sentence.clauses[step.clauseIdx];
+      const h = cl.headWordIndex != null ? esc(sentence.words[cl.headWordIndex]) : 'this head';
+      feedbackHtml += `<div class="tut-explain">That completes the <b>${esc(clauseTypeLabel(cl.type))}</b> headed by <b>${h}</b>${cl.gloss ? ` — “${esc(cl.gloss)}”` : ''}. An adjective stays with the noun it qualifies; a gerund and its own object stay inside the finite verb's clause — that is why they land here, not in the other clause.</div>`;
+    }
+    // Step 1 "honour + explain": if the learner picked a word that isn't a verb here but is easy to
+    // mistake for one (e.g. भक्तः in BG 4.3, a predicate noun after असि), explain why + where to pick.
+    if (step.type === 'verbs' && sentence.step1Hints) {
+      for (const i of selected) {
+        if (expected.has(i)) continue;
+        const hint = sentence.step1Hints.find(t => t.wordIndex === i);
+        if (hint) feedbackHtml += `<div class="tut-explain">${step1HintCallout(sentence, hint)}</div>`;
+      }
+    }
+    // Notes can be per-WORD (PRAGDISHIYA_TIP, krtyaKarmani, sweep-upapada) or CLUSTER-level (the
+    // कारक-षष्ठी kṛdanta-कर्म note doesn't depend on wordIndex) — so iterating the accepted words
+    // would print a cluster-level note once PER accepted word (4× for a कर्म cluster of 4 words,
+    // Harsha 2026-08-19, BG 4.3 प्रोक्तः). Dedupe on the note text so each distinct tip shows once.
+    const noteTargets = [...expected, ...selected];
+    const seenNotes = new Set();
+    for (const idx of new Set(noteTargets)) {
+      const note = step.clusterIdx != null ? tutorialOverrideNote(sentence, step, idx) : null;
+      if (note && !seenNotes.has(note)) { seenNotes.add(note); feedbackHtml += `<div class="tut-explain">${note}</div>`; }
+    }
+  }
+
+  app.innerHTML = `
+    <div class="tutorial-head"><button class="link" id="tutBackBtn">← Dashboard</button><span>${esc(formatVerseRef(verse.ref))}</span></div>
+    <div class="question">
+      <div class="tutorial-verse prompt">${verseHtml}</div>
+      <div class="tut-step-label">${tutorialStepLabel(step, sentence)}</div>
+      ${showNone ? `<button class="secondary" id="tutNoneBtn">None of these</button>` : ''}
+      ${feedbackHtml}
+      <div class="tutorial-actions">
+        ${!checked ? `<button class="primary" id="tutCheckBtn" ${selected.size === 0 ? 'disabled' : ''}>Check answer</button>` : `<button class="primary" id="tutNextBtn">Next →</button>`}
+      </div>
+      ${renderTutorialReportArea(sentence, step, verse)}
+    </div>`;
+  document.getElementById('tutBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  if (!checked) {
+    app.querySelectorAll('.tutword').forEach(el => el.onclick = () => {
+      const i = +el.dataset.i;
+      if (multiSelect) { if (selected.has(i)) selected.delete(i); else selected.add(i); }
+      else { selected.clear(); selected.add(i); }
+      renderTutorial();
+    });
+    const noneBtn = document.getElementById('tutNoneBtn');
+    if (noneBtn) noneBtn.onclick = () => { selected.clear(); checkTutorialStep(); };
+    const checkBtn = document.getElementById('tutCheckBtn');
+    if (checkBtn) checkBtn.onclick = () => checkTutorialStep();
+  } else {
+    document.getElementById('tutNextBtn').onclick = () => advanceTutorialStep();
+  }
+  wireTutorialReportArea(sentence, step, verse, renderTutorial);
+}
+
+function renderTutorialVerseComplete(avgScore) {
+  view = { screen: 'tutorialComplete' };
+  const verse = tutorialVerses[tutorialVerseIdx];
+  app.innerHTML = `
+    <div class="celebrate">
+      <h2>✓ ${esc(formatVerseRef(verse.ref))} complete</h2>
+      <p>${Math.round(avgScore * 100)}% average accuracy across this verse's steps</p>
+      <div class="next-choices">
+        <button class="primary" id="tutNextVerseBtn">Next verse →</button>
+        <button class="secondary" id="tutPickBtn">Pick another verse</button>
+        <button class="secondary" id="tutDashBtn">Dashboard</button>
+      </div>
+    </div>`;
+  document.getElementById('tutNextVerseBtn').onclick = () => {
+    const nextIdx = tutorialVerseIdx + 1 < tutorialVerses.length ? tutorialVerseIdx + 1 : 0;
+    startTutorialVerse(nextIdx);
+  };
+  document.getElementById('tutPickBtn').onclick = () => renderTutorialPicker();
+  document.getElementById('tutDashBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+}
+
+// The source data's own chpatno/slokano fields are zero-padded ("01.001") so plain string sort/
+// grouping (see groupTutorialVersesByChapter below) gives correct chapter order — but BG never
+// exceeds 18 chapters or 78 verses, so that padding is only useful internally. Strip it for
+// anything actually shown to the learner (Harsha, 2026-08-16: "do we need 3 digits for verses").
+// Normalises numeric dot-segments (strips zero-padding: "01.001" → "1.1") but PRESERVES any
+// non-numeric segment verbatim — e.g. Māṇḍūkya's "1.1 · kārikā" would otherwise coerce to "1.NaN".
+function formatVerseRef(ref) { return ref.split('.').map(p => { const n = +p; return Number.isNaN(n) ? p : String(n); }).join('.'); }
+
+// Chapter unit label(s) per tutorial text, mirroring the svādhyāya read-a-verse picker
+// (build_mula_walk.js CHAPTER_UNIT / CHAPTER_DEPTH) so the vākya-विग्रह picker names chapters the same
+// way. depth 2 = the ref's first two components form the chapter (अध्याय · वल्ली, मुण्डकम् · खण्डः).
+// Texts with flat refs (atmabodha, vivekacūḍāmaṇi, taittiriya-mula) never reach chapter grouping —
+// they show a single flat verse list.
+const TUT_CHAPTER = {
+  Gita: { unit: 'अध्याय' }, panchadashi: { unit: 'परिच्छेद' },
+  'kena-mula': { unit: 'खण्डः' }, 'prashna-mula': { unit: 'प्रश्नः' },
+  'katha-mula': { unit: ['अध्याय', 'वल्ली'], depth: 2 },
+  'mundaka-mula': { unit: ['मुण्डकम्', 'खण्डः'], depth: 2 },
+  'mandukya-mula': { unit: 'प्रकरणम्' }, 'aitareya-mula': { unit: 'अध्यायः' },
+  'chandogya-mula': { unit: 'अध्यायः' }, 'brihad-mula': { unit: 'अध्यायः' },
+  'taittiriya-mula': { unit: 'वल्ली' },
+};
+// Display-title overrides for the वाक्य-विग्रह Text dropdown + heading. The tutorial-manifest titles are
+// written by several different builders and drifted inconsistent (some Devanāgarī-first, some raw slugs);
+// this is the single durable place to normalise them to one IAST pattern without fighting the builders.
+const TUT_TITLE = {
+  'atmabodha': 'Ātmabodha',
+  'isha-mula': 'Īśāvāsya Upaniṣad (mūla)',
+  'kena-mula': 'Kena Upaniṣad (mūla)',
+  'katha-mula': 'Kaṭha Upaniṣad (mūla)',
+  'mandukya-mula': 'Māṇḍūkya Upaniṣad (mūla + kārikā)',
+  'chandogya-mula': 'Chāndogya Upaniṣad (mūla)',
+};
+const tutTitle = (slug, fallback) => TUT_TITLE[slug] || fallback || slug;
+// "1.1" + {unit:['अध्याय','वल्ली']} → "अध्याय 1 · वल्ली 1"; "3" + {unit:'प्रकरणम्'} → "प्रकरणम् 3".
+function tutChapterLabel(chapterKey, cfg) {
+  const nums = String(chapterKey).split('.').map(p => { const n = +p; return Number.isNaN(n) ? p : String(n); });
+  if (!cfg) return 'Chapter ' + nums.join('.');
+  const units = Array.isArray(cfg.unit) ? cfg.unit : [cfg.unit];
+  return nums.map((n, i) => (units[i] || units[units.length - 1]) + ' ' + n).join(' · ');
+}
+// Groups the flat tutorialVerses array by chapter — the first `depth` dot-components of `ref` (e.g.
+// "01.001" -> "01"; a Kaṭha "1.2.3" at depth 2 -> "1.2" = adhyāya·vallī). Preserves each verse's
+// original index into tutorialVerses so startTutorialVerse (which takes that index) still works.
+function groupTutorialVersesByChapter(verses, depth) {
+  depth = depth || 1;
+  const chapters = new Map();
+  verses.forEach((v, idx) => {
+    const chapterKey = String(v.ref).split('.').slice(0, depth).join('.');
+    if (!chapters.has(chapterKey)) chapters.set(chapterKey, []);
+    chapters.get(chapterKey).push({ idx, ref: v.ref });
+  });
+  return [...chapters.entries()]
+    .map(([chapterKey, verseList]) => ({ chapterKey, verses: verseList }))
+    .sort((a, b) => a.chapterKey.localeCompare(b.chapterKey, undefined, { numeric: true }));
+}
+
+// texts with NO gold clause decomposition (their kāraka came from the UoHyd e-reader, not Gemini) —
+// वाक्य-विभाग (clause mode) can't run on them, so they're filtered out of that picker. BG only, today.
+const CLAUSE_MODE_EXCLUDE = new Set(['Gita']);
+function renderTutorialPicker() {
+  const clauseMode = tutorialMode === 'clause';
+  const modeTitle = clauseMode ? '🪢 वाक्य-विभाग' : '🧩 वाक्य-विग्रह';
+  // texts listed lexicographically (by romanized slug) in वाक्य-विग्रह + वाक्य-विभाग pickers — independent
+  // of the build-emitted manifest order (Harsha, 2026-08-28).
+  const manifest = (window.TUTORIAL_MANIFEST || []).filter(m => !clauseMode || !CLAUSE_MODE_EXCLUDE.has(m.slug))
+    .slice().sort((a, b) => a.slug.toLowerCase().localeCompare(b.slug.toLowerCase()));
+  // Text is now a real level (mirrors renderReadingPicker) — the manifest carries every pre-built
+  // tutorial text (Gita, vivekacudamani, …). Default to the first entry; remember the choice in
+  // view.picker.tutSlug across re-renders. Re-default if the remembered slug isn't in THIS mode's list.
+  const p = view.picker || (view.picker = { tutSlug: null, chapterKey: null });
+  if (!p.tutSlug || !manifest.find(m => m.slug === p.tutSlug)) p.tutSlug = manifest.length ? manifest[0].slug : null;
+  const textEntry = manifest.find(m => m.slug === p.tutSlug) || manifest[0] || null;
+  const slug = textEntry ? textEntry.slug : null;
+  app.innerHTML = `<div class="picker-head"><h2>${modeTitle}</h2><button class="link" id="tutPickerBackBtn">← Dashboard</button></div><p>Loading…</p>`;
+  document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  if (!slug) { app.innerHTML = `<p>No tutorial texts available. <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`; document.getElementById('tutPickerBackBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); }; return; }
+  ensureTutorialDataLoaded(slug).then(() => {
+    tutorialVerses = window.TUTORIAL_DATA[slug].verses;
+    const completion = loadTutorialCompletion();
+    const completedN = Object.keys(completion).filter(ref => tutorialVerses.some(v => v.ref === ref)).length;
+    const saved = loadTutorialProgress();
+    const resumeIdx = saved.lastRef ? tutorialVerses.findIndex(v => v.ref === saved.lastRef) : -1;
+    // Some texts (e.g. vivekacūḍāmaṇi) have FLAT verse refs ("1".."44"), not "chapter.verse" — those
+    // have no chapter level, so skip the Chapter dropdown and offer a single verse dropdown 1..N.
+    const cfg = TUT_CHAPTER[slug];
+    const isDotted = tutorialVerses.length > 0 && tutorialVerses.every(v => v.ref.includes('.'));
+    const allChapters = isDotted ? groupTutorialVersesByChapter(tutorialVerses, cfg && cfg.depth) : null;
+    // Single-chapter texts (e.g. Īśā) get no chapter dropdown — just a flat verse list, like svādhyāya.
+    const useChapters = !!allChapters && allChapters.length > 1;
+    const chapters = useChapters ? allChapters : null;
+    const selectedChapter = useChapters ? (chapters.find(c => c.chapterKey === p.chapterKey) || null) : null;
+    const flatVerses = useChapters ? null : tutorialVerses.map((v, idx) => ({ idx, ref: v.ref }));
+    const textTitle = tutTitle(slug, textEntry.title);
+    app.innerHTML = `
+      <div class="picker-head">
+        <h2>${modeTitle} — ${esc(textTitle)}</h2>
+        <button class="link" id="tutPickerBackBtn">← Dashboard</button>
+      </div>
+      <p class="picker-sub muted">${clauseMode ? 'Clause decomposition: find each clause-head · group its words · supply the अध्याहार (unstated कर्ता / implied verb)' : 'Full-verse analysis: कारक (syntactic roles) · समास-विच्छेद (compound peeling) · वाक्य-भेद (clause structure)'}</p>
+      <div class="picker-level">
+        <label>Text</label>
+        <select id="tutTextSelect">
+          ${manifest.map(m => `<option value="${esc(m.slug)}"${m.slug === slug ? ' selected' : ''}>${esc(tutTitle(m.slug, m.title))}</option>`).join('')}
+        </select>
+      </div>
+      <p>${completedN} / ${tutorialVerses.length} verses completed</p>
+      <div class="reading-actions">
+        ${resumeIdx >= 0 ? `<button class="primary" id="tutResumeBtn">Continue (${esc(formatVerseRef(saved.lastRef))})</button>` : ''}
+        <button class="secondary" id="tutStartBtn">Start from beginning</button>
+      </div>
+      ${useChapters ? `<div class="picker-level">
+        <label>${esc(Array.isArray(cfg && cfg.unit) ? cfg.unit[0] : (cfg && cfg.unit) || 'Chapter')}</label>
+        <select id="tutChapterSelect">
+          <option value="">Choose…</option>
+          ${chapters.map(c => `<option value="${esc(c.chapterKey)}"${c.chapterKey === p.chapterKey ? ' selected' : ''}>${esc(tutChapterLabel(c.chapterKey, cfg))}</option>`).join('')}
+        </select>
+      </div>
+      ${selectedChapter ? `<div class="picker-level verse-jump">
+        <select id="tutVerseSelect">${selectedChapter.verses.map(v => `<option value="${v.idx}">${esc(formatVerseRef(v.ref))}</option>`).join('')}</select>
+        <button class="secondary" id="tutJumpBtn">Go</button>
+      </div>` : ''}` : `<div class="picker-level verse-jump">
+        <label>Verse</label>
+        <select id="tutVerseSelect">${flatVerses.map(v => `<option value="${v.idx}">${esc(formatVerseRef(v.ref))}</option>`).join('')}</select>
+        <button class="secondary" id="tutJumpBtn">Go</button>
+      </div>`}`;
+    document.getElementById('tutPickerBackBtn').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+    document.getElementById('tutTextSelect').onchange = e => { p.tutSlug = e.target.value || null; p.chapterKey = null; renderTutorialPicker(); };
+    if (resumeIdx >= 0) document.getElementById('tutResumeBtn').onclick = () => startTutorialVerse(resumeIdx);
+    document.getElementById('tutStartBtn').onclick = () => startTutorialVerse(0);
+    const chapterSelect = document.getElementById('tutChapterSelect');
+    if (chapterSelect) chapterSelect.onchange = e => { p.chapterKey = e.target.value || null; renderTutorialPicker(); };
+    const jumpBtn = document.getElementById('tutJumpBtn');
+    if (jumpBtn) jumpBtn.onclick = () => startTutorialVerse(+document.getElementById('tutVerseSelect').value);
+  }).catch(() => {
+    app.innerHTML = `<p>Couldn't load tutorial data. <button class="link" id="tutPickerBackBtn2">← Dashboard</button></p>`;
+    document.getElementById('tutPickerBackBtn2').onclick = () => { view = { screen: 'dashboard' }; renderDashboard(); };
+  });
+}
+
+// Boot: honor a ?tut=<ref>[&step=<type>][&cluster=<n>] testing back-gate (see jumpToTutorial), else
+// the normal dashboard.
+(function boot() {
+  const g = document.getElementById('gearBtn'); if (g) g.onclick = openSettings;
+  // Top-level banner Home button (persists across every SPA screen; header lives outside #app) — always
+  // returns to the dashboard. Non-destructive: reading/quiz progress is already saved as you go. (Harsha, 2026-08-29.)
+  const hb = document.getElementById('homeBtn'); if (hb) hb.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.get('tut')) {
+      if (q.get('cstyle') === 'guided' || q.get('cstyle') === 'socratic') clauseStyle = q.get('cstyle');
+      if (['all', 'smart', 'auto'].includes(q.get('cskip'))) clauseSkip = q.get('cskip');
+      jumpToTutorial(q.get('tut'), q.get('step') || null, q.get('cluster') != null ? +q.get('cluster') : null, q.get('slug') || null, q.get('mode') || null);
+      return;
+    }
+  } catch (e) {}
+  renderDashboard();
+})();

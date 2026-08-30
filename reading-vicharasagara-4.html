@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>विचारसागरः — चतुर्थतरङ्गः</title>
 <style>
-:root{--bg:#faf7f0;--ink:#2b2620;--mula:#1a1a2e;--tip:#5a4632;--tipbg:#f3ead8;--accent:#8a5a2b;--cite:#0e7490;--tr:#4a5568;--rule:#e0d6c2;
+:root{--bg:#faf7f0;--ink:#2b2620;--mula:#1a1a2e;--tip:#5a4632;--tipbg:#f3ead8;--accent:#8a5a2b;--brand:#d97706;--cite:#0e7490;--tr:#4a5568;--rule:#e0d6c2;
   --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#a21caf;--drs:#8a6d3b;--eka:#c2410c}
 /* bhāṣya-matched: citation=teal(--cite) · pūrvapakṣa=red(--pp) · siddhānta=green(--sid) · tātparya/phalita=purple(--tat,=bhāṣya import) · ekadeshi=orange(--eka). VS-new: lakṣaṇa=magenta(--lak) · dṛṣṭānta=sepia(--drs) */
 .w.r-purvapaksha{color:var(--pp)} .w.r-siddhanta{color:var(--sid)} .w.r-phalita{color:var(--tat)} .w.r-lakshana{color:var(--lak)} .w.r-drishtanta{color:var(--drs)} .w.r-ekadeshi{color:var(--eka)} .w.r-anuvada{color:#6b6255}
@@ -27,6 +27,8 @@ body.nosec .secband{display:none}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.85 "Noto Serif Devanagari","Adishila",Georgia,serif;padding:0 0 120px}
 header{position:sticky;top:0;background:rgba(250,247,240,.97);border-bottom:1px solid var(--rule);padding:12px 20px;z-index:5;backdrop-filter:blur(6px)}
+/* mandatory site brand — saffron, left-aligned, on every page (standard template) */
+.brand{display:block;color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:"Noto Serif Devanagari",serif;margin-bottom:3px}
 h1{margin:0;font-size:22px;color:var(--accent)} .sub{font-size:13px;color:#8a7d68;margin-top:2px;font-family:system-ui}
 /* dynamic pinned topic — the current (A. n-m) section, role-coloured, updated on scroll */
 .nowsec{margin-top:4px;font-family:system-ui;font-size:13.5px;color:#8a7d68;display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;border-left:3px solid #caa45a;padding-left:9px;min-height:1.2em;transition:border-color .2s}
@@ -96,7 +98,7 @@ body.notip .tip-wrap{display:none}
 .vs-ab-prov{margin-top:.9em;font-size:12px;color:#8a7a5c;font-family:system-ui,sans-serif;line-height:1.55}
 
 </style></head><body>
-<header><a href="index.html" style="color:#8a7d68;font-size:16px;text-decoration:none;float:right" title="Home" aria-label="Home">🏠</a><h1>विचारसागरः — चतुर्थतरङ्गः</h1>
+<header><a class="brand" href="index.html" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><h1>विचारसागरः — चतुर्थतरङ्गः</h1>
 <div class="nowsec" id="nowsec"><span class="ns-t">उत्तमाधिकारिण उपदेशनिरूपणम्</span></div>
 <div class="byline">श्रीवासुदेवब्रह्मेन्द्रसरस्वती · आवर्ताः १२२–२२५</div>
 <div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English translation</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः (sections)</label></div>

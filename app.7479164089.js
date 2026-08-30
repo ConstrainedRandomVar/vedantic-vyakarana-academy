@@ -1583,7 +1583,7 @@ function newQuestion() {
     for (let guard = 0; guard < 5000; guard++) {
       if (!session.peel || session.peelIdx >= session.peel.length) {
         if (!session.queue.length) session.queue = shuffle(samrPoolKeys()); // wrap around
-        session.peel = samasaPeelItems(window.SAMASA_PEEL[session.queue.pop()], {});
+        session.peel = samasaPeelItems(samrPeelLayers(session.queue.pop()), {});
         session.peelIdx = 0;
         if (!session.peel.length) { session.peel = null; continue; }   // compound with no quizzable layer
       }
@@ -1609,17 +1609,24 @@ function newQuestion() {
   renderQuiz();
 }
 
-// 🧅 समास-विच्छेद Practise source filter: 'all' | 'mula' | 'bhasya'. Bhāṣya compounds come from the
-// 2026-08-20 batch's bhāṣya samāsa (source-tagged in SAMASA_PEEL_SRC); this lets a learner drill only
-// mūla compounds, only bhāṣya compounds, or both. Persisted.
+// 🧅 समास-विच्छेद Practise source filter: 'all' | 'mula' | 'bhasya' | 'vs'. Bhāṣya compounds come from
+// the 2026-08-20 batch's bhāṣya samāsa (source-tagged in SAMASA_PEEL_SRC); Vicārasāgara compounds live
+// in a SEPARATE window.SAMASA_PEEL_VS (kept out of the shared dict so VS never contaminates the 14
+// texts' reading views — build_samasa_peel.js). This lets a learner drill only mūla, only bhāṣya, only
+// VS, or all. Persisted.
 let samrSrc = 'all';
 try { samrSrc = localStorage.getItem('vv_samr_src') || 'all'; } catch (e) {}
+// layers for a SAMR key: shared dict wins; VS-only keys fall back to the isolated VS namespace.
+function samrPeelLayers(key) { return (window.SAMASA_PEEL && window.SAMASA_PEEL[key]) || (window.SAMASA_PEEL_VS && window.SAMASA_PEEL_VS[key]) || null; }
 function samrPoolKeys() {
-  const P = window.SAMASA_PEEL || {}, S = window.SAMASA_PEEL_SRC || {};
-  let ks = Object.keys(P);
-  if (samrSrc === 'mula') ks = ks.filter(k => /^mula/.test(S[k] || 'mula'));
-  else if (samrSrc === 'bhasya') ks = ks.filter(k => /^bhasya/.test(S[k] || ''));
-  return ks.length ? ks : Object.keys(P);   // never leave an empty pool
+  const P = window.SAMASA_PEEL || {}, S = window.SAMASA_PEEL_SRC || {}, VS = window.SAMASA_PEEL_VS || {};
+  const core = Object.keys(P), vsKeys = Object.keys(VS);
+  let ks;
+  if (samrSrc === 'mula') ks = core.filter(k => /^mula/.test(S[k] || 'mula'));
+  else if (samrSrc === 'bhasya') ks = core.filter(k => /^bhasya/.test(S[k] || ''));
+  else if (samrSrc === 'vs') ks = vsKeys;
+  else ks = core.concat(vsKeys.filter(k => !(k in P)));   // 'all' = shared + VS-only (no double-count)
+  return ks.length ? ks : core.concat(vsKeys);            // never leave an empty pool
 }
 
 function startQuiz(mode, code) {
@@ -2091,7 +2098,7 @@ function renderQuiz() {
       <span class="batch">${mode === 'samasa' ? `Q${batchCount + (answered ? 0 : 1)}` : `Q${Math.min(batchCount + (answered ? 0 : 1), BATCH_SIZE)}/${BATCH_SIZE}`}</span>
       <span class="streak">streak ${p.streak} · best ${p.best}${p.mastered ? ' · ✓ mastered' : ''}</span>
     </div>
-    ${code === 'SAMR' ? `<div class="samr-src muted" style="font-size:13px;margin:-4px 0 8px">peel from: ${[['all','सर्व'],['mula','मूल'],['bhasya','भाष्य']].map(([s,l])=>`<button class="link samr-src-btn" data-src="${s}"${samrSrc===s?' style="font-weight:700;text-decoration:underline"':''}>${l}</button>`).join(' · ')}</div>` : ''}
+    ${code === 'SAMR' ? `<div class="samr-src muted" style="font-size:13px;margin:-4px 0 8px">peel from: ${[['all','सर्व'],['mula','मूल'],['bhasya','भाष्य'],['vs','विचारसागर']].map(([s,l])=>`<button class="link samr-src-btn" data-src="${s}"${samrSrc===s?' style="font-weight:700;text-decoration:underline"':''}>${l}</button>`).join(' · ')}</div>` : ''}
     <div class="question">
       ${renderPrompt(item)}
     </div>

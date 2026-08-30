@@ -136,11 +136,13 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);borde
       for (let L = 0; L < sels.length && L < p.length; L++) { const o = optionsFor(refs, nlev, L, p.slice(0, L)); fill(sels[L], o, p[L]); }
     }
 
+    let spyUntil = 0;   // scrollspy suppression window: quiet the spy while a programmatic jump smooth-scrolls
     function jump(ref) {
       if (opts.mode !== 'jump') return;
       const file = opts.pageByRef ? opts.pageByRef[ref] : null;
       if (file == null) return;
       if (opts.curFile != null && file === opts.curFile) {
+        spyUntil = (typeof Date !== 'undefined' ? Date.now() : 0) + 700;   // don't flicker the picker through intermediate verses
         const el = document.getElementById('v-' + ref);
         if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('navhit'); void el.offsetWidth; el.classList.add('navhit'); }
       } else location.href = file + '#v-' + ref;
@@ -157,6 +159,35 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);borde
     setRef(init || refs[0]);
     // arriving via #v-<ref>: mirror nav.js's flash cue on the target verse.
     if (fromHash && opts.mode === 'jump' && typeof document !== 'undefined') { const el = document.getElementById('v-' + init); if (el) el.classList.add('navhit'); }
+
+    // scrollspy (jump mode only): keep the picker in sync with the verse at the top of the viewport as the
+    // reader scrolls. setRef only repaints the selects (no jump / no onSelect), so there is NO scroll↔jump
+    // feedback loop. The read-a-verse picker (mode 'callback') is untouched.
+    if (opts.mode === 'jump' && typeof document !== 'undefined' && typeof addEventListener !== 'undefined') {
+      // the "you are here" line = bottom of the nearest sticky/fixed ancestor of the nav (else top of viewport)
+      const stickyBottom = function () {
+        let e = container, best = 0;
+        while (e && e !== document.body && e.nodeType === 1) {
+          const cs = getComputedStyle(e);
+          if (cs.position === 'sticky' || cs.position === 'fixed') { const b = e.getBoundingClientRect().bottom; if (b > best) best = b; }
+          e = e.parentElement;
+        }
+        return best;
+      };
+      const spy = function () {
+        if (Date.now() < spyUntil) return;
+        const y = stickyBottom() + 8; let pick = null;
+        for (let i = 0; i < refs.length; i++) {
+          const el = document.getElementById('v-' + refs[i]);
+          if (!el) continue;                                   // ref not on THIS page (split texts) → skip
+          if (el.getBoundingClientRect().top <= y) pick = refs[i];
+          else if (pick !== null) break;                       // first on-page verse below the line → done (verses are in order)
+        }
+        if (pick && pick !== currentRef()) setRef(pick);
+      };
+      let ticking = false;
+      addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; spy(); }); } }, { passive: true });
+    }
 
     return { getRef: currentRef, setRef, refresh: () => setRef(currentRef()) };
   }

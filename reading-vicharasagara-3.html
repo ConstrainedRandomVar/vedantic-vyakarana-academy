@@ -55,6 +55,24 @@ h1{margin:0;font-size:22px;color:var(--accent)} .sub{font-size:13px;color:#8a7d6
 .legend>summary .tw{margin-left:auto;font-weight:400;font-size:11px;color:#a08d6f}
 .legend-body{padding:2px 14px 12px;display:flex;flex-wrap:wrap;gap:6px 18px}
 .legend-body>span{display:inline-flex;align-items:center;gap:5px}
+/* विषयानुक्रमः TOC — collapsible section outline; role-coloured, nested by indentation, topic → jump */
+.toc{background:#fff;border:1px solid var(--rule);border-radius:12px;margin:0 0 16px;font-family:system-ui;font-size:13px;color:#6b5d47}
+.toc>summary{list-style:none;cursor:pointer;padding:10px 14px;color:#8a7d68;display:flex;align-items:center;gap:8px}
+.toc>summary::-webkit-details-marker{display:none}
+.toc>summary::before{content:"▸";font-size:11px;color:#caa45a} .toc[open]>summary::before{content:"▾"}
+.toc>summary .tw{margin-left:auto;font-weight:400;font-size:11px;color:#a08d6f}
+.toc-body{padding:2px 8px 10px}
+.toc-i{display:flex;align-items:baseline;gap:6px;padding:3px 8px;border-radius:6px;text-decoration:none;color:inherit;border-left:3px solid transparent;scroll-margin-top:var(--smt,180px)}
+a.toc-i:hover{background:#f3ead8}
+.toc-i .toc-r{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:800}
+.toc-i .toc-t{color:var(--mula)} .toc-i .toc-rng{margin-left:auto;font-size:11px;color:#a07f45;font-weight:700;white-space:nowrap;padding-left:8px}
+.toc-i.r-purvapaksha{border-left-color:var(--pp)} .toc-i.r-purvapaksha .toc-r{color:var(--pp)}
+.toc-i.r-siddhanta{border-left-color:var(--sid)} .toc-i.r-siddhanta .toc-r{color:var(--sid)}
+.toc-i.r-drishtanta{border-left-color:var(--drs)} .toc-i.r-drishtanta .toc-r{color:var(--drs)}
+.toc-i.r-lakshana{border-left-color:var(--lak)} .toc-i.r-lakshana .toc-r{color:var(--lak)}
+.toc-i.r-phalita{border-left-color:var(--tat)} .toc-i.r-phalita .toc-r{color:var(--tat)}
+.toc-i.r-ekadeshi{border-left-color:var(--eka)} .toc-i.r-ekadeshi .toc-r{color:var(--eka)}
+.toc-i.exp .toc-t{color:#8a7d68}
 .lg-w{border-bottom:1px dotted #8a7d68} .lg-c{border-bottom:1px dashed #c9a86a} .lg-q{color:var(--cite)}
 .lg-lk{color:var(--cite);text-decoration:underline} .lg-t{background:var(--tipbg);border-left:3px solid #caa45a;padding:0 6px;border-radius:3px}
 .lg-pp{color:var(--pp)} .lg-sid{color:var(--sid)} .lg-lak{color:var(--lak)} .lg-drs{color:var(--drs)} .lg-tat{color:var(--tat)}
@@ -105,6 +123,7 @@ body.notip .tip-wrap{display:none}
 <div id="reading-nav"></div>
 </header>
 <main>
+
 <details class="legend"><summary>वर्णसङ्केतः · legend<span class="tw">क्लिक् → विस्तारः</span></summary><div class="legend-body">
   <span><span class="lg-w">पदम्</span> word — hover for meaning · grammar · समास-विच्छेद</span>
   <span><span class="lg-q">उद्धृतम्</span> quotation (scripture · smṛti · a quoted phrase)</span>

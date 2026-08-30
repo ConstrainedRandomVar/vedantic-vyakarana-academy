@@ -11,16 +11,18 @@
 .geq{color:#9a8f78;padding:0 2px}               /* the author's = gloss connector */
 .skt.pp{color:var(--pp)} .skt.sid{color:var(--sid)} .skt.def{color:var(--lak)}   /* deterministic fallback (whole-sentence) when a sentence has no roleSpans */
 /* section-role ribbon — a role-coloured band before the first āvarta of each topical (A. n-m) section */
-.secband{margin:26px 0 12px;padding:7px 14px;border-left:5px solid #caa45a;background:#f3ead8;border-radius:0 7px 7px 0;font-family:system-ui;font-size:14px;color:#5a4632;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;scroll-margin-top:var(--smt,180px)}
-.secband .sr{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
-.secband .st{font-weight:600;color:var(--mula)} .secband .srange{margin-left:auto;font-size:11px;color:#a07f45;font-weight:700;white-space:nowrap}
-.secband.r-purvapaksha{border-left-color:var(--pp)} .secband.r-purvapaksha .sr{color:var(--pp)}
-.secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-siddhanta .sr{color:var(--sid)}
-.secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-drishtanta .sr{color:var(--drs)}
-.secband.r-lakshana{border-left-color:var(--lak)} .secband.r-lakshana .sr{color:var(--lak)}
-.secband.r-phalita{border-left-color:var(--tat)} .secband.r-phalita .sr{color:var(--tat)}
-.secband.r-ekadeshi{border-left-color:var(--eka)} .secband.r-ekadeshi .sr{color:var(--eka)}
-.secband.sangraha .st{text-decoration:underline;text-decoration-color:#caa45a;text-underline-offset:3px}
+/* section-role band = a double-pointed CHEVRON RIBBON (<====>), deliberately a different SHAPE and a cool
+   lavender fill so it can never be mistaken for the ṭippaṇī note card (a warm cream #f3ead8 rounded box).
+   Role = the heading colour (exposition muted; argumentative roles pop in their hue). */
+.secband{margin:32px 0 12px;padding:6px 30px;background:#ebe8f4;clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);border:none;border-radius:0;font-family:system-ui;font-size:14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;scroll-margin-top:var(--smt,180px)}
+.secband .st{font-weight:700;color:#6a5f8f} .secband .srange{margin-left:auto;font-size:11px;color:#8f86ad;font-weight:700;white-space:nowrap}
+.secband.r-purvapaksha{background:#f7e6ea} .secband.r-purvapaksha .st{color:var(--pp)} .secband.r-purvapaksha .srange{color:#c98b8b}
+.secband.r-siddhanta{background:#e4f0e8} .secband.r-siddhanta .st{color:var(--sid)} .secband.r-siddhanta .srange{color:#84ab92}
+.secband.r-drishtanta{background:#efe9f0} .secband.r-drishtanta .st{color:var(--drs)} .secband.r-drishtanta .srange{color:#a99}
+.secband.r-lakshana{background:#f4e7f2} .secband.r-lakshana .st{color:var(--lak)} .secband.r-lakshana .srange{color:#bd8fb8}
+.secband.r-phalita{background:#eee8f6} .secband.r-phalita .st{color:var(--tat)} .secband.r-phalita .srange{color:#a394c9}
+.secband.r-ekadeshi{background:#f6e9df} .secband.r-ekadeshi .st{color:var(--eka)} .secband.r-ekadeshi .srange{color:#c79b7a}
+.secband.sangraha .st{text-decoration:underline;text-decoration-color:currentColor;text-underline-offset:3px}
 body.nosec .secband{display:none}
 .spk{display:inline-block;font:600 10px/1 system-ui;padding:2px 6px;border-radius:9px;margin-right:6px;vertical-align:1px}
 .spk-g{background:#dcecdc;color:#15603d} .spk-s{background:#f0e2d0;color:#8a5a2b}

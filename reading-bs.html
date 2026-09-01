@@ -1,275 +1,224 @@
-<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ब्रह्मसूत्राणि — एकीकृत-पाठः</title><style>
-:root{
-  /* shared shell */
-  --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;
-  /* पदार्थ (mula hover analysis) */
-  --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
-  /* मनन (bhasya roles) */
-  --mula:#1a56db;--gloss:#3f4653;--import:#6d28d9;--vyak:#6b6255;--purva:#b91c1c;
-  --eka:#c2410c;--sid:#15803d;--quote:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--introbg:#f2ede2;
-  --mulatint:rgba(124,90,30,.05);
-}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;
-  --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
-  --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
-  --mulatint:rgba(217,184,119,.07);
-}}
-:root[data-theme=dark]{
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;
-  --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
-  --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
-  --mulatint:rgba(217,184,119,.07);
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
-.wrap{max-width:820px;margin:0 auto;padding:22px 18px 90px}
-h1{font-size:21px;margin:0 0 2px}
-.sub{color:var(--muted);font-size:13px;margin:0 0 14px}
-a{color:var(--mula);text-decoration:none}
-.dv{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;overflow-wrap:anywhere;word-break:break-word}
-
-/* top controls */
-.topbar{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
-.topbar .grow{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{border:0;border-right:1px solid var(--line);border-radius:0;background:var(--card);
-  color:var(--muted);padding:6px 11px;font-size:12.5px;cursor:pointer}
-.seg button:last-child{border-right:0}
-.seg button.on{background:var(--moola);color:var(--bg);font-weight:600}
-/* mūlam-only view: hide all bhāṣya prose (intro, preambles, bhāṣya zones, end-notes) */
-body.moola-only .introbox,body.moola-only .pre-zone,body.moola-only .bh-zone,body.moola-only .post-zone{display:none}
-body.moola-only .mula-zone{margin-bottom:14px}
-button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
-  border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
-
-/* nav (from nav.js) */
-#navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
-  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 16px;
-  box-shadow:0 2px 10px rgba(0,0,0,.04)}
-#navbar .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted)}
-#navbar select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
-  border-radius:8px;padding:5px 9px;min-width:64px}
-#navbar .navgo{margin-left:auto;align-self:center;font-size:12px;color:var(--muted)}
-
-/* consolidated legend */
-.legend{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 18px;font-size:12.5px}
-.legend>summary{list-style:none;cursor:pointer;padding:10px 14px;color:var(--muted);
-  display:flex;align-items:center;gap:8px;font-weight:600}
-.legend>summary::-webkit-details-marker{display:none}
-.legend>summary .tw{margin-left:auto;font-weight:400;font-size:11.5px}
-.legbody{padding:2px 14px 13px}
-.leggrp{padding:8px 0 2px}
-.leghd{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.legnote{color:var(--muted);font-size:12.5px;line-height:1.55}
-.legrow{display:flex;flex-wrap:wrap;gap:7px 14px}
-.legrow span.item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.sw{width:11px;height:11px;border-radius:3px;display:inline-block;flex:0 0 auto}
-.legdiv{height:1px;background:var(--line);margin:9px 0 2px}
-
-/* intro */
-.introbox{background:var(--introbg);border:1px solid var(--line);border-radius:14px;padding:15px 18px;margin:0 0 22px}
-.introbox .rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:7px}
-
-/* mantra group = one card holding both voices */
-.mantra{background:var(--card);border:1px solid var(--line);border-radius:16px;
-  margin:0 0 20px;overflow:hidden;scroll-margin-top:80px}
-.mantra-hd{display:flex;align-items:center;gap:9px;padding:11px 16px 0}
-.refbadge{font-family:"Noto Serif Devanagari",serif;font-weight:700;font-size:15px;color:var(--moola);
-  background:var(--mulatint);border:1px solid var(--line);border-radius:8px;padding:2px 10px;letter-spacing:.03em}
-.refbadge .lat{font-family:-apple-system,sans-serif;font-weight:500;font-size:11px;color:var(--muted);margin-left:4px}
-
-/* mula zone */
-.mula-zone{padding:9px 16px 14px;background:var(--mulatint);border-left:3px solid var(--moola);
-  margin:9px 13px 0;border-radius:0 10px 10px 0}
-.zlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
-.mula-zone .zlabel{color:var(--moola)}
-.moola{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;
-  font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
-.en{color:var(--muted);font-size:13.5px;font-style:italic;margin-top:8px}
-
-/* bhasya zone */
-.bh-zone{padding:12px 16px 16px;margin:12px 13px 14px;border-left:3px solid var(--conn);border-radius:0 10px 10px 0}
-.bh-zone .zlabel{color:var(--spine)}
-.pre-zone{padding:11px 16px 6px;margin:9px 13px 0;border-left:3px dashed var(--conn);border-radius:0 10px 10px 0}
-.pre{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;
-  line-height:1.95;color:var(--muted);margin:0}
-.pre::before{content:"उपोद्घातः";display:block;font-family:-apple-system,sans-serif;font-size:10px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
-/* end-of-section note (::post) — mirrors .pre-zone but sits AFTER the bhāṣya zone */
-.post-zone{padding:6px 16px 12px;margin:0 13px 14px;border-left:3px dashed var(--conn);border-radius:0 10px 10px 0}
-.post{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;
-  line-height:1.95;color:var(--muted);margin:0}
-.post::before{content:"उपसंहारः";display:block;font-family:-apple-system,sans-serif;font-size:10px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
-.bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:19px;line-height:2.05}
-
-/* व्याख्या · side-commentary (Ānandagiri-ṭīkā etc.). TWO placements:
-   अन्तः (interleaved, DEFAULT) — notes dropped inline into the bhāṣya at their anchor;
-   पार्श्वे (beside) — a parallel column (desktop only; auto-hidden / forced back to अन्तः on phones). */
-.paira{display:block}
-/* ṭīkā parts, styled by structural role: avataraṇikā = muted-italic lead-in · pratīka = brown-bold
-   catch-word (the bhāṣya lemma quoted, ending इति) · vyākhyā = normal-ink explanation · maṅgala accent. */
-.tk-ava{color:var(--muted);font-style:italic}
-.tk-prat{color:var(--role);font-weight:700}
-.tk-vy{color:var(--ink)}
-.tk-mng{color:var(--role);font-weight:600}
-/* interleaved inline note — a tinted, indented aside inside the bhāṣya flow */
-.tk-inline{display:none;margin:9px 0 11px 20px;padding:8px 13px;border-left:3px solid var(--role);
-  background:var(--mulatint);border-radius:0 9px 9px 0;font-size:16px;line-height:1.85}
-.tk-inline::before{content:attr(data-label);display:block;font-family:-apple-system,sans-serif;
-  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--role);opacity:.85;margin-bottom:3px}
-/* side column */
-.side-zone{display:none;padding:12px 16px 16px;margin:12px 13px 14px;
-  border-left:3px solid var(--role);border-radius:0 10px 10px 0;background:var(--mulatint)}
-.side-zone .zlabel{color:var(--role)}
-.tika{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;line-height:1.95}
-.tk{margin:0 0 10px}.tk:last-child{margin-bottom:0}
-/* सुरेश्वर-वार्त्तिकम् (section-gran side): a brāhmaṇa's numbered verses */
-.vk .vk-t{font-family:-apple-system,sans-serif;font-size:12px;color:var(--muted);font-weight:500}
-.vk .vk-v{display:flex;gap:8px;margin:0 0 11px}.vk .vk-v:last-child{margin-bottom:0}
-.vk .vk-n{flex:0 0 auto;min-width:2em;text-align:right;color:var(--role);font-size:13px;font-family:-apple-system,sans-serif;line-height:1.95;opacity:.8}
-.vk .vk-x{flex:1 1 auto;min-width:0}
-.vk .w{cursor:default}   /* whole-verse laser/highlight target — not a word-gloss link */
-/* पार्श्वे layout — two balanced columns, widened page */
-body.parshve .wrap{max-width:1320px}
-body.parshve .paira{display:flex;gap:10px;align-items:flex-start}
-body.parshve .paira>.bh-zone,body.parshve .paira>.bh{flex:1 1 0;min-width:0}
-body.parshve .side-zone{flex:1 1 0;min-width:0}
-/* phones: पार्श्वे is unusable → hide its control, and treat any persisted पार्श्वे as अन्तः */
-@media(max-width:900px){
-  #placeseg{display:none!important}
-  body.parshve .wrap{max-width:820px}
-  body.parshve .paira{display:block}
-}
-
-/* bhasya role colours */
-.mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
-.import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
-.purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}
-.sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
-.quote{color:var(--quote)}
-
-/* hover words: NO dotted underline, just subtle bg + help cursor */
-.w{cursor:help}.w:hover{background:rgba(120,120,120,.15);border-radius:3px}
-
-/* tooltip (rich for mula, plain for bhasya) */
-#tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);
-  font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;
-  box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
-/* pinned (clicked) tooltip: interactive + text-selectable so the analysis can be copied */
-#tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px var(--accent,#a7f3d0)}
+<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brahma-sūtra (mūla)</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--conn:#b0a99a}
+@media(prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--conn:#5a5f6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:26px 22px 90px}h1{font-size:22px;margin:0 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.legend{padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
+.v{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
+.rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
+.moola{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
+.vjoin{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:22px;line-height:1.85;color:var(--moola);font-weight:600;text-align:center}
+.vjoin .jl{margin:1px 0}.vjoin .dnd{color:var(--muted);font-weight:400;padding:0 .12em}
+body.metmode-sandhi .moola.vpada{font-size:14.5px;line-height:1.85;color:var(--muted);font-weight:500;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+body.metmode-pada .vjoin{display:none}
+.metbar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 10px 0 0;float:right}
+.metbar button{float:none;border:none;border-radius:0;background:var(--card);color:var(--muted);padding:5px 12px;font-size:12px;border-right:1px solid var(--line)}
+.metbar button:last-child{border-right:none}.metbar button.on{background:var(--moola);color:#fff}
+.en{color:var(--muted);font-size:14px;font-style:italic;margin-top:8px}
+.w{cursor:help}.w:hover{background:rgba(120,120,120,.14);border-radius:3px}
+#tip{position:fixed;z-index:99;max-width:min(360px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
 #tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
-#tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}
-#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
-#tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
-#tip.plain{font-family:"Noto Serif Devanagari",serif;font-size:14.5px}
-@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
-.mantra.navhit{animation:navflash 1.6s ease-out}
-.seglbl{font-size:12.5px;color:var(--muted);align-self:center;margin-right:-2px}
-@media(max-width:520px){.topbar{flex-wrap:wrap}.topbar .grow{width:100%;justify-content:flex-start}
-  .topbar .seg button{padding:5px 8px;font-size:11.5px}.seglbl{font-size:11px}
-  .topbar select{font-size:12px;padding:4px 6px;min-width:0}.topbar #tog{padding:5px 8px;font-size:11.5px}}
-html,body{overflow-x:hidden}</style></head><body><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><button id="tog">◐ theme</button></div></div><h1>ब्रह्मसूत्राणि — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>
-#navbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;
-  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;
-  box-shadow:0 2px 10px rgba(0,0,0,.04)}
-#navbar .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted)}
-#navbar select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
-  border-radius:8px;padding:5px 9px;min-width:64px}
-#navbar .navgo{margin-left:auto;align-self:center;font-size:12px;color:var(--muted)}
+#tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}#tip .row{margin:3px 0}#tip .lb{opacity:.6;font-size:11px}
+#tip .split{opacity:.85;font-family:"Noto Serif Devanagari",serif;margin-top:3px}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
+.chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}</style></head><body class="metmode-sandhi"><div class="wrap">
+<button id="tog">◐ theme</button><div class="metbar" id="metseg"><button type="button" data-m="sandhi">सन्धि</button><button type="button" data-m="pada">पद</button></div>
+<h1>Brahma-sūtra (mūla) — पदार्थ (mūla)</h1><p class="sub">word-by-word · Zenodo per-word gloss</p>
+<style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
 .v{scroll-margin-top:78px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
-.v.navhit{animation:navflash 1.6s ease-out}
-</style>
-<div id="navbar"><label class="navlvl"><span>अध्याय</span><select data-lvl="0"></select></label><label class="navlvl"><span>पाद</span><select data-lvl="1"></select></label><label class="navlvl"><span>सूत्र</span><select data-lvl="2"></select></label><span class="navgo">→</span></div>
-<script>(function(){var N={"refs":["1.1.1","1.1.2","1.1.3","1.1.4","1.1.5","1.1.6","1.1.7","1.1.8","1.1.9","1.1.10","1.1.11","1.1.12","1.1.13","1.1.14","1.1.15","1.1.16","1.1.17","1.1.18","1.1.19","1.1.20","1.1.21","1.1.22","1.1.23","1.1.24","1.1.25","1.1.26","1.1.27","1.1.28","1.1.29","1.1.30","1.1.31","1.2.1","1.2.2","1.2.3","1.2.4","1.2.5","1.2.6","1.2.7","1.2.8","1.2.9","1.2.10","1.2.11","1.2.12","1.2.13","1.2.14","1.2.15","1.2.16","1.2.17","1.2.18","1.2.19","1.2.20","1.2.21","1.2.22","1.2.23","1.2.24","1.2.25","1.2.26","1.2.27","1.2.28","1.2.29","1.2.30","1.2.31","1.2.32","1.3.1","1.3.2","1.3.3","1.3.4","1.3.5","1.3.6","1.3.7","1.3.8","1.3.9","1.3.10","1.3.11","1.3.12","1.3.13","1.3.14","1.3.15","1.3.16","1.3.17","1.3.18","1.3.19","1.3.20","1.3.21","1.3.22","1.3.23","1.3.24","1.3.25","1.3.26","1.3.27","1.3.28","1.3.29","1.3.30","1.3.31","1.3.32","1.3.33","1.3.34","1.3.35","1.3.36","1.3.37","1.3.38","1.3.39","1.3.40","1.3.41","1.3.42","1.3.43","1.4.1","1.4.2","1.4.3","1.4.4","1.4.5","1.4.6","1.4.7","1.4.8","1.4.9","1.4.10","1.4.11","1.4.12","1.4.13","1.4.14","1.4.15","1.4.16","1.4.17","1.4.18","1.4.19","1.4.20","1.4.21","1.4.22","1.4.23","1.4.24","1.4.25","1.4.26","1.4.27","1.4.28","2.1.1","2.1.2","2.1.3","2.1.4","2.1.5","2.1.6","2.1.7","2.1.8","2.1.9","2.1.10","2.1.11","2.1.12","2.1.13","2.1.14","2.1.15","2.1.16","2.1.17","2.1.18","2.1.19","2.1.20","2.1.21","2.1.22","2.1.23","2.1.24","2.1.25","2.1.26","2.1.27","2.1.28","2.1.29","2.1.30","2.1.31","2.1.32","2.1.33","2.1.34","2.1.35","2.1.36","2.1.37","2.2.1","2.2.2","2.2.3","2.2.4","2.2.5","2.2.6","2.2.7","2.2.8","2.2.9","2.2.10","2.2.11","2.2.12","2.2.13","2.2.14","2.2.15","2.2.16","2.2.17","2.2.18","2.2.19","2.2.20","2.2.21","2.2.22","2.2.23","2.2.24","2.2.25","2.2.26","2.2.27","2.2.28","2.2.29","2.2.30","2.2.31","2.2.32","2.2.33","2.2.34","2.2.35","2.2.36","2.2.37","2.2.38","2.2.39","2.2.40","2.2.41","2.2.42","2.2.43","2.2.44","2.2.45","2.3.1","2.3.2","2.3.3","2.3.4","2.3.5","2.3.6","2.3.7","2.3.8","2.3.9","2.3.10","2.3.11","2.3.12","2.3.13","2.3.14","2.3.15","2.3.16","2.3.17","2.3.18","2.3.19","2.3.20","2.3.21","2.3.22","2.3.23","2.3.24","2.3.25","2.3.26","2.3.27","2.3.28","2.3.29","2.3.30","2.3.31","2.3.32","2.3.33","2.3.34","2.3.35","2.3.36","2.3.37","2.3.38","2.3.39","2.3.40","2.3.41","2.3.42","2.3.43","2.3.44","2.3.45","2.3.46","2.3.47","2.3.48","2.3.49","2.3.50","2.3.51","2.3.52","2.3.53","2.4.1","2.4.2","2.4.3","2.4.4","2.4.5","2.4.6","2.4.7","2.4.8","2.4.9","2.4.10","2.4.11","2.4.12","2.4.13","2.4.14","2.4.15","2.4.16","2.4.17","2.4.18","2.4.19","2.4.20","2.4.21","2.4.22","3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.1.6","3.1.7","3.1.8","3.1.9","3.1.10","3.1.11","3.1.12","3.1.13","3.1.14","3.1.15","3.1.16","3.1.17","3.1.18","3.1.19","3.1.20","3.1.21","3.1.22","3.1.23","3.1.24","3.1.25","3.1.26","3.1.27","3.2.1","3.2.2","3.2.3","3.2.4","3.2.5","3.2.6","3.2.7","3.2.8","3.2.9","3.2.10","3.2.11","3.2.12","3.2.13","3.2.14","3.2.15","3.2.16","3.2.17","3.2.18","3.2.19","3.2.20","3.2.21","3.2.22","3.2.23","3.2.24","3.2.25","3.2.26","3.2.27","3.2.28","3.2.29","3.2.30","3.2.31","3.2.32","3.2.33","3.2.34","3.2.35","3.2.36","3.2.37","3.2.38","3.2.39","3.2.40","3.2.41","3.3.1","3.3.2","3.3.3","3.3.4","3.3.5","3.3.6","3.3.7","3.3.8","3.3.9","3.3.10","3.3.11","3.3.12","3.3.13","3.3.14","3.3.15","3.3.16","3.3.17","3.3.18","3.3.19","3.3.20","3.3.21","3.3.22","3.3.23","3.3.24","3.3.25","3.3.26","3.3.27","3.3.28","3.3.29","3.3.30","3.3.31","3.3.32","3.3.33","3.3.34","3.3.35","3.3.36","3.3.37","3.3.38","3.3.39","3.3.40","3.3.41","3.3.42","3.3.43","3.3.44","3.3.45","3.3.46","3.3.47","3.3.48","3.3.49","3.3.50","3.3.51","3.3.52","3.3.53","3.3.54","3.3.55","3.3.56","3.3.57","3.3.58","3.3.59","3.3.60","3.3.61","3.3.62","3.3.63","3.3.64","3.3.65","3.3.66","3.4.1","3.4.2","3.4.3","3.4.4","3.4.5","3.4.6","3.4.7","3.4.8","3.4.9","3.4.10","3.4.11","3.4.12","3.4.13","3.4.14","3.4.15","3.4.16","3.4.17","3.4.18","3.4.19","3.4.20","3.4.21","3.4.22","3.4.23","3.4.24","3.4.25","3.4.26","3.4.27","3.4.28","3.4.29","3.4.30","3.4.31","3.4.32","3.4.33","3.4.34","3.4.35","3.4.36","3.4.37","3.4.38","3.4.39","3.4.40","3.4.41","3.4.42","3.4.43","3.4.44","3.4.45","3.4.46","3.4.47","3.4.48","3.4.49","3.4.50","3.4.51","3.4.52","4.1.1","4.1.2","4.1.3","4.1.4","4.1.5","4.1.6","4.1.7","4.1.8","4.1.9","4.1.10","4.1.11","4.1.12","4.1.13","4.1.14","4.1.15","4.1.16","4.1.17","4.1.18","4.1.19","4.2.1","4.2.2","4.2.3","4.2.4","4.2.5","4.2.6","4.2.7","4.2.8","4.2.9","4.2.10","4.2.11","4.2.12","4.2.13","4.2.14","4.2.15","4.2.16","4.2.17","4.2.18","4.2.19","4.2.20","4.2.21","4.3.1","4.3.2","4.3.3","4.3.4","4.3.5","4.3.6","4.3.7","4.3.8","4.3.9","4.3.10","4.3.11","4.3.12","4.3.13","4.3.14","4.3.15","4.3.16","4.4.1","4.4.2","4.4.3","4.4.4","4.4.5","4.4.6","4.4.7","4.4.8","4.4.9","4.4.10","4.4.11","4.4.12","4.4.13","4.4.14","4.4.15","4.4.16","4.4.17","4.4.18","4.4.19","4.4.20","4.4.21","4.4.22"],"levels":["अध्याय","पाद","सूत्र"],"files":["reading-bs-1.html","reading-bs-2.html","reading-bs-3.html","reading-bs-4.html"],"pageIdx":{"1.1.1":0,"1.1.2":0,"1.1.3":0,"1.1.4":0,"1.1.5":0,"1.1.6":0,"1.1.7":0,"1.1.8":0,"1.1.9":0,"1.1.10":0,"1.1.11":0,"1.1.12":0,"1.1.13":0,"1.1.14":0,"1.1.15":0,"1.1.16":0,"1.1.17":0,"1.1.18":0,"1.1.19":0,"1.1.20":0,"1.1.21":0,"1.1.22":0,"1.1.23":0,"1.1.24":0,"1.1.25":0,"1.1.26":0,"1.1.27":0,"1.1.28":0,"1.1.29":0,"1.1.30":0,"1.1.31":0,"1.2.1":0,"1.2.2":0,"1.2.3":0,"1.2.4":0,"1.2.5":0,"1.2.6":0,"1.2.7":0,"1.2.8":0,"1.2.9":0,"1.2.10":0,"1.2.11":0,"1.2.12":0,"1.2.13":0,"1.2.14":0,"1.2.15":0,"1.2.16":0,"1.2.17":0,"1.2.18":0,"1.2.19":0,"1.2.20":0,"1.2.21":0,"1.2.22":0,"1.2.23":0,"1.2.24":0,"1.2.25":0,"1.2.26":0,"1.2.27":0,"1.2.28":0,"1.2.29":0,"1.2.30":0,"1.2.31":0,"1.2.32":0,"1.3.1":0,"1.3.2":0,"1.3.3":0,"1.3.4":0,"1.3.5":0,"1.3.6":0,"1.3.7":0,"1.3.8":0,"1.3.9":0,"1.3.10":0,"1.3.11":0,"1.3.12":0,"1.3.13":0,"1.3.14":0,"1.3.15":0,"1.3.16":0,"1.3.17":0,"1.3.18":0,"1.3.19":0,"1.3.20":0,"1.3.21":0,"1.3.22":0,"1.3.23":0,"1.3.24":0,"1.3.25":0,"1.3.26":0,"1.3.27":0,"1.3.28":0,"1.3.29":0,"1.3.30":0,"1.3.31":0,"1.3.32":0,"1.3.33":0,"1.3.34":0,"1.3.35":0,"1.3.36":0,"1.3.37":0,"1.3.38":0,"1.3.39":0,"1.3.40":0,"1.3.41":0,"1.3.42":0,"1.3.43":0,"1.4.1":0,"1.4.2":0,"1.4.3":0,"1.4.4":0,"1.4.5":0,"1.4.6":0,"1.4.7":0,"1.4.8":0,"1.4.9":0,"1.4.10":0,"1.4.11":0,"1.4.12":0,"1.4.13":0,"1.4.14":0,"1.4.15":0,"1.4.16":0,"1.4.17":0,"1.4.18":0,"1.4.19":0,"1.4.20":0,"1.4.21":0,"1.4.22":0,"1.4.23":0,"1.4.24":0,"1.4.25":0,"1.4.26":0,"1.4.27":0,"1.4.28":0,"2.1.1":1,"2.1.2":1,"2.1.3":1,"2.1.4":1,"2.1.5":1,"2.1.6":1,"2.1.7":1,"2.1.8":1,"2.1.9":1,"2.1.10":1,"2.1.11":1,"2.1.12":1,"2.1.13":1,"2.1.14":1,"2.1.15":1,"2.1.16":1,"2.1.17":1,"2.1.18":1,"2.1.19":1,"2.1.20":1,"2.1.21":1,"2.1.22":1,"2.1.23":1,"2.1.24":1,"2.1.25":1,"2.1.26":1,"2.1.27":1,"2.1.28":1,"2.1.29":1,"2.1.30":1,"2.1.31":1,"2.1.32":1,"2.1.33":1,"2.1.34":1,"2.1.35":1,"2.1.36":1,"2.1.37":1,"2.2.1":1,"2.2.2":1,"2.2.3":1,"2.2.4":1,"2.2.5":1,"2.2.6":1,"2.2.7":1,"2.2.8":1,"2.2.9":1,"2.2.10":1,"2.2.11":1,"2.2.12":1,"2.2.13":1,"2.2.14":1,"2.2.15":1,"2.2.16":1,"2.2.17":1,"2.2.18":1,"2.2.19":1,"2.2.20":1,"2.2.21":1,"2.2.22":1,"2.2.23":1,"2.2.24":1,"2.2.25":1,"2.2.26":1,"2.2.27":1,"2.2.28":1,"2.2.29":1,"2.2.30":1,"2.2.31":1,"2.2.32":1,"2.2.33":1,"2.2.34":1,"2.2.35":1,"2.2.36":1,"2.2.37":1,"2.2.38":1,"2.2.39":1,"2.2.40":1,"2.2.41":1,"2.2.42":1,"2.2.43":1,"2.2.44":1,"2.2.45":1,"2.3.1":1,"2.3.2":1,"2.3.3":1,"2.3.4":1,"2.3.5":1,"2.3.6":1,"2.3.7":1,"2.3.8":1,"2.3.9":1,"2.3.10":1,"2.3.11":1,"2.3.12":1,"2.3.13":1,"2.3.14":1,"2.3.15":1,"2.3.16":1,"2.3.17":1,"2.3.18":1,"2.3.19":1,"2.3.20":1,"2.3.21":1,"2.3.22":1,"2.3.23":1,"2.3.24":1,"2.3.25":1,"2.3.26":1,"2.3.27":1,"2.3.28":1,"2.3.29":1,"2.3.30":1,"2.3.31":1,"2.3.32":1,"2.3.33":1,"2.3.34":1,"2.3.35":1,"2.3.36":1,"2.3.37":1,"2.3.38":1,"2.3.39":1,"2.3.40":1,"2.3.41":1,"2.3.42":1,"2.3.43":1,"2.3.44":1,"2.3.45":1,"2.3.46":1,"2.3.47":1,"2.3.48":1,"2.3.49":1,"2.3.50":1,"2.3.51":1,"2.3.52":1,"2.3.53":1,"2.4.1":1,"2.4.2":1,"2.4.3":1,"2.4.4":1,"2.4.5":1,"2.4.6":1,"2.4.7":1,"2.4.8":1,"2.4.9":1,"2.4.10":1,"2.4.11":1,"2.4.12":1,"2.4.13":1,"2.4.14":1,"2.4.15":1,"2.4.16":1,"2.4.17":1,"2.4.18":1,"2.4.19":1,"2.4.20":1,"2.4.21":1,"2.4.22":1,"3.1.1":2,"3.1.2":2,"3.1.3":2,"3.1.4":2,"3.1.5":2,"3.1.6":2,"3.1.7":2,"3.1.8":2,"3.1.9":2,"3.1.10":2,"3.1.11":2,"3.1.12":2,"3.1.13":2,"3.1.14":2,"3.1.15":2,"3.1.16":2,"3.1.17":2,"3.1.18":2,"3.1.19":2,"3.1.20":2,"3.1.21":2,"3.1.22":2,"3.1.23":2,"3.1.24":2,"3.1.25":2,"3.1.26":2,"3.1.27":2,"3.2.1":2,"3.2.2":2,"3.2.3":2,"3.2.4":2,"3.2.5":2,"3.2.6":2,"3.2.7":2,"3.2.8":2,"3.2.9":2,"3.2.10":2,"3.2.11":2,"3.2.12":2,"3.2.13":2,"3.2.14":2,"3.2.15":2,"3.2.16":2,"3.2.17":2,"3.2.18":2,"3.2.19":2,"3.2.20":2,"3.2.21":2,"3.2.22":2,"3.2.23":2,"3.2.24":2,"3.2.25":2,"3.2.26":2,"3.2.27":2,"3.2.28":2,"3.2.29":2,"3.2.30":2,"3.2.31":2,"3.2.32":2,"3.2.33":2,"3.2.34":2,"3.2.35":2,"3.2.36":2,"3.2.37":2,"3.2.38":2,"3.2.39":2,"3.2.40":2,"3.2.41":2,"3.3.1":2,"3.3.2":2,"3.3.3":2,"3.3.4":2,"3.3.5":2,"3.3.6":2,"3.3.7":2,"3.3.8":2,"3.3.9":2,"3.3.10":2,"3.3.11":2,"3.3.12":2,"3.3.13":2,"3.3.14":2,"3.3.15":2,"3.3.16":2,"3.3.17":2,"3.3.18":2,"3.3.19":2,"3.3.20":2,"3.3.21":2,"3.3.22":2,"3.3.23":2,"3.3.24":2,"3.3.25":2,"3.3.26":2,"3.3.27":2,"3.3.28":2,"3.3.29":2,"3.3.30":2,"3.3.31":2,"3.3.32":2,"3.3.33":2,"3.3.34":2,"3.3.35":2,"3.3.36":2,"3.3.37":2,"3.3.38":2,"3.3.39":2,"3.3.40":2,"3.3.41":2,"3.3.42":2,"3.3.43":2,"3.3.44":2,"3.3.45":2,"3.3.46":2,"3.3.47":2,"3.3.48":2,"3.3.49":2,"3.3.50":2,"3.3.51":2,"3.3.52":2,"3.3.53":2,"3.3.54":2,"3.3.55":2,"3.3.56":2,"3.3.57":2,"3.3.58":2,"3.3.59":2,"3.3.60":2,"3.3.61":2,"3.3.62":2,"3.3.63":2,"3.3.64":2,"3.3.65":2,"3.3.66":2,"3.4.1":2,"3.4.2":2,"3.4.3":2,"3.4.4":2,"3.4.5":2,"3.4.6":2,"3.4.7":2,"3.4.8":2,"3.4.9":2,"3.4.10":2,"3.4.11":2,"3.4.12":2,"3.4.13":2,"3.4.14":2,"3.4.15":2,"3.4.16":2,"3.4.17":2,"3.4.18":2,"3.4.19":2,"3.4.20":2,"3.4.21":2,"3.4.22":2,"3.4.23":2,"3.4.24":2,"3.4.25":2,"3.4.26":2,"3.4.27":2,"3.4.28":2,"3.4.29":2,"3.4.30":2,"3.4.31":2,"3.4.32":2,"3.4.33":2,"3.4.34":2,"3.4.35":2,"3.4.36":2,"3.4.37":2,"3.4.38":2,"3.4.39":2,"3.4.40":2,"3.4.41":2,"3.4.42":2,"3.4.43":2,"3.4.44":2,"3.4.45":2,"3.4.46":2,"3.4.47":2,"3.4.48":2,"3.4.49":2,"3.4.50":2,"3.4.51":2,"3.4.52":2,"4.1.1":3,"4.1.2":3,"4.1.3":3,"4.1.4":3,"4.1.5":3,"4.1.6":3,"4.1.7":3,"4.1.8":3,"4.1.9":3,"4.1.10":3,"4.1.11":3,"4.1.12":3,"4.1.13":3,"4.1.14":3,"4.1.15":3,"4.1.16":3,"4.1.17":3,"4.1.18":3,"4.1.19":3,"4.2.1":3,"4.2.2":3,"4.2.3":3,"4.2.4":3,"4.2.5":3,"4.2.6":3,"4.2.7":3,"4.2.8":3,"4.2.9":3,"4.2.10":3,"4.2.11":3,"4.2.12":3,"4.2.13":3,"4.2.14":3,"4.2.15":3,"4.2.16":3,"4.2.17":3,"4.2.18":3,"4.2.19":3,"4.2.20":3,"4.2.21":3,"4.3.1":3,"4.3.2":3,"4.3.3":3,"4.3.4":3,"4.3.5":3,"4.3.6":3,"4.3.7":3,"4.3.8":3,"4.3.9":3,"4.3.10":3,"4.3.11":3,"4.3.12":3,"4.3.13":3,"4.3.14":3,"4.3.15":3,"4.3.16":3,"4.4.1":3,"4.4.2":3,"4.4.3":3,"4.4.4":3,"4.4.5":3,"4.4.6":3,"4.4.7":3,"4.4.8":3,"4.4.9":3,"4.4.10":3,"4.4.11":3,"4.4.12":3,"4.4.13":3,"4.4.14":3,"4.4.15":3,"4.4.16":3,"4.4.17":3,"4.4.18":3,"4.4.19":3,"4.4.20":3,"4.4.21":3,"4.4.22":3},"cur":-1};
-var bar=document.getElementById('navbar');var sels=[].slice.call(bar.querySelectorAll('select'));
-function comps(r){return r.split('.');}
-function optsFor(level,prefix){var out=[],seen={};N.refs.forEach(function(r){var p=comps(r);if(p.length<=level)return;
-  for(var i=0;i<level;i++)if(p[i]!==prefix[i])return;if(!seen[p[level]]){seen[p[level]]=1;out.push(p[level]);}});return out;}
-function fill(sel,opts,val){sel.innerHTML=opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+o+'</option>';}).join('');}
-function chosen(uptolevel){var a=[];for(var i=0;i<=uptolevel;i++)a.push(sels[i].value);return a;}
-function rebuild(from){for(var L=from;L<sels.length;L++){var opts=optsFor(L,chosen(L-1));fill(sels[L],opts,opts[0]);}}
-function target(){return sels.map(function(s){return s.value;}).join('.');}
-function jump(ref){var i=N.pageIdx[ref];if(i==null)return;
-  if(i===N.cur){var el=document.getElementById('v-'+ref);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});
-    el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');}}
-  else location.href=N.files[i]+'#v-'+ref;}
-sels.forEach(function(s,L){s.addEventListener('change',function(){rebuild(L+1);jump(target());});});
-function setTo(ref){var p=comps(ref);rebuild(0);for(var L=0;L<sels.length&&L<p.length;L++){var opts=optsFor(L,p.slice(0,L));
-  fill(sels[L],opts,p[L]);}}
-// init: reflect #v-<ref> if present, else first verse on this page, else first ref overall
-var h=location.hash.replace(/^#v-/,'');
-if(h&&N.pageIdx[h]!=null){setTo(h);var el=document.getElementById('v-'+h);if(el){el.classList.add('navhit');}}
-else{var first=null;if(N.cur>=0){for(var k=0;k<N.refs.length;k++)if(N.pageIdx[N.refs[k]]===N.cur){first=N.refs[k];break;}}
-  setTo(first||N.refs[0]);}
-})();</script><details class="legend" open><summary>॥ सङ्केत-सूची · legend <span class="tw">▲ tap to fold</span></summary>
-<div class="legbody">
-  <div class="leggrp"><div class="leghd">पदार्थ · hover-analysis</div>
-    <div class="legnote">Hover or tap any word — in the mūla or the bhāṣya — for its analysis — meaning, vibhakti (case·vacana·liṅga), kāraka role, and recursive samāsa vigraha.</div>
-  </div>
-  <div class="legdiv"></div>
-  <div class="leggrp"><div class="leghd">मनन · Śāṅkara-bhāṣya roles</div>
-    <div class="legrow">
-      <span class="item"><span class="sw" style="background:var(--mula)"></span>मूल-प्रतीकम्</span>
-      <span class="item"><span class="sw" style="background:var(--gloss)"></span>व्याख्या · gloss</span>
-      <span class="item"><span class="sw" style="background:var(--import)"></span>तात्पर्यम् · import</span>
-      <span class="item"><span class="sw" style="background:var(--vyak)"></span>व्याकरणम्</span>
-      <span class="item"><span class="sw" style="background:var(--purva)"></span>पूर्वपक्षः</span>
-      <span class="item"><span class="sw" style="background:var(--sid)"></span>सिद्धान्तः</span>
-      <span class="item"><span class="sw" style="background:var(--quote)"></span>प्रमाण-वाक्यम्</span>
-      <span class="item"><u style="text-underline-offset:3px;text-decoration-thickness:1.5px">सङ्ग्रहः</u> · summary-thread</span>
-    </div>
-  </div>
-  
-  
-</div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-bs-1.html">अध्यायः 1</a><a class="refbadge" style="text-decoration:none" href="reading-bs-2.html">अध्यायः 2</a><a class="refbadge" style="text-decoration:none" href="reading-bs-3.html">अध्यायः 3</a><a class="refbadge" style="text-decoration:none" href="reading-bs-4.html">अध्यायः 4</a></div><div id="tip"></div><script>var GM={};var GB={};var GBP={};
-var tip=document.getElementById('tip');
-function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
-function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
-  if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
-  h+=mrow('vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('samāsa',d.sam)+mrow('व्याकरण',d.g);
-  if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';
-  if(d.p)h+='<div class="peel">'+d.p+'</div>';return h;}
-function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
-  var left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
-  var top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
+.v.navhit{animation:navflash 1.6s ease-out}</style>
+<div id="reading-nav"></div>
+<script>'use strict';
+/*
+ * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
+ * ============================================================================
+ * A single source of truth (LEVELS + cascade logic + rendering) used by BOTH:
+ *   1. the static svādhyāya reading pages (मनन bhāṣya + पदार्थ mūla) — via nav.js's buildNav,
+ *      which now emits a container + calls ReadingNav.mount(...) at runtime; and
+ *   2. the in-app "read-a-verse" picker (app.js renderReadingPicker).
+ * Fix the chapter/verse scheme HERE and it percolates to every page — no per-surface drift/creep.
+ *
+ * UMD: works as a browser global (window.ReadingNav) AND a Node require() (nav.js / build tooling).
+ *
+ * API
+ *   ReadingNav.LEVELS                       // { slug: [level-label, ...] }  (per-text native divisions)
+ *   ReadingNav.levelsFor(slug, refs)        // -> [labels]; falls back by ref-depth for an unlisted text
+ *   ReadingNav.comps(ref, nlev)             // -> ref split into nlev comps (extra trailing comps folded into last)
+ *   ReadingNav.optionsFor(refs, nlev, L, prefix)  // -> distinct options at level L under `prefix`
+ *   ReadingNav.STYLE                        // the navbar <style> text (injected once per page)
+ *   ReadingNav.mount(container, opts)       // render cascading <select>s + wire cascade & selection
+ *
+ * mount(container, {
+ *   slug,                 // text slug (LEVELS key)
+ *   refs,                 // ORDERED array of every ref in the text, e.g. ["1.1.1","1.1.2", ...]
+ *   curRef,               // optional: pre-select this ref
+ *   mode,                 // 'jump' (reading pages) | 'callback' (picker)
+ *   pageByRef, curFile,   // 'jump' mode only: {ref:file} + this page's file → same-page scroll or cross-page #v-<ref>
+ *   onSelect,             // called with (ref) whenever the selection changes (both modes)
+ * })  ->  { getRef(), setRef(ref), refresh() }
+ */
+(function (root, factory) {
+  const mod = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = mod;   // Node (nav.js, tooling)
+  if (typeof window !== 'undefined') window.ReadingNav = mod;                   // browser global
+})(this, function () {
+
+  // Level labels per text — MUST span the full ref depth (uniform depth per text). Single source; keep this
+  // the only copy. (Was duplicated in nav.js; nav.js now imports it from here.)
+  const LEVELS = {
+    Gita: ['अध्याय', 'श्लोक'], Isha: ['अध्याय', 'मन्त्र'], Kena: ['खण्ड', 'मन्त्र'], Kena_pada: ['खण्ड', 'मन्त्र'], Kena_vakya: ['खण्ड', 'मन्त्र'],
+    Kathaka: ['अध्याय', 'वल्ली', 'मन्त्र'], Prashna: ['प्रश्न', 'मन्त्र'], Mundaka: ['मुण्डक', 'खण्ड', 'मन्त्र'],
+    Mandukya: ['प्रकरण', 'मन्त्र'], Aitareya: ['अध्याय', 'खण्ड', 'मन्त्र'], Chandogya: ['अध्याय', 'खण्ड', 'मन्त्र'],
+    Taitiriya: ['वल्ली', 'अनुवाक', 'मन्त्र'], Brha: ['अध्याय', 'ब्राह्मण', 'मन्त्र'], BS: ['अध्याय', 'पाद', 'सूत्र'],
+    VC: ['श्लोक'], PD: ['अध्याय', 'श्लोक'], AB: ['श्लोक'], Vicharasagara: ['तरङ्ग', 'आवर्त'],
+  };
+  const FALLBACK = ['भाग', 'उप', 'क्रम', 'मन्त्र'];
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function levelsFor(slug, refs) {
+    let lv = LEVELS[slug];
+    if (!lv) { const depth = Math.max(1, ...(refs || []).map(r => String(r).split('.').length)); lv = FALLBACK.slice(Math.max(0, FALLBACK.length - depth)); }
+    return lv;
+  }
+
+  // Split a ref into exactly nlev components; a ref DEEPER than nlev folds its extra trailing comps into the
+  // last level (e.g. brihad "3.9.28.1" under a 3-level scheme → ["3","9","28.1"]). Mirrors nav.js's old comps().
+  function comps(ref, nlev) {
+    let p = String(ref).split('.');
+    if (p.length > nlev) p = p.slice(0, nlev - 1).concat(p.slice(nlev - 1).join('.'));
+    return p;
+  }
+
+  // Distinct options at level L, given the chosen values for levels 0..L-1 (`prefix`), in first-seen order.
+  function optionsFor(refs, nlev, level, prefix) {
+    const out = [], seen = {};
+    for (const r of refs) {
+      const p = comps(r, nlev);
+      if (p.length <= level) continue;
+      let ok = true;
+      for (let i = 0; i < level; i++) if (p[i] !== prefix[i]) { ok = false; break; }
+      if (ok && !seen[p[level]]) { seen[p[level]] = 1; out.push(p[level]); }
+    }
+    return out;
+  }
+
+  // Inner styling, keyed on the `.reading-nav` CLASS that mount() adds to its container — so it applies in
+  // BOTH surfaces regardless of the container's id (reading pages ALSO get the sticky card bar via nav.js's
+  // own #reading-nav rule; the picker gets just this inner row).
+  const STYLE = `
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
+.v{scroll-margin-top:78px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.v.navhit{animation:navflash 1.6s ease-out}`;
+
+  // Render cascading <select>s into `container` and wire them. Returns a small controller.
+  function mount(container, opts) {
+    opts = opts || {};
+    const refs = (opts.refs || []).filter(r => r != null).map(String);
+    const slug = opts.slug;
+    const levels = levelsFor(slug, refs);
+    const nlev = levels.length;
+    if (refs.length < 2 && opts.mode !== 'callback') { container.innerHTML = ''; return { getRef: () => refs[0] || null, setRef: () => {}, refresh: () => {} }; }
+
+    container.classList.add('reading-nav');   // so ReadingNav.STYLE applies regardless of the container's id
+    container.innerHTML = levels.map((lb, i) => `<label class="navlvl"><span>${esc(lb)}</span><select data-lvl="${i}"></select></label>`).join('');
+    const sels = [].slice.call(container.querySelectorAll('select'));
+
+    function chosen(uptoLevel) { const a = []; for (let i = 0; i <= uptoLevel; i++) a.push(sels[i].value); return a; }
+    function fill(sel, options, val) { sel.innerHTML = options.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join(''); }
+    // (Re)build levels from `from` downward, each defaulting to its first valid option under the ones above.
+    function rebuild(from) { for (let L = from; L < sels.length; L++) { const o = optionsFor(refs, nlev, L, chosen(L - 1)); fill(sels[L], o, o[0]); } }
+    function currentRef() { return sels.map(s => s.value).join('.'); }
+    function setRef(ref) {
+      const p = comps(ref, nlev);
+      rebuild(0);
+      for (let L = 0; L < sels.length && L < p.length; L++) { const o = optionsFor(refs, nlev, L, p.slice(0, L)); fill(sels[L], o, p[L]); }
+    }
+
+    let spyUntil = 0;   // scrollspy suppression window: quiet the spy while a programmatic jump smooth-scrolls
+    function jump(ref) {
+      if (opts.mode !== 'jump') return;
+      const file = opts.pageByRef ? opts.pageByRef[ref] : null;
+      if (file == null) return;
+      if (opts.curFile != null && file === opts.curFile) {
+        spyUntil = (typeof Date !== 'undefined' ? Date.now() : 0) + 700;   // don't flicker the picker through intermediate verses
+        const el = document.getElementById('v-' + ref);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('navhit'); void el.offsetWidth; el.classList.add('navhit'); }
+      } else location.href = file + '#v-' + ref;
+    }
+    function onChange() { const ref = currentRef(); if (typeof opts.onSelect === 'function') opts.onSelect(ref); jump(ref); }
+    sels.forEach((s, L) => s.addEventListener('change', function () { rebuild(L + 1); onChange(); }));
+
+    // initial selection: explicit curRef → #v-<ref> hash → (jump mode) first ref ON THIS PAGE → first ref
+    // overall. The "first on this page" step matters for split texts (chandogya/brihad/gita spread across
+    // files): landing on page N with no hash must show page N's first verse, not the global first (nav.js parity).
+    let init = opts.curRef, fromHash = false;
+    if (!init && typeof location !== 'undefined') { const h = (location.hash || '').replace(/^#v-/, ''); if (h && refs.indexOf(h) >= 0) { init = h; fromHash = true; } }
+    if (!init && opts.mode === 'jump' && opts.pageByRef && opts.curFile != null) init = refs.find(r => opts.pageByRef[r] === opts.curFile) || null;
+    setRef(init || refs[0]);
+    // arriving via #v-<ref>: mirror nav.js's flash cue on the target verse.
+    if (fromHash && opts.mode === 'jump' && typeof document !== 'undefined') { const el = document.getElementById('v-' + init); if (el) el.classList.add('navhit'); }
+
+    // scrollspy (jump mode only): keep the picker in sync with the verse at the top of the viewport as the
+    // reader scrolls. setRef only repaints the selects (no jump / no onSelect), so there is NO scroll↔jump
+    // feedback loop. The read-a-verse picker (mode 'callback') is untouched.
+    if (opts.mode === 'jump' && typeof document !== 'undefined' && typeof addEventListener !== 'undefined') {
+      // the "you are here" line = bottom of the nearest sticky/fixed ancestor of the nav (else top of viewport)
+      const stickyBottom = function () {
+        let e = container, best = 0;
+        while (e && e !== document.body && e.nodeType === 1) {
+          const cs = getComputedStyle(e);
+          if (cs.position === 'sticky' || cs.position === 'fixed') { const b = e.getBoundingClientRect().bottom; if (b > best) best = b; }
+          e = e.parentElement;
+        }
+        return best;
+      };
+      const spy = function () {
+        if (Date.now() < spyUntil) return;
+        const y = stickyBottom() + 8; let pick = null;
+        for (let i = 0; i < refs.length; i++) {
+          const el = document.getElementById('v-' + refs[i]);
+          if (!el) continue;                                   // ref not on THIS page (split texts) → skip
+          if (el.getBoundingClientRect().top <= y) pick = refs[i];
+          else if (pick !== null) break;                       // first on-page verse below the line → done (verses are in order)
+        }
+        if (pick && pick !== currentRef()) setRef(pick);
+      };
+      let ticking = false;
+      addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; spy(); }); } }, { passive: true });
+    }
+
+    return { getRef: currentRef, setRef, refresh: () => setRef(currentRef()) };
+  }
+
+  return { LEVELS, FALLBACK, levelsFor, comps, optionsFor, esc, STYLE, mount };
+});
+
+;(function(){var el=document.getElementById('reading-nav');if(el&&window.ReadingNav)window.ReadingNav.mount(el, {"slug":"BS","refs":["1.1.1","1.1.2","1.1.3","1.1.4","1.1.5","1.1.6","1.1.7","1.1.8","1.1.9","1.1.10","1.1.11","1.1.12","1.1.13","1.1.14","1.1.15","1.1.16","1.1.17","1.1.18","1.1.19","1.1.20","1.1.21","1.1.22","1.1.23","1.1.24","1.1.25","1.1.26","1.1.27","1.1.28","1.1.29","1.1.30","1.1.31","1.2.1","1.2.2","1.2.3","1.2.4","1.2.5","1.2.6","1.2.7","1.2.8","1.2.9","1.2.10","1.2.11","1.2.12","1.2.13","1.2.14","1.2.15","1.2.16","1.2.17","1.2.18","1.2.19","1.2.20","1.2.21","1.2.22","1.2.23","1.2.24","1.2.25","1.2.26","1.2.27","1.2.28","1.2.29","1.2.30","1.2.31","1.2.32","1.3.1","1.3.2","1.3.3","1.3.4","1.3.5","1.3.6","1.3.7","1.3.8","1.3.9","1.3.10","1.3.11","1.3.12","1.3.13","1.3.14","1.3.15","1.3.16","1.3.17","1.3.18","1.3.19","1.3.20","1.3.21","1.3.22","1.3.23","1.3.24","1.3.25","1.3.26","1.3.27","1.3.28","1.3.29","1.3.30","1.3.31","1.3.32","1.3.33","1.3.34","1.3.35","1.3.36","1.3.37","1.3.38","1.3.39","1.3.40","1.3.41","1.3.42","1.3.43","1.4.1","1.4.2","1.4.3","1.4.4","1.4.5","1.4.6","1.4.7","1.4.8","1.4.9","1.4.10","1.4.11","1.4.12","1.4.13","1.4.14","1.4.15","1.4.16","1.4.17","1.4.18","1.4.19","1.4.20","1.4.21","1.4.22","1.4.23","1.4.24","1.4.25","1.4.26","1.4.27","1.4.28","2.1.1","2.1.2","2.1.3","2.1.4","2.1.5","2.1.6","2.1.7","2.1.8","2.1.9","2.1.10","2.1.11","2.1.12","2.1.13","2.1.14","2.1.15","2.1.16","2.1.17","2.1.18","2.1.19","2.1.20","2.1.21","2.1.22","2.1.23","2.1.24","2.1.25","2.1.26","2.1.27","2.1.28","2.1.29","2.1.30","2.1.31","2.1.32","2.1.33","2.1.34","2.1.35","2.1.36","2.1.37","2.2.1","2.2.2","2.2.3","2.2.4","2.2.5","2.2.6","2.2.7","2.2.8","2.2.9","2.2.10","2.2.11","2.2.12","2.2.13","2.2.14","2.2.15","2.2.16","2.2.17","2.2.18","2.2.19","2.2.20","2.2.21","2.2.22","2.2.23","2.2.24","2.2.25","2.2.26","2.2.27","2.2.28","2.2.29","2.2.30","2.2.31","2.2.32","2.2.33","2.2.34","2.2.35","2.2.36","2.2.37","2.2.38","2.2.39","2.2.40","2.2.41","2.2.42","2.2.43","2.2.44","2.2.45","2.3.1","2.3.2","2.3.3","2.3.4","2.3.5","2.3.6","2.3.7","2.3.8","2.3.9","2.3.10","2.3.11","2.3.12","2.3.13","2.3.14","2.3.15","2.3.16","2.3.17","2.3.18","2.3.19","2.3.20","2.3.21","2.3.22","2.3.23","2.3.24","2.3.25","2.3.26","2.3.27","2.3.28","2.3.29","2.3.30","2.3.31","2.3.32","2.3.33","2.3.34","2.3.35","2.3.36","2.3.37","2.3.38","2.3.39","2.3.40","2.3.41","2.3.42","2.3.43","2.3.44","2.3.45","2.3.46","2.3.47","2.3.48","2.3.49","2.3.50","2.3.51","2.3.52","2.3.53","2.4.1","2.4.2","2.4.3","2.4.4","2.4.5","2.4.6","2.4.7","2.4.8","2.4.9","2.4.10","2.4.11","2.4.12","2.4.13","2.4.14","2.4.15","2.4.16","2.4.17","2.4.18","2.4.19","2.4.20","2.4.21","2.4.22","3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.1.6","3.1.7","3.1.8","3.1.9","3.1.10","3.1.11","3.1.12","3.1.13","3.1.14","3.1.15","3.1.16","3.1.17","3.1.18","3.1.19","3.1.20","3.1.21","3.1.22","3.1.23","3.1.24","3.1.25","3.1.26","3.1.27","3.2.1","3.2.2","3.2.3","3.2.4","3.2.5","3.2.6","3.2.7","3.2.8","3.2.9","3.2.10","3.2.11","3.2.12","3.2.13","3.2.14","3.2.15","3.2.16","3.2.17","3.2.18","3.2.19","3.2.20","3.2.21","3.2.22","3.2.23","3.2.24","3.2.25","3.2.26","3.2.27","3.2.28","3.2.29","3.2.30","3.2.31","3.2.32","3.2.33","3.2.34","3.2.35","3.2.36","3.2.37","3.2.38","3.2.39","3.2.40","3.2.41","3.3.1","3.3.2","3.3.3","3.3.4","3.3.5","3.3.6","3.3.7","3.3.8","3.3.9","3.3.10","3.3.11","3.3.12","3.3.13","3.3.14","3.3.15","3.3.16","3.3.17","3.3.18","3.3.19","3.3.20","3.3.21","3.3.22","3.3.23","3.3.24","3.3.25","3.3.26","3.3.27","3.3.28","3.3.29","3.3.30","3.3.31","3.3.32","3.3.33","3.3.34","3.3.35","3.3.36","3.3.37","3.3.38","3.3.39","3.3.40","3.3.41","3.3.42","3.3.43","3.3.44","3.3.45","3.3.46","3.3.47","3.3.48","3.3.49","3.3.50","3.3.51","3.3.52","3.3.53","3.3.54","3.3.55","3.3.56","3.3.57","3.3.58","3.3.59","3.3.60","3.3.61","3.3.62","3.3.63","3.3.64","3.3.65","3.3.66","3.4.1","3.4.2","3.4.3","3.4.4","3.4.5","3.4.6","3.4.7","3.4.8","3.4.9","3.4.10","3.4.11","3.4.12","3.4.13","3.4.14","3.4.15","3.4.16","3.4.17","3.4.18","3.4.19","3.4.20","3.4.21","3.4.22","3.4.23","3.4.24","3.4.25","3.4.26","3.4.27","3.4.28","3.4.29","3.4.30","3.4.31","3.4.32","3.4.33","3.4.34","3.4.35","3.4.36","3.4.37","3.4.38","3.4.39","3.4.40","3.4.41","3.4.42","3.4.43","3.4.44","3.4.45","3.4.46","3.4.47","3.4.48","3.4.49","3.4.50","3.4.51","3.4.52","4.1.1","4.1.2","4.1.3","4.1.4","4.1.5","4.1.6","4.1.7","4.1.8","4.1.9","4.1.10","4.1.11","4.1.12","4.1.13","4.1.14","4.1.15","4.1.16","4.1.17","4.1.18","4.1.19","4.2.1","4.2.2","4.2.3","4.2.4","4.2.5","4.2.6","4.2.7","4.2.8","4.2.9","4.2.10","4.2.11","4.2.12","4.2.13","4.2.14","4.2.15","4.2.16","4.2.17","4.2.18","4.2.19","4.2.20","4.2.21","4.3.1","4.3.2","4.3.3","4.3.4","4.3.5","4.3.6","4.3.7","4.3.8","4.3.9","4.3.10","4.3.11","4.3.12","4.3.13","4.3.14","4.3.15","4.3.16","4.4.1","4.4.2","4.4.3","4.4.4","4.4.5","4.4.6","4.4.7","4.4.8","4.4.9","4.4.10","4.4.11","4.4.12","4.4.13","4.4.14","4.4.15","4.4.16","4.4.17","4.4.18","4.4.19","4.4.20","4.4.21","4.4.22"],"pageByRef":{"1.1.1":"reading-bs-1.html","1.1.2":"reading-bs-1.html","1.1.3":"reading-bs-1.html","1.1.4":"reading-bs-1.html","1.1.5":"reading-bs-1.html","1.1.6":"reading-bs-1.html","1.1.7":"reading-bs-1.html","1.1.8":"reading-bs-1.html","1.1.9":"reading-bs-1.html","1.1.10":"reading-bs-1.html","1.1.11":"reading-bs-1.html","1.1.12":"reading-bs-1.html","1.1.13":"reading-bs-1.html","1.1.14":"reading-bs-1.html","1.1.15":"reading-bs-1.html","1.1.16":"reading-bs-1.html","1.1.17":"reading-bs-1.html","1.1.18":"reading-bs-1.html","1.1.19":"reading-bs-1.html","1.1.20":"reading-bs-1.html","1.1.21":"reading-bs-1.html","1.1.22":"reading-bs-1.html","1.1.23":"reading-bs-1.html","1.1.24":"reading-bs-1.html","1.1.25":"reading-bs-1.html","1.1.26":"reading-bs-1.html","1.1.27":"reading-bs-1.html","1.1.28":"reading-bs-1.html","1.1.29":"reading-bs-1.html","1.1.30":"reading-bs-1.html","1.1.31":"reading-bs-1.html","1.2.1":"reading-bs-1.html","1.2.2":"reading-bs-1.html","1.2.3":"reading-bs-1.html","1.2.4":"reading-bs-1.html","1.2.5":"reading-bs-1.html","1.2.6":"reading-bs-1.html","1.2.7":"reading-bs-1.html","1.2.8":"reading-bs-1.html","1.2.9":"reading-bs-1.html","1.2.10":"reading-bs-1.html","1.2.11":"reading-bs-1.html","1.2.12":"reading-bs-1.html","1.2.13":"reading-bs-1.html","1.2.14":"reading-bs-1.html","1.2.15":"reading-bs-1.html","1.2.16":"reading-bs-1.html","1.2.17":"reading-bs-1.html","1.2.18":"reading-bs-1.html","1.2.19":"reading-bs-1.html","1.2.20":"reading-bs-1.html","1.2.21":"reading-bs-1.html","1.2.22":"reading-bs-1.html","1.2.23":"reading-bs-1.html","1.2.24":"reading-bs-1.html","1.2.25":"reading-bs-1.html","1.2.26":"reading-bs-1.html","1.2.27":"reading-bs-1.html","1.2.28":"reading-bs-1.html","1.2.29":"reading-bs-1.html","1.2.30":"reading-bs-1.html","1.2.31":"reading-bs-1.html","1.2.32":"reading-bs-1.html","1.3.1":"reading-bs-1.html","1.3.2":"reading-bs-1.html","1.3.3":"reading-bs-1.html","1.3.4":"reading-bs-1.html","1.3.5":"reading-bs-1.html","1.3.6":"reading-bs-1.html","1.3.7":"reading-bs-1.html","1.3.8":"reading-bs-1.html","1.3.9":"reading-bs-1.html","1.3.10":"reading-bs-1.html","1.3.11":"reading-bs-1.html","1.3.12":"reading-bs-1.html","1.3.13":"reading-bs-1.html","1.3.14":"reading-bs-1.html","1.3.15":"reading-bs-1.html","1.3.16":"reading-bs-1.html","1.3.17":"reading-bs-1.html","1.3.18":"reading-bs-1.html","1.3.19":"reading-bs-1.html","1.3.20":"reading-bs-1.html","1.3.21":"reading-bs-1.html","1.3.22":"reading-bs-1.html","1.3.23":"reading-bs-1.html","1.3.24":"reading-bs-1.html","1.3.25":"reading-bs-1.html","1.3.26":"reading-bs-1.html","1.3.27":"reading-bs-1.html","1.3.28":"reading-bs-1.html","1.3.29":"reading-bs-1.html","1.3.30":"reading-bs-1.html","1.3.31":"reading-bs-1.html","1.3.32":"reading-bs-1.html","1.3.33":"reading-bs-1.html","1.3.34":"reading-bs-1.html","1.3.35":"reading-bs-1.html","1.3.36":"reading-bs-1.html","1.3.37":"reading-bs-1.html","1.3.38":"reading-bs-1.html","1.3.39":"reading-bs-1.html","1.3.40":"reading-bs-1.html","1.3.41":"reading-bs-1.html","1.3.42":"reading-bs-1.html","1.3.43":"reading-bs-1.html","1.4.1":"reading-bs-1.html","1.4.2":"reading-bs-1.html","1.4.3":"reading-bs-1.html","1.4.4":"reading-bs-1.html","1.4.5":"reading-bs-1.html","1.4.6":"reading-bs-1.html","1.4.7":"reading-bs-1.html","1.4.8":"reading-bs-1.html","1.4.9":"reading-bs-1.html","1.4.10":"reading-bs-1.html","1.4.11":"reading-bs-1.html","1.4.12":"reading-bs-1.html","1.4.13":"reading-bs-1.html","1.4.14":"reading-bs-1.html","1.4.15":"reading-bs-1.html","1.4.16":"reading-bs-1.html","1.4.17":"reading-bs-1.html","1.4.18":"reading-bs-1.html","1.4.19":"reading-bs-1.html","1.4.20":"reading-bs-1.html","1.4.21":"reading-bs-1.html","1.4.22":"reading-bs-1.html","1.4.23":"reading-bs-1.html","1.4.24":"reading-bs-1.html","1.4.25":"reading-bs-1.html","1.4.26":"reading-bs-1.html","1.4.27":"reading-bs-1.html","1.4.28":"reading-bs-1.html","2.1.1":"reading-bs-2.html","2.1.2":"reading-bs-2.html","2.1.3":"reading-bs-2.html","2.1.4":"reading-bs-2.html","2.1.5":"reading-bs-2.html","2.1.6":"reading-bs-2.html","2.1.7":"reading-bs-2.html","2.1.8":"reading-bs-2.html","2.1.9":"reading-bs-2.html","2.1.10":"reading-bs-2.html","2.1.11":"reading-bs-2.html","2.1.12":"reading-bs-2.html","2.1.13":"reading-bs-2.html","2.1.14":"reading-bs-2.html","2.1.15":"reading-bs-2.html","2.1.16":"reading-bs-2.html","2.1.17":"reading-bs-2.html","2.1.18":"reading-bs-2.html","2.1.19":"reading-bs-2.html","2.1.20":"reading-bs-2.html","2.1.21":"reading-bs-2.html","2.1.22":"reading-bs-2.html","2.1.23":"reading-bs-2.html","2.1.24":"reading-bs-2.html","2.1.25":"reading-bs-2.html","2.1.26":"reading-bs-2.html","2.1.27":"reading-bs-2.html","2.1.28":"reading-bs-2.html","2.1.29":"reading-bs-2.html","2.1.30":"reading-bs-2.html","2.1.31":"reading-bs-2.html","2.1.32":"reading-bs-2.html","2.1.33":"reading-bs-2.html","2.1.34":"reading-bs-2.html","2.1.35":"reading-bs-2.html","2.1.36":"reading-bs-2.html","2.1.37":"reading-bs-2.html","2.2.1":"reading-bs-2.html","2.2.2":"reading-bs-2.html","2.2.3":"reading-bs-2.html","2.2.4":"reading-bs-2.html","2.2.5":"reading-bs-2.html","2.2.6":"reading-bs-2.html","2.2.7":"reading-bs-2.html","2.2.8":"reading-bs-2.html","2.2.9":"reading-bs-2.html","2.2.10":"reading-bs-2.html","2.2.11":"reading-bs-2.html","2.2.12":"reading-bs-2.html","2.2.13":"reading-bs-2.html","2.2.14":"reading-bs-2.html","2.2.15":"reading-bs-2.html","2.2.16":"reading-bs-2.html","2.2.17":"reading-bs-2.html","2.2.18":"reading-bs-2.html","2.2.19":"reading-bs-2.html","2.2.20":"reading-bs-2.html","2.2.21":"reading-bs-2.html","2.2.22":"reading-bs-2.html","2.2.23":"reading-bs-2.html","2.2.24":"reading-bs-2.html","2.2.25":"reading-bs-2.html","2.2.26":"reading-bs-2.html","2.2.27":"reading-bs-2.html","2.2.28":"reading-bs-2.html","2.2.29":"reading-bs-2.html","2.2.30":"reading-bs-2.html","2.2.31":"reading-bs-2.html","2.2.32":"reading-bs-2.html","2.2.33":"reading-bs-2.html","2.2.34":"reading-bs-2.html","2.2.35":"reading-bs-2.html","2.2.36":"reading-bs-2.html","2.2.37":"reading-bs-2.html","2.2.38":"reading-bs-2.html","2.2.39":"reading-bs-2.html","2.2.40":"reading-bs-2.html","2.2.41":"reading-bs-2.html","2.2.42":"reading-bs-2.html","2.2.43":"reading-bs-2.html","2.2.44":"reading-bs-2.html","2.2.45":"reading-bs-2.html","2.3.1":"reading-bs-2.html","2.3.2":"reading-bs-2.html","2.3.3":"reading-bs-2.html","2.3.4":"reading-bs-2.html","2.3.5":"reading-bs-2.html","2.3.6":"reading-bs-2.html","2.3.7":"reading-bs-2.html","2.3.8":"reading-bs-2.html","2.3.9":"reading-bs-2.html","2.3.10":"reading-bs-2.html","2.3.11":"reading-bs-2.html","2.3.12":"reading-bs-2.html","2.3.13":"reading-bs-2.html","2.3.14":"reading-bs-2.html","2.3.15":"reading-bs-2.html","2.3.16":"reading-bs-2.html","2.3.17":"reading-bs-2.html","2.3.18":"reading-bs-2.html","2.3.19":"reading-bs-2.html","2.3.20":"reading-bs-2.html","2.3.21":"reading-bs-2.html","2.3.22":"reading-bs-2.html","2.3.23":"reading-bs-2.html","2.3.24":"reading-bs-2.html","2.3.25":"reading-bs-2.html","2.3.26":"reading-bs-2.html","2.3.27":"reading-bs-2.html","2.3.28":"reading-bs-2.html","2.3.29":"reading-bs-2.html","2.3.30":"reading-bs-2.html","2.3.31":"reading-bs-2.html","2.3.32":"reading-bs-2.html","2.3.33":"reading-bs-2.html","2.3.34":"reading-bs-2.html","2.3.35":"reading-bs-2.html","2.3.36":"reading-bs-2.html","2.3.37":"reading-bs-2.html","2.3.38":"reading-bs-2.html","2.3.39":"reading-bs-2.html","2.3.40":"reading-bs-2.html","2.3.41":"reading-bs-2.html","2.3.42":"reading-bs-2.html","2.3.43":"reading-bs-2.html","2.3.44":"reading-bs-2.html","2.3.45":"reading-bs-2.html","2.3.46":"reading-bs-2.html","2.3.47":"reading-bs-2.html","2.3.48":"reading-bs-2.html","2.3.49":"reading-bs-2.html","2.3.50":"reading-bs-2.html","2.3.51":"reading-bs-2.html","2.3.52":"reading-bs-2.html","2.3.53":"reading-bs-2.html","2.4.1":"reading-bs-2.html","2.4.2":"reading-bs-2.html","2.4.3":"reading-bs-2.html","2.4.4":"reading-bs-2.html","2.4.5":"reading-bs-2.html","2.4.6":"reading-bs-2.html","2.4.7":"reading-bs-2.html","2.4.8":"reading-bs-2.html","2.4.9":"reading-bs-2.html","2.4.10":"reading-bs-2.html","2.4.11":"reading-bs-2.html","2.4.12":"reading-bs-2.html","2.4.13":"reading-bs-2.html","2.4.14":"reading-bs-2.html","2.4.15":"reading-bs-2.html","2.4.16":"reading-bs-2.html","2.4.17":"reading-bs-2.html","2.4.18":"reading-bs-2.html","2.4.19":"reading-bs-2.html","2.4.20":"reading-bs-2.html","2.4.21":"reading-bs-2.html","2.4.22":"reading-bs-2.html","3.1.1":"reading-bs-3.html","3.1.2":"reading-bs-3.html","3.1.3":"reading-bs-3.html","3.1.4":"reading-bs-3.html","3.1.5":"reading-bs-3.html","3.1.6":"reading-bs-3.html","3.1.7":"reading-bs-3.html","3.1.8":"reading-bs-3.html","3.1.9":"reading-bs-3.html","3.1.10":"reading-bs-3.html","3.1.11":"reading-bs-3.html","3.1.12":"reading-bs-3.html","3.1.13":"reading-bs-3.html","3.1.14":"reading-bs-3.html","3.1.15":"reading-bs-3.html","3.1.16":"reading-bs-3.html","3.1.17":"reading-bs-3.html","3.1.18":"reading-bs-3.html","3.1.19":"reading-bs-3.html","3.1.20":"reading-bs-3.html","3.1.21":"reading-bs-3.html","3.1.22":"reading-bs-3.html","3.1.23":"reading-bs-3.html","3.1.24":"reading-bs-3.html","3.1.25":"reading-bs-3.html","3.1.26":"reading-bs-3.html","3.1.27":"reading-bs-3.html","3.2.1":"reading-bs-3.html","3.2.2":"reading-bs-3.html","3.2.3":"reading-bs-3.html","3.2.4":"reading-bs-3.html","3.2.5":"reading-bs-3.html","3.2.6":"reading-bs-3.html","3.2.7":"reading-bs-3.html","3.2.8":"reading-bs-3.html","3.2.9":"reading-bs-3.html","3.2.10":"reading-bs-3.html","3.2.11":"reading-bs-3.html","3.2.12":"reading-bs-3.html","3.2.13":"reading-bs-3.html","3.2.14":"reading-bs-3.html","3.2.15":"reading-bs-3.html","3.2.16":"reading-bs-3.html","3.2.17":"reading-bs-3.html","3.2.18":"reading-bs-3.html","3.2.19":"reading-bs-3.html","3.2.20":"reading-bs-3.html","3.2.21":"reading-bs-3.html","3.2.22":"reading-bs-3.html","3.2.23":"reading-bs-3.html","3.2.24":"reading-bs-3.html","3.2.25":"reading-bs-3.html","3.2.26":"reading-bs-3.html","3.2.27":"reading-bs-3.html","3.2.28":"reading-bs-3.html","3.2.29":"reading-bs-3.html","3.2.30":"reading-bs-3.html","3.2.31":"reading-bs-3.html","3.2.32":"reading-bs-3.html","3.2.33":"reading-bs-3.html","3.2.34":"reading-bs-3.html","3.2.35":"reading-bs-3.html","3.2.36":"reading-bs-3.html","3.2.37":"reading-bs-3.html","3.2.38":"reading-bs-3.html","3.2.39":"reading-bs-3.html","3.2.40":"reading-bs-3.html","3.2.41":"reading-bs-3.html","3.3.1":"reading-bs-3.html","3.3.2":"reading-bs-3.html","3.3.3":"reading-bs-3.html","3.3.4":"reading-bs-3.html","3.3.5":"reading-bs-3.html","3.3.6":"reading-bs-3.html","3.3.7":"reading-bs-3.html","3.3.8":"reading-bs-3.html","3.3.9":"reading-bs-3.html","3.3.10":"reading-bs-3.html","3.3.11":"reading-bs-3.html","3.3.12":"reading-bs-3.html","3.3.13":"reading-bs-3.html","3.3.14":"reading-bs-3.html","3.3.15":"reading-bs-3.html","3.3.16":"reading-bs-3.html","3.3.17":"reading-bs-3.html","3.3.18":"reading-bs-3.html","3.3.19":"reading-bs-3.html","3.3.20":"reading-bs-3.html","3.3.21":"reading-bs-3.html","3.3.22":"reading-bs-3.html","3.3.23":"reading-bs-3.html","3.3.24":"reading-bs-3.html","3.3.25":"reading-bs-3.html","3.3.26":"reading-bs-3.html","3.3.27":"reading-bs-3.html","3.3.28":"reading-bs-3.html","3.3.29":"reading-bs-3.html","3.3.30":"reading-bs-3.html","3.3.31":"reading-bs-3.html","3.3.32":"reading-bs-3.html","3.3.33":"reading-bs-3.html","3.3.34":"reading-bs-3.html","3.3.35":"reading-bs-3.html","3.3.36":"reading-bs-3.html","3.3.37":"reading-bs-3.html","3.3.38":"reading-bs-3.html","3.3.39":"reading-bs-3.html","3.3.40":"reading-bs-3.html","3.3.41":"reading-bs-3.html","3.3.42":"reading-bs-3.html","3.3.43":"reading-bs-3.html","3.3.44":"reading-bs-3.html","3.3.45":"reading-bs-3.html","3.3.46":"reading-bs-3.html","3.3.47":"reading-bs-3.html","3.3.48":"reading-bs-3.html","3.3.49":"reading-bs-3.html","3.3.50":"reading-bs-3.html","3.3.51":"reading-bs-3.html","3.3.52":"reading-bs-3.html","3.3.53":"reading-bs-3.html","3.3.54":"reading-bs-3.html","3.3.55":"reading-bs-3.html","3.3.56":"reading-bs-3.html","3.3.57":"reading-bs-3.html","3.3.58":"reading-bs-3.html","3.3.59":"reading-bs-3.html","3.3.60":"reading-bs-3.html","3.3.61":"reading-bs-3.html","3.3.62":"reading-bs-3.html","3.3.63":"reading-bs-3.html","3.3.64":"reading-bs-3.html","3.3.65":"reading-bs-3.html","3.3.66":"reading-bs-3.html","3.4.1":"reading-bs-3.html","3.4.2":"reading-bs-3.html","3.4.3":"reading-bs-3.html","3.4.4":"reading-bs-3.html","3.4.5":"reading-bs-3.html","3.4.6":"reading-bs-3.html","3.4.7":"reading-bs-3.html","3.4.8":"reading-bs-3.html","3.4.9":"reading-bs-3.html","3.4.10":"reading-bs-3.html","3.4.11":"reading-bs-3.html","3.4.12":"reading-bs-3.html","3.4.13":"reading-bs-3.html","3.4.14":"reading-bs-3.html","3.4.15":"reading-bs-3.html","3.4.16":"reading-bs-3.html","3.4.17":"reading-bs-3.html","3.4.18":"reading-bs-3.html","3.4.19":"reading-bs-3.html","3.4.20":"reading-bs-3.html","3.4.21":"reading-bs-3.html","3.4.22":"reading-bs-3.html","3.4.23":"reading-bs-3.html","3.4.24":"reading-bs-3.html","3.4.25":"reading-bs-3.html","3.4.26":"reading-bs-3.html","3.4.27":"reading-bs-3.html","3.4.28":"reading-bs-3.html","3.4.29":"reading-bs-3.html","3.4.30":"reading-bs-3.html","3.4.31":"reading-bs-3.html","3.4.32":"reading-bs-3.html","3.4.33":"reading-bs-3.html","3.4.34":"reading-bs-3.html","3.4.35":"reading-bs-3.html","3.4.36":"reading-bs-3.html","3.4.37":"reading-bs-3.html","3.4.38":"reading-bs-3.html","3.4.39":"reading-bs-3.html","3.4.40":"reading-bs-3.html","3.4.41":"reading-bs-3.html","3.4.42":"reading-bs-3.html","3.4.43":"reading-bs-3.html","3.4.44":"reading-bs-3.html","3.4.45":"reading-bs-3.html","3.4.46":"reading-bs-3.html","3.4.47":"reading-bs-3.html","3.4.48":"reading-bs-3.html","3.4.49":"reading-bs-3.html","3.4.50":"reading-bs-3.html","3.4.51":"reading-bs-3.html","3.4.52":"reading-bs-3.html","4.1.1":"reading-bs-4.html","4.1.2":"reading-bs-4.html","4.1.3":"reading-bs-4.html","4.1.4":"reading-bs-4.html","4.1.5":"reading-bs-4.html","4.1.6":"reading-bs-4.html","4.1.7":"reading-bs-4.html","4.1.8":"reading-bs-4.html","4.1.9":"reading-bs-4.html","4.1.10":"reading-bs-4.html","4.1.11":"reading-bs-4.html","4.1.12":"reading-bs-4.html","4.1.13":"reading-bs-4.html","4.1.14":"reading-bs-4.html","4.1.15":"reading-bs-4.html","4.1.16":"reading-bs-4.html","4.1.17":"reading-bs-4.html","4.1.18":"reading-bs-4.html","4.1.19":"reading-bs-4.html","4.2.1":"reading-bs-4.html","4.2.2":"reading-bs-4.html","4.2.3":"reading-bs-4.html","4.2.4":"reading-bs-4.html","4.2.5":"reading-bs-4.html","4.2.6":"reading-bs-4.html","4.2.7":"reading-bs-4.html","4.2.8":"reading-bs-4.html","4.2.9":"reading-bs-4.html","4.2.10":"reading-bs-4.html","4.2.11":"reading-bs-4.html","4.2.12":"reading-bs-4.html","4.2.13":"reading-bs-4.html","4.2.14":"reading-bs-4.html","4.2.15":"reading-bs-4.html","4.2.16":"reading-bs-4.html","4.2.17":"reading-bs-4.html","4.2.18":"reading-bs-4.html","4.2.19":"reading-bs-4.html","4.2.20":"reading-bs-4.html","4.2.21":"reading-bs-4.html","4.3.1":"reading-bs-4.html","4.3.2":"reading-bs-4.html","4.3.3":"reading-bs-4.html","4.3.4":"reading-bs-4.html","4.3.5":"reading-bs-4.html","4.3.6":"reading-bs-4.html","4.3.7":"reading-bs-4.html","4.3.8":"reading-bs-4.html","4.3.9":"reading-bs-4.html","4.3.10":"reading-bs-4.html","4.3.11":"reading-bs-4.html","4.3.12":"reading-bs-4.html","4.3.13":"reading-bs-4.html","4.3.14":"reading-bs-4.html","4.3.15":"reading-bs-4.html","4.3.16":"reading-bs-4.html","4.4.1":"reading-bs-4.html","4.4.2":"reading-bs-4.html","4.4.3":"reading-bs-4.html","4.4.4":"reading-bs-4.html","4.4.5":"reading-bs-4.html","4.4.6":"reading-bs-4.html","4.4.7":"reading-bs-4.html","4.4.8":"reading-bs-4.html","4.4.9":"reading-bs-4.html","4.4.10":"reading-bs-4.html","4.4.11":"reading-bs-4.html","4.4.12":"reading-bs-4.html","4.4.13":"reading-bs-4.html","4.4.14":"reading-bs-4.html","4.4.15":"reading-bs-4.html","4.4.16":"reading-bs-4.html","4.4.17":"reading-bs-4.html","4.4.18":"reading-bs-4.html","4.4.19":"reading-bs-4.html","4.4.20":"reading-bs-4.html","4.4.21":"reading-bs-4.html","4.4.22":"reading-bs-4.html"},"curFile":"reading-bs.html","mode":"jump"});})();</script><div class="legend">Hover on any word for its analysis — पदच्छेद · व्याकरण (vibhakti + samāsa) · meaning. No kāraka (terse sūtras).</div><div class="chapgrid"><a href="reading-bs-1.html">अध्याय 1</a><a href="reading-bs-2.html">अध्याय 2</a><a href="reading-bs-3.html">अध्याय 3</a><a href="reading-bs-4.html">अध्याय 4</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
+function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.m)h+='<div class="tm">'+d.m+'</div>';
+if(d.g)h+='<div class="row"><span class="lb">व्याकरण</span> '+d.g+'</div>';
+if(d.p&&d.p!==d.w)h+='<div class="split">'+d.p+'</div>';return h;}
+function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
+  let left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
+  let top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
   tip.style.left=left+'px';tip.style.top=top+'px';}
-function show(t){
-  // data-k may be a mūla key (rich GM tooltip) OR a bhāṣya/ṭīkā laser-key with no GM entry — in that
-  // case fall through to data-w (bhāṣya plain gloss); ṭīkā words have neither, so they show nothing.
-  var d=t.dataset.k?GM[t.dataset.k]:null;
-  if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
-  else if(t.dataset.w){var g=GB[t.dataset.w],pl=GBP[t.dataset.w];
-    // bhāṣya word: plain gloss, PLUS the recursive samāsa peel when this compound has one (§9 lane)
-    if(pl&&pl.length){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+'<div class="peel">'+pl.join('<br>')+'</div>';}
-    else if(g){tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
-    else return;}
-  else return;
-  tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
-var touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
-// PIN: a click on a word pins the tooltip so its text is selectable/copyable; hover stays preview-only.
-// Additive & sync-safe — no preventDefault / stopImmediatePropagation, so sync.js's onWordTap (🟡 highlight)
-// and Esc/click-empty clears still fire; presenter suppression (body.vvnopeek #tip) is untouched.
-var pinned=false;
-function hideTip(force){if(pinned&&!force)return;pinned=false;tip.style.opacity=0;tip.classList.remove('pinned');}
-document.addEventListener('mouseover',function(e){if(touch||pinned)return;var t=e.target.closest('.w');if(t)show(t);});
-document.addEventListener('mouseout',function(e){if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
-document.addEventListener('click',function(e){
-  if(tip.contains(e.target))return;                              // selecting inside the tip never dismisses it
-  var t=e.target.closest('.w');
-  if(t){pinned=true;show(t);tip.classList.add('pinned');return;} // click a word → pin (selectable)
-  hideTip(true);});                                              // click empty → unpin+hide
-window.addEventListener('keydown',function(e){if(e.key==='Escape'||e.key==='Esc')hideTip(true);});
-var root=document.documentElement;
-document.getElementById('tog').onclick=function(){
-  var c=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
-  root.setAttribute('data-theme',c=='dark'?'light':'dark');};
-</script></div><style>
+function show(t){const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d);tip.style.opacity=1;place(t);}
+const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
+document.addEventListener('mouseover',e=>{if(touch)return;const t=e.target.closest('.w');if(t)show(t);});
+document.addEventListener('mouseout',e=>{if(touch)return;if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',e=>{const t=e.target.closest('.w');if(!t){tip.style.opacity=0;return;}e.stopPropagation();show(t);});
+const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};
+(function(){var K='vv_reading_metmode';var seg=document.getElementById('metseg');if(!seg)return;var b=[].slice.call(seg.querySelectorAll('button'));
+function ap(m){document.body.classList.remove('metmode-sandhi','metmode-pada');document.body.classList.add('metmode-'+m);b.forEach(function(x){x.classList.toggle('on',x.dataset.m===m);});}
+var s='sandhi';try{s=localStorage.getItem(K)||'sandhi';}catch(e){}ap(s);
+b.forEach(function(x){x.addEventListener('click',function(){ap(x.dataset.m);try{localStorage.setItem(K,x.dataset.m);}catch(e){}});});})();</script><style>
 #rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
   background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;
   padding:8px 14px;box-shadow:0 3px 12px rgba(0,0,0,.18);cursor:pointer}
@@ -338,51 +287,4 @@ document.getElementById('tog').onclick=function(){
     location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
     close();
   });
-})();</script><script>(function(){
-  var KEY='vv_reading_moolaonly';
-  var seg=document.getElementById('viewseg');if(!seg)return;
-  var btns=[].slice.call(seg.querySelectorAll('button'));
-  function apply(mo){document.body.classList.toggle('moola-only',mo);
-    btns.forEach(function(b){b.classList.toggle('on',(b.dataset.v==='moola')===mo);});}
-  var saved='0';try{saved=localStorage.getItem(KEY)||'0';}catch(e){}
-  apply(saved==='1');
-  btns.forEach(function(b){b.addEventListener('click',function(){
-    var mo=b.dataset.v==='moola';apply(mo);
-    try{localStorage.setItem(KEY,mo?'1':'0');}catch(e){}
-  });});
-})();</script><script>(function(){
-  var CKEY='vv_reading_side',PKEY='vv_reading_place';
-  var seg=document.getElementById('sideseg');if(!seg)return;
-  var pseg=document.getElementById('placeseg');
-  var sideBtns=[].slice.call(seg.querySelectorAll('button'));
-  var placeBtns=pseg?[].slice.call(pseg.querySelectorAll('button')):[];
-  var firstBtn=seg.querySelector('button[data-side]:not([data-side=""])');
-  var firstKey=firstBtn?firstBtn.getAttribute('data-side'):'';
-  var savedSide=null;try{savedSide=localStorage.getItem(CKEY);}catch(e){}
-  var side=(savedSide===null)?firstKey:savedSide;                    // first visit → ṭīkā ON
-  if(side&&!seg.querySelector('button[data-side="'+side+'"]'))side='';
-  var place='inter';try{place=localStorage.getItem(PKEY)||'inter';}catch(e){}
-  if(place!=='side')place='inter';
-  function render(){
-    // vārttika (section-gran): placements are पार्श्वे (side) | अधः (below, = the 'inter' slot); ṭīkā: अन्तः | पार्श्वे.
-    // CSS forces below at ≤1024px so phones never get the cramped side-by-side.
-    var curBtn=side?seg.querySelector('button[data-side="'+side+'"]'):null;
-    var sectionGran=!!(curBtn&&curBtn.getAttribute('data-gran')==='section');
-    document.body.classList.toggle('parshve',place==='side'&&!!side);
-    if(side)document.body.setAttribute('data-side',side);else document.body.removeAttribute('data-side');
-    sideBtns.forEach(function(b){b.classList.toggle('on',(b.dataset.side||'')===(side||''));});
-    placeBtns.forEach(function(b){
-      if(b.dataset.place==='inter')b.textContent=sectionGran?'अधः':'अन्तः';
-      b.classList.toggle('on',b.dataset.place===place);b.disabled=false;b.style.opacity='';});
-  }
-  render();
-  function fire(){ if(window.__vvView&&window.__vvView.onChange)window.__vvView.onChange(side,place); }
-  sideBtns.forEach(function(b){b.addEventListener('click',function(){
-    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}render();fire();});});
-  placeBtns.forEach(function(b){b.addEventListener('click',function(){
-    place=b.dataset.place;try{localStorage.setItem(PKEY,place);}catch(e){}render();fire();});});
-  // shared-reading bridge: expose the current view + a remote-apply (no persist, no re-broadcast) to sync.js
-  window.__vvView=window.__vvView||{};
-  window.__vvView.get=function(){return {side:side,place:place};};
-  window.__vvView.apply=function(ns,np){ if(ns!==undefined)side=ns||''; if(np!==undefined)place=(np==='side')?'side':'inter'; render(); };
-})();</script><script src="translit.js"></script></body></html>
+})();</script><script>window.VVSYNC={slug:"BS"};</script><script src="sync.js" defer></script><script src="translit.js"></script></body></html>

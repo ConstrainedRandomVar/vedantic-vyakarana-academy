@@ -33,10 +33,25 @@ body.mode-pada .vjoin{display:none}
 #tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
 #tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
 button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
-.chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}</style></head><body class="mode-sandhi"><div class="wrap">
+.chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}
+/* अनुवादः knob — translation hidden by default (Harsha 2026-09-04) */
+body:not(.trans-on) .trans-layer{display:none}
+/* भाष्यम् toggle — मूलम् (default) hides the commentary; मूलम्+भाष्यम् shows it. The 3 ardha stretches
+   swap whole blocks: spine integers (.ardha-int) in मूलम् mode ↔ edition .5 units (.ardha-half) in भाष्यम्. */
+body.view-mula .bhashya-layer{display:none}
+body.view-mula .ardha-half{display:none}
+body.view-both .ardha-int{display:none}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:0 8px}
+.viewbar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 8px 18px 0}
+.viewbar button{float:none;border:none;border-radius:0;background:var(--card);color:var(--muted);padding:6px 15px;font-size:12.5px;border-right:1px solid var(--line);cursor:pointer}
+.viewbar button:last-child{border-right:none}
+.viewbar button.on{background:var(--role);color:#fff}
+.tglbtn{float:none;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:6px 14px;font-size:12.5px;margin:0 0 18px 0;cursor:pointer}
+.tglbtn.on{background:var(--mng);color:#fff;border-color:var(--mng)}
+</style></head><body class="mode-sandhi view-mula"><div class="wrap">
 <a href="index.html" style="color:var(--brand);font-weight:800;font-size:14px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><a href="index.html" style="float:right;margin:6px 0 0 10px;color:var(--muted);font-size:13px;text-decoration:none">← back</a><button id="tog">◐ theme</button>
 <h1>Pañcadaśī — reading (मनन)</h1><p class="sub">hover-to-read · analysis from the Gemini kāraka dataset</p>
-<div class="modebar" role="radiogroup" aria-label="verse rendering"><button data-mode="sandhi" role="radio">सन्धि · verse</button><button data-mode="pada" role="radio">पद · split</button></div><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+<div class="toolbar"><div class="modebar" role="radiogroup" aria-label="verse rendering"><button data-mode="sandhi" role="radio">सन्धि · verse</button><button data-mode="pada" role="radio">पद · split</button></div><button class="tglbtn" id="transtog" aria-pressed="false" title="अनुवादः दर्शय / गोपय">अनुवादः</button></div><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 
 .reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
 .reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
@@ -218,6 +233,7 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);borde
 (function(){var K='vvMetMode';function set(m){document.body.classList.remove('mode-sandhi','mode-pada');document.body.classList.add('mode-'+m);document.querySelectorAll('.modebar button').forEach(function(b){b.classList.toggle('on',b.dataset.mode===m);});try{localStorage.setItem(K,m);}catch(e){}}
 document.querySelectorAll('.modebar button').forEach(function(b){b.addEventListener('click',function(){set(b.dataset.mode);});});
 var init='sandhi';try{init=localStorage.getItem(K)||'sandhi';}catch(e){}set(init);})();
+(function(){var K='vvTransMode';var btn=document.getElementById('transtog');if(!btn)return;function set(on){document.body.classList.toggle('trans-on',on);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');try{localStorage.setItem(K,on?'1':'0');}catch(e){}}btn.addEventListener('click',function(){set(!document.body.classList.contains('trans-on'));});var it=false;try{it=localStorage.getItem(K)==='1';}catch(e){}set(it);})();
 function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
 if(d.morph)h+='<div class="row"><span class="lb">'+(d.morphLabel||'vibhakti')+'</span> '+d.morph+'</div>';
 if(d.role)h+='<div class="row"><span class="lb">kāraka</span> '+d.role+'</div>';

@@ -1328,7 +1328,7 @@ function renderDashboard() {
     { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'bhasya'], note: 'भाष्यम्: श्रीचन्द्रशेखरभारती' },
     { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula'] },
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula'] },
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },

@@ -34,8 +34,9 @@ body.mode-pada .vjoin{display:none}
 #tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
 button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
 .chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}
-/* अनुवादः knob — translation hidden by default (Harsha 2026-09-04) */
-body:not(.trans-on) .trans-layer{display:none}
+/* अनुवादः knob — ALL English translation hidden by default: the mūla clause-gloss line (.trans-layer) AND
+   the bhāṣya gloss sentence translations (.gtr, incl. the edition-unit .moolatr). (Harsha 2026-09-04) */
+body:not(.trans-on) .trans-layer,body:not(.trans-on) .gtr{display:none}
 /* भाष्यम् toggle — मूलम् (default) hides the commentary; मूलम्+भाष्यम् shows it. The 3 ardha stretches
    swap whole blocks: spine integers (.ardha-int) in मूलम् mode ↔ edition .5 units (.ardha-half) in भाष्यम्. */
 body.view-mula .bhashya-layer{display:none}

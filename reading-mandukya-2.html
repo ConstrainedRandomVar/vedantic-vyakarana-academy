@@ -308,13 +308,23 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
     }
 
     let spyUntil = 0;   // scrollspy suppression window: quiet the spy while a programmatic jump smooth-scrolls
+    // Pick the VISIBLE anchor for a ref. VC's ardha-region swap renders each affected verse under BOTH a spine
+    // `v-<ref>` (.ardha-int) and an edition-unit `vb-<ref>` (.ardha-half), and hides one via display:none per
+    // mode (मूलम् hides .ardha-half; भाष्यम् hides .ardha-int). Targeting the always-`v-` anchor scrolled to the
+    // hidden copy in भाष्यम् mode (picker "did nothing", gloss looked empty). display:none ⇒ offsetParent null.
+    function anchorFor(ref) {
+      const spine = document.getElementById('v-' + ref), unit = document.getElementById('vb-' + ref);
+      if (spine && spine.offsetParent !== null) return spine;
+      if (unit && unit.offsetParent !== null) return unit;
+      return spine || unit;   // neither visible (or non-VC text: no vb-) → the spine anchor / null
+    }
     function jump(ref) {
       if (opts.mode !== 'jump') return;
       const file = opts.pageByRef ? opts.pageByRef[ref] : null;
       if (file == null) return;
       if (opts.curFile != null && file === opts.curFile) {
         spyUntil = (typeof Date !== 'undefined' ? Date.now() : 0) + 700;   // don't flicker the picker through intermediate verses
-        const el = document.getElementById('v-' + ref);
+        const el = anchorFor(ref);
         if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('navhit'); void el.offsetWidth; el.classList.add('navhit'); }
       } else location.href = file + '#v-' + ref;
     }
@@ -329,7 +339,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
     if (!init && opts.mode === 'jump' && opts.pageByRef && opts.curFile != null) init = refs.find(r => opts.pageByRef[r] === opts.curFile) || null;
     setRef(init || refs[0]);
     // arriving via #v-<ref>: mirror nav.js's flash cue on the target verse.
-    if (fromHash && opts.mode === 'jump' && typeof document !== 'undefined') { const el = document.getElementById('v-' + init); if (el) el.classList.add('navhit'); }
+    if (fromHash && opts.mode === 'jump' && typeof document !== 'undefined') { const el = anchorFor(init); if (el) el.classList.add('navhit'); }
 
     // scrollspy (jump mode only): keep the picker in sync with the verse at the top of the viewport as the
     // reader scrolls. setRef only repaints the selects (no jump / no onSelect), so there is NO scroll↔jump
@@ -349,7 +359,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
         if (Date.now() < spyUntil) return;
         const y = stickyBottom() + 8; let pick = null;
         for (let i = 0; i < refs.length; i++) {
-          const el = document.getElementById('v-' + refs[i]);
+          const el = anchorFor(refs[i]);
           if (!el) continue;                                   // ref not on THIS page (split texts) → skip
           if (el.getBoundingClientRect().top <= y) pick = refs[i];
           else if (pick !== null) break;                       // first on-page verse below the line → done (verses are in order)

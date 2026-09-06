@@ -265,6 +265,7 @@ var init='sandhi';try{init=localStorage.getItem(K)||'sandhi';}catch(e){}set(init
 function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
 if(d.morph)h+='<div class="row"><span class="lb">'+(d.morphLabel||'vibhakti')+'</span> '+d.morph+'</div>';
 if(d.role)h+='<div class="row"><span class="lb">kāraka</span> '+d.role+'</div>';
+if(d.sutra)h+='<div class="row"><span class="lb">सूत्र</span> '+d.sutra+'</div>';
 if(d.sam)h+='<div class="row"><span class="lb">samāsa</span> '+d.sam+'</div>';
 if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';return h;}
 // anchor the tip to the tapped word: centred below it, flipped above when near the viewport bottom,

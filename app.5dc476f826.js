@@ -2272,9 +2272,35 @@ function ensureTutorialDataLoaded(slug) {
     s.onload = () => resolve();
     s.onerror = () => reject(new Error('failed to load ' + entry.file));
     document.head.appendChild(s);
-  });
+  }).then(() => loadVibhaktiOverlay(entry.slug, entry.overlay));
   ensureTutorialDataLoaded._pending[entry.slug] = p;
   return p;
+}
+
+// OPTIONAL two-layer vibhakti overlay (vibhakti-overlay-<slug>.js → window.VIBHAKTI_OVERLAY[slug]).
+// Best-effort: a text without an overlay just resolves (presence-detection fallback keeps old behavior).
+// On load, attach each verse's per-word entries onto its sentence as `_vibhakti` so tip/quiz builders
+// (which hold a `sentence`) can read them with no ref/slug plumbing.
+function loadVibhaktiOverlay(slug, overlayFile) {
+  const attach = () => {
+    const ov = (window.VIBHAKTI_OVERLAY || {})[slug]; if (!ov) return;
+    const verses = ((window.TUTORIAL_DATA || {})[slug] || {}).verses || [];
+    for (const v of verses) { const per = ov[String(v.ref)]; if (per && v.sentences && v.sentences[0]) v.sentences[0]._vibhakti = per; }
+  };
+  if ((window.VIBHAKTI_OVERLAY || {})[slug]) { attach(); return Promise.resolve(); }
+  if (!overlayFile) return Promise.resolve();   // this text has no overlay (manifest has no `overlay`) → fine
+  return new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = overlayFile;   // manifest-resolved (content-hashed in deploy, plain in dev)
+    s.onload = () => { attach(); resolve(); };
+    s.onerror = () => resolve();
+    document.head.appendChild(s);
+  });
+}
+
+// Per-word two-layer entry {role,num,text,type,vibhakti,gov} from the overlay, or null (→ fallback).
+function wordVibhakti(sentence, wordIndex) {
+  return (sentence && sentence._vibhakti && sentence._vibhakti[wordIndex]) || null;
 }
 
 let tutorialVerses = [];
@@ -2572,11 +2598,32 @@ function caseDiscriminationCallout(sentence, hc, role) {
   (sentence.words || []).forEach((w, i) => {
     if (idxs.includes(i) || actualVibhakti(sentence, i) !== V) return;
     const r = rm[i];
-    if (r && r !== role && ROLE_LABEL_SUTRA[r]) others.push(`<b>${esc(w)}</b> = ${ROLE_LABEL_SUTRA[r][0]} (${ROLE_LABEL_SUTRA[r][1]})`);
+    if (!(r && r !== role && ROLE_LABEL_SUTRA[r])) return;
+    // Prefer the two-layer overlay (data-driven role + the sūtra that ACTUALLY ordains this word's case,
+    // e.g. उपपद-पञ्चमी 2.3.29), else the hardcoded bucket. Presence-detection: no overlay → old behavior.
+    const ov = wordVibhakti(sentence, i);
+    if (ov && ov.num) others.push(`<b>${esc(w)}</b> = ${esc(ov.role || ROLE_LABEL_SUTRA[r][0])} (${esc(ov.num + ' ' + ov.text)})`);
+    else others.push(`<b>${esc(w)}</b> = ${ROLE_LABEL_SUTRA[r][0]} (${ROLE_LABEL_SUTRA[r][1]})`);
   });
   if (!others.length) return '';
   const self = ROLE_LABEL_SUTRA[role] ? ROLE_LABEL_SUTRA[role][0] : role;
   return `Same case, different कारक: other <b>${esc(V)}</b> word(s) here are NOT the ${self} — ${others.join('; ')}. Match the कारक to the verb, not just the case.`;
+}
+// विभक्ति-विधान reveal (two-layer overlay, presence-gated): for the words a sweep-role step just asked
+// about, name the sūtra that ACTUALLY ordains the case — surfacing उपपद-/विशेष cases the fixed role
+// bucket can't (e.g. प्रमादात् on the अपादान step is really उपपद-पञ्चमी by 2.3.29, governed by अन्यः).
+// Only fires for words whose overlay type is non-default (उपपद/विशेष/शेष/कर्मप्रवचनीय) so it teaches
+// something beyond the plain default; no overlay ⇒ '' (old behavior).
+function vibhaktiOverlayCallout(sentence, expectedSet) {
+  const lines = [];
+  for (const i of expectedSet) {
+    const ov = wordVibhakti(sentence, i);
+    if (!ov || !ov.num || !ov.type || ov.type === 'कारक') continue;
+    const govW = ov.gov ? (sentence.words[ov.gov - 1] || '') : '';
+    lines.push(`<b>${esc(sentence.words[i])}</b> = <b>${esc(ov.role || '')}</b>${govW ? ` (governed by <b>${esc(govW)}</b>)` : ''} — ${esc(ov.num + ' ' + ov.text)}`);
+  }
+  if (!lines.length) return '';
+  return `<b>विभक्ति-विधान</b> — the exact rule ordaining the case: ${lines.join('; ')}.`;
 }
 // सामानाधिकरण्य framing (Harsha, 2026-08-28 — "a great way to teach"): when the कर्ता/कर्म has विशेषण
 // present in the clause, list ALL the co-referential same-case candidates of THIS clause and give the
@@ -2821,6 +2868,10 @@ function buildTutorialSteps(sentence) {
       steps.push({ type: 'samasaType', samasaIdx: si, layerIdx: li });
     }
   });
+  // Two-layer vibhakti-vidhāna MCQ (presence-gated): only when this text carries an overlay AND the word
+  // has a NON-default case rule with a fair distractor. Texts without an overlay emit none (unchanged).
+  if (sentence._vibhakti) for (let i = 0; i < (sentence.words || []).length; i++)
+    if (vibhaktiVidhanaEligible(sentence, i)) steps.push({ type: 'vibhaktiVidhana', wordIndex: i });
   return steps;
 }
 // The step-1 "which words are the verbs" answer set. `sentence.verbs` holds only what its SOURCE
@@ -3245,10 +3296,51 @@ function clauseElidedTip(cl) {
   return s;
 }
 // per-step MCQ spec (options/correct/highlight/explain) for the new samāsa + clause question types
+// Two-layer vibhakti-vidhāna MCQ tables (verified vs vendored Aṣṭādhyāyī). VIBHAKTI_CASE_SUTRAS drives
+// FAIR distractors — every option ordains the SAME case as the answer (2.3.28 vs 2.3.29 vs 2.3.42 are all
+// पञ्चमी), so it tests the vidhāna, never an obviously-wrong case ([[feedback_quiz_distractor_rarity]]).
+const VIBHAKTI_SUTRA_TEXT = {
+  '2.3.46': 'प्रातिपदिकार्थलिङ्गपरिमाणवचनमात्रे प्रथमा',
+  '2.3.2': 'कर्मणि द्वितीया', '2.3.5': 'कालाध्वनोरत्यन्तसंयोगे', '2.3.8': 'कर्मप्रवचनीययुक्ते द्वितीया', '2.3.12': 'गत्यर्थकर्मणि द्वितीयाचतुर्थ्यौ चेष्टायामनध्वनि',
+  '2.3.18': 'कर्तृकरणयोस्तृतीया', '2.3.19': 'सहयुक्तेऽप्रधाने', '2.3.21': 'इत्थंभूतलक्षणे', '2.3.23': 'हेतौ', '2.3.32': 'पृथग्विनानानाभिस्तृतीयाऽन्यतरस्याम्',
+  '2.3.13': 'चतुर्थी सम्प्रदाने', '2.3.14': 'क्रियार्थोपपदस्य च कर्मणि स्थानिनः', '2.3.16': 'नमःस्वस्तिस्वाहास्वधालम्वषड्योगाच्च',
+  '2.3.28': 'अपादाने पञ्चमी', '2.3.29': 'अन्यारादितरर्तेदिक्छब्दाञ्चूत्तरपदाजाहियुक्ते', '2.3.10': 'पञ्चम्यपाङ्परिभिः', '2.3.11': 'प्रतिनिधिप्रतिदाने च यस्मात्', '2.3.24': 'अकर्तर्यृणे पञ्चमी', '2.3.42': 'पञ्चमी विभक्ते',
+  '2.3.50': 'षष्ठी शेषे', '2.3.26': 'षष्ठी हेतुप्रयोगे', '2.3.34': 'दूरान्तिकार्थैः षष्ठ्यन्यतरस्याम्', '2.3.38': 'षष्ठी चानादरे', '2.3.39': 'स्वामीश्वराधिपतिदायादसाक्षिप्रतिभूप्रसूतैश्च', '2.3.52': 'अधीगर्थदयेशां कर्मणि', '2.3.53': 'कृञः प्रतियत्ने', '2.3.65': 'कर्तृकर्मणोः कृति', '2.3.66': 'उभयप्राप्तौ कर्मणि', '2.3.71': 'कृत्यानां कर्तरि वा', '2.3.41': 'यतश्च निर्धारणम्',
+  '2.3.36': 'सप्तम्यधिकरणे च', '2.3.9': 'यस्मादधिकं यस्य चेश्वरवचनं तत्र सप्तमी', '2.3.37': 'यस्य च भावेन भावलक्षणम्', '2.3.43': 'साधुनिपुणाभ्यामर्चायां सप्तम्यप्रतेः', '2.3.47': 'सम्बोधने च',
+};
+const VIBHAKTI_CASE_SUTRAS = {
+  'प्रथमा': ['2.3.46'],
+  'द्वितीया': ['2.3.2', '2.3.5', '2.3.8', '2.3.12'],
+  'तृतीया': ['2.3.18', '2.3.19', '2.3.21', '2.3.23', '2.3.32'],
+  'चतुर्थी': ['2.3.13', '2.3.14', '2.3.16'],
+  'पञ्चमी': ['2.3.28', '2.3.29', '2.3.10', '2.3.11', '2.3.24', '2.3.42', '2.3.32'],
+  'षष्ठी': ['2.3.50', '2.3.26', '2.3.34', '2.3.38', '2.3.39', '2.3.52', '2.3.53', '2.3.65', '2.3.66', '2.3.71', '2.3.41'],
+  'सप्तमी': ['2.3.36', '2.3.9', '2.3.37', '2.3.43', '2.3.41'],
+};
+// Does word i carry an overlay entry that warrants a vibhakti-vidhāna MCQ (non-default rule + ≥1 fair
+// distractor available)? Used both by step emission and the sim.
+function vibhaktiVidhanaEligible(sentence, i) {
+  const e = (sentence._vibhakti || {})[i];
+  if (!e || !e.num || !e.type || e.type === 'कारक' || !e.vibhakti) return false;
+  const pool = (VIBHAKTI_CASE_SUTRAS[e.vibhakti] || []).filter(n => n !== e.num);
+  return pool.length >= 1 && !!VIBHAKTI_SUTRA_TEXT[e.num];
+}
+
 function tutorialMcqSpec(step, sentence) {
   if (step.type === 'verbLakara') {
     const c = sentence.clusters[step.clusterIdx];
     return { ...lakaraOptions(c.lakara), highlight: new Set([c.governorWordIndex]), explainHtml: lakaraTip(c.lakara) };
+  }
+  if (step.type === 'vibhaktiVidhana') {
+    const i = step.wordIndex, e = (sentence._vibhakti || {})[i] || {};
+    const fmt = n => `${n} — ${VIBHAKTI_SUTRA_TEXT[n] || ''}`;
+    const pool = (VIBHAKTI_CASE_SUTRAS[e.vibhakti] || []).filter(n => n !== e.num);
+    const distract = seedRotate(pool, sentence.words[i] || String(i)).slice(0, 3).map(fmt);
+    const correct = fmt(e.num);
+    const options = seedRotate([correct, ...distract], (sentence.words[i] || '') + e.num);
+    const govW = e.gov ? (sentence.words[e.gov - 1] || '') : '';
+    const explainHtml = `<b>${esc(sentence.words[i] || '')}</b> = <b>${esc(e.role || '')}</b>${govW ? ` (governed by <b>${esc(govW)}</b>)` : ''}, so its <b>${esc(e.vibhakti || '')}</b> is ordained by <b>${esc(correct)}</b> — the specific rule here, not the plain default for this case.`;
+    return { correct, options, highlight: new Set([i]), explainHtml };
   }
   if (step.type === 'samasaType') {
     const sm = sentence.samasa[step.samasaIdx], L = sm.layers[step.layerIdx];
@@ -3346,7 +3438,7 @@ function tutorialMcqSpec(step, sentence) {
   }
   return { correct: '', options: [], highlight: new Set(), explainHtml: '' };
 }
-const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase', 'verbLakara']);
+const NEW_MCQ_TYPES = new Set(['samasaType', 'samasaVigraha', 'samasaLeaf', 'clauseType', 'clauseSubordinate', 'clauseElided', 'clauseKarta', 'clauseKartaCase', 'clauseKarmaCase', 'clauseAssign', 'clauseValence', 'clauseGerundAttach', 'clauseGerundValence', 'clauseGerundKarmaCase', 'verbLakara', 'vibhaktiVidhana']);
 // लकार (tense/mood) MCQ: distractors from the lakāras a learner actually meets (present/future/imperative/
 // optative/past/perfect); the correct one is always included even if rarer. (2026-08-29)
 const LAKARA_DISTRACT_POOL = ['लट्', 'लृट्', 'लोट्', 'विधिलिङ्', 'लङ्', 'लिट्'];
@@ -3383,6 +3475,7 @@ function tutorialStepLabelBase(step, sentence) {
     case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any verbal (कृत्) form that <b>governs its own कारक</b> (कर्ता/कर्म)? This <b>includes gerunds/absolutives</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य, which take their own कर्म) and predicate participles (क्त — e.g. चोदिता). Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${verbsIndicesFor(sentence).size})`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'verbLakara': return `${gov} — which लकार (tense/mood) is this verb in?`;
+    case 'vibhaktiVidhana': { const w = sentence.words[step.wordIndex] || '', v = ((sentence._vibhakti || {})[step.wordIndex] || {}).vibhakti || ''; return `<b>${esc(w)}</b> stands in <b>${esc(v)}</b>. Which सूत्र ordains this case <i>here</i>?`; }
     case 'kartaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्ता be in?`;
     case 'karmaCase': return `Given that ${gov} is ${c.voice}, which vibhakti should its कर्म be in?`;
     // उद्देश्य–विधेय (verbless nominal predication). Name the विधेय explicitly so the task is fair —
@@ -4305,6 +4398,10 @@ function renderTutorial() {
   if (checked) {
     const pct = Math.round(tutorialStepScore(selected, expected, anyValid) * 100);
     feedbackHtml += `<div class="feedback">${pct}% correct${expected.size && !fullyValidSubset ? ` (${inter} / ${expected.size})` : ''}</div>`;
+    if (['apadana', 'karana', 'sampradana', 'adhikarana', 'hetu', 'nirdharana', 'itthambhuta', 'satisaptami'].includes(step.type)) {
+      const oc = vibhaktiOverlayCallout(sentence, expected);
+      if (oc) feedbackHtml += `<div class="tut-explain">${oc}</div>`;
+    }
     if (step.type === 'karma') feedbackHtml += `<div class="tut-explain">${tutorialTransitivityAside(sentence.clusters[step.clusterIdx].transitivity)}</div>`;
     if (step.type === 'sampradana') { const yn = sampradanaYogaNote(sentence); if (yn) feedbackHtml += `<div class="tut-explain">${yn}</div>`; }
     if (step.type === 'karta' || step.type === 'karma') {

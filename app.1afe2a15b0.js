@@ -2715,6 +2715,10 @@ function buildClauseSteps(sentence) {
     seenElided.add(el);
     steps.push({ type: 'clauseElided', clauseIdx: i });
   });
+  // Two-layer vibhakti-vidhāna MCQ (presence-gated) — same question as vākya-vigraha, and it fits the
+  // rigorous case-assignment lens of vākya-vibhāga. Only for overlay words with a NON-default case rule.
+  if (sentence._vibhakti) for (let i = 0; i < (sentence.words || []).length; i++)
+    if (vibhaktiVidhanaEligible(sentence, i)) steps.push({ type: 'vibhaktiVidhana', wordIndex: i });
   return steps;
 }
 function buildTutorialSteps(sentence) {

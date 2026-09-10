@@ -226,7 +226,7 @@
 
     if (SESSION) {                                 // opened with a session in the URL
       bar.hidden = false; render();
-      if (role === 'follow') { SC.hideLoadControls(); SC.setWaiting('Waiting for the presenter to share a document…'); }
+      if (role === 'follow') { document.body.classList.add('vv-follower'); SC.hideLoadControls(); SC.setWaiting('Waiting for the presenter to share a document…'); }
       makeTx(function () { if (role === 'present' && lastDoc) send({ t: 'doc', html: lastDoc }); });
     } else {                                        // no session → offer the starter
       startBtn.hidden = false;

@@ -40,12 +40,34 @@
   .toc a:hover{background:var(--bg)}
   .toc a.here{background:rgba(217,119,6,.12);color:var(--saffron);font-weight:600}
   .toc .empty{color:var(--muted);font-size:12.5px;font-style:italic}
+  /* followers don't navigate (they follow the presenter) → drop the ToC, give the paper full width */
+  body.vv-follower .wrap{grid-template-columns:1fr}
+  body.vv-follower .toc{display:none}
+  /* small screens: readable, non-cramped document (esp. the follower's full-width view) */
+  @media (max-width:640px){
+    body:not(.vv-follower) .wrap{grid-template-columns:150px 1fr}   /* presenter keeps a slim ToC */
+    .toc{padding:12px 8px}
+    .toc a{font-size:12.5px}
+    .stage{padding:14px 8px 110px}
+    .paper{padding:20px 15px}
+    .paper h1{font-size:21px}
+    .paper h2{font-size:18px;margin:24px 0 6px}
+    .paper h3{font-size:15px}
+    .paper p{font-size:15.5px}
+    .paper .mula{font-size:17px;line-height:1.9;padding:8px 10px}
+    .paper .tika{font-size:14px;padding-left:10px;margin-left:2px}
+    .legend{padding:6px 15px;font-size:11.5px;gap:10px}
+    .caption,.hint{padding:8px 15px 0}
+    .warn{margin:8px 15px 0}
+    .topbar{gap:8px;padding:8px 12px;flex-wrap:wrap}
+    .subtitle{display:none}
+  }
 
   .stage{padding:24px 20px 120px;display:flex;justify-content:center}
   /* the pushed document, on a paper-white surface — colours read true regardless of app theme */
   .paper{background:#fffdf7;color:#2a2622;max-width:820px;width:100%;border:1px solid var(--line);
     border-radius:12px;padding:34px 46px;box-shadow:0 6px 26px rgba(0,0,0,.10);
-    font-family:"Noto Serif Devanagari","Noto Serif",serif;min-height:60vh}
+    font-family:"Noto Serif Devanagari","Noto Serif",serif;min-height:60vh;overflow-wrap:break-word;word-break:break-word}
   .paper h1{font-size:25px;margin:6px 0 14px;scroll-margin-top:70px}
   .paper h2{font-size:21px;margin:30px 0 6px;color:#1a1410;scroll-margin-top:70px}
   .paper h3{font-size:16px;margin:22px 0 4px;color:#4a423a;scroll-margin-top:70px}

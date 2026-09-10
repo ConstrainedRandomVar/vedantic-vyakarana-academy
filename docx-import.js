@@ -103,6 +103,8 @@
     dotted: 'text-decoration:underline;text-decoration-style:dotted',
     dash: 'text-decoration:underline;text-decoration-style:dashed'
   };
+  // unified सङ्ग्रह-वाक्य marker: one bold wavy line (all of source double/thick/wavy render as this).
+  var SANGRAHA_UL = 'text-decoration:underline;text-decoration-style:wavy;text-decoration-thickness:2px;text-underline-offset:3px';
   var HLMAP = {
     yellow: '#fff3a3', cyan: '#a5efef', lightGray: '#e2e2e2', green: '#b6f0b6',
     magenta: '#f4b6f4', red: '#f6b0b0', darkYellow: '#e6d16b', blue: '#bcd0ff', none: null
@@ -204,15 +206,19 @@
       if (rs) Object.assign(f, resolve(attr(rs, 'val')));
       Object.assign(f, readRpr(rPr));            // direct props override the style
     }
+    var role = roleOf(f);
+    var isSangraha = role && role.indexOf('sangraha') === 0;
     var st = [];
     if (f.color) st.push('color:#' + f.color);
-    if (f.u && f.u !== 'none') st.push(UMAP[f.u] || 'text-decoration:underline');
+    // underline: saṅgraha (double/thick/wavy in the source) is NORMALIZED to one double-wavy line;
+    // single underline (mūlam) stays single. (Verbatim shape intentionally unified per Harsha 2026-09-10.)
+    if (f.u && f.u !== 'none') st.push(isSangraha ? SANGRAHA_UL : (UMAP[f.u] || 'text-decoration:underline'));
     if (f.b) st.push('font-weight:700');
     if (f.i) st.push('font-style:italic');
     if (f.hl && f.hl !== 'none') { var h = HLMAP[f.hl] !== undefined ? HLMAP[f.hl] : f.hl; if (h) st.push('background:' + h); }
-    // additive semantic annotation (verbatim visual styling above is untouched)
+    // additive semantic annotation
     var attrs = '';
-    var role = roleOf(f); if (role) attrs += ' data-role="' + role + '"';
+    if (role) attrs += ' data-role="' + role + '"';
     if (f.hl && HL_ROLE[f.hl]) attrs += ' data-hl="' + HL_ROLE[f.hl] + '"';
     var e = esc(txt);
     return (st.length || attrs) ? '<span' + (st.length ? ' style="' + st.join(';') + '"' : '') + attrs + '>' + e + '</span>' : e;

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="sa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>शेमुषी — shared-reading scratchpad (Word/docx import)</title>
+<!--
+  Classroom "shared-reading scratchpad": load an instructor-authored .docx (Word, or Google Docs →
+  Download → .docx) and render it on the paper reading surface — headings become a clickable Contents
+  panel, the author's colour / underline (single·double·thick·wavy) / bold / highlight scheme is kept
+  VERBATIM, every word is tokenized (for the laser/highlight), and app/translit.js gives all 11 scripts
+  (and auto-transliterates the loaded content via its MutationObserver). Sync-scroll to followers = Phase 2.
+-->
+<link rel="icon" href="data:,">
+<style>
+  :root{--bg:#f4f1ea;--card:#fffdf7;--ink:#2a2622;--muted:#8a8175;--line:#e2dccf;--saffron:#d97706}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.6 "Noto Serif","Georgia",serif;background:var(--bg);color:var(--ink)}
+  .topbar{display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:1px solid var(--line);
+    background:var(--card);position:sticky;top:0;z-index:20}
+  .brand{font-family:"Noto Serif Devanagari","Noto Serif",serif;font-weight:800;font-size:20px;
+    color:var(--saffron);text-decoration:none;white-space:nowrap}
+  .subtitle{font-size:13px;color:var(--muted)}
+  .toolbar{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .btn{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
+    border-radius:9px;padding:6px 12px;cursor:pointer}
+  .btn:hover{background:var(--card)}
+  .btn.primary{background:var(--saffron);color:#fff;border-color:var(--saffron);font-weight:600}
+  #tog{cursor:pointer}
+  .fname{font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .wrap{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 55px)}
+  .toc{border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:55px;align-self:start;
+    max-height:calc(100vh - 55px);overflow:auto;background:var(--card)}
+  .toc h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .toc a{display:block;padding:4px 8px;border-radius:7px;color:var(--ink);text-decoration:none;font-size:13.5px;
+    font-family:"Noto Serif Devanagari",serif}
+  .toc a.lvl2{margin-left:12px;font-size:13px;color:#5f584d}
+  .toc a.lvl3{margin-left:26px;font-size:12.5px;color:#7a7367}
+  .toc a:hover{background:var(--bg)}
+  .toc a.here{background:rgba(217,119,6,.12);color:var(--saffron);font-weight:600}
+  .toc .empty{color:var(--muted);font-size:12.5px;font-style:italic}
+
+  .stage{padding:24px 20px 120px;display:flex;justify-content:center}
+  /* the pushed document, on a paper-white surface — colours read true regardless of app theme */
+  .paper{background:#fffdf7;color:#2a2622;max-width:820px;width:100%;border:1px solid var(--line);
+    border-radius:12px;padding:34px 46px;box-shadow:0 6px 26px rgba(0,0,0,.10);
+    font-family:"Noto Serif Devanagari","Noto Serif",serif;min-height:60vh}
+  .paper h1{font-size:25px;margin:6px 0 14px;scroll-margin-top:70px}
+  .paper h2{font-size:21px;margin:30px 0 6px;color:#1a1410;scroll-margin-top:70px}
+  .paper h3{font-size:16px;margin:22px 0 4px;color:#4a423a;scroll-margin-top:70px}
+  .paper p{margin:6px 0 12px}
+  .paper .mula{font-size:18.5px;line-height:2;text-align:justify;background:#faf6ea;border-left:3px solid var(--saffron);
+    padding:8px 14px;border-radius:4px}
+  .paper .tika{font-size:14.5px;line-height:1.85;color:#4a423a;border-left:2px solid #cfc6b3;padding-left:14px;margin-left:6px}
+  .paper .vyakhya{font-size:15px;color:#3a342c}
+  .paper .avataranika{font-style:italic;color:#5a5348}
+  .paper .bh{text-align:justify}
+  .w{border-radius:4px}
+  .w:hover{background:rgba(120,120,180,.12)}
+
+  /* empty state / drop zone */
+  .drop{max-width:820px;margin:0 auto;border:2px dashed var(--line);border-radius:14px;padding:52px 30px;
+    text-align:center;color:var(--muted);background:var(--card)}
+  .drop.hot{border-color:var(--saffron);background:#fff7ec;color:var(--ink)}
+  .drop h3{margin:0 0 6px;color:var(--ink);font-size:18px}
+  .drop small{display:block;margin-top:10px}
+  .warn{max-width:820px;margin:8px auto 0;font-size:12.5px;color:#9a5b00;background:#fff4e0;
+    border:1px solid #f0d9ac;border-radius:8px;padding:6px 12px}
+  .legend{max-width:820px;margin:6px auto 0;display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);padding:0 46px}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:5px}
+  .hint{max-width:820px;margin:10px auto 0;font-size:12px;color:var(--muted);padding:0 46px}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="brand" href="index.html">वैदान्तिक-व्याकरणम्</a>
+    <span class="subtitle">शेमुषी · shared-reading scratchpad</span>
+    <div class="toolbar">
+      <span class="fname" id="fname"></span>
+      <button class="btn primary" id="load" type="button">↧ Load .docx</button>
+      <input id="file" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+      <button class="btn" id="tog" type="button" title="Light / dark chrome">◐</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <nav class="toc"><h4>अनुक्रमणिका · Contents</h4><div id="toc"><span class="empty">— load a document —</span></div></nav>
+    <div>
+      <div class="legend" id="legend" hidden></div>
+      <div class="warn" id="warn" hidden></div>
+      <div class="stage">
+        <div class="drop" id="drop">
+          <h3>Drop a <b>.docx</b> here</h3>
+          <div>or click <b>↧ Load .docx</b> — Word, or Google Docs → <i>File → Download → .docx</i></div>
+          <small>Headings become the Contents panel · your colour / underline / bold / highlight scheme is kept verbatim.</small>
+        </div>
+        <article class="paper" id="paper" hidden></article>
+      </div>
+      <div class="hint" id="hint" hidden>Click a Contents entry to jump · hover a word · switch <b>Script</b> (top-right) to read in another lipi. <i>Sync-scroll to followers arrives in Phase 2.</i></div>
+    </div>
+  </div>
+
+  <script src="docx-import.js"></script>
+  <script>
+  'use strict';
+  (function () {
+    var fileEl = document.getElementById('file'), paper = document.getElementById('paper'),
+        drop = document.getElementById('drop'), toc = document.getElementById('toc'),
+        warnEl = document.getElementById('warn'), fname = document.getElementById('fname'),
+        legend = document.getElementById('legend'), hint = document.getElementById('hint');
+
+    document.getElementById('load').onclick = function () { fileEl.click(); };
+    fileEl.onchange = function () { if (fileEl.files && fileEl.files[0]) loadFile(fileEl.files[0]); };
+
+    // drag & drop
+    ['dragenter', 'dragover'].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('hot'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (ev === 'dragleave' && e.relatedTarget) return; drop.classList.remove('hot'); }); });
+    document.addEventListener('drop', function (e) {
+      e.preventDefault();
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) loadFile(f);
+    });
+
+    function loadFile(file) {
+      if (!/\.docx$/i.test(file.name)) { showWarn('Please choose a .docx file (not .doc / .pdf).'); return; }
+      fname.textContent = file.name;
+      file.arrayBuffer().then(function (ab) {
+        return window.VVDocx.importDocx(ab);
+      }).then(function (res) {
+        render(res);
+      }).catch(function (err) {
+        showWarn('Could not import: ' + (err && err.message ? err.message : err));
+        console.error(err);
+      });
+    }
+
+    function showWarn(msg) { warnEl.hidden = false; warnEl.textContent = msg; }
+    function clearWarn() { warnEl.hidden = true; warnEl.textContent = ''; }
+
+    function showLegend() {
+      legend.hidden = false;
+      legend.innerHTML =
+        '<span><span class="sw" style="background:#C45911"></span>मूलम् mūlam</span>' +
+        '<span><span class="sw" style="background:#EE0000"></span>पूर्वपक्ष</span>' +
+        '<span><span class="sw" style="background:#7030A0"></span>एकदेशी</span>' +
+        '<span><span class="sw" style="background:#00B050"></span>सिद्धान्त</span>' +
+        '<span>underline: <u>single</u>=मूलम् · <u style="text-decoration-style:double">double/wavy</u>=सङ्ग्रह</span>' +
+        '<span><span class="sw" style="background:#fff3a3"></span>निष्कर्ष?</span>' +
+        '<span><span class="sw" style="background:#a5efef"></span>सङ्गति?</span>' +
+        '<span><span class="sw" style="background:#0000FF"></span>link</span>' +
+        '<span style="opacity:.7">styling shown <b>verbatim</b>; roles via data-role</span>';
+    }
+    // apply document HTML to the surface. tokenizeIt=true for a fresh local import (words not yet
+    // wrapped); false for a doc RECEIVED over sync (already tokenized by the presenter — keep its ids).
+    function applyHtml(html, tokenizeIt) {
+      paper.innerHTML = html;
+      if (tokenizeIt) tokenize(paper);
+      drop.hidden = true; paper.hidden = false; hint.hidden = false;
+      showLegend(); buildToc(); window.scrollTo(0, 0);
+    }
+
+    function render(res) {
+      clearWarn();
+      applyHtml(res.html, true);
+      if (res.warnings && res.warnings.length) showWarn(res.warnings.join(' '));
+      // hand the finished (tokenized) surface to the sync layer, if present, so it can broadcast it
+      if (SC.onDocLoaded) SC.onDocLoaded(paper.innerHTML);
+    }
+
+    // ---- API for the (optional) sync layer: scratchpad-sync.js ----
+    var SC = window.__scratch = {
+      onDocLoaded: null,          // sync sets this → called with tokenized HTML after a local import
+      onNav: null,                // sync sets this → called with a heading id on a ToC click
+      applyDoc: function (html) { clearWarn(); applyHtml(html, false); },   // follower renders a received doc
+      currentHtml: function () { return paper.hidden ? null : paper.innerHTML; },
+      setWaiting: function (msg) { drop.hidden = false; paper.hidden = true; drop.querySelector('h3').textContent = msg || 'Waiting for the presenter…'; drop.querySelector('div').textContent = ''; drop.querySelector('small').textContent = ''; },
+      hideLoadControls: function () { var l = document.getElementById('load'); if (l) l.style.display = 'none'; var f = document.getElementById('fname'); if (f) f.style.display = 'none'; },
+      // test hook: apply already-tokenized HTML AND notify sync (simulates a presenter file-load)
+      loadTokenizedForTest: function (html) { clearWarn(); applyHtml(html, false); if (SC.onDocLoaded) SC.onDocLoaded(paper.innerHTML); }
+    };
+
+    // wrap every word in a .w[data-k] span (preserving the coloured/underlined parent runs)
+    function tokenize(rootEl) {
+      var wlk = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null), texts = [], t, n = 0;
+      while ((t = wlk.nextNode())) texts.push(t);
+      texts.forEach(function (node) {
+        if (!/\S/.test(node.nodeValue)) return;
+        var parts = node.nodeValue.split(/(\s+)/), frag = document.createDocumentFragment();
+        parts.forEach(function (p) {
+          if (p === '') return;
+          if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(p)); return; }
+          var s = document.createElement('span'); s.className = 'w'; s.setAttribute('data-k', 'w' + (n++)); s.textContent = p;
+          frag.appendChild(s);
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+    }
+
+    var tocLinks = [];
+    function buildToc() {
+      toc.innerHTML = ''; tocLinks = [];
+      var hs = paper.querySelectorAll('h1,h2,h3');
+      if (!hs.length) { toc.innerHTML = '<span class="empty">No headings in this document.</span>'; return; }
+      hs.forEach(function (h) {
+        var a = document.createElement('a'); a.href = '#' + h.id; a.textContent = h.textContent; a.className = 'lvl' + h.tagName[1];
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.getElementById(h.id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (window.__scratch && window.__scratch.onNav) window.__scratch.onNav(h.id);   // presenter → followers jump too
+        });
+        toc.appendChild(a); tocLinks.push({ a: a, el: h });
+      });
+    }
+    // scroll-spy
+    window.addEventListener('scroll', function () {
+      if (!tocLinks.length) return;
+      var best = null, bt = -1e9;
+      tocLinks.forEach(function (l) { var top = l.el.getBoundingClientRect().top; if (top <= 90 && top > bt) { bt = top; best = l; } });
+      tocLinks.forEach(function (l) { l.a.classList.toggle('here', l === best); });
+    }, { passive: true });
+
+    // minimal light/dark chrome toggle (the .paper stays light on purpose)
+    document.getElementById('tog').onclick = function () {
+      var d = document.documentElement;
+      var dark = d.style.getPropertyValue('--bg') === '#1c1a17';
+      if (dark) { d.style.removeProperty('--bg'); document.body.style.color = ''; }
+      else { d.style.setProperty('--bg', '#1c1a17'); document.body.style.color = '#e8e3d8'; }
+    };
+  })();
+  </script>
+  <!-- shared-reading sync (separate from app/sync.js): broadcast the loaded doc + positions to followers -->
+  <script src="scratchpad-sync.js" defer></script>
+  <!-- shared script picker + auto-transliteration of the loaded content (all 11 lipis) -->
+  <script src="translit.js" defer></script>
+</body>
+</html>

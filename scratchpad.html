@@ -29,25 +29,10 @@
   #tog{cursor:pointer}
   .fname{font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  .wrap{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 55px)}
-  .toc{border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:55px;align-self:start;
-    max-height:calc(100vh - 55px);overflow:auto;background:var(--card)}
-  .toc h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  .toc a{display:block;padding:4px 8px;border-radius:7px;color:var(--ink);text-decoration:none;font-size:13.5px;
-    font-family:"Noto Serif Devanagari",serif}
-  .toc a.lvl2{margin-left:12px;font-size:13px;color:#5f584d}
-  .toc a.lvl3{margin-left:26px;font-size:12.5px;color:#7a7367}
-  .toc a:hover{background:var(--bg)}
-  .toc a.here{background:rgba(217,119,6,.12);color:var(--saffron);font-weight:600}
-  .toc .empty{color:var(--muted);font-size:12.5px;font-style:italic}
-  /* followers don't navigate (they follow the presenter) → drop the ToC, give the paper full width */
-  body.vv-follower .wrap{grid-template-columns:1fr}
-  body.vv-follower .toc{display:none}
-  /* small screens: readable, non-cramped document (esp. the follower's full-width view) */
+  /* no ToC in the scratchpad — the document gets full width on every device */
+  .wrap{min-height:calc(100vh - 55px)}
+  /* small screens: readable, non-cramped document */
   @media (max-width:640px){
-    body:not(.vv-follower) .wrap{grid-template-columns:150px 1fr}   /* presenter keeps a slim ToC */
-    .toc{padding:12px 8px}
-    .toc a{font-size:12.5px}
     .stage{padding:14px 8px 110px}
     .paper{padding:20px 15px}
     .paper h1{font-size:21px}
@@ -117,7 +102,6 @@
   </div>
 
   <div class="wrap">
-    <nav class="toc"><h4>अनुक्रमणिका · Contents</h4><div id="toc"><span class="empty">— load a document —</span></div></nav>
     <div>
       <div class="legend" id="legend" hidden></div>
       <div class="warn" id="warn" hidden></div>
@@ -125,12 +109,12 @@
         <div class="drop" id="drop">
           <h3>Drop a <b>.docx</b> here</h3>
           <div>or click <b>↧ Load .docx</b> — Word, or Google Docs → <i>File → Download → .docx</i></div>
-          <small>Headings become the Contents panel · your colour / underline / bold / highlight scheme is kept verbatim.</small>
+          <small>Your colour / underline / bold / highlight scheme is kept verbatim.</small>
           <div class="recents" id="recents"></div>
         </div>
         <article class="paper" id="paper" hidden></article>
       </div>
-      <div class="hint" id="hint" hidden>Click a Contents entry to jump · hover a word · switch <b>Script</b> (top-right) to read in another lipi. <i>Sync-scroll to followers arrives in Phase 2.</i></div>
+      <div class="hint" id="hint" hidden>Hover a word · switch <b>Script</b> (top-right) to read in another lipi · <b>⇉ Share reading</b> to sync-scroll followers.</div>
     </div>
   </div>
 
@@ -139,7 +123,7 @@
   'use strict';
   (function () {
     var fileEl = document.getElementById('file'), paper = document.getElementById('paper'),
-        drop = document.getElementById('drop'), toc = document.getElementById('toc'),
+        drop = document.getElementById('drop'),
         warnEl = document.getElementById('warn'), fname = document.getElementById('fname'),
         legend = document.getElementById('legend'), hint = document.getElementById('hint');
     var lastName = '';   // filename of the currently-loaded doc (for IndexedDB save/restore)
@@ -192,7 +176,7 @@
       paper.innerHTML = html;
       if (tokenizeIt) tokenize(paper);
       drop.hidden = true; paper.hidden = false; hint.hidden = false;
-      showLegend(); buildToc(); window.scrollTo(0, 0);
+      showLegend(); window.scrollTo(0, 0);
     }
 
     function render(res) {
@@ -234,28 +218,7 @@
       });
     }
 
-    var tocLinks = [];
-    function buildToc() {
-      toc.innerHTML = ''; tocLinks = [];
-      var hs = paper.querySelectorAll('h1,h2,h3');
-      if (!hs.length) { toc.innerHTML = '<span class="empty">No headings in this document.</span>'; return; }
-      hs.forEach(function (h) {
-        var a = document.createElement('a'); a.href = '#' + h.id; a.textContent = h.textContent; a.className = 'lvl' + h.tagName[1];
-        a.addEventListener('click', function (e) {
-          e.preventDefault();
-          document.getElementById(h.id).scrollIntoView({ behavior: 'smooth', block: 'start' });
-          if (window.__scratch && window.__scratch.onNav) window.__scratch.onNav(h.id);   // presenter → followers jump too
-        });
-        toc.appendChild(a); tocLinks.push({ a: a, el: h });
-      });
-    }
-    // scroll-spy
-    window.addEventListener('scroll', function () {
-      if (!tocLinks.length) return;
-      var best = null, bt = -1e9;
-      tocLinks.forEach(function (l) { var top = l.el.getBoundingClientRect().top; if (top <= 90 && top > bt) { bt = top; best = l; } });
-      tocLinks.forEach(function (l) { l.a.classList.toggle('here', l === best); });
-    }, { passive: true });
+    // (No ToC in the scratchpad — the document renders full-width; presenter scroll still syncs.)
 
     // minimal light/dark chrome toggle (the .paper stays light on purpose)
     document.getElementById('tog').onclick = function () {

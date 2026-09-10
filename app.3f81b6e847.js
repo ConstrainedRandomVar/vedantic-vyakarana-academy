@@ -1394,6 +1394,7 @@ function renderDashboard() {
       <div class="readgrid modegrid">
         <a class="rcard modecard" href="https://vyakarana-corpus-chat.onrender.com/" target="_blank" rel="noopener"><div class="rtitle">🔎 जिज्ञासा · Ask the corpus</div><div class="modetag">query all 15 texts</div><div class="modedesc">Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed.</div></a>
         <a class="rcard modecard" href="https://constrainedrandomvar.github.io/prasthanatrayi-search/" target="_blank" rel="noopener"><div class="rtitle">🔦 अन्वेषण · Full-text search</div><div class="modetag">find any phrase</div><div class="modedesc">Search the source texts &amp; commentaries for any word or phrase, with page-linked results.</div></a>
+        <a class="rcard modecard" href="scratchpad.html"><div class="rtitle">📝 शेमुषी · Shared-reading scratchpad</div><div class="modetag">present a Word / Doc</div><div class="modedesc">Load an instructor's Word / Google-Docs document — colour-coded pūrvapakṣa · siddhānta · pratīka come across verbatim — and share a live, script-independent read-along: students follow your scroll, highlight &amp; laser, each in their own lipi.</div></a>
       </div>
     </div>`;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');

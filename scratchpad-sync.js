@@ -52,6 +52,7 @@
     + '<div id="vvsync" hidden><span class="vs-role" id="vs-role"></span>'
     + '  <span class="vs-sid" id="vs-sid" style="color:var(--muted);font-size:11px"></span>'
     + '  <span style="flex:1"></span>'
+    + '  <button id="vs-link" type="button" title="Copy the student link">📋 link</button>'
     + '  <button id="vs-act" type="button"></button>'
     + '  <button id="vs-end" type="button" title="End for everyone">⏹ end</button></div>';
   function mount() { while (wrap.firstChild) document.body.appendChild(wrap.firstChild); init(); }
@@ -162,15 +163,15 @@
   }
 
   // ================= UI =================
-  var elRole, elSid, elAct, elEnd, bar, startBtn, pop;
+  var elRole, elSid, elAct, elEnd, elLink, bar, startBtn, pop;
   function render() {
     if (!elRole) return;
     var dot = '<span class="vs-dot ' + (status === 'live' ? 'on' : status === 'local' ? 'local' : '') + '"></span>';
     if (role === 'present') elRole.innerHTML = dot + (stopped ? '⏹ ended' : '🎙 presenting') + (followers != null ? ' · 👥 ' + followers : '');
     else elRole.innerHTML = dot + (ended ? '⏹ session ended' : status === 'offline' ? '⚠ reconnecting…' : brokeFree ? '🔓 detached' : '👀 following');
     elSid.textContent = SESSION + (RELAY ? ' · relay' : ' · local');
-    if (role === 'present') { elAct.style.display = 'none'; elEnd.style.display = ''; elEnd.textContent = stopped ? '⇉ present again' : '⏹ end'; }
-    else { elEnd.style.display = 'none'; elAct.style.display = ''; elAct.textContent = brokeFree ? '🔄 re-sync' : '🔓 break free'; elAct.className = brokeFree ? 'vs-hot' : ''; }
+    if (role === 'present') { elLink.style.display = ''; elAct.style.display = 'none'; elEnd.style.display = ''; elEnd.textContent = stopped ? '⇉ present again' : '⏹ end'; }
+    else { elLink.style.display = 'none'; elEnd.style.display = 'none'; elAct.style.display = ''; elAct.textContent = brokeFree ? '🔄 re-sync' : '🔓 break free'; elAct.className = brokeFree ? 'vs-hot' : ''; }
   }
 
   function startPresenting() {
@@ -196,7 +197,9 @@
   function init() {
     bar = document.getElementById('vvsync'); startBtn = document.getElementById('vvstart'); pop = document.getElementById('vvstart-pop');
     elRole = document.getElementById('vs-role'); elSid = document.getElementById('vs-sid');
-    elAct = document.getElementById('vs-act'); elEnd = document.getElementById('vs-end');
+    elAct = document.getElementById('vs-act'); elEnd = document.getElementById('vs-end'); elLink = document.getElementById('vs-link');
+    // 📋 student link — works whether presenting via the ⇉ button (random room) or a static key URL
+    elLink.onclick = function () { if (role !== 'present') return; if (pop.style.display === 'block') pop.style.display = 'none'; else showShare(SESSION); };
 
     // presenter emitters (harmless for followers — gated on role inside)
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -228,6 +231,8 @@
       bar.hidden = false; render();
       if (role === 'follow') { document.body.classList.add('vv-follower'); SC.hideLoadControls(); SC.setWaiting('Waiting for the presenter to share a document…'); }
       makeTx(function () { if (role === 'present' && lastDoc) send({ t: 'doc', html: lastDoc }); });
+      // static-key presenter (opened a ?session=…&role=present URL directly): auto-show the student link once
+      if (role === 'present') setTimeout(function () { showShare(SESSION); }, 500);
     } else {                                        // no session → offer the starter
       startBtn.hidden = false;
       startBtn.onclick = startPresenting;

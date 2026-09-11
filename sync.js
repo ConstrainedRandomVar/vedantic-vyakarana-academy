@@ -208,10 +208,11 @@
     }
 
     var tx = null, status = '…';
-    function send(data) { if (tx) tx.send({ room: SESSION, from: SELF, role: role, data: data }); }
+    function send(data) { if (tx) { data.app = 'reading'; tx.send({ room: SESSION, from: SELF, role: role, data: data }); } }
     function onMsg(m) {
       if (!m || m.room !== SESSION || m.from === SELF) return;
       var d = m.data || {};
+      if (d.app && d.app !== 'reading') return;   // ignore other-app (scratchpad) traffic on a shared key; legacy untagged msgs still accepted
       if (d.t === 'hello') { if (role === 'present' && activeTab()) { sendView(); if (last.ref) sendPos(last.ref, last.k); } return; }
       if (d.t === 'pos') { if (role === 'follow' && !replaying) { if (ended) { ended = false; brokeFree = false; render(); } if (maybeNav(d.page, d.ref)) return; applyPos(d.ref, d.k); } return; }
       if (d.t === 'point') {

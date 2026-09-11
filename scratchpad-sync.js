@@ -69,6 +69,9 @@
   var lastDoc = null, lastRef = null, lastK = null;
   var brokeFree = false, ended = false, stopped = false, followers = null;
   var pendingDoc = null;
+  var APP = 'scratch';                                // wire-tag: a shared key must not cross-wire with app/sync.js (static reading pages)
+  function visible() { try { return document.visibilityState !== 'hidden'; } catch (e) { return true; } }
+  function activeTab() { try { return visible() && document.hasFocus(); } catch (e) { return true; } }
 
   function mkRoom() {
     try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID().replace(/-/g, '').slice(0, 8); } catch (e) {}
@@ -82,7 +85,7 @@
   }
 
   // ================= sync helpers =================
-  function send(data) { if (tx) tx.send({ room: SESSION, from: SELF, role: role, data: data }); }
+  function send(data) { if (tx) { data.app = APP; tx.send({ room: SESSION, from: SELF, role: role, data: data }); } }
   function headingAtTop() {
     var els = document.querySelectorAll('[id^="sec-"]'), best = null, bt = -1e9;
     for (var i = 0; i < els.length; i++) { var t = els[i].getBoundingClientRect().top; if (t <= 140 && t > bt) { bt = t; best = els[i]; } }
@@ -110,7 +113,8 @@
   function onMsg(m) {
     if (!m || m.room !== SESSION || m.from === SELF) return;
     var d = m.data || {};
-    if (d.t === 'hello') { if (role === 'present') { if (lastDoc) send({ t: 'doc', html: lastDoc }); if (lastRef) send({ t: 'pos', ref: lastRef, k: lastK }); } return; }
+    if (d.app && d.app !== APP) return;                // ignore other-app (static reading page) traffic on a shared key; legacy untagged msgs still accepted
+    if (d.t === 'hello') { if (role === 'present' && visible()) { if (lastDoc) send({ t: 'doc', html: lastDoc }); if (lastRef) send({ t: 'pos', ref: lastRef, k: lastK }); } return; }
     if (role !== 'follow') { if (d.t === 'roster') { followers = d.followers; render(); } return; }
     if (d.t === 'doc') { if (ended) { ended = false; brokeFree = false; } applyDocMsg(d.html); return; }
     if (d.t === 'pos') { applyPos(d.ref, d.k); return; }
@@ -141,12 +145,12 @@
   // ================= presenter emitters =================
   var scrollT = 0, ptTs = 0, lastPt = null;
   function onScroll() {
-    if (role !== 'present' || stopped) return;
+    if (role !== 'present' || stopped || !visible()) return;
     clearTimeout(scrollT);
     scrollT = setTimeout(function () { var r = headingAtTop(); if (r && r !== lastRef) { lastRef = r; send({ t: 'pos', ref: r, k: null }); } }, 220);
   }
   function onMove(e) {
-    if (role !== 'present' || stopped) return;
+    if (role !== 'present' || stopped || !visible()) return;
     var now = Date.now(); if (now - ptTs < 70) return; ptTs = now;
     var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
     var k = el ? el.getAttribute('data-k') : null;
@@ -154,7 +158,7 @@
     applyPoint(k); send({ t: 'point', k: k });
   }
   function onClick(e) {
-    if (role !== 'present' || stopped) return;
+    if (role !== 'present' || stopped || !visible()) return;
     var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
     if (!el) { clearHi(); clearPt(); send({ t: 'clear' }); return; }
     if (el.classList.contains('synchi')) { clearHi(); clearPt(); send({ t: 'clear' }); return; }
@@ -209,10 +213,15 @@
     window.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (role === 'present' && !stopped) { clearHi(); clearPt(); send({ t: 'clear' }); } else { clearHi(); clearPt(); } } });
     // follower break-free / re-sync
     ['wheel', 'touchmove'].forEach(function (ev) { window.addEventListener(ev, function () { if (role === 'follow' && !brokeFree) { brokeFree = true; render(); } }, { passive: true }); });
+    // "current active tab wins": when a presenter tab regains focus/visibility it re-asserts (re-pushes doc + pos)
+    // so it — not a stale/background tab on the same key — is the one driving followers.
+    function announceLive() { if (role === 'present' && !stopped && activeTab()) { if (lastDoc) send({ t: 'doc', html: lastDoc }); var r = headingAtTop(); if (r) { lastRef = r; send({ t: 'pos', ref: r, k: lastK }); } } }
+    window.addEventListener('focus', announceLive);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(announceLive, 60); });
 
     // presenter: broadcast a freshly-loaded doc + ToC clicks
-    SC.onDocLoaded = function (html) { lastDoc = html; if (role === 'present' && !stopped) { send({ t: 'doc', html: html }); var r = headingAtTop(); if (r) { lastRef = r; send({ t: 'pos', ref: r, k: null }); } } };
-    SC.onNav = function (ref) { if (role === 'present' && !stopped) { lastRef = ref; send({ t: 'pos', ref: ref, k: null }); } };
+    SC.onDocLoaded = function (html) { lastDoc = html; if (role === 'present' && !stopped && visible()) { send({ t: 'doc', html: html }); var r = headingAtTop(); if (r) { lastRef = r; send({ t: 'pos', ref: r, k: null }); } } };
+    SC.onNav = function (ref) { if (role === 'present' && !stopped && visible()) { lastRef = ref; send({ t: 'pos', ref: ref, k: null }); } };
 
     elAct.onclick = function () {   // follower break-free / re-sync
       if (role !== 'follow') return;

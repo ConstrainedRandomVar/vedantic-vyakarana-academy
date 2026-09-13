@@ -8,9 +8,10 @@
 .rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
 /* avatārikā (prelude) — dashed pre-zone ABOVE the mūla; bhāṣya content, hidden in मूलम्-only mode.
    Small-caps ::before label matches the prasthānatrayī pre-zone (CLAUDE.md consistency). */
-.pre-zone{margin:0 0 12px;padding:10px 14px 6px;border-left:3px dashed var(--role);border-radius:0 10px 10px 0}
-.pre-zone::before{content:"अवतारिका";display:block;font-family:-apple-system,sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--role);opacity:.85;margin-bottom:4px}
-.pre-zone .avat{border:0;padding:0;margin:0}
+.pre-zone{margin:0 0 12px;padding:10px 14px 6px;border-left:3px dashed var(--muted);border-radius:0 10px 10px 0}
+.pre-zone::before{content:"अवतारिका";display:block;font-family:-apple-system,sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:4px}
+/* the ONLY rule is the pre-zone's dashed gray border — strip inner .avat/.gs solid borders (no double line) */
+.pre-zone .avat,.pre-zone .gs{border:0;padding:0;margin:0 0 4px}
 body.view-mula .pre-zone{display:none}
 .moola,.vjoin,.vpada{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif}
 .moola{font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}

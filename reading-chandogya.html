@@ -422,9 +422,11 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 </div></details><div class="legrow" style="margin:0 0 18px"><a class="refbadge" style="text-decoration:none" href="reading-chandogya-1.html">अध्यायः 1</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-2.html">अध्यायः 2</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-3.html">अध्यायः 3</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-4.html">अध्यायः 4</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-5.html">अध्यायः 5</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-6.html">अध्यायः 6</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-7.html">अध्यायः 7</a><a class="refbadge" style="text-decoration:none" href="reading-chandogya-8.html">अध्यायः 8</a></div><div id="tip"></div><script>var GM={};var GB={};var GBP={};
 var tip=document.getElementById('tip');
 function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
+// kāraka + its case-ordaining सूत्र on ONE line (the sūtra explains why this kāraka takes this case)
+function krow(role,sutra){return (role||sutra)?'<div class="row"><span class="lb">kāraka</span> '+(role||'—')+(sutra?' <span class="lb">सूत्र</span> '+sutra:'')+'</div>':'';}
 function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
   if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
-  h+=mrow(d.lemLabel||'प्रकृति',d.lem)+mrow(d.morphLabel||'vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('व्याकरणम्',d.g)+mrow('सूत्र',d.sutra)+mrow('samāsa',d.sam);
+  h+=mrow('व्याकरणम्',d.g)+krow(d.role,d.sutra)+mrow('samāsa',d.sam);
   if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';
   if(d.p)h+='<div class="peel">'+d.p+'</div>';return h;}
 function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;

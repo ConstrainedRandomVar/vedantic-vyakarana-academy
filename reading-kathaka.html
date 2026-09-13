@@ -1,4 +1,4 @@
-<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>कठोपनिषद् — एकीकृत-पाठः</title><style>
+<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kaṭhopaniṣad — एकीकृत-पाठः</title><style>
 :root{
   /* shared shell */
   --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:#d97706;
@@ -188,7 +188,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 @media(max-width:520px){.topbar{flex-wrap:wrap}.topbar .grow{width:100%;justify-content:flex-start}
   .topbar .seg button{padding:5px 8px;font-size:11.5px}.seglbl{font-size:11px}
   .topbar select{font-size:12px;padding:4px 6px;min-width:0}.topbar #tog{padding:5px 8px;font-size:11.5px}}
-body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:clip}</style></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>कठोपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:clip}</style></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>Kaṭhopaniṣad — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
 #reading-nav .rn-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
 #reading-nav .rn-tools>*{margin:0 !important}
 #reading-nav .rn-picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
@@ -424,7 +424,7 @@ var tip=document.getElementById('tip');
 function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
 function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
   if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
-  h+=mrow(d.morphLabel||'vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('सूत्र',d.sutra)+mrow('samāsa',d.sam)+mrow('व्याकरण',d.g);
+  h+=mrow(d.lemLabel||'प्रकृति',d.lem)+mrow(d.morphLabel||'vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('व्याकरणम्',d.g)+mrow('सूत्र',d.sutra)+mrow('samāsa',d.sam);
   if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';
   if(d.p)h+='<div class="peel">'+d.p+'</div>';return h;}
 function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
@@ -437,9 +437,9 @@ function show(t){
   var d=t.dataset.k?GM[t.dataset.k]:null;
   if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
   else if(t.dataset.w){var g=GB[t.dataset.w],pl=GBP[t.dataset.w];
-    // bhāṣya word: plain gloss, PLUS the recursive samāsa peel when this compound has one (§9 lane)
-    if(pl&&pl.length){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+'<div class="peel">'+pl.join('<br>')+'</div>';}
-    else if(g){tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
+    // bhāṣya word: ALWAYS the card (word + gloss), + the recursive samāsa peel when this compound has one
+    // (§9 lane). Uniform shell so a non-compound word (puruṣeṇa) looks like a compound (avidyā-rūpam).
+    if(g||(pl&&pl.length)){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+((pl&&pl.length)?'<div class="peel">'+pl.join('<br>')+'</div>':'');}
     else return;}
   else return;
   tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}

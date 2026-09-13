@@ -427,7 +427,7 @@ var tip=document.getElementById('tip');
 function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+v+'</div>':'';}
 function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
   if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
-  h+=mrow(d.morphLabel||'vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('सूत्र',d.sutra)+mrow('samāsa',d.sam)+mrow('व्याकरण',d.g);
+  h+=mrow(d.lemLabel||'प्रकृति',d.lem)+mrow(d.morphLabel||'vibhakti',d.morph)+mrow('kāraka',d.role)+mrow('व्याकरणम्',d.g)+mrow('सूत्र',d.sutra)+mrow('samāsa',d.sam);
   if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';
   if(d.p)h+='<div class="peel">'+d.p+'</div>';return h;}
 function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
@@ -440,9 +440,9 @@ function show(t){
   var d=t.dataset.k?GM[t.dataset.k]:null;
   if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
   else if(t.dataset.w){var g=GB[t.dataset.w],pl=GBP[t.dataset.w];
-    // bhāṣya word: plain gloss, PLUS the recursive samāsa peel when this compound has one (§9 lane)
-    if(pl&&pl.length){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+'<div class="peel">'+pl.join('<br>')+'</div>';}
-    else if(g){tip.className='plain';tip.textContent=t.dataset.w+' — '+g;}
+    // bhāṣya word: ALWAYS the card (word + gloss), + the recursive samāsa peel when this compound has one
+    // (§9 lane). Uniform shell so a non-compound word (puruṣeṇa) looks like a compound (avidyā-rūpam).
+    if(g||(pl&&pl.length)){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+((pl&&pl.length)?'<div class="peel">'+pl.join('<br>')+'</div>':'');}
     else return;}
   else return;
   tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}

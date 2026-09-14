@@ -77,6 +77,10 @@ body.view-both .ardha-int{display:none}
 .moola.gmoola{font-size:19px}.gmoola .gw{cursor:help}.moolatr{margin:0 0 10px}
 .mw{padding:1px;border-radius:4px;transition:background .25s}.mw.flash{background:#fde68a;color:#7c2d12}
 .pratika{color:var(--morph);font-weight:700;cursor:pointer;border-bottom:1.5px dotted var(--morph)}.pratika:hover{background:rgba(26,86,219,.09)}
+.pratika{transition:background .25s}.pratika.flash{background:#fde68a;color:#7c2d12}
+/* reverse jump affordance: a mūla word that the bhāṣya quotes → click flashes its pratīka. Only shown in
+   मूलम्+भाष्यम् mode (the bhāṣya must be visible for the jump to land). */
+body.view-both .mulq{cursor:pointer;border-bottom:1.5px dotted var(--mula)}
 /* भाष्य gloss tooltip = the SAME stacked card as the mūla #tip (CLAUDE.md #9b) */
 .gtip{position:fixed;z-index:9999;max-width:min(92vw,360px);background:var(--ink);color:var(--bg);padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;white-space:normal;font-family:"Noto Serif Devanagari","Kohinoor Devanagari",serif;display:none}
 .gtip .tw{font-size:16px;font-weight:700;color:var(--bg)}
@@ -342,6 +346,13 @@ document.querySelectorAll('.modebar button').forEach(function(b){b.addEventListe
 var init='sandhi';try{init=localStorage.getItem(K)||'sandhi';}catch(e){}set(init);})();
 (function(){var K='vvViewMode';var bs=document.querySelectorAll('.viewbar button');if(!bs.length)return;function set(m){document.body.classList.remove('view-mula','view-both');document.body.classList.add('view-'+m);bs.forEach(function(b){b.classList.toggle('on',b.dataset.view===m);});if(window.__readingNav&&window.__readingNavRefs)window.__readingNav.setRefs(window.__readingNavRefs[m==='both'?'both':'mula']);try{localStorage.setItem(K,m);}catch(e){}}bs.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.view);});});var iv='mula';try{iv=localStorage.getItem(K)||'mula';}catch(e){}set(iv);})();(function(){var K='vvTransMode';var btn=document.getElementById('transtog');if(!btn)return;function set(on){document.body.classList.toggle('trans-on',on);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');try{localStorage.setItem(K,on?'1':'0');}catch(e){}}btn.addEventListener('click',function(){set(!document.body.classList.contains('trans-on'));});var it=false;try{it=localStorage.getItem(K)==='1';}catch(e){}set(it);})();
 document.addEventListener('click',function(e){var p=e.target.closest('.pratika');if(!p)return;var t=document.getElementById(p.dataset.t);if(!t)return;t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.add('flash');setTimeout(function(){t.classList.remove('flash')},1400);});
+// REVERSE (mūla → bhāṣya): tag each pratīka's target mūla word .mulq (+ remember its pratīka[s]); clicking a
+// quoted mūla word flashes the bhāṣya pratīka that cites it — the mirror of the forward jump above. Only in
+// मूलम्+भाष्यम् mode (bhāṣya visible). Capture + stopPropagation so the mūla word's own gloss-card pin doesn't
+// also fire → one clean jump, symmetric with the pratīka click. mūla-only prakaraṇa texts have no .pratika,
+// so this is a no-op there.
+(function(){var ps=document.querySelectorAll('.pratika[data-t]');for(var i=0;i<ps.length;i++){var t=document.getElementById(ps[i].dataset.t);if(t){t.classList.add('mulq');(t.__prat=t.__prat||[]).push(ps[i]);}}})();
+document.addEventListener('click',function(e){if(!document.body.classList.contains('view-both'))return;var m=e.target.closest('.mulq');if(!m||!m.__prat)return;var p=null;for(var i=0;i<m.__prat.length;i++){if(m.__prat[i].offsetParent!==null){p=m.__prat[i];break;}}if(!p)return;e.preventDefault();e.stopPropagation();p.scrollIntoView({behavior:'smooth',block:'center'});p.classList.add('flash');setTimeout(function(){p.classList.remove('flash')},1400);},true);
 (function(){var tip=document.createElement('div');tip.className='gtip';document.body.appendChild(tip);var pinned=null;
 function card(el){
   // fused सन्धि unit (.bhfuse): no inline data — build the combined card from the sibling पद member spans

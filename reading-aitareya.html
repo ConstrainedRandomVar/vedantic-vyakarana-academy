@@ -96,6 +96,9 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 .vjoin .jl{margin:1px 0}.vjoin .dnd{color:var(--muted);font-weight:400;padding:0 .12em}
 body.metmode-sandhi .moola.vpada{font-size:14.5px;line-height:1.85;color:var(--muted);font-weight:500;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
 body.metmode-pada .vjoin{display:none}
+/* bhāṣya पद-mode: a fused word carries both display forms; the सन्धि/पद toggle swaps them (सन्धि keeps the
+   commentator's original joined text; पद shows the sandhi-resolved padaccheda). Default = सन्धि. */
+.bhsp{display:none} body.metmode-pada .bhsj{display:none} body.metmode-pada .bhsp{display:inline}
 .metbar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 0 0 8px;vertical-align:middle}
 .metbar button{border:none;border-radius:0;background:var(--card);color:var(--muted);padding:5px 12px;font-size:12px;border-right:1px solid var(--line);cursor:pointer}
 .metbar button:last-child{border-right:none}.metbar button.on{background:var(--moola);color:#fff}
@@ -438,10 +441,16 @@ function show(t){
   // case fall through to data-w (bhāṣya plain gloss); ṭīkā words have neither, so they show nothing.
   var d=t.dataset.k?GM[t.dataset.k]:null;
   if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
-  else if(t.dataset.w){var g=GB[t.dataset.w],pl=GBP[t.dataset.w];
-    // bhāṣya word: ALWAYS the card (word + gloss), + the recursive samāsa peel when this compound has one
-    // (§9 lane). Uniform shell so a non-compound word (puruṣeṇa) looks like a compound (avidyā-rūpam).
-    if(g||(pl&&pl.length)){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+((pl&&pl.length)?'<div class="peel">'+pl.join('<br>')+'</div>':'');}
+  else if(t.dataset.w){var gb=GB[t.dataset.w],pl=GBP[t.dataset.w];
+    // bhāṣya word: the SAME stacked card as the mūla (CLAUDE.md #9b) — meaning (green) + पदच्छेद (sandhi-split,
+    // e.g. मयोक्तमिति → मया + उक्तम् + इति) + व्याकरणम् + recursive samāsa peel. The commentary TEXT stays
+    // un-split inline (sacrosanct); the padaccheda is revealed here on hover.
+    if(gb||(pl&&pl.length)){tip.className='';var hh='<div class="tw">'+t.dataset.w+'</div>';
+      if(gb&&gb.m)hh+='<div class="tm">'+gb.m+'</div>';
+      if(gb&&gb.p)hh+='<div class="row"><span class="lb">पदच्छेद</span> '+gb.p+'</div>';
+      if(gb&&gb.g)hh+='<div class="row"><span class="lb">व्याकरणम्</span> '+gb.g+'</div>';
+      if(pl&&pl.length)hh+='<div class="peel">'+pl.join('<br>')+'</div>';
+      tip.innerHTML=hh;}
     else return;}
   else return;
   tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}

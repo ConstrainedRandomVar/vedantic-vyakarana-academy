@@ -1,4 +1,4 @@
-<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kaṭhopaniṣad — एकीकृत-पाठः</title><style>
+<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kaṭha Upaniṣad — एकीकृत-पाठः</title><style>
 :root{
   /* shared shell */
   --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:#d97706;
@@ -96,6 +96,9 @@ button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
 .vjoin .jl{margin:1px 0}.vjoin .dnd{color:var(--muted);font-weight:400;padding:0 .12em}
 body.metmode-sandhi .moola.vpada{font-size:14.5px;line-height:1.85;color:var(--muted);font-weight:500;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
 body.metmode-pada .vjoin{display:none}
+/* bhāṣya पद-mode: a fused word carries both display forms; the सन्धि/पद toggle swaps them (सन्धि keeps the
+   commentator's original joined text; पद shows the sandhi-resolved padaccheda). Default = सन्धि. */
+.bhsp{display:none} body.metmode-pada .bhsj{display:none} body.metmode-pada .bhsp{display:inline}
 .metbar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 0 0 8px;vertical-align:middle}
 .metbar button{border:none;border-radius:0;background:var(--card);color:var(--muted);padding:5px 12px;font-size:12px;border-right:1px solid var(--line);cursor:pointer}
 .metbar button:last-child{border-right:none}.metbar button.on{background:var(--moola);color:#fff}
@@ -188,7 +191,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 @media(max-width:520px){.topbar{flex-wrap:wrap}.topbar .grow{width:100%;justify-content:flex-start}
   .topbar .seg button{padding:5px 8px;font-size:11.5px}.seglbl{font-size:11px}
   .topbar select{font-size:12px;padding:4px 6px;min-width:0}.topbar #tog{padding:5px 8px;font-size:11.5px}}
-body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:clip}</style></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>Kaṭhopaniṣad — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}html,body{overflow-x:clip}</style></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>Kaṭha Upaniṣad — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
 #reading-nav .rn-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
 #reading-nav .rn-tools>*{margin:0 !important}
 #reading-nav .rn-picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
@@ -438,10 +441,16 @@ function show(t){
   // case fall through to data-w (bhāṣya plain gloss); ṭīkā words have neither, so they show nothing.
   var d=t.dataset.k?GM[t.dataset.k]:null;
   if(d){tip.className='';tip.innerHTML=mulaHtml(d);}
-  else if(t.dataset.w){var g=GB[t.dataset.w],pl=GBP[t.dataset.w];
-    // bhāṣya word: ALWAYS the card (word + gloss), + the recursive samāsa peel when this compound has one
-    // (§9 lane). Uniform shell so a non-compound word (puruṣeṇa) looks like a compound (avidyā-rūpam).
-    if(g||(pl&&pl.length)){tip.className='';tip.innerHTML='<div class="tw">'+t.dataset.w+'</div>'+(g?'<div class="tm">'+g+'</div>':'')+((pl&&pl.length)?'<div class="peel">'+pl.join('<br>')+'</div>':'');}
+  else if(t.dataset.w){var gb=GB[t.dataset.w],pl=GBP[t.dataset.w];
+    // bhāṣya word: the SAME stacked card as the mūla (CLAUDE.md #9b) — meaning (green) + पदच्छेद (sandhi-split,
+    // e.g. मयोक्तमिति → मया + उक्तम् + इति) + व्याकरणम् + recursive samāsa peel. The commentary TEXT stays
+    // un-split inline (sacrosanct); the padaccheda is revealed here on hover.
+    if(gb||(pl&&pl.length)){tip.className='';var hh='<div class="tw">'+t.dataset.w+'</div>';
+      if(gb&&gb.m)hh+='<div class="tm">'+gb.m+'</div>';
+      if(gb&&gb.p)hh+='<div class="row"><span class="lb">पदच्छेद</span> '+gb.p+'</div>';
+      if(gb&&gb.g)hh+='<div class="row"><span class="lb">व्याकरणम्</span> '+gb.g+'</div>';
+      if(pl&&pl.length)hh+='<div class="peel">'+pl.join('<br>')+'</div>';
+      tip.innerHTML=hh;}
     else return;}
   else return;
   tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}

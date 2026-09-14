@@ -6,21 +6,21 @@
   --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
   /* मनन (bhasya roles) */
   --mula:#1a56db;--gloss:#3f4653;--import:#6d28d9;--vyak:#6b6255;--purva:#b91c1c;
-  --eka:#c2410c;--sid:#15803d;--quote:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--introbg:#f2ede2;
+  --eka:#c2410c;--sid:#15803d;--cite:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--introbg:#f2ede2;
   --mulatint:rgba(124,90,30,.05);
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){
   --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
   --mulatint:rgba(217,184,119,.07);
 }}
 :root[data-theme=dark]{
   --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--quote:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
   --mulatint:rgba(217,184,119,.07);
 }
 *{box-sizing:border-box}
@@ -117,10 +117,10 @@ body.metmode-pada .vjoin{display:none}
   letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
 .bh{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:19px;line-height:2.05}
 .bhd{color:var(--muted);font-weight:400;padding:0 .12em}/* injected sentence daṇḍa (from the Zenodo body) */
-.cite.lk{color:#0e7490;text-decoration:none;border-bottom:1px dotted #0e7490;cursor:pointer}
-.cite.lk:hover{background:rgba(14,116,144,.14);border-radius:3px}.cite{color:#0e7490}
-@media(prefers-color-scheme:dark){.cite.lk,.cite{color:#5eead4;border-color:#5eead4}}
-:root[data-theme=dark] .cite.lk,:root[data-theme=dark] .cite{color:#5eead4;border-color:#5eead4}
+.cite.lk{color:var(--cite);text-decoration:none;border-bottom:1px dotted var(--cite);cursor:pointer}
+.cite.lk:hover{background:rgba(14,116,144,.14);border-radius:3px}.cite{color:var(--cite)}
+@media(prefers-color-scheme:dark){.cite.lk,.cite{color:var(--cite);border-color:var(--cite)}}
+:root[data-theme=dark] .cite.lk,:root[data-theme=dark] .cite{color:var(--cite);border-color:var(--cite)}
 
 /* व्याख्या · side-commentary (Ānandagiri-ṭīkā etc.). TWO placements:
    अन्तः (interleaved, DEFAULT) — notes dropped inline into the bhāṣya at their anchor;
@@ -166,7 +166,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
 .purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}
 .sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
-.quote{color:var(--quote)}
+.quote{color:var(--cite)}
 
 /* hover words: NO dotted underline, just subtle bg + help cursor */
 .w{cursor:help}.w:hover{background:rgba(120,120,120,.15);border-radius:3px}
@@ -404,7 +404,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
       <span class="item"><span class="sw" style="background:var(--vyak)"></span>व्याकरणम्</span>
       <span class="item"><span class="sw" style="background:var(--purva)"></span>पूर्वपक्षः</span>
       <span class="item"><span class="sw" style="background:var(--sid)"></span>सिद्धान्तः</span>
-      <span class="item"><span class="sw" style="background:var(--quote)"></span>प्रमाण-वाक्यम्</span>
+      <span class="item"><span class="sw" style="background:var(--cite)"></span>प्रमाण-वाक्यम्</span>
       <span class="item"><u style="text-underline-offset:3px;text-decoration-thickness:1.5px">सङ्ग्रहः</u> · summary-thread</span>
     </div>
   </div>

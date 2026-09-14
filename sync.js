@@ -412,6 +412,15 @@
       setTimeout(announceLive, 60);
     });
 
+    // bridge: a cross-layer word jump (bhāṣya⇄mūla, ṭīkā⇄bhāṣya) from the page's gloss card.
+    // Presenter → broadcast the destination as a normal position so every follower jumps + highlights too
+    // (a jump's target IS a (ref, word-key), exactly what sendPos carries). Follower → treat the jump as
+    // "explore" and break free so the next presenter position doesn't yank them back (they can re-sync).
+    window.__vvJump = function (ref, k) {
+      if (role === 'present' && !paused && !stopped) { clearHi(); if (k) { var el = qK(k); if (el) el.classList.add('synchi'); } sendPos(ref, k || null); }
+      else if (role === 'follow' && !brokeFree && !replaying) { brokeFree = true; render(); }
+    };
+
     // bridge: the page's commentary chooser calls this on a user change → presenter broadcasts it
     window.__vvView = window.__vvView || {};
     window.__vvView.onChange = function (s, pl) { if (role === 'present' && !paused && !stopped) { lastView = { side: s, place: pl }; send({ t: 'view', side: s, place: pl }); } };

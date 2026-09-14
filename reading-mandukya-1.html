@@ -492,7 +492,7 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],sk=SK(surfOf(t));
     if(hit)rows.push(jr('pb',ref,hit,''));}
   if(inBh&&sk&&findTikaEl(ref,sk)) rows.push(jr('t',ref,sk,''));                                // bhāṣya → टीका (if cited)
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
-function jr(cat,ref,sk){var lb={m:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',t:'→ टीका'}[cat];
+function jr(cat,ref,sk){var lb={m:'→ मूलम्',mq:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',t:'→ टीका'}[cat];
   return '<span class="jrow" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+sk+'">'+lb+'</span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
 function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),el=null;

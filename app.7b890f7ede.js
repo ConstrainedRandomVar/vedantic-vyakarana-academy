@@ -3532,9 +3532,12 @@ function tutorialStepLabelBase(step, sentence) {
       const qualifiedIdx = coreArgIndices(c, step.side)[0];
       const argWord = qualifiedIdx != null ? `<b>${esc(sentence.words[qualifiedIdx])}</b>` : '';
       const argLabel = step.side === 'karta' ? 'कर्ता' : 'कर्म';
-      // when the compared arg IS the cluster head (a nominal-predication subject), gov and argWord are
-      // the same word — don't tack on the redundant "(the कर्ता of X)" clause.
-      if (qualifiedIdx === c.governorWordIndex) return `${qWord} must share which लिङ्ग (gender) with ${argWord}?`;
+      // when the compared arg IS the governor (a nominal-predication subject / subjectIsHead, or the same
+      // WORD even at a different index — e.g. PD 7.295 धन्यः twice), gov and argWord coincide — don't tack
+      // on the self-referential "(the कर्ता/कर्म of X)" clause. Mirrors the qualifierKarta/Karma guard;
+      // generalized 2026-09-15 (the plain index-match missed subjectIsHead karma-side + repeated words).
+      if (qualifiedIdx === c.governorWordIndex || c.subjectIsHead || sentence.words[qualifiedIdx] === c.governorWord)
+        return `${qWord} must share which लिङ्ग (gender) with ${argWord}?`;
       return `${qWord} must share which लिङ्ग (gender) with ${argWord} (the ${argLabel} of ${gov})?`;
     }
     case 'samuccayaKarta':

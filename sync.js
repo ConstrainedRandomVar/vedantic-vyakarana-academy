@@ -430,3 +430,45 @@
     if (role === 'present') { setTimeout(function () { if (activeTab()) { sendView(); var r0 = curVerse(); if (r0) { lastRef = r0; sendPos(r0, null); } } }, 300); }
   })();
 })();
+
+// ---- Search deep-link highlighter (?hl=<term>) — powers the search tool's "svādhyāya ↗" links.
+// Finds the matched phrase in the target verse (from #v-<ref>) and highlights it, so the user lands ON
+// the searched word, not just the verse. The search surface is the सन्धि (joined) form, so we reveal the
+// सन्धि layer and match tolerantly (ignoring ZWNJ + whitespace) within a text node. Separate from the
+// sync feature above; inert unless ?hl= is present. (2026-09-15) ----
+(function () {
+  var term; try { term = new URLSearchParams(location.search).get('hl'); } catch (e) { return; }
+  if (!term || !(term = term.trim())) return;
+  var nterm = term.replace(/[‌‍]/g, '').replace(/\s+/g, '');
+  if (!nterm) return;
+  function highlightIn(root) {
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), node;
+    while ((node = w.nextNode())) {
+      var raw = node.nodeValue; if (!raw || !raw.trim()) continue;
+      var map = [], nrm = '';
+      for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || /\s/.test(c)) continue; map.push(i); nrm += c; }
+      var pos = nrm.indexOf(nterm); if (pos < 0) continue;
+      try {
+        var rng = document.createRange();
+        rng.setStart(node, map[pos]); rng.setEnd(node, map[pos + nterm.length - 1] + 1);
+        var mark = document.createElement('mark'); mark.className = 'svhl'; rng.surroundContents(mark);
+        return mark;
+      } catch (e) { /* match crosses element boundary — keep scanning */ }
+    }
+    return null;
+  }
+  function run() {
+    try { document.body.classList.remove('mode-pada'); document.body.classList.add('mode-sandhi'); } catch (e) {}
+    if (!document.getElementById('svhl-style')) {
+      var st = document.createElement('style'); st.id = 'svhl-style';
+      st.textContent = '.svhl{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px;box-shadow:0 0 0 2px #fde68a}@media(prefers-color-scheme:dark){.svhl{background:#8a7414;color:#fff;box-shadow:0 0 0 2px #8a7414}}';
+      document.head.appendChild(st);
+    }
+    var scope = null, h = (location.hash || '').replace(/^#/, '');
+    if (h) { try { scope = document.getElementById(h); } catch (e) {} }
+    var hit = (scope && highlightIn(scope)) || highlightIn(document.body);
+    if (hit) setTimeout(function () { try { hit.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }, 60);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(run, 150); });
+  else setTimeout(run, 150);
+})();

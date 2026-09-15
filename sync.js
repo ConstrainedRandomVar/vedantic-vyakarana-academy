@@ -439,18 +439,24 @@
 (function () {
   var term; try { term = new URLSearchParams(location.search).get('hl'); } catch (e) { return; }
   if (!term || !(term = term.trim())) return;
-  var nterm = term.replace(/[‌‍]/g, '').replace(/\s+/g, '');
+  // Canonicalize so a search term matches its sandhi/compound-joined surface: an independent vowel that
+  // got absorbed after a consonant becomes a mātrā (आत्मा searched, but स्वात्मा shown → the आ is written ा).
+  // Also drop ZWNJ + whitespace. This is the SAME lenient equivalence the search matcher uses.
+  var VMAP = { 'आ': 'ा', 'इ': 'ि', 'ई': 'ी', 'उ': 'ु', 'ऊ': 'ू', 'ऋ': 'ृ', 'ॠ': 'ॄ', 'ऌ': 'ॢ', 'ए': 'े', 'ऐ': 'ै', 'ओ': 'ो', 'औ': 'ौ' };
+  var COMBINING = /[ािीुूृॄॢेैोौंँः्]/;   // if a match starts on one of these, extend back to its base consonant
+  function canon(c) { return VMAP[c] || c; }
+  function nrmOf(raw) { var map = [], s = ''; for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || /\s/.test(c)) continue; map.push(i); s += canon(c); } return { s: s, map: map }; }
+  var nterm = nrmOf(term).s;
   if (!nterm) return;
   function highlightIn(root) {
     var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), node;
     while ((node = w.nextNode())) {
       var raw = node.nodeValue; if (!raw || !raw.trim()) continue;
-      var map = [], nrm = '';
-      for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || /\s/.test(c)) continue; map.push(i); nrm += c; }
-      var pos = nrm.indexOf(nterm); if (pos < 0) continue;
+      var n = nrmOf(raw), pos = n.s.indexOf(nterm); if (pos < 0) continue;
+      var startRaw = n.map[pos], endRaw = n.map[pos + nterm.length - 1] + 1;
+      if (startRaw > 0 && COMBINING.test(raw[startRaw])) startRaw--;   // don't start mid-akṣara
       try {
-        var rng = document.createRange();
-        rng.setStart(node, map[pos]); rng.setEnd(node, map[pos + nterm.length - 1] + 1);
+        var rng = document.createRange(); rng.setStart(node, startRaw); rng.setEnd(node, endRaw);
         var mark = document.createElement('mark'); mark.className = 'svhl'; rng.surroundContents(mark);
         return mark;
       } catch (e) { /* match crosses element boundary — keep scanning */ }

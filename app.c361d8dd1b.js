@@ -35,7 +35,6 @@ const CODE_LABEL_OVERRIDES = {
 const SAMASA_LABELS = {
   'Dvandva': 'द्वन्द्व', 'Bahuvrīhi': 'बहुव्रीहि', 'Karmadhāraya': 'कर्मधारय', 'Dvigu': 'द्विगु',
   'Avyayībhāva': 'अव्ययीभाव', 'Nañ-tatpuruṣa': 'नञ्-तत्पुरुष',
-  'Rūpaka (metaphor-compound)': 'रूपक (तत्पुरुष)',
   'TP: general (unspecified vibhakti)': 'तत्पुरुष',
   'TP: upapada': 'उपपद-तत्पुरुष', 'TP: samāhāra (dvigu-like)': 'समाहार-तत्पुरुष',
   'TP: vibhakti-marked (षष्ठी)': 'षष्ठी-तत्पुरुष', 'TP: vibhakti-marked (तृतीया)': 'तृतीया-तत्पुरुष',
@@ -1620,6 +1619,11 @@ let samrSrc = 'all';
 try { samrSrc = localStorage.getItem('vv_samr_src') || 'all'; } catch (e) {}
 // layers for a SAMR key: shared dict wins; VS-only keys fall back to the isolated VS namespace.
 function samrPeelLayers(key) { return (window.SAMASA_PEEL && window.SAMASA_PEEL[key]) || (window.SAMASA_PEEL_VS && window.SAMASA_PEEL_VS[key]) || null; }
+// समास-विच्छेद peels with DEPTH — only a key that has a real compound layer to decompose belongs in
+// the pool. Leaf-only entries (a lone taddhita/kṛt derivation like ततः=तद्+तसिल्, यतः=√यम्+क्त) have
+// nothing to peel; they stay in the reading-view hover (build_*_reading_view bakes SAMASA_PEEL
+// directly, so the derivation is preserved there) but are NOT quizzed here (Harsha, 2026-09-15).
+function samrHasCompound(key) { const L = samrPeelLayers(key); return Array.isArray(L) && L.some(l => isCompoundSamasaType(l && l.type)); }
 function samrPoolKeys() {
   const P = window.SAMASA_PEEL || {}, S = window.SAMASA_PEEL_SRC || {}, VS = window.SAMASA_PEEL_VS || {};
   const core = Object.keys(P), vsKeys = Object.keys(VS);
@@ -1628,7 +1632,8 @@ function samrPoolKeys() {
   else if (samrSrc === 'bhasya') ks = core.filter(k => /^bhasya/.test(S[k] || ''));
   else if (samrSrc === 'vs') ks = vsKeys;
   else ks = core.concat(vsKeys.filter(k => !(k in P)));   // 'all' = shared + VS-only (no double-count)
-  return ks.length ? ks : core.concat(vsKeys);            // never leave an empty pool
+  ks = ks.filter(samrHasCompound);                        // drop leaf-only (no compound to peel)
+  return ks.length ? ks : core.concat(vsKeys).filter(samrHasCompound);  // never leave an empty pool
 }
 
 function startQuiz(mode, code) {

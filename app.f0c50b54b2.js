@@ -3511,14 +3511,17 @@ function tutorialStepLabelBase(step, sentence) {
       return `Which word agrees with (सामानाधिकरण्य — matches in gender/number/case with) ${w ? `<b>${esc(w)}</b>` : 'the कर्म'}?`; }
     case 'qualifierKarta': {
       const w = coreArgWords(c, sentence, 'karta');
-      // when the कर्ता IS the governor (a verbless nominal-predication head, e.g. VC 2), don't append the
-      // self-referential "(the कर्ता of X)" — just ask "qualify X?" (Harsha #1, 2026-08-20).
-      if (w && w === c.governorWord) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
+      // When the कर्ता IS the governor, the "(the कर्ता of X)" clause is self-referential — just ask
+      // "qualify X?". This fires for a verbless nominal-predication head (subjectIsHead, e.g. VC 2 / US 2 —
+      // फलम् is itself the कर्ता, so "कर्ता of फलम्" is bogus) AND when the named कर्ता group otherwise
+      // already contains the governor (w may be "फलम्/पतन-कारणम्", ≠ the bare governorWord, so the old
+      // exact-match guard missed it). Generalized 2026-09-15 from Harsha's 2026-08-20 exact-match fix.
+      if (w && (c.subjectIsHead || w.split('/').includes(c.governorWord))) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
       return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्ता of ${gov})` : `the कर्ता of ${gov}`}?`;
     }
     case 'qualifierKarma': {
       const w = coreArgWords(c, sentence, 'karma');
-      if (w && w === c.governorWord) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
+      if (w && (c.subjectIsHead || w.split('/').includes(c.governorWord))) return `Which word(s) qualify (विशेषण) <b>${esc(w)}</b>?`;
       return `Which word(s) qualify (विशेषण) ${w ? `<b>${esc(w)}</b> (the कर्म of ${gov})` : `the कर्म of ${gov}`}?`;
     }
     case 'genderCheck': {

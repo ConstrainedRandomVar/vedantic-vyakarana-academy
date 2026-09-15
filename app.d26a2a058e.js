@@ -1003,6 +1003,11 @@ function flattenWalk(chapterKey, scope) {
     for (const section of sections) {
       for (const s of v.sections[section].steps) {
         const step = { verseRef: v.ref, verseLabel: v.label, moola: v.moola, section, ...s };
+        // LEM (प्रकृति/lemma) items are svādhyāya-reading-VIEW-only — build_*_walk emits them so the
+        // reading-<slug>.html hover can show the प्रकृति/व्याकरणम् row. read-a-verse (quiz) has NO question
+        // type for them (decided-excluded, [[project_gloss_prakriti_lemma]]) and they'd crash
+        // questionSignature's sandhi default (a lemma item has no `before`). Drop them from the quiz flatten.
+        if (Array.isArray(step.items)) step.items = step.items.filter(it => it.kind !== 'lemma');
         // Read-a-verse recursive samāsa: a flat `samasa` item whose compound is in the shared PEEL index
         // (VC + analysed texts) becomes the guided vigraha→type peel sequence; others stay flat (Harsha, 2026-08-21).
         if (Array.isArray(step.items) && window.SAMASA_PEEL) {
@@ -4586,7 +4591,20 @@ const TUT_TITLE = {
   'mandukya-mula': 'Māṇḍūkya Upaniṣad (mūla + kārikā)',
   'chandogya-mula': 'Chāndogya Upaniṣad (mūla)',
 };
-const tutTitle = (slug, fallback) => TUT_TITLE[slug] || fallback || slug;
+// Canonical text names (DV + IAST-in-parens) are DEFINED ONCE by the walk-manifest labels — the names
+// read-a-verse already shows. वाक्य-विग्रह + वाक्य-विभाग derive the SAME name here so all three surfaces
+// read IDENTICALLY with no second table to drift (fixes the 2026-09-15 inconsistency: upaniṣads showed raw
+// slugs, Gita/PD/VC IAST-only, US/AB DV(IAST)). Map the tutorial-data slug → its walk slug, then take the
+// label's text-name part (before the " · <chapter>" suffix). Falls back to TUT_TITLE / the manifest title.
+const TUT2WALK = { 'Gita': 'Gita', 'isha-mula': 'Isha', 'kena-mula': 'Kena', 'katha-mula': 'Kathaka',
+  'prashna-mula': 'Prashna', 'mundaka-mula': 'Mundaka', 'mandukya-mula': 'Mandukya', 'taittiriya-mula': 'Taitiriya',
+  'aitareya-mula': 'Aitareya', 'chandogya-mula': 'Chandogya', 'brihad-mula': 'Brha', 'vivekacudamani': 'VC',
+  'panchadashi': 'PD', 'atmabodha': 'AB', 'upadesha-saram': 'UPS' };
+function tutTitle(slug, fallback) {
+  const wslug = TUT2WALK[slug];
+  if (wslug) { const e = (window.WALK_MANIFEST || []).find(m => m.slug === wslug); if (e && e.label) return e.label.split(' · ')[0]; }
+  return TUT_TITLE[slug] || fallback || slug;
+}
 // "1.1" + {unit:['अध्याय','वल्ली']} → "अध्याय 1 · वल्ली 1"; "3" + {unit:'प्रकरणम्'} → "प्रकरणम् 3".
 function tutChapterLabel(chapterKey, cfg) {
   const nums = String(chapterKey).split('.').map(p => { const n = +p; return Number.isNaN(n) ? p : String(n); });

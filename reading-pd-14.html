@@ -6,6 +6,10 @@
 .legend{padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
 .v{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
 .rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
+/* SAD per-verse topic band (viṣaya, pp.7-10) — VS-style ribbon; role colours reuse the bhāṣya palette (#9c) */
+.secband{margin:22px 0 8px;padding:6px 16px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.secband .st{font-weight:600;color:var(--ink)} .secband .srange{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.secband.r-purvapaksha{border-left-color:var(--purva)} .secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-lakshana{border-left-color:var(--lakshana)} .secband.r-phalita{border-left-color:var(--import)}
 /* avatārikā (prelude) — dashed pre-zone ABOVE the mūla; bhāṣya content, hidden in मूलम्-only mode.
    Small-caps ::before label matches the prasthānatrayī pre-zone (CLAUDE.md consistency). */
 .pre-zone{margin:0 0 12px;padding:10px 14px 6px;border-left:3px dashed var(--muted);border-radius:0 10px 10px 0}

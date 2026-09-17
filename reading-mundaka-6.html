@@ -157,7 +157,7 @@ body.metmode-pada .vjoin{display:none}
 /* पार्श्वे layout — two balanced columns, widened page */
 body.parshve .wrap{max-width:1320px}
 body.parshve .paira{display:flex;gap:10px;align-items:flex-start}
-body.parshve .paira>.bh-zone,body.parshve .paira>.bh{flex:1 1 0;min-width:0}
+body.parshve .paira>.bh-zone,body.parshve .paira>.bh,body.parshve .paira>.pre{flex:1 1 0;min-width:0}
 body.parshve .side-zone{flex:1 1 0;min-width:0}
 /* phones: पार्श्वे is unusable → hide its control, and treat any persisted पार्श्वे as अन्तः */
 @media(max-width:900px){
@@ -479,29 +479,37 @@ function matchWord(ref,sel,sk){if(!sk)return null;var c=document.getElementById(
   var els=c.querySelectorAll(sel),pref=null;
   for(var i=0;i<els.length;i++){if(els[i].offsetParent===null)continue;var s=SK(surfOf(els[i]));if(!s)continue;
     if(s===sk)return els[i];if(!pref&&s.length>=3&&(s.indexOf(sk)===0||sk.indexOf(s)===0))pref=els[i];}return pref;}
-function findTikaEl(ref,sk){if(!sk)return null;var c=document.getElementById('v-'+ref);if(!c)return null;
+// pre (optional): true → only PRELUDE ṭīkā pratīkas (data-k carries '::pre'); false → only MANTRA-bhāṣya ones.
+function findTikaEl(ref,sk,pre){if(!sk)return null;var c=document.getElementById('v-'+ref);if(!c)return null;
   var els=c.querySelectorAll('.tk-prat[data-lemma]');
   for(var i=0;i<els.length;i++){if(els[i].offsetParent===null)continue;
+    if(pre!==undefined){var w0=els[i].querySelector('.w[data-k]');var ip=!!(w0&&w0.getAttribute('data-k').indexOf('::pre')>=0);if(ip!==!!pre)continue;}
     var sks=lemSKs(els[i].getAttribute('data-lemma'));       // any word of the catch-phrase may be the one cited
     for(var q=0;q<sks.length;q++){if(skMatch(sks[q],sk))return els[i];}}return null;}
+// The bhāṣya a jump targets may live in the mantra zone (.bh) OR the सम्बन्ध-भाष्य/अवतारिका prelude zone (.pre).
+// We scope each jump to the RIGHT zone (never cross them) so a prelude ṭīkā links to the prelude bhāṣya and a
+// mantra ṭīkā to the mantra bhāṣya, even on a section-opener verse that shows both. Zone is carried in data-jz.
 function buildJumps(t,ref){if(!ref)return '';var rows=[],sk=SK(surfOf(t));
-  var inMula=t.closest('.mula-zone'),inBh=t.closest('.bh'),pr=t.closest('.tk-prat[data-jb]');
+  var inMula=t.closest('.mula-zone'),pr=t.closest('.tk-prat[data-jb]');
+  var preT=!!pr&&(t.getAttribute('data-k')||'').indexOf('::pre')>=0;        // a PRELUDE ṭīkā pratīka
+  var inPreBh=!pr&&!!t.closest('.pre'),inBh=!pr&&!!t.closest('.bh');        // a bhāṣya word: prelude vs mantra zone
   if(t.getAttribute('data-jm')) rows.push(jr('m',ref,sk,''));                                   // bhāṣya quote → मूलम् (always)
   else if(t.getAttribute('data-jmq')&&sk&&mqTarget(sk)) rows.push(jr('mq','',sk,''));             // intro cross-verse quote → मूलम्
-  if(inMula&&sk&&matchWord(ref,'.bh .w[data-jm]',sk)) rows.push(jr('b',ref,sk,''));             // mūla → भाष्यम् (if quoted)
-  if(pr){var sks=lemSKs(pr.getAttribute('data-lemma')),hit=null;                                // ṭīkā-pratīka → भाष्यम्
-    for(var q=0;q<sks.length;q++){if(matchWord(ref,'.bh .w',sks[q])){hit=sks[q];break;}}         // first phrase-word with a bhāṣya word
-    if(hit)rows.push(jr('pb',ref,hit,''));}
-  if(inBh&&sk&&findTikaEl(ref,sk)) rows.push(jr('t',ref,sk,''));                                // bhāṣya → टीका (if cited)
+  if(inMula&&sk){ if(matchWord(ref,'.bh .w[data-jm]',sk)) rows.push(jr('b',ref,sk,'bh'));       // mūla → भाष्यम् (mantra, if quoted)
+    else if(matchWord(ref,'.pre .w[data-jm]',sk)) rows.push(jr('b',ref,sk,'pre')); }             // mūla → प्रस्तावना-भाष्यम् (if quoted there)
+  if(pr){var sks=lemSKs(pr.getAttribute('data-lemma')),hit=null,sel=(preT?'.pre':'.bh')+' .w';  // ṭīkā-pratīka → its own bhāṣya zone
+    for(var q=0;q<sks.length;q++){if(matchWord(ref,sel,sks[q])){hit=sks[q];break;}}
+    if(hit)rows.push(jr('pb',ref,hit,preT?'pre':'bh'));}
+  if((inBh||inPreBh)&&sk&&findTikaEl(ref,sk,inPreBh)) rows.push(jr('t',ref,sk,inPreBh?'pre':'bh'));  // bhāṣya → टीका (same zone)
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
-function jr(cat,ref,sk){var lb={m:'→ मूलम्',mq:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',t:'→ टीका'}[cat];
-  return '<span class="jrow" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+sk+'">'+lb+'</span>';}
+function jr(cat,ref,sk,zone){var lb={m:'→ मूलम्',mq:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',t:'→ टीका'}[cat];
+  return '<span class="jrow" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+sk+'" data-jz="'+(zone||'')+'">'+lb+'</span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
-function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),el=null;
+function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='m')el=matchWord(ref,'.mula-zone .w',sk);
-  else if(cat==='b')el=matchWord(ref,'.bh .w[data-jm]',sk);
-  else if(cat==='pb')el=matchWord(ref,'.bh .w',sk);
-  else if(cat==='t')el=findTikaEl(ref,sk);
+  else if(cat==='b')el=matchWord(ref,'.'+(z==='pre'?'pre':'bh')+' .w[data-jm]',sk);
+  else if(cat==='pb')el=matchWord(ref,'.'+(z==='pre'?'pre':'bh')+' .w',sk);
+  else if(cat==='t')el=findTikaEl(ref,sk,z==='pre');
   else if(cat==='mq'){ var tt=mqTarget(sk);                        // intro cross-verse quote
     if(tt&&tt.el) el=tt.el;
     else if(tt&&tt.page){ hideTip(true); location.assign(tt.page===CURPAGE?('#v-'+tt.ref):(tt.page+'#v-'+tt.ref)); return; } }

@@ -112,6 +112,8 @@ body.metmode-pada .vjoin{display:none}
   line-height:1.95;color:var(--muted);margin:0}
 .pre::before{content:"अवतारिका";display:block;font-family:-apple-system,sans-serif;font-size:10px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:3px}
+/* section-opening prelude (first verse of a brāhmaṇa/pāda/chapter) = सम्बन्ध-भाष्यम्, not अवतारिका */
+.pre.pre-samb::before{content:"सम्बन्ध-भाष्यम्"}
 /* end-of-section note (::post) — mirrors .pre-zone but sits AFTER the bhāṣya zone */
 .post-zone{padding:6px 16px 12px;margin:0 13px 14px;border-left:3px dashed var(--conn);border-radius:0 10px 10px 0}
 .post{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;

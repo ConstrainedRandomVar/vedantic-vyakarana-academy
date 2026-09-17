@@ -464,7 +464,14 @@
     return null;
   }
   function run() {
-    try { document.body.classList.remove('mode-pada'); document.body.classList.add('mode-sandhi'); } catch (e) {}
+    // Reveal the सन्धि (joined) layer — that's the surface the search matches against. Two view
+    // conventions exist: VC bhāṣya uses mode-*, the unified upaniṣad/Gita views use metmode-*. Force
+    // BOTH to sandhi (harmless where absent) — else a पद-mode reader lands on a mark inside a
+    // display:none .vjoin and sees nothing (the 2026-09-16 mandukya ?hl= miss).
+    try {
+      document.body.classList.remove('mode-pada'); document.body.classList.add('mode-sandhi');
+      document.body.classList.remove('metmode-pada'); document.body.classList.add('metmode-sandhi');
+    } catch (e) {}
     if (!document.getElementById('svhl-style')) {
       var st = document.createElement('style'); st.id = 'svhl-style';
       st.textContent = '.svhl{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px;box-shadow:0 0 0 2px #fde68a}@media(prefers-color-scheme:dark){.svhl{background:#8a7414;color:#fff;box-shadow:0 0 0 2px #8a7414}}';

@@ -1,7 +1,7 @@
 <!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>मुण्डकोपनिषद् · मुण्डकम् 3 · खण्डः 2 — एकीकृत-पाठः</title><style>
 :root{
   /* shared shell */
-  --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:#d97706;
+  --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:#d97706;--tm:#a7f3d0;
   /* पदार्थ (mula hover analysis) */
   --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
   /* मनन (bhasya roles) */
@@ -10,14 +10,14 @@
   --mulatint:rgba(124,90,30,.05);
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
   --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
   --mulatint:rgba(217,184,119,.07);
 }}
 :root[data-theme=dark]{
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
   --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
@@ -183,7 +183,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 /* pinned (clicked) tooltip: interactive + text-selectable so the analysis can be copied */
 #tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px var(--accent,#a7f3d0)}
 #tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
-#tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px}
+#tip .tm{color:var(--tm);font-style:italic;margin:2px 0 5px}
 #tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
 #tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
 #tip.plain{font-family:"Noto Serif Devanagari",serif;font-size:14.5px}

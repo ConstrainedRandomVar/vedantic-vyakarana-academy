@@ -194,8 +194,7 @@ body.tarka-on .dm-hinge-nig::after{content:"निग॰"}
 /* महावाक्य · verse-level identity-equation pill — HIDDEN until the महावाक्य toggle; two shades by
    sub-type (मुख्य solid fill vs बाधायाम् lighter dashed), styled hover note names the classification
    (a positioned card, NOT a native title=, per gloss-consistency #9b) */
-.maha-mark{display:none;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help}
-body.maha-on .maha-mark{display:inline-block}
+.maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help}
 .maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}
 .maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
 .maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
@@ -242,7 +241,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 .v{scroll-margin-top:78px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .v.navhit{animation:navflash 1.6s ease-out}</style>
-<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="metbar" id="metseg" role="group" aria-label="verse form"><button type="button" data-m="sandhi">सन्धि</button><button type="button" data-m="pada">पद</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button><button type="button" data-side="vartika" data-gran="section">सुरेश्वर-वार्त्तिकम्</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div><div class="seg dv" id="tarkaseg" role="group" aria-label="तर्क · reason-spine"><button type="button" id="tarkabtn" data-tarka="1">तर्क</button></div><div class="seg dv" id="mahaseg" role="group" aria-label="महावाक्य · identity equations"><button type="button" id="mahabtn" data-maha="1">महावाक्य</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
+<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="metbar" id="metseg" role="group" aria-label="verse form"><button type="button" data-m="sandhi">सन्धि</button><button type="button" data-m="pada">पद</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button><button type="button" data-side="vartika" data-gran="section">सुरेश्वर-वार्त्तिकम्</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div><div class="seg dv" id="tarkaseg" role="group" aria-label="तर्क · reason-spine"><button type="button" id="tarkabtn" data-tarka="1">तर्क</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
 <script>'use strict';
 /*
  * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
@@ -453,7 +452,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
       <span class="item"><sup style="color:var(--muted);font-weight:700">श्रु॰/स्मृ॰/न्या॰</sup> प्रमाण-भेदः · citation-type</span>
       <span class="item"><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमानम्</span><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमेयम्</span> दृष्टान्तः · analogy</span>
       <span class="item"><sup style="color:var(--tarka);font-weight:700">हे॰</sup>हेतुः · <sup style="color:var(--tarka);font-weight:700">निग॰</sup>निगमनम् — तर्क reason↔conclusion (top-bar toggle)</span>
-      <span class="item"><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 4px">मुख्य</span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 4px">बाधायाम्</span> महावाक्यम् · identity equation, jīva=brahman (top-bar toggle)</span>
+      <span class="item"><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 4px">मुख्य</span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 4px">बाधायाम्</span> महावाक्यम् · identity equation, jīva=brahman</span>
     </div>
   </div>
   <div class="legdiv"></div>
@@ -730,11 +729,4 @@ document.getElementById('tog').onclick=function(){
   var saved='0';try{saved=localStorage.getItem(KEY)||'0';}catch(e){}
   apply(saved==='1');
   b.addEventListener('click',function(){var on=!document.body.classList.contains('tarka-on');apply(on);try{localStorage.setItem(KEY,on?'1':'0');}catch(e){}});
-})();</script><script>(function(){
-  var KEY='vv_reading_maha';
-  var b=document.getElementById('mahabtn');if(!b)return;
-  function apply(on){document.body.classList.toggle('maha-on',on);b.classList.toggle('on',on);}
-  var saved='0';try{saved=localStorage.getItem(KEY)||'0';}catch(e){}
-  apply(saved==='1');
-  b.addEventListener('click',function(){var on=!document.body.classList.contains('maha-on');apply(on);try{localStorage.setItem(KEY,on?'1':'0');}catch(e){}});
 })();</script><script src="translit.js"></script></body></html>

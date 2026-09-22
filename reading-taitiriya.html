@@ -6,21 +6,21 @@
   --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
   /* मनन (bhasya roles) */
   --mula:#1a56db;--gloss:#3f4653;--import:#6d28d9;--vyak:#6b6255;--purva:#b91c1c;
-  --eka:#c2410c;--sid:#15803d;--cite:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--introbg:#f2ede2;
+  --eka:#c2410c;--sid:#15803d;--cite:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--tarka:#5b6472;--drs:#a16207;--introbg:#f2ede2;
   --mulatint:rgba(124,90,30,.05);
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){
   --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--introbg:#232028;
   --mulatint:rgba(217,184,119,.07);
 }}
 :root[data-theme=dark]{
   --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--introbg:#232028;
+  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--introbg:#232028;
   --mulatint:rgba(217,184,119,.07);
 }
 *{box-sizing:border-box}
@@ -179,6 +179,16 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 .rolepill-sid{color:var(--sid);border-color:var(--sid);background:color-mix(in srgb,var(--sid) 12%,transparent)}
 .rolepill-pp{color:var(--purva);border-color:var(--purva);background:color-mix(in srgb,var(--purva) 12%,transparent)}
 .rolepill-eka{color:var(--eka);border-color:var(--eka);background:color-mix(in srgb,var(--eka) 12%,transparent)}
+/* discourse superscript-badges — ONE shared style (अभ्युपगमः concession + typed-citation श्रु/स्मृ/न्या); always-on, point-annotation on a single word (CLAUDE.md #9c) */
+.dm-conc::after,.dm-src[data-praman]::after{vertical-align:super;font-size:.56em;font-weight:700;color:var(--muted);margin-inline-start:1px;font-family:"Noto Serif Devanagari",serif}
+.dm-conc::after{content:"अभ्यु॰"}
+.dm-src[data-praman="श्रु"]::after{content:"श्रु॰"}
+.dm-src[data-praman="स्मृ"]::after{content:"स्मृ॰"}
+.dm-src[data-praman="न्या"]::after{content:"न्या॰"}
+/* तर्क · reason-spine (हि/तस्मात्/अतः/यस्मात्/यतः) — hidden until the तर्क toggle; dotted underline in a neutral hue, NOT a discourse-role colour */
+body.tarka-on .dm-hinge-reason{text-decoration:underline dotted var(--tarka);text-underline-offset:3px;text-decoration-thickness:1.5px}
+/* दृष्टान्त · upamāna/upameya start-pills (both poles share the --drs dṛṣṭānta hue, distinguished by label) */
+.dr-mark{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid var(--drs);color:var(--drs);background:color-mix(in srgb,var(--drs) 12%,transparent);font-family:"Noto Serif Devanagari",serif}
 .sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
 .quote{color:var(--cite)}
 
@@ -426,8 +436,13 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
       <span class="item"><span class="sw" style="background:var(--vyak)"></span>व्याकरणम्</span>
       <span class="item"><span class="sw" style="background:var(--purva)"></span>पूर्वपक्षः</span>
       <span class="item"><span class="sw" style="background:var(--sid)"></span>सिद्धान्तः</span>
+      <span class="item"><span class="sw" style="background:var(--eka)"></span>एकदेशी · partial view</span>
       <span class="item"><span class="sw" style="background:var(--cite)"></span>प्रमाण-वाक्यम्</span>
       <span class="item"><u style="text-underline-offset:3px;text-decoration-thickness:1.5px">सङ्ग्रहः</u> · summary-thread</span>
+      <span class="item"><sup style="color:var(--muted);font-weight:700">अभ्यु॰</sup> अभ्युपगमः · concession</span>
+      <span class="item"><sup style="color:var(--muted);font-weight:700">श्रु॰/स्मृ॰/न्या॰</sup> प्रमाण-भेदः · citation-type</span>
+      <span class="item"><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमानम्</span><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमेयम्</span> दृष्टान्तः · analogy</span>
+      <span class="item"><u style="text-decoration:underline dotted var(--tarka);text-underline-offset:3px">तर्क</u> · reason-spine — हि/तस्मात्/अतः (top-bar toggle)</span>
     </div>
   </div>
   <div class="legdiv"></div>

@@ -171,6 +171,13 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 .mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
 .purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}
+/* role PILL — start-anchored role marker for a rebuttal/objection whose words carry another colour
+   (mūla-pratīka blue / gloss / citation), so it can't be recoloured in-line. Marks the role WITHOUT
+   recolouring the words. Draws from the SAME role tokens (#9c). See bhasya_role_apply.js. */
+.rolepill{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid;font-family:"Noto Serif Devanagari",serif}
+.rolepill-sid{color:var(--sid);border-color:var(--sid);background:color-mix(in srgb,var(--sid) 12%,transparent)}
+.rolepill-pp{color:var(--purva);border-color:var(--purva);background:color-mix(in srgb,var(--purva) 12%,transparent)}
+.rolepill-eka{color:var(--eka);border-color:var(--eka);background:color-mix(in srgb,var(--eka) 12%,transparent)}
 .sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
 .quote{color:var(--cite)}
 

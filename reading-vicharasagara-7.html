@@ -3,7 +3,13 @@
 <title>विचारसागरः — सप्तमतरङ्गः</title>
 <style>
 :root{--bg:#faf7f0;--ink:#2b2620;--mula:#1a1a2e;--tip:#5a4632;--tipbg:#f3ead8;--accent:#8a5a2b;--brand:#d97706;--cite:#0e7490;--tr:#4a5568;--rule:#e0d6c2;
-  --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#a21caf;--drs:#a16207;--eka:#c2410c}
+  --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#a21caf;--drs:#a16207;--eka:#c2410c;--maha:#db2777}
+/* महावाक्य · verse-level identity pill, HIDDEN until the महावाक्य checkbox; two shades मुख्य/बाधायाम्, styled hover note (not native title=). Pink --maha is distinct from the fuchsia --lak lakṣaṇa hue (#9c). */
+.maha-mark{display:none;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help}
+body.maha-on .maha-mark{display:inline-block}
+.maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}
+.maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
+.maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 /* bhāṣya-matched: citation=teal(--cite) · pūrvapakṣa=red(--pp) · siddhānta=green(--sid) · tātparya/phalita=purple(--tat,=bhāṣya import) · ekadeshi=orange(--eka). VS-new: lakṣaṇa=magenta(--lak) · dṛṣṭānta=sepia(--drs) */
 .w.r-purvapaksha{color:var(--pp)} .w.r-siddhanta{color:var(--sid)} .w.r-phalita{color:var(--tat)} .w.r-lakshana{color:var(--lak)} .w.r-drishtanta{color:var(--drs)} .w.r-ekadeshi{color:var(--eka)} .w.r-anuvada{color:#6b6255}
 .w.ga{font-weight:650}                          /* A = pratīka (term being glossed) */
@@ -123,7 +129,7 @@ body.notip .tip-wrap{display:none}
 </style></head><body>
 <header>
 <div class="hbar"><a class="brand" href="index.html" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><div id="reading-nav"></div></div>
-<div class="hbar"><h1>विचारसागरः — सप्तमतरङ्गः<span class="by"> · श्रीवासुदेवब्रह्मेन्द्रसरस्वती</span></h1><div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः</label></div></div>
+<div class="hbar"><h1>विचारसागरः — सप्तमतरङ्गः<span class="by"> · श्रीवासुदेवब्रह्मेन्द्रसरस्वती</span></h1><div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः</label><label><input type="checkbox" id="ck-maha"> महावाक्य</label></div></div>
 <div class="nowsec" id="nowsec"><span class="ns-t">जीवन्मुक्तिविदेहमुक्तिवर्णनम्</span></div>
 </header>
 <main>
@@ -136,6 +142,7 @@ body.notip .tip-wrap{display:none}
   <span><span class="lg-sid">समाधानम्</span> resolution (siddhānta)</span>
   <span><span class="lg-tat">फलितम्</span> takeaway (phalita)</span>
   <span><span class="lg-drs">दृष्टान्तः</span> analogy (dṛṣṭānta)</span>
+  <span><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 3px">मुख्य</span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 3px">बाधायाम्</span> महावाक्यम् · identity equation (checkbox)</span>
   <span><span class="lg-lak">लक्षणम्</span> definition (lakṣaṇa)</span>
   <span><span class="lg-t">टिप्पणी</span> author's gloss</span>
   <span>word<sup class="anc"><a>1</a></sup> ṭippaṇī anchor — click to jump to its note</span>
@@ -196,7 +203,7 @@ body.notip .tip-wrap{display:none}
     Kathaka: ['अध्याय', 'वल्ली', 'मन्त्र'], Prashna: ['प्रश्न', 'मन्त्र'], Mundaka: ['मुण्डक', 'खण्ड', 'मन्त्र'],
     Mandukya: ['प्रकरण', 'मन्त्र'], Aitareya: ['अध्याय', 'खण्ड', 'मन्त्र'], Chandogya: ['अध्याय', 'खण्ड', 'मन्त्र'],
     Taitiriya: ['वल्ली', 'अनुवाक', 'मन्त्र'], Brha: ['अध्याय', 'ब्राह्मण', 'मन्त्र'], BS: ['अध्याय', 'पाद', 'सूत्र'],
-    VC: ['श्लोक'], PD: ['अध्याय', 'श्लोक'], AB: ['श्लोक'], Vicharasagara: ['तरङ्ग', 'आवर्त'],
+    VC: ['श्लोक'], PD: ['अध्याय', 'श्लोक'], AB: ['श्लोक'], UPS: ['श्लोक'], SAD: ['श्लोक'], Vicharasagara: ['तरङ्ग', 'आवर्त'],
   };
   const FALLBACK = ['भाग', 'उप', 'क्रम', 'मन्त्र'];
 
@@ -380,4 +387,5 @@ function place(e){var r=8,x=e.clientX+14,y=e.clientY+16,b=tip.getBoundingClientR
 document.getElementById('ck-tr').addEventListener('change',function(e){document.body.classList.toggle('notr',!e.target.checked);});
 document.getElementById('ck-tip').addEventListener('change',function(e){document.body.classList.toggle('notip',!e.target.checked);});
 document.getElementById('ck-sec').addEventListener('change',function(e){document.body.classList.toggle('nosec',!e.target.checked);});
+document.getElementById('ck-maha').addEventListener('change',function(e){document.body.classList.toggle('maha-on',e.target.checked);});
 </script></body></html>

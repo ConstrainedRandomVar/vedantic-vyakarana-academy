@@ -185,8 +185,10 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 .dm-src[data-praman="श्रु"]::after{content:"श्रु॰"}
 .dm-src[data-praman="स्मृ"]::after{content:"स्मृ॰"}
 .dm-src[data-praman="न्या"]::after{content:"न्या॰"}
-/* तर्क · reason-spine (हि/तस्मात्/अतः/यस्मात्/यतः) — hidden until the तर्क toggle; dotted underline in a neutral hue, NOT a discourse-role colour */
-body.tarka-on .dm-hinge-reason{text-decoration:underline dotted var(--tarka);text-underline-offset:3px;text-decoration-thickness:1.5px}
+/* तर्क · reason-spine split into its TWO ends (like दृष्टान्त's poles) — hidden until the तर्क toggle; हे॰ (हेतुः) / निग॰ (निगमनम्) superscripts in --tarka */
+body.tarka-on .dm-hinge-hetu::after,body.tarka-on .dm-hinge-nig::after{vertical-align:super;font-size:.56em;font-weight:700;color:var(--tarka);margin-inline-start:1px;font-family:"Noto Serif Devanagari",serif}
+body.tarka-on .dm-hinge-hetu::after{content:"हे॰"}
+body.tarka-on .dm-hinge-nig::after{content:"निग॰"}
 /* दृष्टान्त · upamāna/upameya start-pills (both poles share the --drs dṛṣṭānta hue, distinguished by label) */
 .dr-mark{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid var(--drs);color:var(--drs);background:color-mix(in srgb,var(--drs) 12%,transparent);font-family:"Noto Serif Devanagari",serif}
 /* महावाक्य · verse-level identity-equation pill — HIDDEN until the महावाक्य toggle; two shades by
@@ -450,7 +452,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
       <span class="item"><sup style="color:var(--muted);font-weight:700">अभ्यु॰</sup> अभ्युपगमः · concession</span>
       <span class="item"><sup style="color:var(--muted);font-weight:700">श्रु॰/स्मृ॰/न्या॰</sup> प्रमाण-भेदः · citation-type</span>
       <span class="item"><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमानम्</span><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमेयम्</span> दृष्टान्तः · analogy</span>
-      <span class="item"><u style="text-decoration:underline dotted var(--tarka);text-underline-offset:3px">तर्क</u> · reason-spine — हि/तस्मात्/अतः (top-bar toggle)</span>
+      <span class="item"><sup style="color:var(--tarka);font-weight:700">हे॰</sup>हेतुः · <sup style="color:var(--tarka);font-weight:700">निग॰</sup>निगमनम् — तर्क reason↔conclusion (top-bar toggle)</span>
       <span class="item"><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 4px">मुख्य</span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 4px">बाधायाम्</span> महावाक्यम् · identity equation, jīva=brahman (top-bar toggle)</span>
     </div>
   </div>

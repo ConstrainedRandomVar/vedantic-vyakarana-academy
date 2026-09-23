@@ -5,7 +5,8 @@
 :root{--bg:#faf7f0;--ink:#2b2620;--mula:#1a1a2e;--tip:#5a4632;--tipbg:#f3ead8;--accent:#8a5a2b;--brand:#d97706;--cite:#0e7490;--tr:#4a5568;--rule:#e0d6c2;
   --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#a21caf;--drs:#a16207;--eka:#c2410c;--maha:#db2777}
 /* महावाक्य · verse-level identity pill, HIDDEN until the महावाक्य checkbox; two shades मुख्य/बाधायाम्, styled hover note (not native title=). Pink --maha is distinct from the fuchsia --lak lakṣaṇa hue (#9c). */
-.maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help}
+.maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
 .maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}
 .maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
 .maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
@@ -141,7 +142,7 @@ body.notip .tip-wrap{display:none}
   <span><span class="lg-sid">समाधानम्</span> resolution (siddhānta)</span>
   <span><span class="lg-tat">फलितम्</span> takeaway (phalita)</span>
   <span><span class="lg-drs">दृष्टान्तः</span> analogy (dṛṣṭānta)</span>
-  <span><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 3px">मुख्य</span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 3px">बाधायाम्</span> महावाक्यम् · identity equation</span>
+  <span><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 3px"></span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 3px"></span> महावाक्यम् · identity equation — मुख्य (solid) / बाधायाम् (dashed)</span>
   <span><span class="lg-lak">लक्षणम्</span> definition (lakṣaṇa)</span>
   <span><span class="lg-t">टिप्पणी</span> author's gloss</span>
   <span>word<sup class="anc"><a>1</a></sup> ṭippaṇī anchor — click to jump to its note</span>

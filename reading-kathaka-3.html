@@ -175,7 +175,8 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 /* role PILL — start-anchored role marker for a rebuttal/objection whose words carry another colour
    (mūla-pratīka blue / gloss / citation), so it can't be recoloured in-line. Marks the role WITHOUT
    recolouring the words. Draws from the SAME role tokens (#9c). See bhasya_role_apply.js. */
-.rolepill{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid;font-family:"Noto Serif Devanagari",serif}
+.rolepill{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid;font-family:"Noto Serif Devanagari",serif;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.rolepill-pp::before{content:"पूर्वपक्षः"}.rolepill-sid::before{content:"सिद्धान्तः"}.rolepill-eka::before{content:"एकदेशी"}  /* labels via generated content — copy-safe */
 .rolepill-sid{color:var(--sid);border-color:var(--sid);background:color-mix(in srgb,var(--sid) 12%,transparent)}
 .rolepill-pp{color:var(--purva);border-color:var(--purva);background:color-mix(in srgb,var(--purva) 12%,transparent)}
 .rolepill-eka{color:var(--eka);border-color:var(--eka);background:color-mix(in srgb,var(--eka) 12%,transparent)}
@@ -190,11 +191,13 @@ body.tarka-on .dm-hinge-hetu::after,body.tarka-on .dm-hinge-nig::after{vertical-
 body.tarka-on .dm-hinge-hetu::after{content:"हे॰"}
 body.tarka-on .dm-hinge-nig::after{content:"निग॰"}
 /* दृष्टान्त · upamāna/upameya start-pills (both poles share the --drs dṛṣṭānta hue, distinguished by label) */
-.dr-mark{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid var(--drs);color:var(--drs);background:color-mix(in srgb,var(--drs) 12%,transparent);font-family:"Noto Serif Devanagari",serif}
+.dr-mark{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid var(--drs);color:var(--drs);background:color-mix(in srgb,var(--drs) 12%,transparent);font-family:"Noto Serif Devanagari",serif;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.dr-mark-upamana::before{content:"उपमानम्"}.dr-mark-upameya::before{content:"उपमेयम्"}  /* labels via generated content — copy-safe */
 /* महावाक्य · verse-level identity-equation pill — HIDDEN until the महावाक्य toggle; two shades by
    sub-type (मुख्य solid fill vs बाधायाम् lighter dashed), styled hover note names the classification
    (a positioned card, NOT a native title=, per gloss-consistency #9b) */
-.maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help}
+.maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
 .maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}
 .maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
 .maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
@@ -452,7 +455,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
       <span class="item"><sup style="color:var(--muted);font-weight:700">श्रु॰/स्मृ॰/न्या॰</sup> प्रमाण-भेदः · citation-type</span>
       <span class="item"><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमानम्</span><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमेयम्</span> दृष्टान्तः · analogy</span>
       <span class="item"><sup style="color:var(--tarka);font-weight:700">हे॰</sup>हेतुः · <sup style="color:var(--tarka);font-weight:700">निग॰</sup>निगमनम् — तर्क reason↔conclusion (top-bar toggle)</span>
-      <span class="item"><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 4px">मुख्य</span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 4px">बाधायाम्</span> महावाक्यम् · identity equation, jīva=brahman</span>
+      <span class="item"><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 4px"></span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 4px"></span> महावाक्यम् · identity equation, jīva=brahman — मुख्य (solid) / बाधायाम् (dashed)</span>
     </div>
   </div>
   <div class="legdiv"></div>

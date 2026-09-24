@@ -6,6 +6,12 @@
 :root{--tarka:#5b6472;--drs:#a16207}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tarka:#9aa7b8;--drs:#fcd34d}}:root[data-theme=dark]{--tarka:#9aa7b8;--drs:#fcd34d}
 /* प्रमाण reserved hue (#9c named token, 298°) — reserved in every renderer palette; build_vc texts are ungraded so no pills render here yet */
 :root{--praman:#ad24b2}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--praman:#e67bea}}:root[data-theme=dark]{--praman:#e67bea}
+/* प्रमाण श्रुति/युक्ति/अनुभव pills — ONE reserved hue --praman (298°), 3 lightness steps; always-on; COPY-SAFE (empty span + ::after + user-select:none) */
+.prb{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid;font-family:"Noto Serif Devanagari",serif;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.prb-shruti{color:color-mix(in srgb,var(--praman) 58%,#000);border-color:color-mix(in srgb,var(--praman) 58%,#000);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-yukti{color:var(--praman);border-color:var(--praman);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-anubhava{color:color-mix(in srgb,var(--praman) 74%,#fff);border-color:color-mix(in srgb,var(--praman) 74%,#fff);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-shruti::after{content:"श्रुतिः"}.prb-yukti::after{content:"युक्तिः"}.prb-anubhava::after{content:"अनुभवः"}
 .maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
 .maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
 .maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}

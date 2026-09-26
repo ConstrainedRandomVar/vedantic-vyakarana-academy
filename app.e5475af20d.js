@@ -2616,7 +2616,8 @@ function clauseTracedIndices(sentence, clauseIdx) {
   const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return new Set();
   const hc = clusterForClauseHead(sentence, cl);
   const s = new Set();
-  if (cl.headWordIndex != null) s.add(cl.headWordIndex);
+  // only a REQUIRED nucleus counts as traced; a supplied-verb / optional (#3) head is asked in the mop-up instead
+  if (cl.headWordIndex != null && clauseHeadsPlan(sentence).required.has(cl.headWordIndex)) s.add(cl.headWordIndex);
   // Mirror the trace-step GUARDS exactly (a step is generated only when its PRIMARY role is present) so
   // `traced` never claims a word the trace didn't actually ask — otherwise an orphan समुच्चय co-agent/object
   // (present when the primary कर्ता/कर्म is absent) would be excluded from mop-up yet never quizzed.
@@ -2758,14 +2759,16 @@ function buildClauseSteps(sentence) {
   // identify it among the तृतीया words — distinguishing the करणम् trap (a same-case instrument that ISN'T
   // the agent, e.g. Māṇḍūkya 3.15 मृद्-लोह…आद्यैः). ACTIVE clause with an elided pronoun: the recipe-ladder
   // MCQ (only when derivable). (Harsha, 2026-08-27 — a vedānta student SHOULD deduce श्रुत्या from कर्मणि.)
-  const seenActive = new Set();
+  const seenActive = new Set(), seenPassive = new Set();
   clauses.forEach((cl, i) => {
     const cluster = clusterForClauseHead(sentence, cl);
     const correct = normalizeAgent(cl.anuktaKarta);
     if (!correct || /copula/i.test(correct)) return;
     if (cluster && cluster.voice === 'कर्मणि') {
-      steps.push({ type: 'clauseKartaCase', clauseIdx: i });   // कर्मणि ⇒ agent in तृतीया
-      steps.push({ type: 'clauseKarta', clauseIdx: i });       // which तृतीया word is the agent (vs करणम्)
+      if (seenPassive.has(correct)) return;   // once per distinct agent per verse (#4)
+      seenPassive.add(correct);
+      steps.push({ type: 'clauseKartaCase', clauseIdx: i });   // कर्मणि ⇒ agent in तृतीया (+ the agent note when no quiz)
+      if (passiveAgentQuiz(sentence, i)) steps.push({ type: 'clauseKarta', clauseIdx: i });   // fair pronoun-case quiz only (#4 b)
     } else if (clauseKartaOptions(sentence, i) && !seenActive.has(correct)) {
       seenActive.add(correct);
       steps.push({ type: 'clauseKarta', clauseIdx: i });
@@ -2986,7 +2989,7 @@ function verbsIndicesFor(sentence) {
 function expectedSetForStep(sentence, step) {
   if (step.type === 'verbs') return verbsIndicesFor(sentence);
   // वाक्य-विभाग word-select steps — graded against the gold `clauses` (no cluster involved)
-  if (step.type === 'clauseHeads') return new Set((sentence.clauses || []).map(cl => cl.headWordIndex).filter(i => i != null));
+  if (step.type === 'clauseHeads') return clauseHeadsPlan(sentence).required;   // supplied-verb + optional nuclei excluded (#3)
   if (step.type === 'clauseMembers') return new Set((((sentence.clauses || [])[step.clauseIdx]) || {}).words || []);
   if (step.type === 'clauseKarma') return new Set(clauseCoreIn(sentence, step.clauseIdx, clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]), 'karma'));
   if (step.type === 'clauseKartaTrace') return new Set(clauseCoreIn(sentence, step.clauseIdx, clusterForClauseHead(sentence, (sentence.clauses || [])[step.clauseIdx]), 'karta'));
@@ -3303,6 +3306,49 @@ const COPULA_FORMS = new Set(COPULA_PARADIGMS.flat());
 // the synonym filter and the agent≡elided dedup all miss it; 328 steps). (2026-09-25)
 const stripParens = e => String(e || '').trim().replace(/^\((.+)\)$/, '$1').trim();
 function elidedString(cl) { return (cl.elided || []).map(stripParens).join(' ').split(/\s+/).map(stripParens).filter(Boolean).join(' '); }   // whole "(एषः अस्ति)", then per-token "कात्यायनीपुत्रः (अस्ति)"
+// ---- वाक्य-विभाग step-1 nucleus plan (Harsha 2026-09-26, review decision #3) ----
+// A gold nucleus that is neither a finite verb nor a प्रथमा subject (तथा, नमः, a सति-सप्तमी head, a vocative…)
+// broke step 1's own recipe (~470 heads). Two cases:
+//   • the gold SUPPLIES the clause's verb (अध्याहार: "तथा इति {अस्तु}", "ब्रह्मणे नमः {अस्तु}") — the true nucleus
+//     is that understood verb: nothing printed to click; the supply phase asks for it (~330);
+//   • no verb supplied (a bare reply, an address, a locative-absolute phrase) — OPTIONAL: not required, accepted
+//     if clicked, named + explained in the reveal; step 1 adds a note ONLY on those verses (~145).
+const NOT_TIN = new Set(['सति', 'सत्सु', 'कृते', 'केनचित्', 'तत्', 'तस्मिन्']);
+function isTinToken(t) {
+  t = String(t || '').replace(/[\[\]()]/g, '').split('/')[0].trim();
+  if (!t || NOT_TIN.has(t)) return false;
+  return COPULA_FORMS.has(t) || /(ति|ते|तु|न्ति|न्ते|न्तु|ताम्|त्|सि|से|मि|मः|महे|थः|युः|शे|विदुः|हि|णु|थाः|था|याः|ेत)$/.test(t);
+}
+function suppliedVerbOf(cl) { return [...elidedString(cl).split(/\s+/).filter(Boolean)].reverse().find(isTinToken) || null; }
+function nonRecipeHeadKind(sentence, cl) {
+  const h = cl.headWordIndex; if (h == null) return null;
+  if ((sentence.clusters || []).some(c => c.governorWordIndex === h && c.isFiniteVerb)) return null;
+  if ((sentence.verbs || []).includes(h)) return null;
+  const code = (sentence.wordCodes || [])[h] || '';
+  if (!code || code[0] === '1') return null;   // प्रथमा subject of an "X [is] Y" (or uncoded) — the recipe applies
+  return code === 'Y' ? 'avyaya' : code[0] === '8' ? 'vocative' : code[0] === '7' ? 'locative' : 'oblique';
+}
+function clauseHeadsPlan(sentence) {
+  const required = new Set(), supplied = [], optional = [];
+  (sentence.clauses || []).forEach((cl, ci) => {
+    const h = cl.headWordIndex; if (h == null) return;
+    const kind = nonRecipeHeadKind(sentence, cl);
+    if (!kind) { required.add(h); return; }
+    const verb = suppliedVerbOf(cl);
+    if (verb) supplied.push({ clauseIdx: ci, verb, head: h }); else optional.push({ idx: h, kind, clauseIdx: ci });
+  });
+  return { required, supplied, optional };
+}
+const NUCLEUS_KIND_NOTE = {
+  avyaya: w => `a bare particle/reply like <b>${w}</b>`, vocative: w => `an address like <b>${w}</b>`,
+  locative: w => `a “when …” (सति-सप्तमी) phrase headed by <b>${w}</b>`, oblique: w => `a verbless phrase headed by <b>${w}</b>`,
+};
+const NUCLEUS_KIND_WHY = {
+  avyaya: 'a particle/reply heading a short clause of its own, with no verb stated or supplied',
+  vocative: 'an address (सम्बोधन) — it stands apart from the sentence, with no verb of its own',
+  locative: 'a सति-सप्तमी (“when/while …”) phrase — it sets the circumstance for the main verb',
+  oblique: 'a short verbless phrase, with no verb stated or supplied',
+};
 function clauseElidedOptions(sentence, clauseIdx) {
   const cl = sentence.clauses[clauseIdx];
   const correct = elidedString(cl);
@@ -3354,7 +3400,7 @@ function clauseKartaOptions(sentence, clauseIdx) {
   if (!correct || /copula/i.test(correct)) return null;
   if (!kartaIsRecipeDerivable(sentence, correct)) return null;   // don't quiz an un-derivable external agent
   const sibs = [];
-  (sentence.clauses || []).forEach(x => { const a = (x.anuktaKarta || '').trim(); if (a && !/copula/i.test(a) && a !== correct && !sibs.includes(a)) sibs.push(a); });
+  (sentence.clauses || []).forEach(x => { const a = normalizeAgent(x.anuktaKarta); if (a && !/copula/i.test(a) && a !== correct && !sibs.includes(a)) sibs.push(a); });   // normalized: no "(ईश्वरेण)" brackets in options
   const pool = [...new Set([...sibs, ...KARTA_FALLBACK.filter(a => a !== correct)])];
   const distract = seedRotate(pool, correct).slice(0, 3);
   if (!distract.length) return null;
@@ -3383,6 +3429,44 @@ function clauseAgentSpec(sentence, clauseIdx, cl, cluster) {
   if (traps.length) tip += ` Beware the other तृतीया word(s) that are NOT the agent: ${traps.join('; ')} — same case, different कारक.`;
   if (karma.length) tip += ` <b>${esc(karma.join('/'))}</b> is the कर्म (प्रथमा under the passive, अभिहित).`;
   return { correct, options, highlight: new Set(cl.words), explainHtml: tip };
+}
+// Passive-agent quiz (Harsha 2026-09-26, review decision #4 (b)). Quiz only when the unexpressed agent is a real
+// तृतीया PRONOUN — the options are that SAME pronoun in the other cases (अहम्/माम्/मम vs मया), which tests the lesson
+// just taught (कर्मणि ⇒ agent in तृतीया) and can't be won by elimination (the old options mixed verse words with the
+// one external answer → 135 giveaways; fallback तेन/देवेन were arguably also correct → 449). A slash answer accepts
+// either half. Nominative/impersonal answers (89) and external nouns (ईश्वरेण, श्रुत्या) are TAUGHT in the case step's
+// reveal instead. Asked once per distinct agent per verse (aitareya 1.1.4 asked ईश्वरेण 7×).
+const TRTIYA_PRONOUN_CASES = {
+  'मया': ['अहम्', 'माम्', 'मम'], 'अस्माभिः': ['वयम्', 'अस्मान्', 'अस्माकम्'], 'त्वया': ['त्वम्', 'त्वाम्', 'तव'],
+  'युष्माभिः': ['यूयम्', 'युष्मान्', 'युष्माकम्'], 'तेन': ['सः', 'तम्', 'तस्य'], 'तया': ['सा', 'ताम्', 'तस्याः'],
+  'तैः': ['ते', 'तान्', 'तेषाम्'], 'ताभिः': ['ताः', 'तासाम्', 'तस्याः'], 'केनचित्': ['कश्चित्', 'कञ्चित्', 'कस्यचित्'],
+  'अनेन': ['अयम्', 'इमम्', 'अस्य'], 'एतेन': ['एषः', 'एतम्', 'एतस्य'], 'कैश्चित्': ['केचित्', 'कांश्चित्', 'केषाञ्चित्'],
+};
+function passiveAgentAlts(cl) { return normalizeAgent(cl.anuktaKarta).split('/').map(a => stripParens(a)).filter(Boolean); }
+function passiveAgentQuiz(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl) return null;
+  const alts = passiveAgentAlts(cl);
+  const pick = alts.find(a => TRTIYA_PRONOUN_CASES[a]);
+  if (!pick) return null;
+  const options = seedRotate([pick, ...TRTIYA_PRONOUN_CASES[pick]], pick + clauseIdx);
+  const tip = `<b>${esc(pick)}</b> is the कर्ता (agent), supplied by अध्याहार — in <b>तृतीया</b>, because the verb is कर्मणि (passive). The other forms are the same pronoun in प्रथमा/द्वितीया/षष्ठी.${alts.length > 1 ? ` (${alts.map(esc).join(' / ')} are both acceptable here.)` : ''}`;
+  return { correct: pick, options, accept: [pick], key: pick, tip };
+}
+// the agent note folded into the कर्मणि case step's reveal when there is no fair quiz for it
+function passiveAgentNote(sentence, clauseIdx) {
+  const cl = (sentence.clauses || [])[clauseIdx]; if (!cl || passiveAgentQuiz(sentence, clauseIdx)) return '';
+  const alts = passiveAgentAlts(cl); if (!alts.length) return '';
+  if (alts.some(a => /impersonal/i.test(a)) || alts.every(a => ['कश्चित्', 'केचित्', 'सः', 'सा', 'तत्', 'अहम्', 'त्वम्'].includes(a)))
+    return ` Here no particular agent is meant (impersonal / “someone”) — so there is no तृतीया word to supply; if one were stated, it would stand in तृतीया (e.g. केनचित् “by someone”).`;
+  return ` Here the unexpressed agent is <b>${alts.map(esc).join(' / ')}</b> — supplied by अध्याहार from the context, not from the verse's own words.`;
+}
+// step-1 count (Harsha 2026-09-26, review decision #6 (a)): keep "(identify N)"; for N = 0 (537 verbless sentences)
+// say why instead of the broken-looking "(identify 0)", naming the understood verb when the gold supplies one.
+function identifyCountNote(sentence) {
+  const n = verbsIndicesFor(sentence).size;
+  if (n) return `(identify ${n})`;
+  const v = (sentence.clauses || []).map(suppliedVerbOf).find(Boolean);
+  return `<b>No verb is spoken in this verse — the verb is understood (अध्याहार${v ? `: <b>${esc(v)}</b>` : ''}).</b> Click Check without selecting anything.`;
 }
 // teaching tips shown after answering
 function samasaTip(L) {
@@ -3521,7 +3605,7 @@ function tutorialMcqSpec(step, sentence) {
     const r = kartaCaseOptions(cluster, sentence);   // कर्मणि ⇒ correct तृतीया (reuses वाक्य-विग्रह's own logic); कारक-षष्ठी honoured
     // highlight only the HEAD verb (like वाक्य-विग्रह's kartaCase), NOT the whole clause — highlighting
     // every word paints them "correct"-green and prematurely reveals the boundary the trace is discovering.
-    return { ...r, highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: r.tip || `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.` };
+    return { ...r, highlight: new Set(cl.headWordIndex != null ? [cl.headWordIndex] : []), explainHtml: (r.tip || `In <b>कर्मणि</b> (passive) the कर्म is promoted to प्रथमा (अभिहित) and the <b>कर्ता (agent)</b> is expressed in <b>तृतीया</b> (अनुक्त). So the agent is the instrumental word — spoken or supplied.`) + passiveAgentNote(sentence, step.clauseIdx) };
   }
   if (step.type === 'clauseKarmaCase') {
     const cl = sentence.clauses[step.clauseIdx];
@@ -3535,7 +3619,11 @@ function tutorialMcqSpec(step, sentence) {
   if (step.type === 'clauseKarta') {
     const cl = sentence.clauses[step.clauseIdx];
     const cluster = clusterForClauseHead(sentence, cl);
-    if (cluster && cluster.voice === 'कर्मणि') return clauseAgentSpec(sentence, step.clauseIdx, cl, cluster);
+    if (cluster && cluster.voice === 'कर्मणि') {
+      const pa = passiveAgentQuiz(sentence, step.clauseIdx);
+      if (pa) return { correct: pa.correct, options: pa.options, accept: pa.accept, highlight: new Set(cl.words), explainHtml: pa.tip };
+      return clauseAgentSpec(sentence, step.clauseIdx, cl, cluster);   // (not emitted any more — kept for deep-links)
+    }
     const r = clauseKartaOptions(sentence, step.clauseIdx) || { correct: '', options: [] };
     return { ...r, highlight: new Set(cl.words), explainHtml: clauseKartaTip(cl) };
   }
@@ -3614,7 +3702,7 @@ function tutorialStepLabelBase(step, sentence) {
   const c = step.clusterIdx != null ? sentence.clusters[step.clusterIdx] : null;
   const gov = c ? `<b>${esc(c.governorWord)}</b>` : '';
   switch (step.type) {
-    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any verbal (कृत्) form that <b>governs its own कारक</b> (कर्ता/कर्म)? This <b>includes gerunds/absolutives</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य, which take their own कर्म) and predicate participles (क्त — e.g. चोदिता). Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). (identify ${verbsIndicesFor(sentence).size})`;
+    case 'verbs': return `Which words are the <b>verbs</b> of this sentence — the finite verbs (तिङन्त) and any verbal (कृत्) form that <b>governs its own कारक</b> (कर्ता/कर्म)? This <b>includes gerunds/absolutives</b> (क्त्वा/ल्यप् — e.g. विदित्वा, प्रणोद्य, which take their own कर्म) and predicate participles (क्त — e.g. चोदिता). Don't pick words that merely name or describe (nouns and adjectives — including a कृत्-word used as a noun/adjective). ${identifyCountNote(sentence)}`;
     case 'voice': return `${gov} — is this कर्तरि, कर्मणि, or भावे?`;
     case 'verbLakara': return `${gov} — which लकार (tense/mood) is this verb in?`;
     case 'vibhaktiVidhana': { const w = sentence.words[step.wordIndex] || '', v = ((sentence._vibhakti || {})[step.wordIndex] || {}).vibhakti || ''; return `<b>${esc(w)}</b> stands in <b>${esc(v)}</b>. Which सूत्र ordains this case <i>here</i>?`; }
@@ -3725,9 +3813,20 @@ function tutorialStepLabelBase(step, sentence) {
       const L = sentence.samasa[step.samasaIdx].layers[step.layerIdx];
       return `<b>${esc(L.c)}</b> is a leaf of the peel — no longer a compound, but a प्रातिपदिक (base stem). How is it derived — <b>कृदन्त</b> (from a verb root), <b>तद्धित</b> (from a nominal), or a <b>मूल-प्रातिपदिक</b> (underived)?`;
     }
-    case 'clauseHeads':
+    case 'clauseHeads': {
       // Deliberately DON'T reveal the count — deriving "#nuclei = #clauses" is the lesson (revealed after).
-      return `<b>Recipe step 1 — find the nuclei.</b> Every clause (वाक्य) is built on exactly one nucleus: a <b>finite verb</b> (तिङन्त), or — in a verbless “X [is] Y” — the <b>subject</b>. A gerund/participle (ल्यप्/क्त्वा/शतृ/क्त…) is NOT a nucleus; it stays inside a finite verb's clause. Click every nucleus — how many you find is how many clauses the verse has.`;
+      const plan = clauseHeadsPlan(sentence);
+      let t = `<b>Recipe step 1 — find the nuclei.</b> Every clause (वाक्य) is built on exactly one nucleus: a <b>finite verb</b> (तिङन्त) — <b>spoken or understood (अध्याहार)</b> — or, in a verbless “X [is] Y”, the <b>subject</b>. A gerund/participle (ल्यप्/क्त्वा/शतृ/क्त…) is NOT a nucleus; it stays inside a finite verb's clause. Click every nucleus you can see — how many there are tells you how many clauses the verse has.`;
+      // the extra notes appear ONLY on verses that have these exceptions (Harsha #3: not on every verse)
+      if (plan.supplied.length) t += ` <span class="muted">(Here ${plan.supplied.length === 1 ? 'one clause has its' : 'some clauses have their'} verb <b>understood, not printed</b> — nothing to click for ${plan.supplied.length === 1 ? 'it' : 'those'}; you'll supply that verb later.)</span>`;
+      if (plan.optional.length) {
+        const seen = new Set(), parts = [];
+        for (const o of plan.optional) if (!seen.has(o.kind)) { seen.add(o.kind); parts.push(NUCLEUS_KIND_NOTE[o.kind](esc(sentence.words[o.idx]))); }
+        const one = plan.optional.length === 1;
+        t += ` <b>This verse also has ${one ? 'a short clause' : 'short clauses'} with neither</b> — ${parts.join('; ')}. You don't need to find ${one ? 'it' : 'those'}; ${one ? "it'll" : "they'll"} be shown after you answer.`;
+      }
+      return t;
+    }
     case 'clauseMembers': {
       const cl = sentence.clauses[step.clauseIdx];
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this head';
@@ -3747,7 +3846,7 @@ function tutorialStepLabelBase(step, sentence) {
       const h = cl.headWordIndex != null ? `<b>${esc(sentence.words[cl.headWordIndex])}</b>` : 'this clause';
       const cluster = clusterForClauseHead(sentence, cl);
       if (cluster && cluster.voice === 'कर्मणि')
-        return `Now find that agent. ${h} is passive, so its कर्ता is in <b>तृतीया</b> — but beware: not every तृतीया word is the agent (some are करणम् the instrument, or हेतु the cause). Which word is the <b>कर्ता (agent)</b>?`;
+        return `Now supply that agent. ${h} is passive and its कर्ता is not stated — it is a pronoun understood from context (अध्याहार). Which <b>form</b> of it does a passive verb require?`;
       return `<b>Recipe step 3 — supply the unspoken agent.</b> The clause headed by ${h} states no कर्ता. Infer it from the signals: उत्तम-verb → अहम्, मध्यम → त्वम्, relative/optative → कश्चित्, existential/भावे → impersonal, else carry the main clause's subject. What is the अनुक्त-कर्ता here?`;
     }
     case 'clauseValence': {
@@ -4239,9 +4338,15 @@ function checkTutorialStep() {
   const sentence = currentTutorialSentence();
   const step = currentTutorialStep();
   const expected = expectedSetForStep(sentence, step);
-  const selected = view.selectedIndices;
+  let selected = view.selectedIndices, shownExpected = expected;
+  if (step.type === 'clauseHeads') {   // optional (#3) nuclei: never penalised; a click on one counts as right
+    const opt = new Set(clauseHeadsPlan(sentence).optional.map(o => o.idx));
+    const pickedOpt = [...selected].filter(i => opt.has(i));
+    selected = new Set([...selected].filter(i => !opt.has(i)));
+    shownExpected = new Set([...expected, ...pickedOpt]);
+  }
   tutorialScores.push(tutorialStepScore(selected, expected, ANY_VALID_STEP_TYPES.has(step.type)));
-  view = { ...view, checked: true, expected };
+  view = { ...view, checked: true, expected: shownExpected };
   renderTutorial();
 }
 
@@ -4576,13 +4681,18 @@ function renderTutorial() {
     // TYPE (the boundary signal) + its gloss — taught, not quizzed (Core scope).
     if (step.type === 'clauseHeads') {
       const cls = sentence.clauses || [];
-      const lines = cls.map(cl => {
+      const plan = clauseHeadsPlan(sentence);
+      const supByCl = new Map(plan.supplied.map(x => [x.clauseIdx, x])), optByCl = new Map(plan.optional.map(x => [x.clauseIdx, x]));
+      const lines = cls.map((cl, ci) => {
         const w = cl.headWordIndex != null ? sentence.words[cl.headWordIndex] : '?';
         const cluster = clusterForClauseHead(sentence, cl);
         const gloss = cl.gloss ? ` <span class="muted">“${esc(cl.gloss)}”</span>` : '';
+        const sup = supByCl.get(ci), opt = optByCl.get(ci);
+        if (sup) return `<b>[${esc(sup.verb)}]</b> — understood, not printed (अध्याहार): the nucleus of <b>${esc(cl.words.map(i => sentence.words[i]).join(' '))}</b>.${gloss}`;
+        if (opt) return `<b>${esc(w)}</b> — ${NUCLEUS_KIND_WHY[opt.kind]}.${gloss}`;
         return `<b>${esc(w)}</b> — ${headMorphBrief(sentence, cl, cluster)}.${gloss}`;
       });
-      feedbackHtml += `<div class="tut-explain">You found <b>${cls.length}</b> nuclei ⇒ this verse has <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}:<br>• ${lines.join('<br>• ')}<br>Next: trace each one's boundary, then supply what each leaves unspoken.</div>`;
+      feedbackHtml += `<div class="tut-explain">This verse has <b>${cls.length}</b> nuclei ⇒ <b>${cls.length}</b> clause${cls.length === 1 ? '' : 's'}:<br>• ${lines.join('<br>• ')}<br>Next: trace each one's boundary, then supply what each leaves unspoken.</div>`;
     }
     if (step.type === 'clauseMembers') {
       const cl = sentence.clauses[step.clauseIdx];

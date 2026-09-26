@@ -4,13 +4,15 @@
 /* महावाक्य hue (#9c named token) + verse-level identity pill, HIDDEN until the महावाक्य toggle; two shades by sub-type, styled hover note (not native title=) */
 :root{--maha:#db2777}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--maha:#f472b6}}:root[data-theme=dark]{--maha:#f472b6}
 :root{--tarka:#5b6472;--drs:#a16207}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tarka:#9aa7b8;--drs:#fcd34d}}:root[data-theme=dark]{--tarka:#9aa7b8;--drs:#fcd34d}
-/* प्रमाण reserved hue (#9c named token, 298°) — reserved in every renderer palette; build_vc texts are ungraded so no pills render here yet */
-:root{--praman:#ad24b2}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--praman:#e67bea}}:root[data-theme=dark]{--praman:#e67bea}
-/* प्रमाण श्रुति/युक्ति/अनुभव pills — ONE reserved hue --praman (298°), 3 lightness steps; always-on; COPY-SAFE (empty span + ::after + user-select:none) */
+/* प्रमाण reserved hue (#9c named token, 298°) — reserved in every renderer palette; graded refs only (VC, SD so far) */
+:root{--praman:#ad24b2;--prb-shruti:#5c0f60;--prb-yukti:#7a1a7e;--prb-anubhava:#9d1fa2}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--praman:#e67bea;--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5}}:root[data-theme=dark]{--praman:#e67bea;--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5}
+/* gloss-card accent + separator — the card is INVERTED (bg=--ink), so these flip with the theme (#9c; a literal light accent vanished on the light dark-mode card) */
+:root{--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.2)}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tipacc:#065f46;--tipline:rgba(0,0,0,.18)}}:root[data-theme=dark]{--tipacc:#065f46;--tipline:rgba(0,0,0,.18)}
+/* प्रमाण श्रुति/युक्ति/अनुभव pills — ONE reserved hue --praman (298°), 3 explicit lightness steps (AA ≥4.5:1 on the tinted pill, both themes); always-on; COPY-SAFE (empty span + ::after + user-select:none) */
 .prb{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid;font-family:"Noto Serif Devanagari",serif;user-select:none;-webkit-user-select:none;-moz-user-select:none}
-.prb-shruti{color:color-mix(in srgb,var(--praman) 58%,#000);border-color:color-mix(in srgb,var(--praman) 58%,#000);background:color-mix(in srgb,var(--praman) 12%,transparent)}
-.prb-yukti{color:var(--praman);border-color:var(--praman);background:color-mix(in srgb,var(--praman) 12%,transparent)}
-.prb-anubhava{color:color-mix(in srgb,var(--praman) 74%,#fff);border-color:color-mix(in srgb,var(--praman) 74%,#fff);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-shruti{color:var(--prb-shruti);border-color:var(--prb-shruti);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-yukti{color:var(--prb-yukti);border-color:var(--prb-yukti);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-anubhava{color:var(--prb-anubhava);border-color:var(--prb-anubhava);background:color-mix(in srgb,var(--praman) 12%,transparent)}
 .prb-shruti::after{content:"श्रुतिः"}.prb-yukti::after{content:"युक्तिः"}.prb-anubhava::after{content:"अनुभवः"}
 .maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
 .maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
@@ -60,10 +62,10 @@ body.mode-pada .vjoin{display:none}
 .trans{color:var(--muted);font-size:14px;line-height:1.55;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
 .w{cursor:help}.w:hover{background:rgba(120,120,120,.14);border-radius:3px}
 #tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
-#tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px #a7f3d0}
+#tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px var(--tipacc)}
 #tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
 #tip .tm{color:var(--tm);font-style:italic;margin:2px 0 5px}#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
-#tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2);font-family:"Noto Serif Devanagari",serif}
+#tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid var(--tipline);font-family:"Noto Serif Devanagari",serif}
 button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
 .chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}
 /* अनुवादः knob — ALL English translation hidden by default: the mūla clause-gloss line (.trans-layer) AND
@@ -111,7 +113,7 @@ body.view-both .mulq{cursor:pointer;border-bottom:1.5px dotted var(--mula)}
 .gtip .tm{color:var(--tm,#15803d);font-style:italic;margin:2px 0 5px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px}
 .gtip .row{margin:1px 0}
 .gtip .lb{opacity:.6;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-.gtip .peel{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2)}
+.gtip .peel{margin-top:5px;padding-top:5px;border-top:1px solid var(--tipline,rgba(255,255,255,.2))}
 /* bhāṣyam role palette (light) + dark — matched to build_unified_reading_view's Śaṅkara-bhāṣya scheme */
 :root{--purva:#b91c1c;--sid:#15803d;--eka:#c2410c;--import:#6d28d9;--vyak:#6b6255;--cite:#0e7490;--drs:#a16207;--gloss:#3f4653;--mula:#1a56db;--phalita:#be185d;--lakshana:#a21caf}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--purva:#f79a9a;--sid:#83e0a0;--eka:#f8b06a;--import:#c9b6f7;--vyak:#b8b2a8;--cite:#67d3e8;--drs:#fcd34d;--gloss:#c2c8d2;--mula:#7ab0ff;--phalita:#f472b6;--lakshana:#e879f9}}

@@ -1332,16 +1332,20 @@ function renderDashboard() {
     { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'bhasya'], note: 'भाष्यम्: श्रीचन्द्रशेखरभारती' },
-    { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'vyakhya'], note: 'व्याख्या: श्रीचन्द्रशेखरभारती' },
+    { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: पददीपिका · अ. १–७' },
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula'] },
-    { dv: 'उपदेशसारम्', lat: 'Upadeśa Sāram', file: 'reading-ups.html', group: 'prakarana', offers: ['mula'] },
-    { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'bhasya'], note: 'भाष्यम्: श्रीकपालिशास्त्री' },
+    { dv: 'उपदेशसारम्', lat: 'Upadeśa Sāram', file: 'reading-ups.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीगणपतिमुनिः' },
+    { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीकपालिशास्त्री' },
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
   ];
   const readOffers = t => '<div class="offers">'
     + (t.offers.includes('mula') ? '<span class="pill mula">मूलम्</span>' : '')
     + (t.offers.includes('bhasya') ? '<span class="pill bhasya">भाष्यम्</span>' : '')
+    // prakaraṇa commentaries are टीका (PD/US/SD); VC's Candraśekhara-Bhāratī commentary is a व्याख्या — the only
+    // exception in the current prakaraṇa set (Harsha, 2026-09-27). Same commentary pill style, own label.
+    + (t.offers.includes('tika') ? '<span class="pill bhasya tika">टीका</span>' : '')
+    + (t.offers.includes('vyakhya') ? '<span class="pill bhasya vyakhya">व्याख्या</span>' : '')
     + (t.note ? '<span class="rnote">' + t.note + '</span>' : '') + '</div>';
   const readCard = t => `<a class="rcard" data-reflect="${t.file}"><div class="rtitle">${t.dv}</div><div class="rlat">${t.lat}</div>${readOffers(t)}</a>`;
   const readGroup = g => READING_TEXTS.filter(t => t.group === g).map(readCard).join('');
@@ -1380,7 +1384,7 @@ function renderDashboard() {
         <div class="readgrid">${readGroup('prasthana')}</div>
       </div>
       <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">4 · मूलम्</span></div>
+        <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'prakarana').length} · मूलम् + टीका / व्याख्या</span></div>
         <div class="readgrid">${readGroup('prakarana')}</div>
       </div>
     </div>

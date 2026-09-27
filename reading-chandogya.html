@@ -210,6 +210,9 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 
 /* hover words: NO dotted underline, just subtle bg + help cursor */
 .w{cursor:help}.w:hover{background:rgba(120,120,120,.15);border-radius:3px}
+/* ṭīkā words have no gloss (layer-scoped, no data-w) — no help cursor / hover tint; a ṭīkā pratīka keeps them (jump card) */
+.tk-inline .w:not([data-w]),.side-zone .w:not([data-w]){cursor:auto}.tk-inline .w:not([data-w]):hover,.side-zone .w:not([data-w]):hover{background:none}
+.tk-inline .tk-prat .w,.side-zone .tk-prat .w{cursor:help}.tk-inline .tk-prat .w:hover,.side-zone .tk-prat .w:hover{background:rgba(120,120,120,.15)}
 
 /* tooltip (rich for mula, plain for bhasya) */
 #tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);

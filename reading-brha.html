@@ -6,7 +6,7 @@
   --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
   /* मनन (bhasya roles) */
   --mula:#1a56db;--gloss:#3f4653;--import:#6d28d9;--vyak:#6b6255;--purva:#b91c1c;
-  --eka:#c2410c;--sid:#15803d;--cite:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--tarka:#5b6472;--drs:#a16207;--maha:#db2777;--praman:#ad24b2;--introbg:#f2ede2;
+  --eka:#c2410c;--sid:#15803d;--cite:#0e7490;--conn:#b0a99a;--spine:#7c5a1e;--tarka:#5b6472;--drs:#a16207;--maha:#db2777;--praman:#ad24b2;--introbg:#f2ede2;--tika:#475569;
   --tipacc:#a7f3d0;--tipline:rgba(255,255,255,.2);--prb-shruti:#5c0f60;--prb-yukti:#7a1a7e;--prb-anubhava:#9d1fa2;
   --mulatint:rgba(124,90,30,.05);
 }
@@ -14,7 +14,7 @@
   --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;
+  --eka:#fb923c;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;--tika:#94a3b8;
   --tipacc:#065f46;--tipline:rgba(0,0,0,.18);--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5;
   --mulatint:rgba(217,184,119,.07);
 }}
@@ -22,7 +22,7 @@
   --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
-  --eka:#f8b06a;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;
+  --eka:#fb923c;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;--tika:#94a3b8;
   --tipacc:#065f46;--tipline:rgba(0,0,0,.18);--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5;
   --mulatint:rgba(217,184,119,.07);
 }
@@ -139,24 +139,24 @@ body.metmode-pada .vjoin{display:none}
 /* ṭīkā parts, styled by structural role: avataraṇikā = muted-italic lead-in · pratīka = brown-bold
    catch-word (the bhāṣya lemma quoted, ending इति) · vyākhyā = normal-ink explanation · maṅgala accent. */
 .tk-ava{color:var(--muted);font-style:italic}
-.tk-prat{color:var(--role);font-weight:700}
+.tk-prat{color:var(--tika);font-weight:700}
 .tk-vy{color:var(--ink)}
 .tk-mng{color:var(--ink);font-style:italic;font-weight:600}   /* maṅgala = commentator's own benedictory verse: ink + italic (verse presence), NOT the pratīka brown (--role) it used to share, and NOT the muted avataraṇikā (--muted). #9c: no colour reuse. */
 /* interleaved inline note — a tinted, indented aside inside the bhāṣya flow */
-.tk-inline{display:none;margin:9px 0 11px 20px;padding:8px 13px;border-left:3px solid var(--role);
-  background:var(--mulatint);border-radius:0 9px 9px 0;font-size:16px;line-height:1.85}
+.tk-inline{display:none;margin:9px 0 11px 20px;padding:8px 13px;border-left:3px solid var(--tika);
+  background:color-mix(in srgb,var(--tika) 6%,transparent);border-radius:0 9px 9px 0;font-size:16px;line-height:1.85}   /* ṭīkā's own tint (was the mūla tint) */
 .tk-inline::before{content:attr(data-label);display:block;font-family:-apple-system,sans-serif;
-  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--role);opacity:.85;margin-bottom:3px}
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--tika);opacity:.85;margin-bottom:3px}
 /* side column */
 .side-zone{display:none;padding:12px 16px 16px;margin:12px 13px 14px;
-  border-left:3px solid var(--role);border-radius:0 10px 10px 0;background:var(--mulatint)}
-.side-zone .zlabel{color:var(--role)}
+  border-left:3px solid var(--tika);border-radius:0 10px 10px 0;background:color-mix(in srgb,var(--tika) 6%,transparent)}
+.side-zone .zlabel{color:var(--tika)}
 .tika{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;font-size:17px;line-height:1.95}
 .tk{margin:0 0 10px}.tk:last-child{margin-bottom:0}
 /* सुरेश्वर-वार्त्तिकम् (section-gran side): a brāhmaṇa's numbered verses */
 .vk .vk-t{font-family:-apple-system,sans-serif;font-size:12px;color:var(--muted);font-weight:500}
 .vk .vk-v{display:flex;gap:8px;margin:0 0 11px}.vk .vk-v:last-child{margin-bottom:0}
-.vk .vk-n{flex:0 0 auto;min-width:2em;text-align:right;color:var(--role);font-size:13px;font-family:-apple-system,sans-serif;line-height:1.95;opacity:.8}
+.vk .vk-n{flex:0 0 auto;min-width:2em;text-align:right;color:var(--tika);font-size:13px;font-family:-apple-system,sans-serif;line-height:1.95;opacity:.8}
 .vk .vk-x{flex:1 1 auto;min-width:0}
 .vk .w{cursor:default}   /* whole-verse laser/highlight target — not a word-gloss link */
 /* पार्श्वे layout — two balanced columns, widened page */
@@ -197,7 +197,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 /* दृष्टान्त · upamāna/upameya start-pills (both poles share the --drs dṛṣṭānta hue, distinguished by label) */
 .dr-mark{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid var(--drs);color:var(--drs);background:color-mix(in srgb,var(--drs) 12%,transparent);font-family:"Noto Serif Devanagari",serif;user-select:none;-webkit-user-select:none;-moz-user-select:none}
 .dr-mark-upamana::before{content:"उपमानम्"}.dr-mark-upameya::before{content:"उपमेयम्"}  /* labels via generated content — copy-safe */
-/* महावाक्य · verse-level identity-equation pill — HIDDEN until the महावाक्य toggle; two shades by
+/* महावाक्य · verse-level identity-equation pill — ALWAYS shown (no toggle since 2026-09-22); two shades by
    sub-type (मुख्य solid fill vs बाधायाम् lighter dashed), styled hover note names the classification
    (a positioned card, NOT a native title=, per gloss-consistency #9b) */
 .maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
@@ -224,7 +224,6 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 #tip .tm{color:var(--tm);font-style:italic;margin:2px 0 5px}
 #tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
 #tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid var(--tipline);font-family:"Noto Serif Devanagari",serif}
-#tip.plain{font-family:"Noto Serif Devanagari",serif;font-size:14.5px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .mantra.navhit{animation:navflash 1.6s ease-out}
 /* cross-layer jump arrival flash (word / ṭīkā-pratīka) — saffron so it reads as "navigation", distinct
@@ -469,7 +468,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
     <div class="legnote">Each note runs in three moves — set up the doubt, point at the bhāṣya word, then explain it:</div>
     <div class="legrow">
       <span class="item"><i style="color:var(--muted)">अवतरणिका</i> — the lead-in framing the doubt</span>
-      <span class="item"><b style="color:var(--role)">प्रतीकम्</b> — the bhāṣya catch-word explained (ends इति)</span>
+      <span class="item"><b style="color:var(--tika)">प्रतीकम्</b> — the bhāṣya catch-word explained (ends इति)</span>
       <span class="item">व्याख्या — the explanation</span>
     </div>
     <div class="legnote" style="margin-top:5px">Show it inline in the bhāṣya (अन्तः) or beside it (पार्श्वे) from the top bar; on phones it's always inline.</div>
@@ -486,9 +485,9 @@ function mrow(lb,v){return v?'<div class="row"><span class="lb">'+lb+'</span> '+
 function krow(role,sutra){return (role||sutra)?'<div class="row"><span class="lb">kāraka</span> '+(role||'—')+(sutra?' <span class="lb">सूत्र</span> '+sutra:'')+'</div>':'';}
 function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
   if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
-  h+=mrow('व्याकरणम्',d.g)+krow(d.role,d.sutra)+mrow('samāsa',d.sam);
-  if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';
-  if(d.p)h+='<div class="peel">'+d.p+'</div>';return h;}
+  // #9b fixed row order — पदच्छेद as a LABELLED row before व्याकरणम् (as the bhāṣya card), never an unlabelled line after the peel
+  h+=mrow('पदच्छेद',d.p)+mrow('व्याकरणम्',d.g)+krow(d.role,d.sutra)+mrow('samāsa',d.sam);
+  if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';return h;}
 function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
   var left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
   var top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);

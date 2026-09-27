@@ -41,10 +41,10 @@
     + '.syncv{scroll-margin-top:82px}'
     + '@keyframes syncflash{0%{background:rgba(120,120,180,.30)}100%{background:transparent}}'
     + '.syncv.syncv-hit{animation:syncflash 1.6s ease-out}'
-    + '.w.synchi{background:rgba(230,170,32,.35);border-radius:4px;box-shadow:0 0 0 2px rgba(230,170,32,.55);'
+    + '.w.synchi,.gw.synchi{background:rgba(230,170,32,.35);border-radius:4px;box-shadow:0 0 0 2px rgba(230,170,32,.55);'
     + '  transition:background .15s,box-shadow .15s}'
     + '@keyframes syncptpulse{0%,100%{box-shadow:0 0 0 2px rgba(220,60,60,.60)}50%{box-shadow:0 0 0 4px rgba(220,60,60,.28)}}'
-    + '.w.syncpt{background:rgba(220,60,60,.16);border-radius:4px;animation:syncptpulse 1.1s ease-in-out infinite}'
+    + '.w.syncpt,.gw.syncpt{background:rgba(220,60,60,.16);border-radius:4px;animation:syncptpulse 1.1s ease-in-out infinite}'
     + '#vvsync .vs-tip{position:fixed;left:14px;bottom:56px;max-width:min(92vw,420px);background:var(--card);'
     + '  border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--muted);'
     + '  box-shadow:0 6px 20px rgba(0,0,0,.25);line-height:1.45}'
@@ -185,8 +185,8 @@
       for (var i = 0; i < els.length; i++) if (els[i].offsetParent !== null) return els[i];
       return els[0] || null; }
     function inView(el) { try { var r = el.getBoundingClientRect(); return r.top >= 64 && r.bottom <= innerHeight - 32; } catch (e) { return true; } }
-    function clearHi() { var w = document.querySelector('.w.synchi'); if (w) w.classList.remove('synchi'); }
-    function clearPt() { var p = document.querySelector('.w.syncpt'); if (p) p.classList.remove('syncpt'); }
+    function clearHi() { var w = document.querySelector('.w.synchi,.gw.synchi'); if (w) w.classList.remove('synchi'); }
+    function clearPt() { var p = document.querySelector('.w.syncpt,.gw.syncpt'); if (p) p.classList.remove('syncpt'); }
     function applyPos(ref, k) {
       last.ref = ref; if (k !== undefined) last.k = k;
       if (ref) {
@@ -272,7 +272,7 @@
     }
     function onWordTap(e) {
       if (role !== 'present' || paused || stopped || !visible()) return;
-      var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
+      var el = e.target && e.target.closest ? e.target.closest('.w[data-k],.gw[data-k]') : null;
       if (!el) { sendClear(); return; }                             // click empty space → clear laser + highlight
       if (el.classList.contains('synchi')) { sendClear(); return; } // click the highlighted word again → toggle off
       var k = el.getAttribute('data-k'); var r = refOfK(k) || curVerse();
@@ -287,7 +287,7 @@
     function onMove(e) {
       if (role !== 'present' || paused || stopped || replaying || !visible()) return;
       var now = Date.now(); if (now - ptTs < 70) return; ptTs = now;
-      var el = e.target && e.target.closest ? e.target.closest('.w[data-k]') : null;
+      var el = e.target && e.target.closest ? e.target.closest('.w[data-k],.gw[data-k]') : null;
       var k = el ? el.getAttribute('data-k') : null;
       if (k === lastPt) return; lastPt = k;
       if (k) { var r = refOfK(k); if (r) lastRef = r; }   // keep presenter state at the pointed verse (late joiners land here)

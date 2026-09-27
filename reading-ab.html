@@ -1,7 +1,7 @@
 <!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>आत्मबोधः (Ātmabodha)</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;--brand:#d97706;--tm:#a7f3d0;--topicbg:#edf1f8}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}}
 :root[data-theme=dark]{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}
-/* महावाक्य hue (#9c named token) + verse-level identity pill, HIDDEN until the महावाक्य toggle; two shades by sub-type, styled hover note (not native title=) */
+/* महावाक्य hue (#9c named token) + verse-level identity pill, ALWAYS shown (no toggle since 2026-09-22); two shades by sub-type, styled hover note (not native title=) */
 :root{--maha:#db2777}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--maha:#f472b6}}:root[data-theme=dark]{--maha:#f472b6}
 :root{--tarka:#5b6472;--drs:#a16207}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tarka:#9aa7b8;--drs:#fcd34d}}:root[data-theme=dark]{--tarka:#9aa7b8;--drs:#fcd34d}
 /* प्रमाण reserved hue (#9c named token, 298°) — reserved in every renderer palette; graded refs only (VC, SD so far) */
@@ -32,7 +32,7 @@
    topic reads apart from the prelude (--introbg-style dashed zone), mūla and commentary; role colours = left border (#9c) */
 .secband{margin:22px 0 8px;padding:6px 16px;background:var(--topicbg);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .secband .st{font-weight:600;color:var(--ink)} .secband .srange{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
-.secband.r-purvapaksha{border-left-color:var(--purva)} .secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-lakshana{border-left-color:var(--lakshana)} .secband.r-phalita{border-left-color:var(--import)}
+.secband.r-purvapaksha{border-left-color:var(--purva)} .secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-lakshana{border-left-color:var(--lakshana)} .secband.r-phalita{border-left-color:var(--phalita,var(--import))}
 /* avatārikā (prelude) — dashed pre-zone ABOVE the mūla; bhāṣya content, hidden in मूलम्-only mode.
    Small-caps ::before label matches the prasthānatrayī pre-zone (CLAUDE.md consistency). */
 .pre-zone{margin:0 0 12px;padding:10px 14px 6px;border-left:3px dashed var(--muted);border-radius:0 10px 10px 0}

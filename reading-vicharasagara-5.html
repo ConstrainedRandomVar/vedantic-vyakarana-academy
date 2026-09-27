@@ -3,7 +3,11 @@
 <title>विचारसागरः — पञ्चमतरङ्गः</title>
 <style>
 :root{--bg:#faf7f0;--ink:#2b2620;--mula:#1a1a2e;--tip:#5a4632;--tipbg:#f3ead8;--accent:#8a5a2b;--brand:#d97706;--cite:#0e7490;--tr:#4a5568;--rule:#e0d6c2;
-  --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#a21caf;--drs:#a16207;--eka:#c2410c;--maha:#db2777}
+  --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#a21caf;--drs:#a16207;--eka:#c2410c;--maha:#db2777;
+  --card:#fff;--muted:#8a7d68;--muted2:#a08d6f;--label:#6b5d47;--connector:#9a8f78;--gold:var(--gold);--gold2:#a07f45;--hover:#f0e4c8;--flash:var(--flash);--tipedge:#e6d6b3;--trrule:#d8cbb0;--gloss:#3f4653;--anuvada:#6b6255;--secbase:#6a5f8f;--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.18);--topicbg:#ebe8f4}
+/* dark palette (#9c tokens) — explicit ◐ toggle, or the OS preference when no explicit choice */
+:root[data-theme=dark]{--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#e879f9;--drs:#fcd34d;--eka:#f8b06a;--maha:#f472b6;--card:#1c1f26;--muted:#a79a82;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.18);--topicbg:#1e2431}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#e879f9;--drs:#fcd34d;--eka:#f8b06a;--maha:#f472b6;--card:#1c1f26;--muted:#a79a82;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.18);--topicbg:#1e2431}}
 /* महावाक्य · verse-level identity pill, HIDDEN until the महावाक्य checkbox; two shades मुख्य/बाधायाम्, styled hover note (not native title=). Pink --maha is distinct from the fuchsia --lak lakṣaṇa hue (#9c). */
 .maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
 .maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
@@ -11,81 +15,81 @@
 .maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
 .maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 /* bhāṣya-matched: citation=teal(--cite) · pūrvapakṣa=red(--pp) · siddhānta=green(--sid) · tātparya/phalita=purple(--tat,=bhāṣya import) · ekadeshi=orange(--eka). VS-new: lakṣaṇa=magenta(--lak) · dṛṣṭānta=sepia(--drs) */
-.w.r-purvapaksha{color:var(--pp)} .w.r-siddhanta{color:var(--sid)} .w.r-phalita{color:var(--tat)} .w.r-lakshana{color:var(--lak)} .w.r-drishtanta{color:var(--drs)} .w.r-ekadeshi{color:var(--eka)} .w.r-anuvada{color:#6b6255}
+.w.r-purvapaksha{color:var(--pp)} .w.r-siddhanta{color:var(--sid)} .w.r-phalita{color:var(--tat)} .w.r-lakshana{color:var(--lak)} .w.r-drishtanta{color:var(--drs)} .w.r-ekadeshi{color:var(--eka)} .w.r-anuvada{color:var(--anuvada)}
 .w.ga{font-weight:650}                          /* A = pratīka (term being glossed) */
-.w.gb{color:#3f4653;font-style:italic}          /* B = gloss (synonym / vivaraṇa) */
-.geq{color:#9a8f78;padding:0 2px}               /* the author's = gloss connector */
+.w.gb{color:var(--gloss);font-style:italic}          /* B = gloss (synonym / vivaraṇa) */
+.geq{color:var(--connector);padding:0 2px}               /* the author's = gloss connector */
 .skt.pp{color:var(--pp)} .skt.sid{color:var(--sid)} .skt.def{color:var(--lak)}   /* deterministic fallback (whole-sentence) when a sentence has no roleSpans */
 /* section-role ribbon — a role-coloured band before the first āvarta of each topical (A. n-m) section */
 /* section-role band = a double-pointed CHEVRON RIBBON (<====>), deliberately a different SHAPE and a cool
    lavender fill so it can never be mistaken for the ṭippaṇī note card (a warm cream #f3ead8 rounded box).
    Role = the heading colour (exposition muted; argumentative roles pop in their hue). */
-.secband{margin:32px 0 12px;padding:6px 30px;background:#ebe8f4;clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);border:none;border-radius:0;font-family:system-ui;font-size:14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;scroll-margin-top:var(--smt,180px)}
-.secband .st{font-weight:700;color:#6a5f8f} .secband .srange{margin-left:auto;font-size:11px;color:#8f86ad;font-weight:700;white-space:nowrap}
-.secband.r-purvapaksha{background:#f7e6ea} .secband.r-purvapaksha .st{color:var(--pp)} .secband.r-purvapaksha .srange{color:#c98b8b}
-.secband.r-siddhanta{background:#e4f0e8} .secband.r-siddhanta .st{color:var(--sid)} .secband.r-siddhanta .srange{color:#84ab92}
-.secband.r-drishtanta{background:#efe9f0} .secband.r-drishtanta .st{color:var(--drs)} .secband.r-drishtanta .srange{color:#a99}
-.secband.r-lakshana{background:#f4e7f2} .secband.r-lakshana .st{color:var(--lak)} .secband.r-lakshana .srange{color:#bd8fb8}
-.secband.r-phalita{background:#eee8f6} .secband.r-phalita .st{color:var(--tat)} .secband.r-phalita .srange{color:#a394c9}
-.secband.r-ekadeshi{background:#f6e9df} .secband.r-ekadeshi .st{color:var(--eka)} .secband.r-ekadeshi .srange{color:#c79b7a}
+.secband{margin:32px 0 12px;padding:6px 30px;background:var(--topicbg);clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);border:none;border-radius:0;font-family:system-ui;font-size:14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;scroll-margin-top:var(--smt,180px)}
+.secband .st{font-weight:700;color:var(--secbase)} .secband .srange{margin-left:auto;font-size:11px;color:color-mix(in srgb,var(--secbase) 70%,var(--bg));font-weight:700;white-space:nowrap}
+.secband.r-purvapaksha{background:color-mix(in srgb,var(--pp) 11%,var(--bg))} .secband.r-purvapaksha .st{color:var(--pp)} .secband.r-purvapaksha .srange{color:color-mix(in srgb,var(--pp) 55%,var(--bg))}
+.secband.r-siddhanta{background:color-mix(in srgb,var(--sid) 11%,var(--bg))} .secband.r-siddhanta .st{color:var(--sid)} .secband.r-siddhanta .srange{color:color-mix(in srgb,var(--sid) 55%,var(--bg))}
+.secband.r-drishtanta{background:color-mix(in srgb,var(--drs) 11%,var(--bg))} .secband.r-drishtanta .st{color:var(--drs)} .secband.r-drishtanta .srange{color:color-mix(in srgb,var(--drs) 55%,var(--bg))}
+.secband.r-lakshana{background:color-mix(in srgb,var(--lak) 11%,var(--bg))} .secband.r-lakshana .st{color:var(--lak)} .secband.r-lakshana .srange{color:color-mix(in srgb,var(--lak) 55%,var(--bg))}
+.secband.r-phalita{background:color-mix(in srgb,var(--tat) 11%,var(--bg))} .secband.r-phalita .st{color:var(--tat)} .secband.r-phalita .srange{color:color-mix(in srgb,var(--tat) 55%,var(--bg))}
+.secband.r-ekadeshi{background:color-mix(in srgb,var(--eka) 11%,var(--bg))} .secband.r-ekadeshi .st{color:var(--eka)} .secband.r-ekadeshi .srange{color:color-mix(in srgb,var(--eka) 55%,var(--bg))}
 .secband.sangraha .st{text-decoration:underline;text-decoration-color:currentColor;text-underline-offset:3px}
 body.nosec .secband{display:none}
 .spk{display:inline-block;font:600 10px/1 system-ui;padding:2px 6px;border-radius:9px;margin-right:6px;vertical-align:1px}
-.spk-g{background:#dcecdc;color:#15603d} .spk-s{background:#f0e2d0;color:#8a5a2b}
+.spk-g{background:color-mix(in srgb,var(--sid) 16%,var(--bg));color:var(--sid)} .spk-s{background:color-mix(in srgb,var(--accent) 16%,var(--bg));color:var(--accent)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.85 "Noto Serif Devanagari","Adishila",Georgia,serif;padding:0 0 120px}
-header{position:sticky;top:0;background:rgba(250,247,240,.97);border-bottom:1px solid var(--rule);padding:9px 20px;z-index:5;backdrop-filter:blur(6px)}
+header{position:sticky;top:0;background:color-mix(in srgb,var(--bg) 97%,transparent);border-bottom:1px solid var(--rule);padding:9px 20px;z-index:5;backdrop-filter:blur(6px)}
 /* mandatory site brand — saffron, left-aligned, on every page (standard template) */
 .brand{color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:"Noto Serif Devanagari",serif;white-space:nowrap}
 /* compact header rows: brand|picker, then title|toolbar, then the dynamic pin */
 .hbar{display:flex;align-items:center;justify-content:space-between;gap:6px 18px;flex-wrap:wrap} .hbar+.hbar{margin-top:5px}
-h1{margin:0;font-size:20px;color:var(--accent);line-height:1.2} .by{font-size:12px;font-weight:400;color:#a08d6f;font-family:system-ui}
-.sub{font-size:13px;color:#8a7d68;margin-top:2px;font-family:system-ui}
+h1{margin:0;font-size:20px;color:var(--accent);line-height:1.2} .by{font-size:12px;font-weight:400;color:var(--muted2);font-family:system-ui}
+.sub{font-size:13px;color:var(--muted);margin-top:2px;font-family:system-ui}
 /* dynamic pinned topic — the current (A. n-m) section, role-coloured, updated on scroll */
-.nowsec{margin-top:4px;font-family:system-ui;font-size:13.5px;color:#8a7d68;display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;border-left:3px solid #caa45a;padding-left:9px;min-height:1.2em;transition:border-color .2s}
+.nowsec{margin-top:4px;font-family:system-ui;font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;border-left:3px solid var(--gold);padding-left:9px;min-height:1.2em;transition:border-color .2s}
 .nowsec .ns-r{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
-.nowsec .ns-t{font-weight:600;color:var(--mula)} .nowsec .ns-range{font-size:11px;color:#a07f45;font-weight:700;white-space:nowrap}
+.nowsec .ns-t{font-weight:600;color:var(--mula)} .nowsec .ns-range{font-size:11px;color:var(--gold2);font-weight:700;white-space:nowrap}
 .nowsec.r-purvapaksha{border-left-color:var(--pp)} .nowsec.r-purvapaksha .ns-r{color:var(--pp)}
 .nowsec.r-siddhanta{border-left-color:var(--sid)} .nowsec.r-siddhanta .ns-r{color:var(--sid)}
 .nowsec.r-drishtanta{border-left-color:var(--drs)} .nowsec.r-drishtanta .ns-r{color:var(--drs)}
 .nowsec.r-lakshana{border-left-color:var(--lak)} .nowsec.r-lakshana .ns-r{color:var(--lak)}
 .nowsec.r-phalita{border-left-color:var(--tat)} .nowsec.r-phalita .ns-r{color:var(--tat)}
 .nowsec.r-ekadeshi{border-left-color:var(--eka)} .nowsec.r-ekadeshi .ns-r{color:var(--eka)}
-.byline{font-size:11.5px;color:#a08d6f;margin-top:3px;font-family:system-ui}
-.toolbar{margin:0;font-family:system-ui;font-size:12.5px;white-space:nowrap} .toolbar label{margin-left:14px;cursor:pointer;color:#6b5d47}
+.byline{font-size:11.5px;color:var(--muted2);margin-top:3px;font-family:system-ui}
+.toolbar{margin:0;font-family:system-ui;font-size:12.5px;white-space:nowrap} .toolbar label{margin-left:14px;cursor:pointer;color:var(--label)}
 #reading-nav{margin:0}
 .reading-nav{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:flex-end}
-.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:#8a7d68;font-family:system-ui}
-.reading-nav select{font:inherit;font-size:14px;color:var(--ink);background:#fff;border:1px solid var(--rule);border-radius:8px;padding:4px 9px;min-width:70px}
-@keyframes navflash{0%{background:#fdf0c8}100%{background:transparent}} .av.navhit{animation:navflash 1.6s ease-out}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);font-family:system-ui}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:4px 9px;min-width:70px}
+@keyframes navflash{0%{background:var(--flash)}100%{background:transparent}} .av.navhit{animation:navflash 1.6s ease-out}
 /* legend — collapsible, IN-FLOW (scrolls away; not part of the sticky header). Mirrors the upaniṣad views. */
-.legend{background:#fff;border:1px solid var(--rule);border-radius:12px;margin:0 0 20px;font-family:system-ui;font-size:12px;color:#6b5d47}
-.legend>summary{list-style:none;cursor:pointer;padding:10px 14px;color:#8a7d68;display:flex;align-items:center;gap:8px}
+.legend{background:var(--card);border:1px solid var(--rule);border-radius:12px;margin:0 0 20px;font-family:system-ui;font-size:12px;color:var(--label)}
+.legend>summary{list-style:none;cursor:pointer;padding:10px 14px;color:var(--muted);display:flex;align-items:center;gap:8px}
 .legend>summary::-webkit-details-marker{display:none}
-.legend>summary::before{content:"▸";font-size:11px;color:#caa45a} .legend[open]>summary::before{content:"▾"}
-.legend>summary .tw{margin-left:auto;font-weight:400;font-size:11px;color:#a08d6f}
+.legend>summary::before{content:"▸";font-size:11px;color:var(--gold)} .legend[open]>summary::before{content:"▾"}
+.legend>summary .tw{margin-left:auto;font-weight:400;font-size:11px;color:var(--muted2)}
 .legend-body{padding:2px 14px 12px;display:flex;flex-wrap:wrap;gap:6px 18px}
 .legend-body>span{display:inline-flex;align-items:center;gap:5px}
 /* विषयानुक्रमः TOC — collapsible section outline; role-coloured, nested by indentation, topic → jump */
-.toc{background:#fff;border:1px solid var(--rule);border-radius:12px;margin:0 0 16px;font-family:system-ui;font-size:13px;color:#6b5d47}
-.toc>summary{list-style:none;cursor:pointer;padding:10px 14px;color:#8a7d68;display:flex;align-items:center;gap:8px}
+.toc{background:var(--card);border:1px solid var(--rule);border-radius:12px;margin:0 0 16px;font-family:system-ui;font-size:13px;color:var(--label)}
+.toc>summary{list-style:none;cursor:pointer;padding:10px 14px;color:var(--muted);display:flex;align-items:center;gap:8px}
 .toc>summary::-webkit-details-marker{display:none}
-.toc>summary::before{content:"▸";font-size:11px;color:#caa45a} .toc[open]>summary::before{content:"▾"}
-.toc>summary .tw{margin-left:auto;font-weight:400;font-size:11px;color:#a08d6f}
+.toc>summary::before{content:"▸";font-size:11px;color:var(--gold)} .toc[open]>summary::before{content:"▾"}
+.toc>summary .tw{margin-left:auto;font-weight:400;font-size:11px;color:var(--muted2)}
 .toc-body{padding:2px 8px 10px}
 .toc-i{display:flex;align-items:baseline;gap:6px;padding:3px 8px;border-radius:6px;text-decoration:none;color:inherit;border-left:3px solid transparent;scroll-margin-top:var(--smt,180px)}
-a.toc-i:hover{background:#f3ead8}
+a.toc-i:hover{background:var(--tipbg)}
 .toc-i .toc-r{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:800}
-.toc-i .toc-t{color:var(--mula)} .toc-i .toc-rng{margin-left:auto;font-size:11px;color:#a07f45;font-weight:700;white-space:nowrap;padding-left:8px}
+.toc-i .toc-t{color:var(--mula)} .toc-i .toc-rng{margin-left:auto;font-size:11px;color:var(--gold2);font-weight:700;white-space:nowrap;padding-left:8px}
 .toc-i.r-purvapaksha{border-left-color:var(--pp)} .toc-i.r-purvapaksha .toc-r{color:var(--pp)}
 .toc-i.r-siddhanta{border-left-color:var(--sid)} .toc-i.r-siddhanta .toc-r{color:var(--sid)}
 .toc-i.r-drishtanta{border-left-color:var(--drs)} .toc-i.r-drishtanta .toc-r{color:var(--drs)}
 .toc-i.r-lakshana{border-left-color:var(--lak)} .toc-i.r-lakshana .toc-r{color:var(--lak)}
 .toc-i.r-phalita{border-left-color:var(--tat)} .toc-i.r-phalita .toc-r{color:var(--tat)}
 .toc-i.r-ekadeshi{border-left-color:var(--eka)} .toc-i.r-ekadeshi .toc-r{color:var(--eka)}
-.toc-i.exp .toc-t{color:#8a7d68}
-.lg-w{border-bottom:1px dotted #8a7d68} .lg-c{border-bottom:1px dashed #c9a86a} .lg-q{color:var(--cite)}
-.lg-lk{color:var(--cite);text-decoration:underline} .lg-t{background:var(--tipbg);border-left:3px solid #caa45a;padding:0 6px;border-radius:3px}
+.toc-i.exp .toc-t{color:var(--muted)}
+.lg-w{border-bottom:1px dotted var(--muted)} .lg-c{border-bottom:1px dashed var(--gold)} .lg-q{color:var(--cite)}
+.lg-lk{color:var(--cite);text-decoration:underline} .lg-t{background:var(--tipbg);border-left:3px solid var(--gold);padding:0 6px;border-radius:3px}
 .lg-pp{color:var(--pp)} .lg-sid{color:var(--sid)} .lg-lak{color:var(--lak)} .lg-drs{color:var(--drs)} .lg-tat{color:var(--tat)}
 main{max-width:860px;margin:0 auto;padding:24px 20px}
 .av{margin:0 0 34px;padding-bottom:24px;border-bottom:1px solid var(--rule)}
@@ -93,43 +97,44 @@ main{max-width:860px;margin:0 auto;padding:24px 20px}
 .hd{color:var(--mula);font-family:"Noto Serif Devanagari",serif;font-weight:700}
 .mula{color:var(--mula)} .sent{margin:0 0 6px}
 .w{cursor:help;border-bottom:1px dotted transparent;transition:background .1s}
-.w:hover{background:#f0e4c8;border-bottom-color:var(--accent)}
+.w:hover{background:var(--hover);border-bottom-color:var(--accent)}
 .qrun{color:var(--cite)}                       /* quotation run — colour overlay, text untouched */
-.qrun .w:hover{background:#f0e4c8}
+.qrun .w:hover{background:var(--hover)}
 .cite{font-family:system-ui;font-size:.82em;color:var(--cite);white-space:nowrap}
-a.cite.lk{text-decoration:underline;cursor:pointer} a.cite.lk:hover{background:#f3d9d9;border-radius:3px}
-.tr{color:var(--tr);font:italic 15.5px/1.6 Georgia,serif;margin:3px 0 10px;padding-left:12px;border-left:2px solid #d8cbb0}
+a.cite.lk{text-decoration:underline;cursor:pointer} a.cite.lk:hover{background:color-mix(in srgb,var(--cite) 16%,transparent);border-radius:3px}
+.tr{color:var(--tr);font:italic 15.5px/1.6 Georgia,serif;margin:3px 0 10px;padding-left:12px;border-left:2px solid var(--trrule)}
 body.notr .tr{display:none}
-.tip-wrap{margin-top:12px;background:var(--tipbg);border:1px solid #e6d6b3;border-left:3px solid #caa45a;border-radius:6px;padding:10px 14px}
-.tip-lbl{font-family:system-ui;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#a07f45;margin-bottom:4px}
-.tip{color:var(--tip);font-size:16.5px;margin:4px 0} .tn,a.tn{color:#a07f45;font-weight:700;margin-right:4px;text-decoration:none}
+.tip-wrap{margin-top:12px;background:var(--tipbg);border:1px solid var(--tipedge);border-left:3px solid var(--gold);border-radius:6px;padding:10px 14px}
+.tip-lbl{font-family:system-ui;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px}
+.tip{color:var(--tip);font-size:16.5px;margin:4px 0} .tn,a.tn{color:var(--gold2);font-weight:700;margin-right:4px;text-decoration:none}
 .anc{font-size:.6em;font-weight:700;vertical-align:super;line-height:0} .anc a{color:var(--accent);text-decoration:none;padding:0 1px}
-.tip:target{background:#fdf0c8;border-radius:4px;box-shadow:0 0 0 3px #fdf0c8} .anc a:target{outline:2px solid var(--accent);border-radius:3px;background:#fdf0c8}
+.tip:target{background:var(--flash);border-radius:4px;box-shadow:0 0 0 3px var(--flash)} .anc a:target{outline:2px solid var(--accent);border-radius:3px;background:var(--flash)}
 /* anchor-jump targets clear the sticky header (--smt set to header height at load; else you land under it) */
 .tip,.anc a,section.av{scroll-margin-top:var(--smt,180px)}
 body.notip .tip-wrap{display:none}
 #tip{position:fixed;z-index:20;max-width:360px;background:#1f1b16;color:#f3ead8;font:14px/1.5 system-ui;padding:10px 12px;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.35);display:none;pointer-events:none}
-#tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:#f3ead8} #tip .tm{color:#a7f3d0;font-style:italic;margin:2px 0 5px} #tip .tg{color:#c9bfa8;font-size:12.5px;margin-bottom:4px} #tip .row{margin:1px 0} #tip .lb{opacity:.6;font-size:11px}
-#tip .sam{border-top:1px solid #4a4034;margin-top:5px;padding-top:5px} #tip .sam-h{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a9977a;margin-bottom:3px}
+#tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:#f3ead8} #tip .tm{color:var(--tipacc);font-style:italic;margin:2px 0 5px} #tip .tg{color:#c9bfa8;font-size:12.5px;margin-bottom:4px} #tip .row{margin:1px 0} #tip .lb{opacity:.6;font-size:11px}
+#tip .sam{border-top:1px solid var(--tipline);margin-top:5px;padding-top:5px} #tip .sam-h{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a9977a;margin-bottom:3px}
 #tip .sam-l{font-size:12.5px;margin:1px 0} #tip .sam-t{color:#a9977a;font-size:11px}
 
-.vs-about{margin:1em 0;border:1px solid #d8cfc0;border-radius:8px;background:#fbf9f5}
-.vs-about>summary{cursor:pointer;padding:.6em .9em;font-weight:600;color:#5a3e00;font-family:system-ui,sans-serif;font-size:14px}
+.vs-about{margin:1em 0;border:1px solid var(--rule,#d8cfc0);border-radius:8px;background:var(--card,#fbf9f5)}
+.vs-about>summary{cursor:pointer;padding:.6em .9em;font-weight:600;color:var(--accent,#5a3e00);font-family:system-ui,sans-serif;font-size:14px}
 .vs-about-body{padding:.4em .9em 1em}
 .vs-ab-row{display:grid;grid-template-columns:130px 1fr;gap:10px;margin:.35em 0;font-size:14px;line-height:1.5}
-.vs-ab-k{color:#8a7a5c;font-family:system-ui,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
-.vs-ab-note{margin:.9em 0;font-size:14px;line-height:1.65;color:#3a3a3a}
-.vs-ab-ded{margin:.9em 0;padding:.7em .9em;background:#f4efe6;border-left:3px solid #6d28d9;border-radius:4px}
-.vs-ab-ded-h{font-family:system-ui,sans-serif;font-size:12px;color:#6d28d9;margin-bottom:.5em}
-.vs-ab-verse-l{text-align:center;margin:.15em 0;color:#2a2a2a}
+.vs-ab-k{color:var(--muted,#8a7a5c);font-family:system-ui,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
+.vs-ab-note{margin:.9em 0;font-size:14px;line-height:1.65;color:var(--ink,#3a3a3a)}
+.vs-ab-ded{margin:.9em 0;padding:.7em .9em;background:var(--tipbg,#f4efe6);border-left:3px solid var(--tat,#6d28d9);border-radius:4px}
+.vs-ab-ded-h{font-family:system-ui,sans-serif;font-size:12px;color:var(--tat,#6d28d9);margin-bottom:.5em}
+.vs-ab-verse-l{text-align:center;margin:.15em 0;color:var(--mula,#2a2a2a)}
 .vs-ab-verse-trwrap{margin-top:.7em;padding-top:.6em;border-top:1px dotted #cdbfa0}
-.vs-ab-verse-tr{font-family:system-ui,sans-serif;font-size:13px;font-style:italic;color:#5a5245;line-height:1.6;margin:.35em 0}
-.vs-ab-prov{margin-top:.9em;font-size:12px;color:#8a7a5c;font-family:system-ui,sans-serif;line-height:1.55}
+.vs-ab-verse-tr{font-family:system-ui,sans-serif;font-size:13px;font-style:italic;color:var(--tr,#5a5245);line-height:1.6;margin:.35em 0}
+.vs-ab-prov{margin-top:.9em;font-size:12px;color:var(--muted,#8a7a5c);font-family:system-ui,sans-serif;line-height:1.55}
 
+#tog{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:3px 10px;cursor:pointer;margin-left:14px}
 </style></head><body>
 <header>
 <div class="hbar"><a class="brand" href="index.html" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><div id="reading-nav"></div></div>
-<div class="hbar"><h1>विचारसागरः — पञ्चमतरङ्गः<span class="by"> · श्रीवासुदेवब्रह्मेन्द्रसरस्वती</span></h1><div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः</label></div></div>
+<div class="hbar"><h1>विचारसागरः — पञ्चमतरङ्गः<span class="by"> · श्रीवासुदेवब्रह्मेन्द्रसरस्वती</span></h1><div class="toolbar"><label><input type="checkbox" id="ck-tr" checked> English</label><label><input type="checkbox" id="ck-tip" checked> टिप्पणी</label><label><input type="checkbox" id="ck-sec" checked> विभागाः</label><button id="tog" title="light / dark" aria-label="toggle theme">◐</button></div></div>
 <div class="nowsec" id="nowsec"><span class="ns-t">मध्यमाधिकारिण उपदेशनिरूपणम्</span></div>
 </header>
 <main>
@@ -386,4 +391,5 @@ document.querySelectorAll('.w').forEach(function(w){
 function place(e){var r=8,x=e.clientX+14,y=e.clientY+16,b=tip.getBoundingClientRect();if(x+b.width>innerWidth-r)x=e.clientX-b.width-14;if(y+b.height>innerHeight-r)y=e.clientY-b.height-16;tip.style.left=x+'px';tip.style.top=y+'px';}
 document.getElementById('ck-tr').addEventListener('change',function(e){document.body.classList.toggle('notr',!e.target.checked);});
 document.getElementById('ck-tip').addEventListener('change',function(e){document.body.classList.toggle('notip',!e.target.checked);});
-document.getElementById('ck-sec').addEventListener('change',function(e){document.body.classList.toggle('nosec',!e.target.checked);});</script></body></html>
+document.getElementById('ck-sec').addEventListener('change',function(e){document.body.classList.toggle('nosec',!e.target.checked);});
+(function(){var r=document.documentElement;document.getElementById('tog').onclick=function(){var c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark');};})();</script></body></html>

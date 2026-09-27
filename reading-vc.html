@@ -392,7 +392,10 @@ window.__vcNav=function(el){el.scrollIntoView({behavior:'smooth',block:'center'}
   var k=el.getAttribute('data-k'),sec=el.closest('[id^="v-"],[id^="vb-"]'),ref=k?k.split(':')[1]:(sec?sec.id.replace(/^vb?-/,''):null);
   if(ref&&window.__vvJump)window.__vvJump(ref,k||null);};   // presenter → carry followers
 window.__vcMulaJump=function(t){if(!t||!t.__prat||!document.body.classList.contains('view-both'))return '';var p=null;
-  for(var i=0;i<t.__prat.length;i++){if(t.__prat[i].offsetParent!==null){p=t.__prat[i];break;}}if(!p)return '';window.__vcJumpTo=p;
+  for(var i=0;i<t.__prat.length&&!p;i++){var q=t.__prat[i];if(q.offsetParent!==null){p=q;break;}
+    // a pratīka inside a sandhi-fused unit sits in the hidden पद copy (.fumembers) in सन्धि mode → land on the visible fused word
+    var fu=q.closest('.fu'),host=fu?fu.querySelector('.bhfuse'):null;if(host&&host.offsetParent!==null)p=host;}
+  if(!p)return '';window.__vcJumpTo=p;
   return '<div class="jumps"><span class="jrow" data-jp="1">→ '+(window.__vcJL||'भाष्यम्')+'</span></div>';};
 (function(){var tip=document.createElement('div');tip.className='gtip';document.body.appendChild(tip);var pinned=null;tip.classList.remove('pinned');
 function card(el){

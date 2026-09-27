@@ -1,6 +1,6 @@
-<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pañcadaśī · Pañcadaśī · परिच्छेद 2</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;--brand:#d97706;--tm:#a7f3d0}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d}}
-:root[data-theme=dark]{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d}
+<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pañcadaśī · Pañcadaśī · परिच्छेद 2</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;--brand:#d97706;--tm:#a7f3d0;--topicbg:#edf1f8}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}}
+:root[data-theme=dark]{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}
 /* महावाक्य hue (#9c named token) + verse-level identity pill, HIDDEN until the महावाक्य toggle; two shades by sub-type, styled hover note (not native title=) */
 :root{--maha:#db2777}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--maha:#f472b6}}:root[data-theme=dark]{--maha:#f472b6}
 :root{--tarka:#5b6472;--drs:#a16207}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tarka:#9aa7b8;--drs:#fcd34d}}:root[data-theme=dark]{--tarka:#9aa7b8;--drs:#fcd34d}
@@ -28,8 +28,9 @@
 .legend{padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
 .v{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
 .rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
-/* SAD per-verse topic band (viṣaya, pp.7-10) — VS-style ribbon; role colours reuse the bhāṣya palette (#9c) */
-.secband{margin:22px 0 8px;padding:6px 16px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+/* topic band (SAD per-verse viṣaya · AB section · VC two-tier) — its own card ABOVE the verse, tinted --topicbg so a
+   topic reads apart from the prelude (--introbg-style dashed zone), mūla and commentary; role colours = left border (#9c) */
+.secband{margin:22px 0 8px;padding:6px 16px;background:var(--topicbg);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .secband .st{font-weight:600;color:var(--ink)} .secband .srange{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
 .secband.r-purvapaksha{border-left-color:var(--purva)} .secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-lakshana{border-left-color:var(--lakshana)} .secband.r-phalita{border-left-color:var(--import)}
 /* avatārikā (prelude) — dashed pre-zone ABOVE the mūla; bhāṣya content, hidden in मूलम्-only mode.
@@ -104,9 +105,17 @@ body.view-both .ardha-int{display:none}
 .mw{padding:1px;border-radius:4px;transition:background .25s}.mw.flash{background:#fde68a;color:#7c2d12}
 .pratika{color:var(--morph);font-weight:700;cursor:pointer;border-bottom:1.5px dotted var(--morph)}.pratika:hover{background:rgba(26,86,219,.09)}
 .pratika{transition:background .25s}.pratika.flash{background:#fde68a;color:#7c2d12}
-/* reverse jump affordance: a mūla word that the bhāṣya quotes → click flashes its pratīka. Only shown in
-   मूलम्+भाष्यम् mode (the bhāṣya must be visible for the jump to land). */
-body.view-both .mulq{cursor:pointer;border-bottom:1.5px dotted var(--mula)}
+/* a mūla word the commentary quotes — dotted hint (मूलम्+भाष्यम् mode); the JUMP is the → row in its gloss card
+   (cross-layer links, same affordance as the upaniṣad views: word-click only pins the card / presenter highlight) */
+body.view-both .mulq{border-bottom:1.5px dotted var(--mula)}
+/* cross-layer jump row inside the gloss cards (#tip mūla card, .gtip commentary card) + saffron arrival flash */
+#tip .jumps,.gtip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline,rgba(255,255,255,.2));display:flex;flex-wrap:wrap;gap:5px 8px}
+#tip .jrow,.gtip .jrow{cursor:pointer;color:var(--tipacc,#a7f3d0);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc,#a7f3d0) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+#tip .jrow:hover,.gtip .jrow:hover{background:color-mix(in srgb,var(--tipacc,#a7f3d0) 16%,transparent)}
+.gtip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text}
+body.vvnopeek .gtip{display:none !important}
+@keyframes navflashw{0%{background:rgba(217,119,6,.42);box-shadow:0 0 0 2px rgba(217,119,6,.5)}100%{background:transparent;box-shadow:0 0 0 2px transparent}}
+.navhit{animation:navflashw 1.7s ease-out;border-radius:4px}
 /* भाष्य gloss tooltip = the SAME stacked card as the mūla #tip (CLAUDE.md #9b) */
 .gtip{position:fixed;z-index:9999;max-width:min(92vw,360px);background:var(--ink);color:var(--bg);padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;white-space:normal;font-family:"Noto Serif Devanagari","Kohinoor Devanagari",serif;display:none}
 .gtip .tw{font-size:16px;font-weight:700;color:var(--bg)}
@@ -367,16 +376,19 @@ body.view-mula .rolelegend{display:none}
 (function(){var K='vvMetMode';function set(m){document.body.classList.remove('mode-sandhi','mode-pada');document.body.classList.add('mode-'+m);document.querySelectorAll('.modebar button').forEach(function(b){b.classList.toggle('on',b.dataset.mode===m);});try{localStorage.setItem(K,m);}catch(e){}}
 document.querySelectorAll('.modebar button').forEach(function(b){b.addEventListener('click',function(){set(b.dataset.mode);});});
 var init='sandhi';try{init=localStorage.getItem(K)||'sandhi';}catch(e){}set(init);})();
-(function(){var K='vvViewMode';var bs=document.querySelectorAll('.viewbar button');if(!bs.length)return;function set(m){document.body.classList.remove('view-mula','view-both');document.body.classList.add('view-'+m);bs.forEach(function(b){b.classList.toggle('on',b.dataset.view===m);});if(window.__readingNav&&window.__readingNavRefs)window.__readingNav.setRefs(window.__readingNavRefs[m==='both'?'both':'mula']);try{localStorage.setItem(K,m);}catch(e){}}bs.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.view);});});var iv='mula';try{iv=localStorage.getItem(K)||'mula';}catch(e){}set(iv);})();(function(){var K='vvTransMode';var btn=document.getElementById('transtog');if(!btn)return;function set(on){document.body.classList.toggle('trans-on',on);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');try{localStorage.setItem(K,on?'1':'0');}catch(e){}}btn.addEventListener('click',function(){set(!document.body.classList.contains('trans-on'));});var it=false;try{it=localStorage.getItem(K)==='1';}catch(e){}set(it);})();
+(function(){var K='vvViewMode';var bs=document.querySelectorAll('.viewbar button');if(!bs.length)return;function set(m){document.body.classList.remove('view-mula','view-both');document.body.classList.add('view-'+m);bs.forEach(function(b){b.classList.toggle('on',b.dataset.view===m);});if(window.__readingNav&&window.__readingNavRefs)window.__readingNav.setRefs(window.__readingNavRefs[m==='both'?'both':'mula']);try{localStorage.setItem(K,m);}catch(e){}}bs.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.view);});});var iv='mula';try{iv=localStorage.getItem(K)||'mula';}catch(e){}set(iv);})();(function(){var K='vvTransMode';var btn=document.getElementById('transtog');if(!btn)return;function set(on){document.body.classList.toggle('trans-on',on);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');try{localStorage.setItem(K,on?'1':'0');}catch(e){}}btn.addEventListener('click',function(){set(!document.body.classList.contains('trans-on'));});var it=false;try{it=localStorage.getItem(K)==='1';}catch(e){}set(it);})();window.__vcJL="टीका";
 document.addEventListener('click',function(e){var p=e.target.closest('.pratika');if(!p)return;var t=document.getElementById(p.dataset.t);if(!t)return;t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.add('flash');setTimeout(function(){t.classList.remove('flash')},1400);});
-// REVERSE (mūla → bhāṣya): tag each pratīka's target mūla word .mulq (+ remember its pratīka[s]); clicking a
-// quoted mūla word flashes the bhāṣya pratīka that cites it — the mirror of the forward jump above. Only in
-// मूलम्+भाष्यम् mode (bhāṣya visible). Capture + stopPropagation so the mūla word's own gloss-card pin doesn't
-// also fire → one clean jump, symmetric with the pratīka click. mūla-only prakaraṇa texts have no .pratika,
-// so this is a no-op there.
+// mūla ⇄ commentary links: tag each pratīka's target mūla word .mulq (+ remember its pratīka[s]). The jump itself is
+// a → row inside the gloss card (mūla #tip: → भाष्यम्/टीका; commentary .gtip: → मूलम्) — NOT a word-click, which
+// stays "pin the card" / the presenter's highlight (the old capture-phase mūla click swallowed both).
 (function(){var ps=document.querySelectorAll('.pratika[data-t]');for(var i=0;i<ps.length;i++){var t=document.getElementById(ps[i].dataset.t);if(t){t.classList.add('mulq');(t.__prat=t.__prat||[]).push(ps[i]);}}})();
-document.addEventListener('click',function(e){if(!document.body.classList.contains('view-both'))return;var m=e.target.closest('.mulq');if(!m||!m.__prat)return;var p=null;for(var i=0;i<m.__prat.length;i++){if(m.__prat[i].offsetParent!==null){p=m.__prat[i];break;}}if(!p)return;e.preventDefault();e.stopPropagation();p.scrollIntoView({behavior:'smooth',block:'center'});p.classList.add('flash');setTimeout(function(){p.classList.remove('flash')},1400);},true);
-(function(){var tip=document.createElement('div');tip.className='gtip';document.body.appendChild(tip);var pinned=null;
+window.__vcNav=function(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit')},1800);
+  var k=el.getAttribute('data-k'),sec=el.closest('[id^="v-"],[id^="vb-"]'),ref=k?k.split(':')[1]:(sec?sec.id.replace(/^vb?-/,''):null);
+  if(ref&&window.__vvJump)window.__vvJump(ref,k||null);};   // presenter → carry followers
+window.__vcMulaJump=function(t){if(!t||!t.__prat||!document.body.classList.contains('view-both'))return '';var p=null;
+  for(var i=0;i<t.__prat.length;i++){if(t.__prat[i].offsetParent!==null){p=t.__prat[i];break;}}if(!p)return '';window.__vcJumpTo=p;
+  return '<div class="jumps"><span class="jrow" data-jp="1">→ '+(window.__vcJL||'भाष्यम्')+'</span></div>';};
+(function(){var tip=document.createElement('div');tip.className='gtip';document.body.appendChild(tip);var pinned=null;tip.classList.remove('pinned');
 function card(el){
   // fused सन्धि unit (.bhfuse): no inline data — build the combined card from the sibling पद member spans
   if(el.classList.contains('bhfuse')){var fu=el.parentNode,mem=fu?fu.querySelector('.fumembers'):null,gws=mem?mem.querySelectorAll('.gw'):[];
@@ -388,6 +400,7 @@ function card(el){
     hf+='<div class="row"><span class="lb">पदच्छेद</span> '+pd.join(' ')+'</div>';
     if(gr.length)hf+='<div class="row"><span class="lb">व्याकरणम्</span> '+gr.join(' · ')+'</div>';
     if(pl.length)hf+='<div class="peel">'+pl.join('§§').split('§§').join('<br>')+'</div>';
+    for(var j=0;j<gws.length;j++){var tj=gws[j].getAttribute('data-t');if(tj&&document.getElementById(tj)){hf+=jrowM(tj);break;}}
     return hf;}
   var w=el.getAttribute('data-hw')||el.textContent||'';var mng=el.getAttribute('data-mng')||'';var gram=el.getAttribute('data-gram')||'';var peel=el.getAttribute('data-peel')||'';
   if(!mng&&!gram&&!peel)return '';
@@ -395,14 +408,16 @@ function card(el){
   if(mng)h+='<div class="tm">'+mng+'</div>';
   if(gram)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+gram+'</div>';
   if(peel)h+='<div class="peel">'+peel.split('§§').join('<br>')+'</div>';
+  var tt=el.getAttribute('data-t');if(tt&&document.getElementById(tt))h+=jrowM(tt);
   return h;}
+function jrowM(id){return '<div class="jumps"><span class="jrow" data-jt="'+id+'">→ मूलम्</span></div>';}
 function place(x,y){var r=tip.getBoundingClientRect();var px=Math.max(6,Math.min(x+13,window.innerWidth-r.width-8));var py=y+18;if(py+r.height>window.innerHeight-6)py=Math.max(6,y-r.height-14);tip.style.left=px+'px';tip.style.top=py+'px';}
 function show(el,x,y){var h=card(el);if(!h)return;tip.innerHTML=h;tip.style.display='block';place(x,y);}
 function hide(){tip.style.display='none';}
 document.addEventListener('mouseover',function(e){if(pinned)return;var el=e.target.closest('.gw');if(el)show(el,e.clientX,e.clientY);});
 document.addEventListener('mousemove',function(e){if(pinned||tip.style.display!=='block')return;var el=e.target.closest('.gw');if(el)place(e.clientX,e.clientY);else hide();});
 document.addEventListener('mouseout',function(e){if(pinned)return;if(e.target.closest('.gw'))hide();});
-document.addEventListener('click',function(e){var el=e.target.closest('.gw');if(!el){if(pinned){pinned.classList.remove('pinned');pinned=null;hide();}return;}if(!card(el))return;e.stopPropagation();if(pinned===el){pinned.classList.remove('pinned');pinned=null;hide();return;}if(pinned)pinned.classList.remove('pinned');pinned=el;el.classList.add('pinned');var r=el.getBoundingClientRect();show(el,r.left,r.top+r.height-18);},true);
+document.addEventListener('click',function(e){if(tip.contains(e.target)){var jr=e.target.closest('.jrow');if(jr){e.stopPropagation();var tg=document.getElementById(jr.getAttribute('data-jt'));if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');}hide();if(tg)window.__vcNav(tg);}return;}var el=e.target.closest('.gw');if(!el){if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();}return;}if(!card(el))return;e.stopPropagation();if(pinned===el){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();return;}if(pinned)pinned.classList.remove('pinned');pinned=el;el.classList.add('pinned');tip.classList.add('pinned');var r=el.getBoundingClientRect();show(el,r.left,r.top+r.height-18);},true);
 })();
 function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
 if(d.g)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+d.g+'</div>';
@@ -415,7 +430,7 @@ function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||
   let left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
   let top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
   tip.style.left=left+'px';tip.style.top=top+'px';}
-function show(t){const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d);tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
+function show(t){const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d)+(window.__vcMulaJump?window.__vcMulaJump(t):'');tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
 const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
 // PIN: click a word to pin the tooltip (selectable/copyable); hover stays preview-only. Additive & sync-safe
 // (no preventDefault/stopImmediatePropagation → sync.js onWordTap + Esc/click-empty clears still fire).
@@ -425,6 +440,7 @@ document.addEventListener('mouseover',e=>{if(touch||pinned)return;const t=e.targ
 document.addEventListener('mouseout',e=>{if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
 document.addEventListener('click',e=>{if(tip.contains(e.target))return;const t=e.target.closest('.w');if(t){pinned=true;show(t);tip.classList.add('pinned');return;}hideTip(true);});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Esc')hideTip(true);});
+tip.addEventListener('click',e=>{const jr=e.target.closest('.jrow');if(jr&&window.__vcJumpTo&&window.__vcNav){e.stopPropagation();hideTip(true);window.__vcNav(window.__vcJumpTo);}});   // mūla → commentary (cross-layer link)
 const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script><style>
 #rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
   background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;

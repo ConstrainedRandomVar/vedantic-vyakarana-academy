@@ -1340,7 +1340,7 @@ function renderDashboard() {
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
     // निबन्धाः — modern monographs (not prakaraṇa). Tamil prose with Sanskrit quotations; reading-only (no quiz /
     // node / tutorial fan-out for non-Sanskrit texts — Harsha 2026-10-01). Built in ~/Projects/Tamil-Texts.
-    { dv: 'ब्रह्मसूत्रे प्रपञ्चमिथ्यात्वम्', lat: 'Brahma-sūtre prapañca-mithyātvam', file: 'reading-prapancha-mithyatva.html', group: 'nibandha', offers: [], note: 'தமிழ் · म.म. डॉ. रा. कृष्णमूर्तिशास्त्री · English (draft)' },
+    { dv: 'ब्रह्मसूत्रे प्रपञ्चमिथ्यात्वम्', lat: 'Brahma-sūtre prapañca-mithyātvam', file: 'reading-prapancha-mithyatva.html', group: 'nibandha', offers: [], note: 'தமிழ் · Brahmasri S. R. Krishnamurthi Sastrigal · English (draft)' },
   ];
   const readOffers = t => '<div class="offers">'
     + (t.offers.includes('mula') ? '<span class="pill mula">मूलम्</span>' : '')

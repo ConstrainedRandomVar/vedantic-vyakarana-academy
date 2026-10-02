@@ -1319,7 +1319,9 @@ function renderDashboard() {
   // reading+manana page (मूलम् + भाष्यम्, build_unified_reading_view.js → reading-<slug>.html);
   // prakaraṇa set → mūla-only padārtha hover (build_vc_reading_view.js). Kena is ONE entry — its
   // pada + vākya bhāṣya are merged into reading-kena.html by the unified builder.
-  const READING_TEXTS = [
+  // A sister site (साहित्य-व्याकरणम्, build_sahitya_site.js) supplies its own list via window.SITE_CONFIG; the academy
+  // has no SITE_CONFIG, so this academy list applies unchanged.
+  const READING_TEXTS = (window.SITE_CONFIG && window.SITE_CONFIG.readingTexts) || [
     { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
     { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya'], note: 'भाष्यम्: pada + vākya' },
@@ -1338,9 +1340,11 @@ function renderDashboard() {
     { dv: 'उपदेशसारम्', lat: 'Upadeśa Sāram', file: 'reading-ups.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीगणपतिमुनिः' },
     { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीकपालिशास्त्री' },
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
-    // निबन्धाः — modern monographs (not prakaraṇa). Tamil prose with Sanskrit quotations; reading-only (no quiz /
-    // node / tutorial fan-out for non-Sanskrit texts — Harsha 2026-10-01). Built in ~/Projects/Tamil-Texts.
+    // निबन्धाः — modern monographs (not prakaraṇa): prose (Tamil / English) with Sanskrit quotations; reading-only (no
+    // quiz / node / tutorial fan-out for non-Sanskrit texts — Harsha 2026-10-01). Built outside this repo: Tamil-Texts;
+    // sanskrit-texts/monograph/vrk-gita-upanishads (DATA-PROVENANCE §12, §14).
     { dv: 'ब्रह्मसूत्रे प्रपञ्चमिथ्यात्वम्', lat: 'Brahma-sūtre prapañca-mithyātvam', file: 'reading-prapancha-mithyatva.html', group: 'nibandha', offers: [], note: 'தமிழ் · Brahmasri S. R. Krishnamurthi Sastrigal · English (draft)' },
+    { dv: 'गीता उपनिषदश्च', lat: 'Gita and Upanishads', file: 'reading-vrk-gita-upanishads.html', group: 'nibandha', offers: [], note: 'English · V. R. Kalyanasundara Sastrigal · 20 doctrines, Upaniṣad ‖ Gītā passages' },
   ];
   const readOffers = t => '<div class="offers">'
     + (t.offers.includes('mula') ? '<span class="pill mula">मूलम्</span>' : '')
@@ -1391,7 +1395,7 @@ function renderDashboard() {
         <div class="readgrid">${readGroup('prakarana')}</div>
       </div>
       <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">निबन्धाः <span class="lat">· Monographs</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'nibandha').length} · Tamil + Sanskrit</span></div>
+        <div class="readgroup-head"><span class="gtitle">निबन्धाः <span class="lat">· Monographs</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'nibandha').length} · Tamil / English + Sanskrit</span></div>
         <div class="readgrid">${readGroup('nibandha')}</div>
       </div>
     </div>
@@ -1997,7 +2001,7 @@ function composeReportMessage(target, userComment) {
 function buildReportIssueUrl(target, name, email, message) {
   const { subject } = buildReportDetails(target);
   const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n\n${message}`;
-  const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
+  const url = new URL('https://github.com/' + ((window.SITE_CONFIG && window.SITE_CONFIG.issueRepo) || 'ConstrainedRandomVar/vedantic-vyakarana-academy') + '/issues/new');
   url.searchParams.set('title', subject);
   url.searchParams.set('body', fullBody);
   return url.toString();
@@ -4186,7 +4190,7 @@ function buildTutorialReportDetails(target) {
 function buildTutorialReportIssueUrl(target, name, email, message) {
   const { subject } = buildTutorialReportDetails(target);
   const fullBody = `Reported by: ${name || '(anonymous)'}${email ? ` <${email}>` : ''}\n\n${message}`;
-  const url = new URL('https://github.com/ConstrainedRandomVar/vedantic-vyakarana-academy/issues/new');
+  const url = new URL('https://github.com/' + ((window.SITE_CONFIG && window.SITE_CONFIG.issueRepo) || 'ConstrainedRandomVar/vedantic-vyakarana-academy') + '/issues/new');
   url.searchParams.set('title', subject);
   url.searchParams.set('body', fullBody);
   return url.toString();

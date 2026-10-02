@@ -1385,6 +1385,9 @@ function renderDashboard() {
     </div>
     <div class="dash-lane">
       <div class="lane-label">🪷 स्वाध्यायः · Read the texts</div>
+      ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? /* sister site: its own groups (build_sahitya_site.js) */
+        '<div class="lane-sub">' + (window.SITE_CONFIG.svadhyayaSub || '') + '</div>' + window.SITE_CONFIG.readGroups.map(g =>
+          `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.dv} <span class="lat">· ${g.lat}</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === g.key).length} · ${g.count || ''}</span></div><div class="readgrid">${readGroup(g.key)}</div></div>`).join('') : `
       <div class="lane-sub">Each text opens its reading page. <span class="mulahue">मूलम्</span> = word-by-word hover (kāraka · vibhakti · samāsa) · <span class="bhasyahue">भाष्यम्</span> = Śāṅkara-bhāṣya.</div>
       <div class="readgroup">
         <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 · मूलम् + भाष्यम्</span></div>
@@ -1398,6 +1401,7 @@ function renderDashboard() {
         <div class="readgroup-head"><span class="gtitle">निबन्धाः <span class="lat">· Monographs</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'nibandha').length} · Tamil / English + Sanskrit</span></div>
         <div class="readgrid">${readGroup('nibandha')}</div>
       </div>
+      `}
     </div>
     <div class="dash-lane">
       <div class="lane-label">🎯 साधना · Disciplined drill</div>
@@ -1410,6 +1414,7 @@ function renderDashboard() {
     <div class="grid">
       ${flatCodes.map(renderNodeCard).join('')}
     </div>
+    ${(window.SITE_CONFIG && window.SITE_CONFIG.hideTools) ? '' : `
     <div class="dash-lane">
       <div class="lane-label">🔎 उपकरणानि · Other tools</div>
       <div class="readgrid modegrid">
@@ -1417,7 +1422,7 @@ function renderDashboard() {
         <a class="rcard modecard" href="https://constrainedrandomvar.github.io/prasthanatrayi-search/" target="_blank" rel="noopener"><div class="rtitle">🔦 अन्वेषण · Full-text search</div><div class="modetag">find any phrase</div><div class="modedesc">Search the source texts &amp; commentaries for any word or phrase, with page-linked results.</div></a>
         <a class="rcard modecard" href="scratchpad.html"><div class="rtitle">📝 शेमुषी · Shared-reading scratchpad</div><div class="modetag">present a Word / Doc</div><div class="modedesc">Load an instructor's Word / Google-Docs document — colour-coded pūrvapakṣa · siddhānta · pratīka come across verbatim — and share a live, script-independent read-along: students follow your scroll, highlight &amp; laser, each in their own lipi.</div></a>
       </div>
-    </div>`;
+    </div>`}`;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };

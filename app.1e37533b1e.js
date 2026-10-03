@@ -4946,7 +4946,7 @@ function buildAnvayaSteps(d) {
     if (u.kind === 'particle' || u.kind === 'verb') { auto(u); continue; }
     let st;
     if (u.kind === 'supply') {   // ask the FIRST copula of a verse (it is optional — no need to drill it 8×); verbs/pronouns always
-      if (u.supplyKind === 'copula' && steps.some(x => x.type === 'anvSupply' && x.unit.supplyKind === 'copula')) { auto(u); continue; }
+      if ((u.supplyKind === 'copula' || u.supplyKind === 'carry') && steps.some(x => x.type === 'anvSupply' && x.unit.supplyKind === u.supplyKind)) { auto(u); continue; }
       st = { type: 'anvSupply', unit: u, before: leading, after: [] };
     } else st = { type: 'anvUnit', unit: u, expected: u.w.slice(), core: (u.core || u.w).slice(), before: leading, after: [] };
     leading = []; steps.push(st); last = st;
@@ -4994,6 +4994,14 @@ function anvayaKim(sentence, i) {
   if (!/^[1-7][1-3]$/.test(code)) return null;
   return KIM[code[0]][g][+code[1] - 1];
 }
+// कीदृश declined like the participle it asks for (कीदृशः अपि न वेत्ति? → सम्बोधितः अपि)
+const KIDRSHA = { 1: { m: ['कीदृशः','कीदृशौ','कीदृशाः'], f: ['कीदृशी','कीदृश्यौ','कीदृश्यः'], n: ['कीदृशम्','कीदृशे','कीदृशानि'] },
+  2: { m: ['कीदृशम्','कीदृशौ','कीदृशान्'], f: ['कीदृशीम्','कीदृश्यौ','कीदृशीः'], n: ['कीदृशम्','कीदृशे','कीदृशानि'] },
+  3: { m: ['कीदृशेन','कीदृशाभ्याम्','कीदृशैः'], f: ['कीदृश्या','कीदृशीभ्याम्','कीदृशीभिः'], n: ['कीदृशेन','कीदृशाभ्याम्','कीदृशैः'] } };
+function anvayaKidrsha(sentence, i) {
+  const code = (sentence.wordCodes || [])[i] || '', g = { 'पुं': 'm', 'स्त्री': 'f', 'नपुं': 'n' }[(sentence.wordGenders || [])[i]] || 'm';
+  return /^[1-3][1-3]$/.test(code) ? KIDRSHA[code[0]][g][+code[1] - 1] : null;
+}
 function anvayaQuestion(step, sentence) {
   const d = anvayaData(), u0 = step.unit;
   // the verb as it will be asked about — with its न when the verse negates it (कः न वेत्ति?)
@@ -5001,7 +5009,13 @@ function anvayaQuestion(step, sentence) {
   if (u0.kind === 'neg') return ['निषेधः', `The verb <b>${esc(sentence.words[u0.verb])}</b> is negated — click the negation; it stands right before the verb.`];
   const head = (u0.core || u0.w)[0], kim = anvayaKim(sentence, head), vp = esc(verbPhrase(u0.verb));
   const ask = q => `<span class="anv-q">${q}</span> `;
-  if (u0.kind === 'kr') return ['पूर्वकालः', `${ask(`किं कृत्वा ${vp}?`)}The participle/absolutive phrase: click “${esc(sentence.words[u0.w[u0.w.length - 1]])}” and the words that belong to it`];
+  if (u0.kind === 'kr') {   // by kṛdanta type: absolutive किं कृत्वा? · infinitive किं कर्तुम्? · participle कीदृशः (अपि)?
+    const kw = esc(sentence.words[head]);
+    if (u0.krt === 'inf') return ['तुमुन्', `${ask(`किं कर्तुम् ${vp}?`)}The purpose — the infinitive (…तुम्) of “${vp}”`];
+    if (u0.krt === 'part') { const kd = anvayaKidrsha(sentence, head);
+      return ['कृदन्तम्', `${ask(`${kd || 'कीदृशः'}${u0.api ? ' अपि' : ''} ${vp}?`)}${u0.api ? 'Even being in what state? — the participle with अपि (“though …”)' : 'In what state? — the participle'}`]; }
+    return ['पूर्वकालः', `${ask(`किं कृत्वा ${vp}?`)}Having done what? — the absolutive (…त्वा / …य) “${kw}”`];
+  }
   if (u0.role === 'nominalHead') return ['उद्देश्यम्', `${ask(`${kim || 'किम्'} [अस्ति]?`)}What is the subject of this statement?`];
   const finiteVerb = u0.verb != null && d.units.some(x => x.kind === 'verb' && x.w.includes(u0.verb));
   if (u0.role === 'agreementKarta' || u0.role === 'agreementKarma')   // किम् असि? (finite) · शक्तिः का? (verbless: ask of the subject)
@@ -5064,7 +5078,7 @@ function renderAnvaya() {
       const u = step.unit, opts = [...u.options, '— nothing —'];
       const ok = o => o === u.text || (u.acceptNone && o === '— nothing —');
       ctrl = `<div class="options">${opts.map(o => `<button class="opt ${view.checked ? (ok(o) ? 'correct' : (o === view.anvPicked ? 'wrong' : '')) : ''}" data-o="${esc(o)}" ${view.checked ? 'disabled' : ''}>${esc(o)}</button>`).join('')}</div>
-        ${view.checked ? `<div class="tut-explain">${u.supplyKind === 'copula' ? `The copula [${esc(u.text)}] is understood; supplying it is optional.` : u.supplyKind === 'pronoun' ? `The verb's person requires [${esc(u.text)}] as the unstated kartā.` : `[${esc(u.text)}] — the verb is carried over from the other clause.`}</div>` : ''}`;
+        ${view.checked ? `<div class="tut-explain">${u.supplyKind === 'copula' ? `The copula [${esc(u.text)}] is understood; supplying it is optional.` : u.supplyKind === 'pronoun' ? `The verb's person requires [${esc(u.text)}] as the unstated kartā.` : u.supplyKind === 'carry' ? `The kartā of the previous clause carries over; supplying [${esc(u.text)}] is optional (Apte §397 — a “contracted” compound sentence).` : `[${esc(u.text)}] — the verb is carried over from the other clause.`}</div>` : ''}`;
     } else prompt = anvayaQuestion(step, sentence);
     const clickable = step.type !== 'anvSupply';
     const exp = new Set([...(step.core || step.expected || []), ...[...view.selectedIndices].filter(i => (step.expected || []).includes(i))]);

@@ -1376,12 +1376,11 @@ function renderDashboard() {
   app.innerHTML = `
     <div class="dash-head"><div>${masteredN} / ${CODES.length} nodes mastered</div></div>
     <div class="dash-lane">
-      <div class="lane-label">🧠 अभ्यास-मार्गाः · ${(window.ANVAYA_MANIFEST || []).length ? 'Four' : 'Three'} ways to study</div>
+      <div class="lane-label">🧠 अभ्यास-मार्गाः · Three ways to study</div>
       <div class="readgrid modegrid">
         <a class="rcard modecard" id="readBtn"><div class="rtitle">📖 Read a verse</div><div class="modetag">know each word</div><div class="modedesc">Walk each word — recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the Drill pool.</div></a>
         <a class="rcard modecard" id="tutorialBtn"><div class="rtitle">🧩 वाक्य-विग्रह</div><div class="modetag">parse the sentence</div><div class="modedesc">How the words relate across the whole sentence — kāraka, qualifier-of, coordination, clauses, uddeśya–vidheya, samāsa vigraha.</div></a>
         <a class="rcard modecard" id="clauseBtn"><div class="rtitle">🪢 वाक्य-विभाग</div><div class="modetag">carve the clauses</div><div class="modedesc">Split the verse into clauses (वाक्य): find each clause-head, group its words, then supply the अध्याहार — the unstated कर्ता and any implied verb. The step before वाक्य-विग्रह.</div></a>
-        ${(window.ANVAYA_MANIFEST || []).length ? `<a class="rcard modecard" id="anvayaBtn"><div class="rtitle">🔀 अन्वय</div><div class="modetag">put it in prose order</div><div class="modedesc">Rebuild the verse as a sentence: find the verb, then ask कः? किम्? केन? — each answer takes its place in the अन्वयः. Or order the words freely and check.</div></a>` : ''}
       </div>
     </div>
     <div class="dash-lane">
@@ -4935,19 +4934,31 @@ function ensureAnvayaDataLoaded(slug) {
 // Pure step builder (also exercised by vc-karaka/assert_anvaya_tutorial.js). Asked steps carry `before`: the automatic
 // units (particles, verbs already found, nothing else) that precede them in model order and are appended first.
 function buildAnvayaSteps(d) {
+  // asked steps carry `before` (automatic units preceding the FIRST question) and `after` (automatic units that follow
+  // this step in model order — the verb, particles, later copulas — placed as soon as the step is answered, so e.g.
+  // न is immediately followed by its verb: … स्फुटं न वेत्ति)
   const steps = [];
   const verbs = d.units.filter(u => u.kind === 'verb').flatMap(u => u.w);
   if (verbs.length) steps.push({ type: 'anvVerbs', expected: verbs });
-  let pending = [];
+  let leading = [], last = null;
+  const auto = u => last ? last.after.push(u) : leading.push(u);
   for (const u of d.units) {
-    if (u.kind === 'particle' || u.kind === 'verb') { pending.push(u); continue; }
+    if (u.kind === 'particle' || u.kind === 'verb') { auto(u); continue; }
+    let st;
     if (u.kind === 'supply') {   // ask the FIRST copula of a verse (it is optional — no need to drill it 8×); verbs/pronouns always
-      if (u.supplyKind === 'copula' && steps.some(st => st.type === 'anvSupply' && st.unit.supplyKind === 'copula')) { pending.push(u); continue; }
-      steps.push({ type: 'anvSupply', unit: u, before: pending }); pending = []; continue; }
-    steps.push({ type: 'anvUnit', unit: u, expected: u.w.slice(), before: pending }); pending = [];
+      if (u.supplyKind === 'copula' && steps.some(x => x.type === 'anvSupply' && x.unit.supplyKind === 'copula')) { auto(u); continue; }
+      st = { type: 'anvSupply', unit: u, before: leading, after: [] };
+    } else st = { type: 'anvUnit', unit: u, expected: u.w.slice(), core: (u.core || u.w).slice(), before: leading, after: [] };
+    leading = []; steps.push(st); last = st;
   }
-  steps.push({ type: 'anvDone', before: pending });
+  steps.push({ type: 'anvDone', before: leading, after: [] });
   return steps;
+}
+function anvayaStepScore(selected, step) {
+  const core = new Set(step.core || step.expected || []), all = new Set(step.expected || []);
+  const sel = [...selected], wrong = sel.filter(i => !all.has(i)).length, hit = [...core].filter(i => selected.has(i)).length;
+  if (!core.size) return wrong ? 0 : 1;
+  return Math.max(0, hit / core.size - wrong / Math.max(core.size, sel.length));
 }
 function anvayaData() {
   const verse = tutorialVerses[tutorialVerseIdx];
@@ -4971,7 +4982,37 @@ function startAnvayaSentence(slug) {
 function anvayaTok(t, sentence) { return typeof t === 'number' ? `<span class="anv-w">${esc(sentence.words[t])}</span>` : `<span class="anv-sup">[${esc(t.s)}]</span>`; }
 function anvayaAppend(units) { for (const u of units || []) { if (u.kind === 'supply') { anvayaLine.push({ s: u.text }); continue; } for (const i of u.w) if (!anvayaLine.includes(i)) anvayaLine.push(i); } }
 function anvayaLineHas(i) { return anvayaLine.includes(i); }
+// interrogative pronoun declined to the answer's case/number/gender (traditional ākāṅkṣā question: केन न वेत्ति?)
+const KIM = {   // [vibhakti][gender] → [eka, dvi, bahu]
+  1: { m: ['कः','कौ','के'], f: ['का','के','काः'], n: ['किम्','के','कानि'] }, 2: { m: ['कम्','कौ','कान्'], f: ['काम्','के','काः'], n: ['किम्','के','कानि'] },
+  3: { m: ['केन','काभ्याम्','कैः'], f: ['कया','काभ्याम्','काभिः'], n: ['केन','काभ्याम्','कैः'] }, 4: { m: ['कस्मै','काभ्याम्','केभ्यः'], f: ['कस्यै','काभ्याम्','काभ्यः'], n: ['कस्मै','काभ्याम्','केभ्यः'] },
+  5: { m: ['कस्मात्','काभ्याम्','केभ्यः'], f: ['कस्याः','काभ्याम्','काभ्यः'], n: ['कस्मात्','काभ्याम्','केभ्यः'] }, 6: { m: ['कस्य','कयोः','केषाम्'], f: ['कस्याः','कयोः','कासाम्'], n: ['कस्य','कयोः','केषाम्'] },
+  7: { m: ['कस्मिन्','कयोः','केषु'], f: ['कस्याम्','कयोः','कासु'], n: ['कस्मिन्','कयोः','केषु'] },
+};
+function anvayaKim(sentence, i) {
+  const code = (sentence.wordCodes || [])[i] || '', g = { 'पुं': 'm', 'स्त्री': 'f', 'नपुं': 'n' }[(sentence.wordGenders || [])[i]] || 'm';
+  if (!/^[1-7][1-3]$/.test(code)) return null;
+  return KIM[code[0]][g][+code[1] - 1];
+}
 function anvayaQuestion(step, sentence) {
+  const d = anvayaData(), u0 = step.unit;
+  // the verb as it will be asked about — with its न when the verse negates it (कः न वेत्ति?)
+  const verbPhrase = vi => vi == null ? '' : ((d.units.some(x => x.kind === 'neg' && x.verb === vi) ? 'न ' : '') + sentence.words[vi]);
+  if (u0.kind === 'neg') return ['निषेधः', `The verb <b>${esc(sentence.words[u0.verb])}</b> is negated — click the negation; it stands right before the verb.`];
+  const head = (u0.core || u0.w)[0], kim = anvayaKim(sentence, head), vp = esc(verbPhrase(u0.verb));
+  const ask = q => `<span class="anv-q">${q}</span> `;
+  if (u0.kind === 'kr') return ['पूर्वकालः', `${ask(`किं कृत्वा ${vp}?`)}The participle/absolutive phrase: click “${esc(sentence.words[u0.w[u0.w.length - 1]])}” and the words that belong to it`];
+  if (u0.role === 'nominalHead') return ['उद्देश्यम्', `${ask(`${kim || 'किम्'} [अस्ति]?`)}What is the subject of this statement?`];
+  const finiteVerb = u0.verb != null && d.units.some(x => x.kind === 'verb' && x.w.includes(u0.verb));
+  if (u0.role === 'agreementKarta' || u0.role === 'agreementKarma')   // किम् असि? (finite) · शक्तिः का? (verbless: ask of the subject)
+    return ['विधेयम्', `${ask(finiteVerb ? `${kim || 'किम्'} ${vp}?` : `${vp} ${kim || 'किम्'}?`)}What is said about it (the predicate)?`];
+  const caseN = +(((sentence.wordCodes || [])[head] || '')[0]) || 0;
+  const adverb = caseN >= 3 ? kim : 'कथम्';   // an inflected adjunct gets its own interrogative (कैः न लभ्यते?); adverbs कथम्
+  const fixed = { modifiers: adverb, remaining: adverb, satisaptami: `${kim || 'कस्मिन्'} सति`, adhikarana: kim || 'कुत्र', hetu: kim || 'कस्मात्', apadana: kim || 'कुतः' };
+  const qq = ANVAYA_Q[u0.role];
+  const interrog = fixed[u0.role] || kim;
+  if (interrog && qq && u0.kind === 'unit') return [qq[0], `${ask(`${interrog} ${vp}?`)}${qq[1].replace('{v}', vp)}`];
+
   const u = step.unit, v = u.verb != null ? sentence.words[u.verb] : '';
   if (u.kind === 'lead') return ['आरम्भः', 'Which word opens this clause? (a यथा / यत् / यदा …, its तथा / तत् / तदा, or अथ / ततः …)'];
   if (u.kind === 'kr') return ['पूर्वकालः', `The participle/absolutive phrase: click “${esc(sentence.words[u.w[u.w.length - 1]])}” and the words that belong to it`];
@@ -5026,7 +5067,7 @@ function renderAnvaya() {
         ${view.checked ? `<div class="tut-explain">${u.supplyKind === 'copula' ? `The copula [${esc(u.text)}] is understood; supplying it is optional.` : u.supplyKind === 'pronoun' ? `The verb's person requires [${esc(u.text)}] as the unstated kartā.` : `[${esc(u.text)}] — the verb is carried over from the other clause.`}</div>` : ''}`;
     } else prompt = anvayaQuestion(step, sentence);
     const clickable = step.type !== 'anvSupply';
-    const exp = new Set(step.expected || []);
+    const exp = new Set([...(step.core || step.expected || []), ...[...view.selectedIndices].filter(i => (step.expected || []).includes(i))]);
     body = `
       <div class="tutorial-verse prompt">${clickable ? renderClickableVerse(words, { selected: view.selectedIndices, disabled: view.checked, expected: view.checked ? exp : null }) : esc(words.join(' '))}</div>
       <div class="anv-line">${line || '<span class="muted">अन्वयः …</span>'} ${parked ? `<span class="anv-gap">…</span> ${parked}` : ''}</div>
@@ -5062,14 +5103,18 @@ function renderAnvaya() {
       view = { ...view, selectedIndices: sel }; renderAnvaya();
     });
     document.getElementById('anvCheckStep').onclick = () => {
-      if (!d.uncertain) anvayaScores.push(tutorialStepScore(view.selectedIndices, new Set(step.expected), false));
+      if (!d.uncertain) anvayaScores.push(anvayaStepScore(view.selectedIndices, step));
       view = { ...view, checked: true }; renderAnvaya();
     };
   }
   const nx = document.getElementById('anvNext');
   if (nx) nx.onclick = () => {
-    if (step.type !== 'anvVerbs') { anvayaAppend(step.before); if (step.unit && step.unit.kind !== 'supply') anvayaAppend([step.unit]); }
-    if (step.type === 'anvSupply' && view.anvPicked !== '— nothing —') anvayaLine.push({ s: step.unit.text });
+    if (step.type !== 'anvVerbs') {
+      anvayaAppend(step.before);
+      if (step.unit && step.unit.kind !== 'supply') anvayaAppend([step.unit]);
+      if (step.type === 'anvSupply' && view.anvPicked !== '— nothing —') anvayaLine.push({ s: step.unit.text });
+      anvayaAppend(step.after);
+    }
     anvayaStepIdx++; view = { ...view, selectedIndices: new Set(), checked: false, anvPicked: null }; renderAnvaya();
   };
 }
@@ -5175,6 +5220,8 @@ function renderTutorialPicker() {
   const hb = document.getElementById('homeBtn'); if (hb) hb.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
   try {
     const q = new URLSearchParams(location.search);
+    // अन्वय tutorial (in testing, not linked from the home page): ?mode=anvaya opens its picker (text → verse)
+    if (q.get('mode') === 'anvaya' && !q.get('tut')) { tutorialMode = 'anvaya'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); return; }
     if (q.get('tut')) {
       if (q.get('cstyle') === 'guided' || q.get('cstyle') === 'socratic') clauseStyle = q.get('cstyle');
       if (['all', 'smart', 'auto'].includes(q.get('cskip'))) clauseSkip = q.get('cskip');

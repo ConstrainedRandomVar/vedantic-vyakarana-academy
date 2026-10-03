@@ -4940,6 +4940,7 @@ function buildAnvayaSteps(d) {
   const steps = [];
   const verbs = d.units.filter(u => u.kind === 'verb').flatMap(u => u.w);
   if (verbs.length) steps.push({ type: 'anvVerbs', expected: verbs });
+  if ((d.krtGov || []).length) steps.push({ type: 'anvKrt', expected: d.krtGov.slice() });   // the वाक्य-विग्रह lens: कृत् forms governing a कारक
   let leading = [], last = null;
   const auto = u => last ? last.after.push(u) : leading.push(u);
   for (const u of d.units) {
@@ -5073,6 +5074,7 @@ function renderAnvaya() {
     const parked = step.type === 'anvVerbs' ? '' : anvayaSteps[0].type === 'anvVerbs' ? anvayaSteps[0].expected.filter(i => !anvayaLineHas(i)).map(i => `<span class="anv-park">${esc(words[i])}</span>`).join(' ') : '';
     let prompt, ctrl = '';
     if (step.type === 'anvVerbs') prompt = ['क्रिया', 'Find the main verb(s) — the finite verb of each clause. They will close their clauses.'];
+    else if (step.type === 'anvKrt') prompt = ['कृदन्तम्', `Now the verbal (कृत्) forms that <b>govern their own कारक</b> — absolutives (…त्वा / …य), infinitives (…तुम्) and participles that take their own कर्ता / कर्म / करण (${step.expected.length} here). Their own कारकs are asked next, of them (केन …? · किम् …?).`];
     else if (step.type === 'anvSupply') {
       prompt = ['अध्याहारः', 'Is a word unstated here? Supply it.'];
       const u = step.unit, opts = [...u.options, '— nothing —'];
@@ -5123,7 +5125,7 @@ function renderAnvaya() {
   }
   const nx = document.getElementById('anvNext');
   if (nx) nx.onclick = () => {
-    if (step.type !== 'anvVerbs') {
+    if (step.type !== 'anvVerbs' && step.type !== 'anvKrt') {
       anvayaAppend(step.before);
       if (step.unit && step.unit.kind !== 'supply') anvayaAppend([step.unit]);
       if (step.type === 'anvSupply' && view.anvPicked !== '— nothing —') anvayaLine.push({ s: step.unit.text });

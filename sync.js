@@ -22,6 +22,16 @@
   function qp(n) { try { return new URLSearchParams(location.search).get(n); } catch (e) { return null; } }
   var SESSION = qp('session');
 
+  // ---- word-card peek controller (peek.js): ONE place for "hide the #tip/.gtip cards unless Cmd/Ctrl/Alt is
+  // held" — used both for a presenter (below: applyPeekMode) and for the ⚙ "Quiet hover" setting (any reader,
+  // no session needed). Loaded on every page, session or not. ----
+  window.__vvPresenting = false;
+  if (!window.VVPeek && !document.querySelector('script[data-vvpeek]')) {
+    var _pk = document.createElement('script'); _pk.src = 'peek.js'; _pk.setAttribute('data-vvpeek', '1');
+    _pk.onload = function () { if (window.VVPeek) window.VVPeek.setPresenting(window.__vvPresenting); };
+    (document.head || document.documentElement).appendChild(_pk);
+  }
+
   // ---- inject CSS once ----
   var CSS = ''
     + '#vvsync{position:fixed;left:14px;bottom:14px;z-index:85;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;'
@@ -62,7 +72,7 @@
     + '#vvstart-pop button{font:inherit;font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid var(--line);'
     + '  background:var(--bg);color:var(--ink);cursor:pointer}'
     + '#vvstart-pop button:hover{background:var(--card)}'
-    + 'body.vvnopeek #tip{display:none !important}';   // presenter: hover drives the laser; hold Alt to peek
+    + 'body.vvnopeek #tip{display:none !important}';   // presenter / quiet hover (peek.js): hold Cmd/Ctrl or Alt to peek
   var _st = document.createElement('style'); _st.textContent = CSS;
   (document.head || document.documentElement).appendChild(_st);
 
@@ -307,12 +317,13 @@
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { if (role === 'present') sendClear(); else { clearHi(); clearPt(); } }
     });
-    // Presenter: hover drives the 🔴 laser, so suppress the page's word-analysis tooltip (#tip) while
-    // presenting; hold Alt (Option) to "peek" at the analysis on demand. Followers keep the tooltip.
-    function applyPeekMode() { if (role === 'present' && !paused && !stopped) document.body.classList.add('vvnopeek'); else document.body.classList.remove('vvnopeek'); }
-    window.addEventListener('keydown', function (e) { if (e.key === 'Alt' && role === 'present') document.body.classList.remove('vvnopeek'); });
-    window.addEventListener('keyup', function (e) { if (e.key === 'Alt' && role === 'present' && !paused) document.body.classList.add('vvnopeek'); });
-    window.addEventListener('blur', function () { if (role === 'present' && !paused) document.body.classList.add('vvnopeek'); });
+    // Presenter: hover drives the 🔴 laser, so the page's word-analysis cards (#tip/.gtip) are hidden while
+    // presenting; hold Cmd/Ctrl or Alt (Option) to "peek" on demand. Followers keep the cards (unless they turned on
+    // ⚙ Quiet hover). The key handling lives in peek.js — shared with Quiet hover so both use the same keys.
+    function applyPeekMode() {
+      window.__vvPresenting = role === 'present' && !paused && !stopped;
+      if (window.VVPeek) window.VVPeek.setPresenting(window.__vvPresenting);
+    }
     applyPeekMode();
 
     function stopReplay() { replaying = false; replayTimers.forEach(clearTimeout); replayTimers = []; render(); }
@@ -389,7 +400,7 @@
       tip.innerHTML = '<b>Shared reading.</b> The presenter\'s scrolling, hover (🔴 laser) &amp; word-taps '
         + '(🟡 highlight) mirror to everyone in session <b>' + SESSION + '</b> — each in their own script. '
         + 'Clear the laser/highlight by clicking empty space, clicking the word again, or pressing <b>Esc</b>. '
-        + (role === 'present' ? 'The word-analysis tooltip is hidden while presenting — hold <b>Alt</b> (Option) to peek. ' : '')
+        + (role === 'present' ? 'The word-analysis tooltip is hidden while presenting — hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) to peek. ' : '')
         + 'Open a second text in another tab and switch — followers move with you. '
         + (RELAY ? 'Cross-device via relay.' : 'Same-browser (open another tab in this session). Add <code>?relay=wss://…</code> for cross-device.')
         + '<br>Followers can <b>break free</b> to look around, then <b>re-sync</b>. '

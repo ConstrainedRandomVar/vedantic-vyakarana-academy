@@ -95,7 +95,7 @@ const AUTO_ADVANCE_DELAY_WRONG = 1100;
 const AUTO_ADVANCE_KEY = 'vyakarana_auto_advance';
 function autoAdvanceOn() { return localStorage.getItem(AUTO_ADVANCE_KEY) !== '0'; }
 function setAutoAdvance(on) { localStorage.setItem(AUTO_ADVANCE_KEY, on ? '1' : '0'); }
-// ---- Settings (⚙ gear): auto-advance + reading-page script. The script pref (vv_script) is only SET
+// ---- Settings (⚙ gear): auto-advance + reading-page script + quiet hover. The script pref (vv_script) is only SET
 // here; it's READ + applied by the reading pages' translit.js (the quiz itself is never transliterated).
 // Shared localStorage key, so the gear default and the reading-page picker stay in sync. ----
 const SCRIPT_KEY = 'vv_script';
@@ -103,6 +103,12 @@ const SCRIPT_OPTS = [['dev', 'देवनागरी'], ['iast', 'IAST'], ['ka
 function readingScript() { const v = localStorage.getItem(SCRIPT_KEY); return ['iast', 'kannada', 'tamil'].includes(v) ? v : 'dev'; }
 function reflectScriptSel() { const el = document.getElementById('setScrSel'); if (el) el.value = readingScript(); }
 function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScriptSel(); }
+// Quiet hover (reading pages): word cards appear only while Cmd/Ctrl or Alt is held — for instructors who
+// screen-share (Zoom etc.) without our sync feature. SET here; READ + applied by the reading pages' peek.js
+// (shared with the sync-scrolling presenter peek, so both use the same keys). Hover-capable devices only.
+const QUIET_HOVER_KEY = 'vv_quiet_hover';
+function quietHoverOn() { return localStorage.getItem(QUIET_HOVER_KEY) === '1'; }
+function setQuietHover(on) { localStorage.setItem(QUIET_HOVER_KEY, on ? '1' : '0'); }
 function openSettings() {
   let ov = document.getElementById('settings-ov');
   if (!ov) {
@@ -118,6 +124,11 @@ function openSettings() {
         <select id="setScrSel" class="set-select">${SCRIPT_OPTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
         <div class="set-hint">Applies to the “Read the texts” pages — shows the same Sanskrit in Devanāgarī, IAST, or another script (Kannada, Tamil, Telugu, Malayalam, Bengali, Gujarati, Cyrillic, Siddhaṃ, katakana). The quiz is unaffected.</div>
       </div>
+      <div class="set-row">
+        <div class="set-label">Word cards · reading pages</div>
+        <label class="set-check"><input type="checkbox" id="setQuietHover"> Quiet hover — show word cards only while holding <b>Cmd/Ctrl</b> (or <b>Alt</b>)</label>
+        <div class="set-hint">For screen-sharing (e.g. on Zoom): cards stop popping up as you move the mouse; hold the key to see one. The same keys reveal cards when presenting with shared reading. Phones and tablets are unaffected.</div>
+      </div>
       <div style="text-align:right"><button class="secondary" id="setClose">Done</button></div>
     </div>`;
     document.body.appendChild(ov);
@@ -126,8 +137,11 @@ function openSettings() {
     const chk = document.getElementById('setAutoAdv');
     chk.onchange = () => setAutoAdvance(chk.checked);
     document.getElementById('setScrSel').onchange = (e) => setReadingScript(e.target.value);
+    const qh = document.getElementById('setQuietHover');
+    qh.onchange = () => setQuietHover(qh.checked);
   }
   document.getElementById('setAutoAdv').checked = autoAdvanceOn();
+  document.getElementById('setQuietHover').checked = quietHoverOn();
   reflectScriptSel();
   ov.classList.add('on');
 }

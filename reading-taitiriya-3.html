@@ -542,20 +542,23 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],sk=SK(surfOf(t));
   else if(t.getAttribute('data-jmq')&&sk&&mqTarget(sk)) rows.push(jr('mq','',sk,''));             // intro cross-verse quote → मूलम्
   if(inMula&&sk){ if(matchWord(ref,'.bh .w[data-jm]',sk)) rows.push(jr('b',ref,sk,'bh'));       // mūla → भाष्यम् (mantra, if quoted)
     else if(matchWord(ref,'.pre .w[data-jm]',sk)) rows.push(jr('b',ref,sk,'pre')); }             // mūla → प्रस्तावना-भाष्यम् (if quoted there)
-  if(pr){var sks=lemSKs(pr.getAttribute('data-lemma')),hit=null,sel=(preT?'.pre':'.bh')+' .w';  // ṭīkā-pratīka → its own bhāṣya zone
+  if(pr&&pr.getAttribute('data-jti')){var ti=pr.getAttribute('data-jti'),vv0=document.getElementById('v-'+ref);   // exact bhāṣya word
+    if(vv0&&vv0.querySelector('.bh .w[data-ti="'+ti+'"]'))rows.push(jr('pi',ref,ti,'bh'));}
+  else if(pr){var sks=lemSKs(pr.getAttribute('data-lemma')),hit=null,sel=(preT?'.pre':'.bh')+' .w';  // ṭīkā-pratīka → its own bhāṣya zone
     for(var q=0;q<sks.length;q++){if(matchWord(ref,sel,sks[q])){hit=sks[q];break;}}
     if(hit)rows.push(jr('pb',ref,hit,preT?'pre':'bh'));
     if(pr.getAttribute('data-jtm')){var mh=null;for(var q2=0;q2<sks.length;q2++){if(matchWord(ref,'.mula-zone .w',sks[q2])){mh=sks[q2];break;}}
       if(mh)rows.push(jr('m',ref,mh,''));}}                                                       // ṭīkā pratīka that quotes the mūla → मूलम्
   if((inBh||inPreBh)&&sk&&findTikaEl(ref,sk,inPreBh)) rows.push(jr('t',ref,sk,inPreBh?'pre':'bh'));  // bhāṣya → टीका (same zone)
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
-function jr(cat,ref,sk,zone){var lb={m:'→ मूलम्',mq:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',t:'→ टीका'}[cat];
+function jr(cat,ref,sk,zone){var lb={m:'→ मूलम्',mq:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',pi:'→ भाष्यम्',t:'→ टीका'}[cat];
   return '<span class="jrow" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+sk+'" data-jz="'+(zone||'')+'">'+lb+'</span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
 function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='m')el=matchWord(ref,'.mula-zone .w',sk);
   else if(cat==='b')el=matchWord(ref,'.'+(z==='pre'?'pre':'bh')+' .w[data-jm]',sk);
   else if(cat==='pb')el=matchWord(ref,'.'+(z==='pre'?'pre':'bh')+' .w',sk);
+  else if(cat==='pi'){var vv1=document.getElementById('v-'+ref);el=vv1?vv1.querySelector('.bh .w[data-ti="'+sk+'"]'):null;}
   else if(cat==='t')el=findTikaEl(ref,sk,z==='pre');
   else if(cat==='mq'){ var tt=mqTarget(sk);                        // intro cross-verse quote
     if(tt&&tt.el) el=tt.el;

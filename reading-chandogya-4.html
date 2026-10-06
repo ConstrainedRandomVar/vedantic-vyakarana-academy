@@ -160,6 +160,10 @@ body.metmode-pada .vjoin{display:none}
 .vk .vk-x{flex:1 1 auto;min-width:0}
 .vk .w{cursor:default}   /* whole-verse laser/highlight target — not a word-gloss link */
 .vk .vk-b{margin:0 0 14px}.vk .vk-b:last-child{margin-bottom:0}
+.vk details.vk-tk{margin:-6px 0 12px 2.6em}.vk details.vk-tk>summary{cursor:pointer;font-family:-apple-system,sans-serif;font-size:11.5px;color:var(--tika);opacity:.85;list-style:none}
+.vk details.vk-tk>summary::before{content:'▸ '}.vk details.vk-tk[open]>summary::before{content:'▾ '}
+.vk .vk-tkb{font-size:15.5px;line-height:1.85;margin-top:4px;padding-left:9px;border-left:2px solid color-mix(in srgb,var(--tika) 35%,transparent)}
+.vk .vk-prat{cursor:help}.vk .vkw.vk-hl{background:color-mix(in srgb,var(--tika) 22%,transparent);border-radius:3px}
 .vk .vk-at{font-family:-apple-system,sans-serif;font-size:12px;color:var(--muted);margin:0 0 6px}   /* anchored block: the bhāṣya words it sits at */
 /* पार्श्वे layout — two balanced columns, widened page */
 body.parshve .wrap{max-width:1320px}

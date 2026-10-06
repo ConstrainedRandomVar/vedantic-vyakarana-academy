@@ -490,6 +490,29 @@
     }
     var scope = null, h = (location.hash || '').replace(/^#/, '');
     if (h) { try { scope = document.getElementById(h); } catch (e) {} }
+    // Commentary-lane hits (2026-10-06 — VNM on BS, Śāstraprakāśikā on the Bṛhad vārttika): ?side=<lane> switches the
+    // unified view to that commentary, INLINE (the copy that is visible on every screen width), and searches only inside
+    // it; ?vk=<note id> first opens that vārttika verse's ṭīkā fold-out (its text is cloned in on open). Both opt-in.
+    var qs = new URLSearchParams(location.search), side = qs.get('side'), vk = qs.get('vk');
+    if (side && window.__vvView && window.__vvView.apply) {
+      try { window.__vvView.apply(side, 'inter'); } catch (e) {}
+      var root = scope || document.body, lanes = root.querySelectorAll('.tk-inline[data-side="' + side + '"]');
+      var tryLanes = function () {
+        for (var i = 0; i < lanes.length; i++) {
+          var sc = lanes[i];
+          if (vk) { var d = lanes[i].querySelector('details.vk-tk[data-tk="' + vk + '"]'); if (!d) continue; sc = d; }
+          var m = highlightIn(sc); if (m) return m;
+        }
+        return null;
+      };
+      if (vk) { var ds = root.querySelectorAll('.tk-inline[data-side="' + side + '"] details.vk-tk[data-tk="' + vk + '"]');
+        for (var j = 0; j < ds.length; j++) ds[j].open = true; }   // fires 'toggle' → the fold-out clones its text in
+      setTimeout(function () {
+        var hit2 = tryLanes() || (scope && highlightIn(scope)) || highlightIn(document.body);
+        if (hit2) setTimeout(function () { try { hit2.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }, 60);
+      }, vk ? 120 : 0);
+      return;
+    }
     var hit = (scope && highlightIn(scope)) || highlightIn(document.body);
     if (hit) setTimeout(function () { try { hit.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }, 60);
   }

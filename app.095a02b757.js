@@ -1428,7 +1428,11 @@ function renderDashboard() {
     <div class="grid">
       ${flatCodes.map(renderNodeCard).join('')}
     </div>
-    ${(window.SITE_CONFIG && window.SITE_CONFIG.hideTools) ? '' : `
+    ${(window.SITE_CONFIG && window.SITE_CONFIG.tools) ? /* sister site: its own tool cards (build_sahitya_site.js) */ `
+    <div class="dash-lane">
+      <div class="lane-label">🔎 उपकरणानि · Tools</div>
+      <div class="readgrid modegrid">${window.SITE_CONFIG.tools.map(t => `<a class="rcard modecard" href="${t.href}"><div class="rtitle">${t.title}</div><div class="modetag">${t.tag}</div><div class="modedesc">${t.desc}</div></a>`).join('')}</div>
+    </div>` : (window.SITE_CONFIG && window.SITE_CONFIG.hideTools) ? '' : `
     <div class="dash-lane">
       <div class="lane-label">🔎 उपकरणानि · Other tools</div>
       <div class="readgrid modegrid">

@@ -252,10 +252,10 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 .vpill::before{content:"विरोधपरिहारः"} .vpill::after{content:" ▸";font-family:system-ui;font-size:9px} .vpill.pin::after{content:" ▾"}
 .vpill:hover{background:color-mix(in srgb,var(--vir) 22%,transparent)} .vpill.pin{background:color-mix(in srgb,var(--vir) 25%,transparent)}
 .vpill:focus-visible{outline:2px solid var(--vir);outline-offset:2px}
-.von .vA{text-decoration:underline solid var(--vir) 2px;text-underline-offset:5px}
-.von .vB{text-decoration:underline dashed var(--vir) 2px;text-underline-offset:5px}
-.von .vH{text-decoration:underline double var(--vir);text-underline-offset:5px}
-.von .vA1::after{content:" ⇄";color:var(--vir);font-weight:700;font-family:system-ui;display:inline-block;text-decoration:none}
+.vlit.vA{text-decoration:underline solid var(--vir) 2px;text-underline-offset:5px}
+.vlit.vB{text-decoration:underline dashed var(--vir) 2px;text-underline-offset:5px}
+.vlit.vH{text-decoration:underline double var(--vir);text-underline-offset:5px}
+.vlit.vA1::after{content:" ⇄";color:var(--vir);font-weight:700;font-family:system-ui;display:inline-block;text-decoration:none}
 #vtip{position:fixed;z-index:120;max-width:min(440px,94vw);max-height:calc(100vh - 96px);overflow:auto;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.55;
   padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:none}
 #vtip.show{display:block} #vtip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
@@ -265,11 +265,10 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 /* docked card: right margin on wide screens, bottom sheet on narrow ones — never on top of the marked text */
 #vtip.sheet{left:0!important;right:0;bottom:0;top:auto!important;width:auto!important;max-width:none;max-height:42vh;border-radius:12px 12px 0 0}
 #vtip .x{float:right;cursor:pointer;opacity:.7;font:16px system-ui;padding:0 2px;background:none;border:0;color:var(--bg)}
-#vtip .span{font-family:system-ui;font-size:12px;opacity:.85;margin:1px 0 6px} #vtip .span a{cursor:pointer;text-decoration:underline}
+#vtip .span{font-family:system-ui;font-size:12px;opacity:.85;margin:1px 0 6px} #vtip .span .q{opacity:.75} #vtip .span a{cursor:pointer;text-decoration:underline}
 #vtip .tm{cursor:pointer} #vtip .tm:hover{text-decoration:underline}
-/* extent: a bar down the left of every verse the open unit spans; a matching ↑ marker in later verses */
+/* extent: while open, a bar down the left of every verse the unit touches (its span + the verses it quotes) */
 .mantra.von{box-shadow:-5px 0 0 0 var(--vir)}
-.vpill.vcont::before{content:"विरोधपरिहारः"} .vpill.vcont::after{content:" ↑";font-family:system-ui;font-size:9px}
 @keyframes vflash{from{background:color-mix(in srgb,var(--vir) 38%,transparent)}to{background:transparent}} .vflash{animation:vflash 1.6s ease-out}
 #vtip .src{opacity:.7;font-size:11px} #vtip a{color:var(--tipacc)} #vtip .ed{opacity:.55;font-size:10.5px;margin-top:6px}
 </style></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><a href="reading-gita.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>श्रीमद्भगवद्गीता · अध्याय 4 — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
@@ -494,7 +493,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
       <span class="item"><sup style="color:var(--muted);font-weight:700">अभ्यु॰</sup> अभ्युपगमः · concession</span>
       <span class="item"><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमानम्</span><span class="dr-mark" style="font-size:9px;padding:0 4px">उपमेयम्</span> दृष्टान्तः · analogy</span>
       <span class="item"><span class="prb prb-shruti" style="font-size:9px;padding:0 4px"></span><span class="prb prb-yukti" style="font-size:9px;padding:0 4px"></span><span class="prb prb-anubhava" style="font-size:9px;padding:0 4px"></span> प्रमाणम् — the bhāṣya's epistemic basis</span>
-      <span class="item"><span class="vpill" style="cursor:default"></span> विरोधपरिहारः — tap: an apparent contradiction and how the bhāṣya (or Ānandagiri) resolves it · <b>▸</b> marks a pill you can open; pills without ▸ are labels</span>
+      <span class="item"><span class="vpill" style="cursor:default"></span> an apparent contradiction and how it is resolved · <b>▸</b> = tap to open</span>
       <span class="item"><span class="maha-mark maha-mark-muk" style="display:inline-block;font-size:9px;padding:0 4px"></span><span class="maha-mark maha-mark-bad" style="display:inline-block;font-size:9px;padding:0 4px"></span> महावाक्यम् · identity equation, jīva=brahman — मुख्य (solid) / बाधायाम् (dashed)</span>
     </div>
   </div>
@@ -646,6 +645,7 @@ document.getElementById('tog').onclick=function(){
 var U=JSON.parse(document.getElementById('virodha-data').textContent);
 var cp=function(c){return c.charCodeAt(0);};   // code-point tests, no character-class literals (the text-integrity gate scans scripts)
 var isCons=function(c){var x=cp(c);return x>=0x915&&x<=0x939;}, isNas=function(c){var x=cp(c);return x===0x901||x===0x902||x===0xa8f3||x===0xa8f4;};
+var isVow=function(c){var x=cp(c);return x>=0x904&&x<=0x914;};
 var isMark=function(c){var x=cp(c);return (x>=0x900&&x<=0x903)||(x>=0x93a&&x<=0x94f)||(x>=0x955&&x<=0x957)||x===0x962||x===0x963;};
 var sk=function(s){s=String(s||'').normalize('NFC');var o='';for(var i=0;i<s.length;i++){var c=s[i];if(isCons(c))o+=c;else if(isNas(c))o+=String.fromCharCode(0x92e);}return o;};
 var SKIP='.bhsp,.tk-inline .zlabel,.vpill,script,style,#vtip';
@@ -659,6 +659,8 @@ function mark(ref,q,cls,zone){ if(!q||!ref)return null; var sec=document.getElem
   for(var r=0;r<roots.length;r++){ var ns=textNodes(roots[r],zone==='tika'),s='',ent=[];
     ns.forEach(function(n,ni){var t=n.textContent.normalize('NFC'); if(t!==n.textContent)n.textContent=t; for(var i=0;i<t.length;i++){var c=t[i]; if(isCons(c)){s+=c;ent.push([ni,i]);} else if(isNas(c)){s+=String.fromCharCode(0x92e);ent.push([ni,i]);}}});
     var at=s.indexOf(k); if(at<0)continue; var st=ent[at],en=ent[at+k.length-1],segs=[];
+    // the skeleton is consonants only: a quote that opens with a vowel letter (उदासीन…) must not lose it
+    var q0=String(q).normalize('NFC').trim().charAt(0); if(isVow(q0)&&st[1]>0&&isVow(ns[st[0]].textContent.charAt(st[1]-1)))st=[st[0],st[1]-1];
     for(var ni=st[0];ni<=en[0];ni++){var t=ns[ni].textContent,from=ni===st[0]?st[1]:0,to=t.length; if(ni===en[0]){to=en[1]+1; while(to<t.length&&isMark(t[to]))to++;} segs.push([ni,from,to]);}
     var els=[]; segs.reverse().forEach(function(g){var n=ns[g[0]],w=n.parentElement.closest('.w');
       if(w&&roots[r].contains(w)){ if(els.indexOf(w)<0)els.unshift(w); return; }
@@ -672,11 +674,15 @@ function place(p){ var col=document.querySelector('section.mantra'), r=col?col.g
   else { tip.classList.add('sheet'); document.body.style.paddingBottom='45vh'; tip.style.left='0'; tip.style.top='auto'; tip.style.width='auto';
     var pr=p.getBoundingClientRect(); if(pr.top>innerHeight*0.5||pr.top<0) scrollBy({top:pr.top-innerHeight*0.15,behavior:'smooth'}); } }
 function close(){ if(!openPill)return; var u=openPill._u; u.pills.forEach(function(q){q.classList.remove('pin'); q.setAttribute('aria-expanded','false');});
-  (openPill._secs||[]).forEach(function(s){s.classList.remove('von');}); tip.classList.remove('show'); document.body.style.paddingBottom=''; openPill=null; }
-function flash(el){ if(!el)return; el.scrollIntoView({block:'center',behavior:'smooth'}); var t=el.closest('.w')||el; t.classList.remove('vflash'); void t.offsetWidth; t.classList.add('vflash'); }
+  (openPill._secs||[]).forEach(function(s){s.classList.remove('von');}); (openPill._els||[]).forEach(function(x){x.classList.remove('vlit');}); tip.classList.remove('show'); document.body.style.paddingBottom=''; openPill=null; }
+function flash(el){ if(!el)return; el.scrollIntoView({block:'center',behavior:'smooth'}); var t=el.classList.contains('vpill')?el:(el.closest('.w')||el); t.classList.remove('vflash'); void t.offsetWidth; t.classList.add('vflash'); }
 var before=function(a,b){ return !!(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING); };
-U.forEach(function(u){ var secs=[],first=null,firstIn={};
-  function take(m,pr){ if(!m)return; if(secs.indexOf(m.sec)<0)secs.push(m.sec);
+// the node a pill goes in front of: the whole word that holds el, never the middle of it
+var isBrk=function(c){var x=cp(c);return x===32||x===10||x===9||x===13||x===0xa0||x===0x964||x===0x965||c==='-';};
+function wordStart(el){ var w=el.closest('.w'); if(w)return w; var pv=el.previousSibling;
+  if(pv&&pv.nodeType===3){ var t=pv.textContent,i=t.length; while(i>0&&!isBrk(t.charAt(i-1)))i--; if(i<t.length)return i>0?pv.splitText(i):pv; } return el; }
+U.forEach(function(u){ var secs=[],first=null,firstIn={},els=[];
+  function take(m,pr){ if(!m)return; if(secs.indexOf(m.sec)<0)secs.push(m.sec); els.push.apply(els,m.els);
     var e=m.els[0]; if(e){ if(!pr._first||before(e,pr._first))pr._first=e; var id=m.sec.id; if(!firstIn[id]||before(e,firstIn[id]))firstIn[id]=e; } return m.els; }
   function earliest(els){ if(els&&els[0]&&(!first||before(els[0],first)))first=els[0]; }
   u.pairs.forEach(function(p){
@@ -684,30 +690,35 @@ U.forEach(function(u){ var secs=[],first=null,firstIn={};
     earliest(take(p.sA&&mark(p.sA.ref,p.sA.quote,'vA','bh'),p)); earliest(take(p.sB&&mark(p.sB.ref,p.sB.quote,'vB','bh'),p));
     if(p.h&&p.h.quote){ var z=p.h.source==='tika'?'tika':'bh'; var h=take(mark(p.h.ref,p.h.quote,'vH',z),p); if(z==='bh')earliest(h); } });
   if(!secs.length)return;
-  secs.sort(function(a,b){ return before(a,b)?-1:1; }); u.pills=[];
-  function mk(cls,label){ var q=document.createElement('span'); q.className=cls; q.tabIndex=0; q.setAttribute('role','button'); q.setAttribute('aria-expanded','false'); q.setAttribute('aria-label',label); q._secs=secs; q._u=u; u.pills.push(q); return q; }
-  var pill=mk('vpill','विरोधपरिहारः — show the apparent contradiction and its resolution');
-  if(first)first.before(pill); else { var b=secs[0].querySelector('.bh-zone .bh')||secs[0]; b.prepend(pill); }
-  // continuation markers in the later verses of a multi-verse unit
-  secs.slice(1).forEach(function(sc){ var at=firstIn[sc.id]; var q=mk('vpill vcont','विरोधपरिहारः — continued from '+(u.vrefs[0]||'')+'; show the whole unit');
-    if(at)at.before(q); else { var bb=sc.querySelector('.bh-zone .bh')||sc; bb.prepend(q); } });
+  secs.sort(function(a,b){ return before(a,b)?-1:1; });
+  // ONE pill per unit, where the discussion starts (the earliest bhāṣya mark; else the bhāṣya of its first verse)
+  var pill=document.createElement('span'); pill.className='vpill'; pill.tabIndex=0; pill.setAttribute('role','button'); pill.setAttribute('aria-expanded','false');
+  pill.setAttribute('aria-label','विरोधपरिहारः — show the apparent contradiction and its resolution'); pill._secs=secs; pill._els=els; pill._u=u; u.pills=[pill];
+  var home=secs.filter(function(sc){ return u.vrefs.indexOf(sc.id.slice(2))>=0; })[0]||secs[0];
+  if(first)wordStart(first).before(pill); else { var b=home.querySelector('.bh-zone .bh')||home; b.prepend(pill); }
+  // the card header: the discussion span (u.vrefs) and the verses it only quotes, in page order, as jump links
+  var on=function(r){return !!document.getElementById('v-'+r);};
+  var span=secs.map(function(sc){return sc.id.slice(2);}).filter(function(r){return u.vrefs.indexOf(r)>=0;});
+  u.vrefs.forEach(function(r){ if(on(r)&&span.indexOf(r)<0)span.push(r); });
+  var quoted=secs.map(function(sc){return sc.id.slice(2);}).filter(function(r){return u.vrefs.indexOf(r)<0;});
+  var lnk=function(r){return '<a data-ref="'+esc(r)+'">'+esc(r)+'</a>';};
+  var head='<div class="span">'+span.map(lnk).join(' → ')+(quoted.length?' <span class="q">· sides from '+quoted.map(lnk).join(', ')+'</span>':'')+'</div>';
   function open(e){ e.stopPropagation(); var me=e.currentTarget; if(openPill&&openPill._u===u){close();return;} close();
-    var refs=u.vrefs.filter(function(r){return document.getElementById('v-'+r);});
-    tip.innerHTML='<button class="x" aria-label="close">✕</button><div class="tw">विरोधपरिहारः</div>'+
-      (refs.length>1?'<div class="span">spans '+refs.map(function(r){return '<a data-ref="'+esc(r)+'">'+esc(r)+'</a>';}).join(' → ')+'</div>':'')+u.pairs.map(function(p,i){
+    tip.innerHTML='<button class="x" aria-label="close">✕</button><div class="tw">विरोधपरिहारः</div>'+head+u.pairs.map(function(p,i){
       var row=function(sw,s){return s&&(s.label||s.quote)?'<div class="row"><span class="lb"><i class="sw'+sw+'"></i></span><span class="dv">'+esc(s.label||'')+'</span></div>':'';};
       return (i?'<div class="peel"></div>':'')+'<div class="tm" data-pi="'+i+'" title="show this pair in the text">'+esc(p.desc)+'</div>'+row('',p.sA)+row(' d',p.sB)+
         '<div class="row"><span class="lb">परिहारः</span>'+(p.h&&p.h.quote?'<span class="dv">“'+esc(p.h.quote)+'”</span> ':'')+'<span class="src">— '+esc(SRC[(p.h||{}).source]||'')+'</span></div>';}).join('')+
       (u.same.length?'<div class="peel"><span class="lb">same paradox</span><br>'+u.same.map(function(s){return (s.href?'<a href="'+s.href+'">':'')+esc(s.label)+(s.href?'</a>':'')+(s.why?' <span class="src">('+esc(s.why)+')</span>':'');}).join('<br>')+'</div>':'')+
       '<div class="ed">Side labels are Śaṅkara’s own words from this passage; a resolution from Ānandagiri is marked as his. Candidate set, under expert review.</div>';
     tip.querySelector('.x').onclick=function(ev){ ev.stopPropagation(); close(); };
-    tip.querySelectorAll('.span a').forEach(function(a){ a.onclick=function(ev){ ev.stopPropagation(); var sc=document.getElementById('v-'+a.dataset.ref); flash(firstIn['v-'+a.dataset.ref]||sc); }; });
+    // jump links; the discussion's own first verse returns to the pill
+    tip.querySelectorAll('.span a').forEach(function(a){ a.onclick=function(ev){ ev.stopPropagation(); var id='v-'+a.dataset.ref;
+      flash(id===pill.closest('section').id?pill:(firstIn[id]||document.getElementById(id))); }; });
     tip.querySelectorAll('.tm[data-pi]').forEach(function(t){ t.onclick=function(ev){ ev.stopPropagation(); flash(u.pairs[+t.dataset.pi]._first); }; });
-    secs.forEach(function(s){s.classList.add('von');}); u.pills.forEach(function(q){q.classList.add('pin'); q.setAttribute('aria-expanded','true');});
+    secs.forEach(function(s){s.classList.add('von');}); els.forEach(function(x){x.classList.add('vlit');}); u.pills.forEach(function(q){q.classList.add('pin'); q.setAttribute('aria-expanded','true');});
     tip.classList.add('show'); openPill=me; place(me); }
   u.pills.forEach(function(q){ q.addEventListener('click',open); q.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){e.preventDefault(); q.click();} }); });
 });
-document.addEventListener('click',function(e){ if(openPill&&!tip.contains(e.target))close(); });
 document.addEventListener('keydown',function(e){ if(e.key==='Escape')close(); });
 addEventListener('resize',function(){ if(openPill)place(openPill); });
 })();</script></div><style>

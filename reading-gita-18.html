@@ -270,7 +270,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 /* extent: while open, a bar down the left of every verse the unit touches (its span + the verses it quotes) */
 .mantra.von{box-shadow:-5px 0 0 0 var(--vir)}
 @keyframes vflash{from{background:color-mix(in srgb,var(--vir) 38%,transparent)}to{background:transparent}} .vflash{animation:vflash 1.6s ease-out}
-#vtip .src{opacity:.7;font-size:11px} #vtip a{color:var(--tipacc)} #vtip .ed{opacity:.55;font-size:10.5px;margin-top:6px}
+#vtip .src{opacity:.7;font-size:11px} #vtip a{color:var(--tipacc)}
 </style></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home">वैदान्तिक-व्याकरणम्</a><a href="reading-gita.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>श्रीमद्भगवद्गीता · अध्याय 18 — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
 #reading-nav .rn-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
 #reading-nav .rn-tools>*{margin:0 !important}
@@ -708,8 +708,7 @@ U.forEach(function(u){ var secs=[],first=null,firstIn={},els=[];
       var row=function(sw,s){return s&&(s.label||s.quote)?'<div class="row"><span class="lb"><i class="sw'+sw+'"></i></span><span class="dv">'+esc(s.label||'')+'</span></div>':'';};
       return (i?'<div class="peel"></div>':'')+'<div class="tm" data-pi="'+i+'" title="show this pair in the text">'+esc(p.desc)+'</div>'+row('',p.sA)+row(' d',p.sB)+
         '<div class="row"><span class="lb">परिहारः</span>'+(p.h&&p.h.quote?'<span class="dv">“'+esc(p.h.quote)+'”</span> ':'')+'<span class="src">— '+esc(SRC[(p.h||{}).source]||'')+'</span></div>';}).join('')+
-      (u.same.length?'<div class="peel"><span class="lb">same paradox</span><br>'+u.same.map(function(s){return (s.href?'<a href="'+s.href+'">':'')+esc(s.label)+(s.href?'</a>':'')+(s.why?' <span class="src">('+esc(s.why)+')</span>':'');}).join('<br>')+'</div>':'')+
-      '<div class="ed">Side labels are Śaṅkara’s own words from this passage; a resolution from Ānandagiri is marked as his. Candidate set, under expert review.</div>';
+      (u.same.length?'<div class="peel"><span class="lb">same paradox</span><br>'+u.same.map(function(s){return (s.href?'<a href="'+s.href+'">':'')+esc(s.label)+(s.href?'</a>':'')+(s.why?' <span class="src">('+esc(s.why)+')</span>':'');}).join('<br>')+'</div>':'');
     tip.querySelector('.x').onclick=function(ev){ ev.stopPropagation(); close(); };
     // jump links; the discussion's own first verse returns to the pill
     tip.querySelectorAll('.span a').forEach(function(a){ a.onclick=function(ev){ ev.stopPropagation(); var id='v-'+a.dataset.ref;

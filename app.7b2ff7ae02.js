@@ -3075,7 +3075,7 @@ function expectedSetForStep(sentence, step) {
   if (step.type === 'sampradana') return new Set(c.sampradana.map(r => r.wordIndex));
   if (step.type === 'apadana') return new Set(c.apadana.map(r => r.wordIndex));
   if (step.type === 'adhikarana') return new Set(c.adhikarana.map(r => r.wordIndex));
-  if (step.type === 'satisaptami') return new Set(c.satisaptami.map(r => r.wordIndex));
+  if (step.type === 'satisaptami') return new Set(satisaptamiPhrases(c).flatMap(ph => [...ph]));
   if (step.type === 'itthambhuta') return new Set((c.itthambhuta || []).map(r => r.wordIndex));
   if (step.type === 'upamana') return new Set((c.upamana || []).map(r => r.wordIndex));
   if (step.type === 'upameya') return new Set((c.upameya || []).map(r => r.wordIndex));
@@ -3115,6 +3115,8 @@ function computeClauseGroups(sentence) {
     ...c.apadana.map(r => r.wordIndex), ...c.adhikarana.map(r => r.wordIndex),
     ...c.satisaptami.map(r => r.wordIndex), ...c.nirdharana.map(r => r.wordIndex),
     ...c.remaining.map(r => r.wordIndex),
+    // प्रतिषेध न is part of its verb's clause — omitting it left BG 2.20's न (17) outside the न हन्यते … box.
+    ...(c.pratishedha || []),
   ];
   const byGovernor = new Map(clusters.map((c, ci) => [c.governorWordIndex, ci]));
   const nestedUnder = new Map(); // child clusterIdx -> parent clusterIdx
@@ -3139,7 +3141,17 @@ function computeClauseGroups(sentence) {
     g.min = Math.min(g.min, min); g.max = Math.max(g.max, max);
     g.clusterIdxs.push(ci);
   });
-  return [...groups.entries()].map(([topClusterIdx, g]) => ({ ...g, topClusterIdx })).sort((a, b) => a.min - b.min);
+  // renderClickableVerse needs sorted, NON-overlapping spans — an overlap made it stop opening boxes after the
+  // first one (BG 2.20: जायते 1-4 contains म्रियते 2-3, so the हन्यते box was never drawn). Clauses that
+  // interleave in the verse merge into one box; the current-step lookup still finds them via clusterIdxs.
+  const sorted = [...groups.entries()].map(([topClusterIdx, g]) => ({ ...g, topClusterIdx })).sort((a, b) => a.min - b.min);
+  const merged = [];
+  for (const g of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && g.min <= last.max) { last.max = Math.max(last.max, g.max); last.clusterIdxs.push(...g.clusterIdxs); }
+    else merged.push({ ...g, clusterIdxs: [...g.clusterIdxs] });
+  }
+  return merged;
 }
 
 // ---- explanatory prose (Harsha, 2026-08-12: conversational tone; draft mine, flagged for review
@@ -3835,7 +3847,7 @@ function tutorialStepLabelBase(step, sentence) {
     case 'sampradana': return `For ${gov}, which word is the सम्प्रदान — "for whom" or "for what purpose" (तादर्थ्य) is this कर्म/क्रिया being done?`;
     case 'apadana': return `For ${gov}, which word is the अपादान — "from what" or "from where" does this action originate?`;
     case 'adhikarana': return `For ${gov}, which word is the अधिकरण — "where" or "when" is this action happening?`;
-    case 'satisaptami': return `For ${gov}, which word names the circumstance under which this action happens (सति-सप्तमी — a locative-absolute clause, distinct from ordinary अधिकरण)?`;
+    case 'satisaptami': return `For ${gov}, which word names the circumstance under which this action happens (सति-सप्तमी — a locative-absolute phrase, distinct from ordinary अधिकरण)? Either its noun or its participle counts.`;
     case 'itthambhuta': return `For ${gov}, which word tells by what characteristic/mark the agent is recognized (इत्थम्भूतलक्षणे — तृतीया, 2.3.21 — "by virtue of being …")?`;
     case 'upamana': return `Which word is the उपमान — the standard of comparison ("like / as ___", e.g. the moon in "face like the moon")?`;
     case 'upameya': return `Which word is the उपमेय — the thing being compared (to the उपमान)?`;
@@ -4255,7 +4267,7 @@ function tutorialReportTarget(sentence, step, verse) {
     selectedWords: [...selected].map(i => sentence.words[i]),
     voicePicked: view.voicePicked,
     correctVoice: c ? c.voice : null,
-    pct: view.checked ? Math.round(tutorialStepScore(selected, expected, ANY_VALID_STEP_TYPES.has(step.type)) * 100) : null,
+    pct: view.checked ? Math.round(tutorialStepScore(selected, expected, stepAnyValid(sentence, step)) * 100) : null,
   };
 }
 function renderTutorialReportArea(sentence, step, verse) {
@@ -4371,9 +4383,28 @@ function renderClickableVerse(words, opts) {
 // 50%). This is unlike modifiers/samuccaya/sweep buckets, where the task genuinely is to find
 // EVERY member (e.g. both कृत्स्नम् AND प्रविभक्तम् in qualifierKarma) — those keep plain Jaccard.
 const ANY_VALID_STEP_TYPES = new Set(['karta', 'karma', 'agreementKarta', 'agreementKarma']);
+// सति-सप्तमी is graded PER PHRASE: the locative absolute is a noun + its participle (हन्यमाने शरीरे), and either
+// word names it — Kāśikā 2.3.37 puts the सप्तमी on the भाववत् noun (गोषु दुह्यमानासु), while the participle carries
+// the "सति" action, and the corpus tags it both ways (noun + participle-qualifier, or a lone participle). One
+// pick per phrase with no wrong picks = 100% (Harsha, 2026-10-10, BG 2.20). Each phrase = the tagged word +
+// the peripheral qualifiers that point at it.
+function satisaptamiPhrases(c) {
+  return c.satisaptami.map(r => new Set([r.wordIndex, ...(c.peripheralQualifiers || []).filter(q => q.targetIndex === r.wordIndex).map(q => q.wordIndex)]));
+}
+// anyValid for a step: true (one shared any-valid bucket), an array of phrase Sets (satisaptami), or false.
+function stepAnyValid(sentence, step) {
+  if (ANY_VALID_STEP_TYPES.has(step.type)) return true;
+  if (step.type === 'satisaptami' && step.clusterIdx != null) return satisaptamiPhrases(sentence.clusters[step.clusterIdx]);
+  return false;
+}
 function tutorialStepScore(selected, expected, anyValid) {
   if (!expected.size && !selected.size) return 1;
   const inter = [...selected].filter(i => expected.has(i)).length;
+  if (Array.isArray(anyValid)) {   // per-phrase any-valid: credit each phrase hit, penalise wrong picks
+    const hit = anyValid.filter(ph => [...ph].some(i => selected.has(i))).length;
+    const wrong = selected.size - inter;
+    return anyValid.length + wrong ? hit / (anyValid.length + wrong) : 1;
+  }
   if (anyValid && selected.size > 0 && inter === selected.size) return 1; // non-empty, no wrong picks
   const union = new Set([...selected, ...expected]).size;
   return union ? inter / union : 0;
@@ -4389,7 +4420,7 @@ function checkTutorialStep() {
     selected = new Set([...selected].filter(i => !opt.has(i)));
     shownExpected = new Set([...expected, ...pickedOpt]);
   }
-  tutorialScores.push(tutorialStepScore(selected, expected, ANY_VALID_STEP_TYPES.has(step.type)));
+  tutorialScores.push(tutorialStepScore(selected, expected, stepAnyValid(sentence, step)));
   view = { ...view, checked: true, expected: shownExpected };
   renderTutorial();
 }
@@ -4688,12 +4719,13 @@ function renderTutorial() {
   // (PD 1.1), or an absent kāraka. Shown ALWAYS (independent of whether the answer is actually none),
   // else its mere presence would leak the answer (Harsha, 2026-08-21).
   const showNone = multiSelect && !checked;
-  const anyValid = ANY_VALID_STEP_TYPES.has(step.type);
+  const anyValid = stepAnyValid(sentence, step);
   const inter = [...selected].filter(i => expected.has(i)).length;
   // A fully-valid subset (any-valid buckets only, e.g. picking just योगम् out of {इमम्,योगम्})
   // scores 100% — don't then mark the OTHER valid alternatives as "missed" (misleading next to a
   // 100% score); show only what was actually picked as correct instead.
-  const fullyValidSubset = anyValid && selected.size > 0 && inter === selected.size;
+  const fullyValidSubset = Array.isArray(anyValid) ? tutorialStepScore(selected, expected, anyValid) === 1
+    : anyValid && selected.size > 0 && inter === selected.size;
   const displayExpected = checked ? (fullyValidSubset ? selected : expected) : null;
   const verseHtml = renderClickableVerse(words, { selected, disabled: checked, expected: displayExpected, codes: sentence.wordCodes, groups: showClauseGroups ? clauseGroups : null, currentGroupTop, elidedAfter });
 

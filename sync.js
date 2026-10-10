@@ -474,6 +474,15 @@
     }
     return null;
   }
+  function forwardFrom(el) {
+    if (!el || !el.id || el.id.indexOf('v-') !== 0) return null;
+    var all = document.querySelectorAll('[id^="v-"]'), seen = false;
+    for (var i = 0; i < all.length; i++) {
+      if (all[i] === el) { seen = true; continue; }
+      if (seen && !el.contains(all[i])) { var m = highlightIn(all[i]); if (m) return m; }
+    }
+    return null;
+  }
   function run() {
     // Reveal the सन्धि (joined) layer — that's the surface the search matches against. Two view
     // conventions exist: VC bhāṣya uses mode-*, the unified upaniṣad/Gita views use metmode-*. Force
@@ -513,7 +522,10 @@
       }, vk ? 120 : 0);
       return;
     }
-    var hit = (scope && highlightIn(scope)) || highlightIn(document.body);
+    // not in the anchored verse → try the verses AFTER it before the whole page: a search block spanning
+    // verses (BG bhāṣya [45,47] anchors to #v-6.45) has its phrase in a later verse of the range, and a
+    // whole-page search would stop at the chapter's FIRST occurrence, possibly an earlier verse (2026-10-10).
+    var hit = (scope && highlightIn(scope)) || forwardFrom(scope) || highlightIn(document.body);
     if (hit) setTimeout(function () { try { hit.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }, 60);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(run, 150); });

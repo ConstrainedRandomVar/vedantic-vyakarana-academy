@@ -178,7 +178,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 }
 
 /* bhasya role colours */
-.mula{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
+.mula{color:var(--mula);font-weight:650}.msub{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
 .purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}
 /* role PILL — start-anchored role marker for a rebuttal/objection whose words carry another colour
@@ -545,6 +545,10 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],sk=SK(surfOf(t));
   var inMula=t.closest('.mula-zone'),pr=t.closest('.tk-prat[data-jb]');
   var preT=!!pr&&(t.getAttribute('data-k')||'').indexOf('::pre')>=0;        // a PRELUDE ṭīkā pratīka
   var inPreBh=!pr&&!!t.closest('.pre'),inBh=!pr&&!!t.closest('.bh');        // a bhāṣya word: prelude vs mantra zone
+  var jsk=t.getAttribute('data-jsk');                                                            // SUB-WORD pratīka (#9e: exact or nothing)
+  if(jsk&&mulaRun(ref,jsk)) rows.push(jr('ms',ref,jsk,''));
+  if(inMula){var vsub=document.getElementById('v-'+ref),subs=vsub?vsub.querySelectorAll('.bh .w[data-jsk]'):[];                  // mūla word quoted by a sub-word mark → that bhāṣya word
+    for(var si=0;si<subs.length;si++){var rr=mulaRun(ref,subs[si].getAttribute('data-jsk'));if(rr&&rr.els.indexOf(t)>=0){rows.push(jr('bs',ref,String(si),'bh'));break;}}}
   if(t.getAttribute('data-jm')) rows.push(jr('m',ref,sk,''));                                   // bhāṣya quote → मूलम् (always)
   else if(t.getAttribute('data-jmq')&&sk&&mqTarget(sk)) rows.push(jr('mq','',sk,''));             // intro cross-verse quote → मूलम्
   if(inMula&&sk){ if(matchWord(ref,'.bh .w[data-jm]',sk)) rows.push(jr('b',ref,sk,'bh'));       // mūla → भाष्यम् (mantra, if quoted)
@@ -558,11 +562,20 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],sk=SK(surfOf(t));
       if(mh)rows.push(jr('m',ref,mh,''));}}                                                       // ṭīkā pratīka that quotes the mūla → मूलम्
   if((inBh||inPreBh)&&sk&&findTikaEl(ref,sk,inPreBh)) rows.push(jr('t',ref,sk,inPreBh?'pre':'bh'));  // bhāṣya → टीका (same zone)
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
-function jr(cat,ref,sk,zone){var lb={m:'→ मूलम्',mq:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',pi:'→ भाष्यम्',t:'→ टीका'}[cat];
+// a SUB-WORD pratīka's mūla target: the ONE run of consecutive VISIBLE mūla words whose skeletons concatenate to EXACTLY
+// jsk (no prefix fuzz). 0 or ≥2 runs → null → no link (CLAUDE.md #9e: a jump must land on the exact quoted word).
+function mulaRun(ref,jsk){var c=document.getElementById('v-'+ref);if(!c||!jsk)return null;
+  var els=[].filter.call(c.querySelectorAll('.mula-zone .w'),function(e){return e.offsetParent!==null;}),hit=null,n=0;
+  for(var i=0;i<els.length;i++){var acc='';for(var j=i;j<els.length&&j<i+6;j++){acc+=SK(surfOf(els[j]));
+      if(acc===jsk){n++;if(!hit)hit={start:els[i],els:els.slice(i,j+1)};break;} if(acc.length>=jsk.length)break;}}
+  return n===1?hit:null;}
+function jr(cat,ref,sk,zone){var lb={m:'→ मूलम्',mq:'→ मूलम्',ms:'→ मूलम्',b:'→ भाष्यम्',pb:'→ भाष्यम्',pi:'→ भाष्यम्',bs:'→ भाष्यम्',t:'→ टीका'}[cat];
   return '<span class="jrow" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+sk+'" data-jz="'+(zone||'')+'">'+lb+'</span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
 function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='m')el=matchWord(ref,'.mula-zone .w',sk);
+  else if(cat==='ms'){var mr=mulaRun(ref,sk);el=mr?mr.start:null;}
+  else if(cat==='bs'){var vbs=document.getElementById('v-'+ref);el=vbs?(vbs.querySelectorAll('.bh .w[data-jsk]')[+sk]||null):null;}
   else if(cat==='b')el=matchWord(ref,'.'+(z==='pre'?'pre':'bh')+' .w[data-jm]',sk);
   else if(cat==='pb')el=matchWord(ref,'.'+(z==='pre'?'pre':'bh')+' .w',sk);
   else if(cat==='pi'){var vv1=document.getElementById('v-'+ref);el=vv1?vv1.querySelector('.bh .w[data-ti="'+sk+'"]'):null;}

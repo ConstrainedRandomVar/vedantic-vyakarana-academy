@@ -87,11 +87,13 @@
   .recents .rc .t{color:var(--muted);font-size:11px}
   .recents .rc .del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px;padding:4px 8px}
   .recents .rc .del:hover{color:#c0392b}
+  .brand .bshort{display:none}
+  @media (max-width:640px){.brand .bfull{display:none}.brand .bshort{display:inline}}
 </style>
 </head>
 <body>
   <div class="topbar">
-    <a class="brand" href="index.html">वैदान्तिक-व्याकरणम्</a>
+    <a class="brand" href="index.html" data-vv-brand data-short="स्वा·दी"><span class="bfull">स्वाध्याय-दीपिका</span><span class="bshort">स्वा·दी</span></a>
     <span class="subtitle">शेमुषी · shared-reading scratchpad</span>
     <div class="toolbar">
       <span class="fname" id="fname"></span>

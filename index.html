@@ -1,9 +1,12 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>वैदान्तिक-व्याकरणम्</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>स्वाध्याय-दीपिका</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3a2f2a">
 <style>
  body{font-family:system-ui,sans-serif;margin:0;background:#faf9f7;color:#222}
- header{background:#3a2f2a;color:#fff;padding:12px 18px;display:flex;align-items:center;gap:10px}
+ header{background:#3a2f2a;color:#fff;padding:12px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:40}
+ /* brand pinned at top-left on every page; abbreviated on phones (CLAUDE.md #9a) */
+ #homeBtn .bshort{display:none}
+ @media (max-width:640px){#homeBtn .bfull{display:none}#homeBtn .bshort{display:inline}}
  header h1{margin:0;font-size:18px;font-weight:600;flex:1}
  #gearBtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:18px;line-height:1;border-radius:8px;padding:5px 9px;cursor:pointer}
  #gearBtn:hover{background:rgba(255,255,255,.12)}
@@ -170,7 +173,7 @@
  .anv-legend{font-size:13px;color:#8a7a5a;margin:-4px 0 6px}
  .anv-q{font-family:'Noto Serif Devanagari',serif;font-size:19px;font-weight:700;color:#7c5a1e;margin-right:6px}
 </style></head><body>
-<header><button id="homeBtn" title="वैदान्तिक-व्याकरणम् — Home" aria-label="वैदान्तिक-व्याकरणम् — Home" style="background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;font-weight:800;font-size:16px;color:#f5b544;letter-spacing:.02em">वैदान्तिक-व्याकरणम्</button><span style="flex:1"></span><button id="gearBtn" title="Settings" aria-label="Settings">⚙</button></header>
+<header><button id="homeBtn" data-vv-brand data-short="स्वा·दी" title="स्वाध्याय-दीपिका — Home" aria-label="स्वाध्याय-दीपिका — Home" style="background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;font-weight:800;font-size:16px;color:#f5b544;letter-spacing:.02em"><span class="bfull">स्वाध्याय-दीपिका</span><span class="bshort">स्वा·दी</span></button><span style="flex:1"></span><button id="gearBtn" title="Settings" aria-label="Settings">⚙</button></header>
 <div id="app">loading…</div>
 
 <script src="quiz-items.beee5e8833.js"></script>
@@ -183,7 +186,8 @@
 <script src="flagged-wrong.56332609a3.js"></script>
 <script src="samasa-peel.c7972057ef.js"></script>
 <script src="reading-nav.1d8a42d71b.js"></script>
-<script src="app.7b2ff7ae02.js"></script>
+<script src="vv-store.88b5750518.js"></script>
+<script src="app.ee132ec4b8.js"></script>
 <script>
 // Freshness during churn: updateViaCache:'none' → the browser always network-fetches sw.js (never
 // its HTTP cache); reg.update() proactively checks on load; and when a NEW sw version takes control

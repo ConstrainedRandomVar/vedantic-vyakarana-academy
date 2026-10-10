@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="sa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>★ My library — स्वाध्याय-दीपिका</title>
+<!-- library.html — the reader's own bookmarks, collections and study notes (Harsha 2026-10-11, feedback #6/#7).
+     Everything is read from VVStore (vv-store.js) = this browser's localStorage, shared by every site on this origin;
+     nothing is sent anywhere. Share links (#c=…) carry a collection snapshot inside the URL itself. -->
+<style>
+:root{--bg:#fbfaf7;--card:#fff;--ink:#22201b;--muted:#6b6455;--line:#e6e0d4;--brand:#d97706;--acc:#b45309;--chip:#fdf3e1}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--acc:#f5b544;--chip:#2a2418}}
+:root[data-theme=dark]{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--acc:#f5b544;--chip:#2a2418}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.dv{font-family:"Noto Serif Devanagari",serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:"Noto Serif Devanagari",serif;white-space:nowrap}
+.brand .bs{display:none}
+@media(max-width:640px){.brand .bf{display:none}.brand .bs{display:inline}}
+header h1{margin:0;font-size:17px;flex:1}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs a{padding:5px 11px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--ink);font-size:14px}
+nav.tabs a.on{background:var(--brand);border-color:var(--brand);color:#fff}
+#tog{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:3px 8px;cursor:pointer}
+main{max-width:920px;margin:0 auto;padding:16px 18px 60px}
+.note-top{color:var(--muted);font-size:13px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.card .t{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card .t a{color:var(--acc);font-weight:600;text-decoration:none}
+.card .t a:hover{text-decoration:underline}
+.card .ex{margin:6px 0 0;font-size:15px}
+.card .meta{margin-top:6px;color:var(--muted);font-size:12.5px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chip{background:var(--chip);border-radius:999px;padding:1px 8px;font-size:12px;color:var(--ink)}
+.site{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:0 6px;color:var(--muted)}
+.mini{font:12.5px system-ui,sans-serif;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;padding:3px 8px;cursor:pointer}
+.mini:hover{border-color:var(--brand)}
+.mini.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+input[type=text],textarea{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+textarea{width:100%;min-height:70px;font-family:"Noto Serif Devanagari",system-ui,serif}
+h2{font-size:16px;margin:22px 0 8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
+.empty{color:var(--muted);font-style:italic;padding:8px 2px}
+.colhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.colhead input{font-weight:600;font-size:15px;max-width:100%}
+.order{display:inline-flex;gap:2px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.banner{background:var(--chip);border:1px solid var(--brand);border-radius:12px;padding:12px 14px;margin:0 0 14px}
+.search{flex:1;min-width:180px}
+@media print{header,nav.tabs,.toolbar,.mini,#tog{display:none!important}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html" data-vv-brand data-short="स्वा·दी" title="स्वाध्याय-दीपिका — Home" aria-label="स्वाध्याय-दीपिका — Home"><span class="bf">स्वाध्याय-दीपिका</span><span class="bs">स्वा·दी</span></a>
+  <h1>★ My library</h1>
+  <nav class="tabs"><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks</a><a href="#collections" data-tab="collections">🗂 Collections</a><a href="#notes" data-tab="notes">📝 Notes</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
+  <button id="tog" title="light / dark">◐</button>
+</header>
+<main>
+  <p class="note-top">Stored only in this browser (shared by all our sites on this address) — nothing is sent to any server. Clearing browser data deletes it: use <a href="#backup">Backup → Export</a> to keep a copy or move it to another device.</p>
+  <div id="view"></div>
+</main>
+<script src="vv-store.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.VVStore, V = document.getElementById('view');
+  var r = document.documentElement;
+  document.getElementById('tog').onclick = function () { var c = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); r.setAttribute('data-theme', c === 'dark' ? 'light' : 'dark'); };
+  // brand follows the site this copy is served from (academy / public = स्वाध्याय-दीपिका, sister site = साहित्य-व्याकरणम्)
+  if (S.SITE === 'sahitya') { var b = document.querySelector('.brand'); b.querySelector('.bf').textContent = 'साहित्य-व्याकरणम्'; b.querySelector('.bs').textContent = 'सा·व्या'; b.setAttribute('data-short', 'सा·व्या'); b.title = b.getAttribute('aria-label').replace('स्वाध्याय-दीपिका', 'साहित्य-व्याकरणम्'); r.style.setProperty('--brand', '#4f46e5'); r.style.setProperty('--acc', '#4f46e5'); document.title = document.title.replace('स्वाध्याय-दीपिका', 'साहित्य-व्याकरणम्'); }
+  S.rememberSite();
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function day(iso) { return iso ? iso.slice(0, 10) : ''; }
+  function siteTag(site) { return site && site !== S.SITE ? '<span class="site" title="saved on a sister site — opens there">' + esc(S.SITE_NAMES[site] || site) + '</span>' : ''; }
+  function link(rec) { return '<a href="' + esc(rec.url) + '"' + (rec.site && rec.site !== S.SITE ? ' target="_blank" rel="noopener"' : '') + '>' + esc(rec.title || rec.url) + '</a>'; }
+
+  // ---- one bookmark card (inCol = the collection being shown, for reorder/remove-from) ----
+  function bmCard(b, inCol, idx, n) {
+    var cols = S.collections.of(b.id).map(function (c) { return '<span class="chip">' + esc(c.name) + '</span>'; }).join(' ');
+    return '<div class="card" data-b="' + esc(b.id) + '"><div class="t">' + link(b) + siteTag(b.site)
+      + (b.src === 'search' && b.query ? '<span class="chip" title="found by this search">🔎 ' + esc(b.query) + '</span>' : '') + '</div>'
+      + (b.excerpt ? '<div class="ex dv">' + esc(b.excerpt) + '</div>' : '')
+      + (b.note ? '<div class="ex" style="font-size:14px">✎ ' + esc(b.note) + '</div>' : '')
+      + '<div class="meta">' + day(b.created) + (inCol ? '' : (cols ? ' · ' + cols : '')) + ' '
+      + (inCol ? '<span class="order"><button class="mini" data-act="up" ' + (idx === 0 ? 'disabled' : '') + '>↑</button><button class="mini" data-act="down" ' + (idx === n - 1 ? 'disabled' : '') + '>↓</button></span><button class="mini" data-act="out">remove from collection</button>'
+               : '<button class="mini" data-act="addto">add to collection…</button><button class="mini" data-act="del">delete</button>')
+      + '<button class="mini" data-act="note">' + (b.note ? 'edit note' : 'add note') + '</button></div></div>';
+  }
+
+  function renderBookmarks() {
+    var all = S.bookmarks.list(), uns = S.collections.unsorted();
+    V.innerHTML = '<div class="toolbar"><input type="text" class="search" placeholder="filter bookmarks…" id="flt"></div>'
+      + '<h2>Unsorted <span class="cnt">' + uns.length + ' · not in any collection yet</span></h2>'
+      + (uns.length ? uns.map(function (b) { return bmCard(b); }).join('') : '<div class="empty">Nothing unsorted.</div>')
+      + '<h2>All bookmarks <span class="cnt">' + all.length + '</span></h2>'
+      + (all.length ? all.map(function (b) { return bmCard(b); }).join('') : '<div class="empty">No bookmarks yet — use ☆ on a verse, on a selected passage, or on a search hit.</div>');
+    var f = document.getElementById('flt');
+    f.oninput = function () { var q = f.value.trim(); [].forEach.call(V.querySelectorAll('.card'), function (c) { c.style.display = !q || c.textContent.indexOf(q) >= 0 ? '' : 'none'; }); };
+  }
+
+  function renderCollections() {
+    var cols = S.collections.list();
+    V.innerHTML = '<div class="toolbar"><input type="text" id="newcol" placeholder="new collection name, e.g. Ananda-vichAra-in-bhAShyam" style="min-width:300px"><button class="mini pri" data-act="newcol">＋ create</button></div>'
+      + (cols.length ? cols.map(function (c) {
+          var items = (c.items || []).map(S.bookmarks.get).filter(Boolean);
+          return '<section class="col" data-c="' + esc(c.id) + '"><h2 class="colhead"><input type="text" value="' + esc(c.name) + '" data-act="rename" size="' + Math.max(12, Math.min(48, c.name.length + 2)) + '"><span class="cnt">' + items.length + ' item' + (items.length === 1 ? '' : 's') + '</span>'
+            + '<button class="mini" data-act="share">🔗 share link</button><button class="mini" data-act="print">🖨 print</button><button class="mini" data-act="delcol">delete collection</button></h2>'
+            + (items.length ? items.map(function (b, i) { return bmCard(b, c.id, i, items.length); }).join('') : '<div class="empty">Empty — add bookmarks from the Bookmarks tab (or from the ☆ popover while reading/searching).</div>')
+            + '</section>';
+        }).join('') : '<div class="empty">No collections yet. Create one above, then add bookmarks to it.</div>');
+  }
+
+  function renderNotes() {
+    var ns = S.notes.list();
+    var by = {}; ns.forEach(function (n) { var k = (n.title || '').replace(/\s+\S+$/, '') || n.page; (by[k] = by[k] || []).push(n); });
+    V.innerHTML = '<div class="toolbar"><input type="text" class="search" placeholder="search my notes…" id="flt"></div>'
+      + (ns.length ? Object.keys(by).map(function (k) {
+          return '<h2 class="dv">' + esc(k) + ' <span class="cnt">' + by[k].length + '</span></h2>' + by[k].map(function (n) {
+            return '<div class="card" data-n="' + esc(n.key) + '"><div class="t">' + link(n) + siteTag(n.site) + '</div><div class="ex" style="white-space:pre-wrap">' + esc(n.text) + '</div>'
+              + '<div class="meta">' + day(n.updated) + ' <button class="mini" data-act="nedit">edit</button><button class="mini" data-act="ndel">delete</button></div></div>';
+          }).join('');
+        }).join('') : '<div class="empty">No notes yet — open a reading page and use 📝 in the top bar.</div>');
+    var f = document.getElementById('flt');
+    f.oninput = function () { var q = f.value.trim(); [].forEach.call(V.querySelectorAll('.card'), function (c) { c.style.display = !q || c.textContent.indexOf(q) >= 0 ? '' : 'none'; }); };
+  }
+
+  function renderBackup() {
+    var nb = S.bookmarks.list().length, nc = S.collections.list().length, nn = S.notes.list().length, nh = S.history.list().length;
+    V.innerHTML = '<div class="card"><b>Export</b> — download everything (' + nb + ' bookmarks, ' + nc + ' collections, ' + nn + ' notes, ' + nh + ' recent searches) as one file. Keep it safe, or import it on another device.<div class="meta"><button class="mini pri" data-act="export">⤓ export file</button></div></div>'
+      + '<div class="card"><b>Import</b> — merge an exported file into this browser. Nothing here is deleted; where the same item exists in both, the more recently edited copy wins.<div class="meta"><input type="file" id="imp" accept=".json,application/json"></div><div id="impmsg" class="meta"></div></div>';
+    document.getElementById('imp').onchange = function (e) {
+      var f = e.target.files[0]; if (!f) return;
+      f.text().then(function (t) { var n = S.importAll(JSON.parse(t)); document.getElementById('impmsg').textContent = 'Imported — ' + n + ' item(s) added or updated.'; })
+        .catch(function (err) { document.getElementById('impmsg').textContent = 'Could not import: ' + err.message; });
+    };
+  }
+
+  // ---- a shared collection arriving via #c=<code> : preview, then save a copy ----
+  function renderShared(code) {
+    V.innerHTML = '<div class="empty">Opening shared collection…</div>';
+    S.decodeShare(code).then(function (snap) {
+      var exists = !!S.collections.byName(snap.name);
+      V.innerHTML = '<div class="banner"><b>Shared collection: <span class="dv">' + esc(snap.name) + '</span></b> — ' + (snap.items || []).length + ' item(s). This is a snapshot: browse it freely; saving makes your own copy (you can then add notes).'
+        + '<div class="meta" style="margin-top:8px">' + (exists
+          ? 'You already have a collection with this name: <button class="mini pri" data-act="savemerge">merge into it</button><button class="mini" data-act="savenew">keep both</button>'
+          : '<button class="mini pri" data-act="savenew">save to my collections</button>') + '</div></div>'
+        + (snap.items || []).map(function (it) { return bmCard(Object.assign({ id: '' }, it), 'shared', 0, 0).replace(/<span class="order">[\s\S]*?<\/div><\/div>$/, '</div></div>'); }).join('');
+      V.onclick = function (e) {
+        var act = e.target.getAttribute && e.target.getAttribute('data-act');
+        if (act === 'savenew' || act === 'savemerge') { S.importShared(snap, act === 'savemerge' ? 'merge' : 'new'); history.replaceState(null, '', location.pathname + '#collections'); route(); }
+      };
+    }).catch(function (err) { V.innerHTML = '<div class="empty">This share link could not be opened (' + esc(err.message) + '). It may be truncated — ask for the link again.</div>'; });
+  }
+
+  // ---- actions (one delegated handler) ----
+  function pickCollection(bid, at) {
+    var cols = S.collections.list();
+    var name = prompt('Add to which collection? Type an existing name or a new one.' + (cols.length ? '\n\nExisting: ' + cols.map(function (c) { return c.name; }).join(' · ') : ''));
+    if (name && name.trim()) { S.collections.addItem(S.collections.create(name.trim()), bid); render(); }
+  }
+  V.addEventListener('click', function (e) {
+    var act = e.target.getAttribute && e.target.getAttribute('data-act'); if (!act) return;
+    var card = e.target.closest('[data-b]'), bid = card && card.getAttribute('data-b');
+    var sec = e.target.closest('[data-c]'), cid = sec && sec.getAttribute('data-c');
+    var ncard = e.target.closest('[data-n]'), nkey = ncard && ncard.getAttribute('data-n');
+    if (act === 'del' && confirm('Delete this bookmark (from every collection too)?')) { S.bookmarks.remove(bid); render(); }
+    else if (act === 'addto') pickCollection(bid);
+    else if (act === 'note') { var b = S.bookmarks.get(bid); var v = prompt('Note for this bookmark:', b.note || ''); if (v !== null) { S.bookmarks.update(bid, { note: v.trim() }); render(); } }
+    else if (act === 'out') { S.collections.removeItem(cid, bid); render(); }
+    else if (act === 'up' || act === 'down') { var c = S.collections.get(cid), i = c.items.indexOf(bid); S.collections.move(cid, bid, act === 'up' ? i - 1 : i + 1); render(); }
+    else if (act === 'newcol') { var nm = document.getElementById('newcol').value.trim(); if (nm) { S.collections.create(nm); render(); } }
+    else if (act === 'delcol' && confirm('Delete this collection? (Its bookmarks stay in your library.)')) { S.collections.remove(cid); render(); }
+    else if (act === 'print') { [].forEach.call(document.querySelectorAll('section.col'), function (s) { s.style.display = s === sec ? '' : 'none'; }); window.print(); render(); }
+    else if (act === 'share') {
+      S.encodeShare(cid).then(function (code) {
+        var url = location.href.split('#')[0] + '#c=' + code;
+        var done = function () { e.target.textContent = '✓ link copied'; setTimeout(function () { e.target.textContent = '🔗 share link'; }, 2500); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { prompt('Copy this share link:', url); });
+        else prompt('Copy this share link:', url);
+      });
+    }
+    else if (act === 'export') {
+      var blob = new Blob([JSON.stringify(S.exportAll(), null, 1)], { type: 'application/json' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'svadhyaya-dipika-library-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+    }
+    else if (act === 'nedit') { var n = S.notes.get(nkey); var v2 = prompt('Edit note:', n.text); if (v2 !== null) { S.notes.set(nkey, Object.assign({}, n, { text: v2 })); render(); } }
+    else if (act === 'ndel' && confirm('Delete this note?')) { S.notes.remove(nkey); render(); }
+  });
+  V.addEventListener('change', function (e) {
+    if (e.target.getAttribute('data-act') === 'rename') { var sec = e.target.closest('[data-c]'); var v = e.target.value.trim(); if (v) S.collections.rename(sec.getAttribute('data-c'), v); }
+  });
+
+  var tab = 'bookmarks';
+  function render() { V.onclick = null; ({ bookmarks: renderBookmarks, collections: renderCollections, notes: renderNotes, backup: renderBackup })[tab](); }
+  function route() {
+    var h = location.hash.slice(1);
+    [].forEach.call(document.querySelectorAll('nav.tabs a'), function (a) { a.classList.remove('on'); });
+    if (h.indexOf('c=') === 0) { renderShared(h.slice(2)); return; }
+    tab = { bookmarks: 1, collections: 1, notes: 1, backup: 1 }[h] ? h : 'bookmarks';
+    document.querySelector('nav.tabs a[data-tab="' + tab + '"]').classList.add('on');
+    render();
+  }
+  window.addEventListener('hashchange', route);
+  S.onChange(function () { if (location.hash.indexOf('#c=') !== 0 && !document.activeElement.matches('input,textarea')) render(); });
+  route();
+})();
+</script>
+</body>
+</html>

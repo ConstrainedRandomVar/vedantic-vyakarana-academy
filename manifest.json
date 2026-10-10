@@ -1,6 +1,6 @@
 {
-  "name": "Vyākaraṇa Quiz — Khan Academy for Vedāntic Sanskrit",
-  "short_name": "Vyākaraṇa Quiz",
+  "name": "स्वाध्याय-दीपिका — Vedāntic reading aid",
+  "short_name": "स्वाध्याय-दीपिका",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

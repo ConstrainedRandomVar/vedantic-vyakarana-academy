@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="sa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>वैदिक-अन्वेषणम् · Vedic word search (TITUS) — स्वाध्याय-दीपिका</title>
+<script>
+/* ONE canonical page shipped to EVERY site (CLAUDE.md: the Vedic word search is on all sites). Brand + accent adapt to the
+   site it is served from: साहित्य-व्याकरणम् (indigo) on the sister site, else स्वाध्याय-दीपिका (saffron). Runs before paint. */
+window.VV_TOOL_SITE=(/\/(sahitya-vyakaranam|sites\/sahitya)\//.test(location.pathname))
+  ?{brand:'साहित्य-व्याकरणम्',short:'सा·व्या',accent:'#4f46e5',dark:'#a5b4fc'}
+  :{brand:'स्वाध्याय-दीपिका',short:'स्वा·दी',accent:'#d97706',dark:'#f5b544'};
+document.documentElement.style.setProperty('--brand-l',VV_TOOL_SITE.accent);
+document.documentElement.style.setProperty('--brand-d',VV_TOOL_SITE.dark);
+document.title=document.title.replace('स्वाध्याय-दीपिका',VV_TOOL_SITE.brand);
+</script>
+<style>
+:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:var(--brand-l,#d97706);--code:#f3f2ee;--warn:#b45309}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:var(--brand-d,#f5b544);--code:#232733;--warn:#f8b06a}}
+:root[data-theme=dark]{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:var(--brand-d,#f5b544);--code:#232733;--warn:#f8b06a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:14px 18px 60px}
+.topbar{display:flex;align-items:center;gap:12px;margin:0 -18px 6px;padding:8px 18px;position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.topbar .bshort{display:none}
+@media (max-width:640px){.topbar .bfull{display:none}.topbar .bshort{display:inline}}
+.topbar a.brandlink{color:var(--brand);font-weight:800;font-size:14px;text-decoration:none;font-family:'Noto Serif Devanagari',serif}
+.topbar .sp{flex:1}
+button,select,input{font:inherit;color:inherit}
+#tog{background:none;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--muted);cursor:pointer}
+h1{font-size:22px;margin:10px 0 2px}
+.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+label{display:block;font-weight:600;margin:0 0 4px}
+#q{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:18px}
+.row{display:flex;flex-wrap:wrap;gap:14px 22px;margin-top:12px}
+.row>div{min-width:200px}
+select{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.chk{font-weight:400;display:flex;gap:6px;align-items:center;margin:4px 0}
+.hint{color:var(--muted);font-size:13px;margin-top:4px}
+.forms{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.forms label.f{font-weight:400;display:inline-flex;gap:5px;align-items:center;background:var(--code);border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer}
+.forms label.f span{font-family:"Noto Serif","Gentium Plus",serif}
+.forms .why{color:var(--muted);font-size:12px}
+a.go{display:inline-block;background:var(--brand);color:var(--bg);font-weight:700;text-decoration:none;border-radius:8px;padding:9px 16px;margin:6px 8px 4px 0}
+a.go.alt{background:none;color:var(--brand);border:1px solid var(--brand);font-weight:600;padding:6px 12px;font-size:14px}
+code{background:var(--code);border-radius:4px;padding:1px 5px}
+.warn{color:var(--warn)}
+details summary{cursor:pointer;font-weight:600}
+ul{padding-left:20px}
+li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="brandlink" id="brandlink" href="index.html" data-vv-brand data-short="स्वा·दी" title="स्वाध्याय-दीपिका — Home" aria-label="स्वाध्याय-दीपिका — Home"><span class="bfull">स्वाध्याय-दीपिका</span><span class="bshort">स्वा·दी</span></a>
+    <script>(function(){var a=document.getElementById('brandlink'),S=window.VV_TOOL_SITE;a.querySelector('.bfull').textContent=S.brand;a.querySelector('.bshort').textContent=S.short;a.dataset.short=S.short;a.title=a.getAttribute('aria-label').replace('स्वाध्याय-दीपिका',S.brand);a.setAttribute('aria-label',a.title);})();</script>
+    <span class="sp"></span><button id="tog">◐ theme</button>
+  </div>
+  <h1>🔭 वैदिक-अन्वेषणम् · Vedic word search</h1>
+  <p class="sub">Is a word form attested — and where? Type it in ITRANS, IAST or देवनागरी. This page builds the right
+  query for the <a href="https://titus.fkidg1.uni-frankfurt.de/database/titusinx/titusinx.htm" target="_blank" rel="noopener">TITUS</a>
+  text database (Frankfurt), which indexes the Vedic saṃhitās, brāhmaṇas, sūtras, the epics and much classical
+  literature. The search itself runs on TITUS; nothing is sent anywhere else.</p>
+
+  <div class="card">
+    <label for="q">Word form</label>
+    <input id="q" autocomplete="off" spellcheck="false" placeholder="e.g. vindyAt · vindyāt · विन्द्यात्">
+    <div class="hint" id="iast">&nbsp;</div>
+
+    <div class="row">
+      <div>
+        <label for="scope">Search in</label>
+        <select id="scope"></select>
+        <div class="hint" id="scopehint"></div>
+      </div>
+      <div>
+        <label for="mode">Match</label>
+        <select id="mode">
+          <option value="0" selected>exact (the forms ticked below)</option>
+          <option value="1">extended (+ TITUS graphical variants)</option>
+          <option value="2">thesaurus (every form of the lemma)</option>
+        </select>
+        <div class="hint" id="modehint"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <label>Sandhi spellings to include <span class="hint" style="font-weight:400">(TITUS indexes each word as printed, after sandhi)</span></label>
+      <div class="forms" id="forms"></div>
+      <label class="chk"><input type="checkbox" id="initvar"> also initial-sound sandhi (<code>ś-</code> → <code>ch-</code>)</label>
+    </div>
+
+    <div id="out" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>How this works · limits</summary>
+      <ul>
+        <li><b>Spelling.</b> TITUS's index is romanised (IAST); a Devanāgarī or ITRANS query finds nothing there, so this page
+          converts it. Aspirates may be typed plainly (<code>dh</code> matches TITUS's <code>dʰ</code>); vocalic <code>ṛ</code> is
+          sent as TITUS spells it (<code>r̥</code>); accents are ignored (accented and unaccented texts both match).</li>
+        <li><b>Sandhi.</b> <code>vidyāt</code> before a vowel or voiced sound is printed <code>vidyād</code>, before <code>c</code>
+          <code>vidyāc</code>, before a nasal <code>vidyān</code> — and the index keeps these apart (exact <code>vidyāt</code>: 4 hits;
+          <code>vidyād</code>: 306). So the query ORs all the final-sound variants together. A word whose final vowel merges with
+          the next word (<code>-a</code>/<code>-ā</code> + vowel) cannot be found as a separate word; <code>-i/-u/-e/-o</code> finals are
+          covered via their <code>y/v/a/ay/av</code> forms.</li>
+        <li><b>Elided <code>a-</code></b> (<code>'vṛṇīta</code>) is indexed under the full form, so it is found automatically.</li>
+        <li><b>Coverage.</b> TITUS labels its retrieval engine a preliminary version: a hit it shows is real, but a count is not
+          a frequency, and "no hit" is not proof of absence.</li>
+        <li><b>Scope.</b> TITUS groups texts by its own "varieties"; one query searches one variety (or all Sanskrit). The
+          examples under each scope are texts TITUS returned for it in a test query, not a full list.</li>
+        <li>Results open on titus.fkidg1.uni-frankfurt.de in a new tab; the server can take a minute or two.</li>
+      </ul>
+    </details>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  // ---------- theme ----------
+  var r = document.documentElement;
+  document.getElementById('tog').onclick = function () {
+    var c = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+    r.setAttribute('data-theme', c == 'dark' ? 'light' : 'dark');
+  };
+
+  // ---------- input → IAST ----------
+  var IV = { 'अ':'a','आ':'ā','इ':'i','ई':'ī','उ':'u','ऊ':'ū','ऋ':'ṛ','ॠ':'ṝ','ऌ':'ḷ','ए':'e','ऐ':'ai','ओ':'o','औ':'au' };
+  var IM = { 'ा':'ā','ि':'i','ी':'ī','ु':'u','ू':'ū','ृ':'ṛ','ॄ':'ṝ','ॢ':'ḷ','े':'e','ै':'ai','ो':'o','ौ':'au' };
+  var IC = { 'क':'k','ख':'kh','ग':'g','घ':'gh','ङ':'ṅ','च':'c','छ':'ch','ज':'j','झ':'jh','ञ':'ñ','ट':'ṭ','ठ':'ṭh','ड':'ḍ','ढ':'ḍh','ण':'ṇ','त':'t','थ':'th','द':'d','ध':'dh','न':'n','प':'p','फ':'ph','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'v','श':'ś','ष':'ṣ','स':'s','ह':'h','ळ':'ḷ' };
+  var IS = { 'ं':'ṃ','ꣳ':'ṃ','ँ':'ṃ','ः':'ḥ','ऽ':'' };
+  function deva2iast(s) {
+    var o = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (IC[ch] !== undefined) { o += IC[ch]; var nx = s[i + 1]; if (nx === '्') i++; else if (IM[nx] !== undefined) { o += IM[nx]; i++; } else o += 'a'; }
+      else if (IV[ch] !== undefined) o += IV[ch];
+      else if (IS[ch] !== undefined) o += IS[ch];
+      else if (/[॒॑᳚॓॔]/.test(ch) || ch === '्') { /* svara marks / stray virāma */ }
+      else o += ch;
+    }
+    return o;
+  }
+  // ITRANS (+ the common Harvard-Kyoto letters) → IAST. Longest tokens first; output is never re-scanned.
+  var ITR = [
+    ['RRi','ṛ'],['R^i','ṛ'],['RRI','ṝ'],['R^I','ṝ'],['LLi','ḷ'],['L^i','ḷ'],['chh','ch'],['Ch','ch'],['shh','ṣ'],
+    ['Sh','ṣ'],['sh','ś'],['GY','jñ'],['dny','jñ'],['j~n','jñ'],['~N','ṅ'],['N^','ṅ'],['~n','ñ'],['JN','ñ'],
+    ['aa','ā'],['ii','ī'],['uu','ū'],['ee','ī'],['oo','ū'],['ai','ai'],['au','au'],['kh','kh'],['gh','gh'],['ch','c'],['jh','jh'],
+    ['Th','ṭh'],['Dh','ḍh'],['th','th'],['dh','dh'],['ph','ph'],['bh','bh'],['.N','ṃ'],['.n','ṃ'],['.m','ṃ'],['.h',''],['.a',''],
+    ['A','ā'],['I','ī'],['U','ū'],['R','ṛ'],['M','ṃ'],['H','ḥ'],['T','ṭ'],['D','ḍ'],['N','ṇ'],['S','ṣ'],['z','ś'],
+    ['G','ṅ'],['J','ñ'],['x','kṣ'],['L','ḷ'],["'",''],['w','v'],['q','k'],['f','ph']
+  ];
+  function itrans2iast(s) {
+    var o = '', i = 0;
+    outer: while (i < s.length) {
+      for (var k = 0; k < ITR.length; k++) { var t = ITR[k][0]; if (s.substr(i, t.length) === t) { o += ITR[k][1]; i += t.length; continue outer; } }
+      o += s[i++];
+    }
+    return o;
+  }
+  var DEV = /[ऀ-ॿ꣠-ꣿ]/, DIAC = /[āīūṛṝḷṃṁṅñṭḍṇśṣḥ̥́̀̄]/;
+  function toIAST(raw) {
+    var s = raw.normalize('NFC').trim().replace(/\s+/g, '');
+    if (DEV.test(s)) s = deva2iast(s);
+    else if (!DIAC.test(s)) s = itrans2iast(s);
+    s = s.normalize('NFD').replace(/r̥̄/g, 'ṝ').replace(/r̥/g, 'ṛ').replace(/l̥/g, 'ḷ')
+         .replace(/([aeiouāīūṛ])[́̀̂]/g, '$1').normalize('NFC');   // drop accents
+    s = s.replace(/ʰ/g, 'h').replace(/ṁ/g, 'ṃ').replace(/[^a-zāīūṛṝḷṃṅñṭḍṇśṣḥ']/g, '').replace(/'/g, '');
+    return s.toLowerCase();
+  }
+
+  // ---------- sandhi spellings of the word's final (and optionally initial) sound ----------
+  function finals(w) {
+    var out = [];
+    function add(f, why) { if (f && !out.some(function (x) { return x.f === f; })) out.push({ f: f, why: why }); }
+    add(w, 'as typed');
+    var m;
+    if ((m = w.match(/^(.*)([td])$/))) { var b = m[1];
+      add(b + 't', 'pausa / before voiceless'); add(b + 'd', 'before vowel / voiced'); add(b + 'c', 'before c, ś');
+      add(b + 'j', 'before j'); add(b + 'n', 'before nasal'); add(b + 'l', 'before l'); }
+    else if ((m = w.match(/^(.*)([kg])$/))) { add(m[1] + 'k', 'pausa'); add(m[1] + 'g', 'before voiced'); add(m[1] + 'ṅ', 'before nasal'); }
+    else if ((m = w.match(/^(.*)([ṭḍ])$/))) { add(m[1] + 'ṭ', 'pausa'); add(m[1] + 'ḍ', 'before voiced'); add(m[1] + 'ṇ', 'before nasal'); }
+    else if ((m = w.match(/^(.*)([pb])$/))) { add(m[1] + 'p', 'pausa'); add(m[1] + 'b', 'before voiced'); add(m[1] + 'm', 'before nasal'); }
+    else if ((m = w.match(/^(.*)[mṃ]$/))) { var b2 = m[1];
+      add(b2 + 'm', 'pausa / before vowel'); add(b2 + 'ṃ', 'before consonant'); add(b2 + 'ṅ', 'before k-row'); add(b2 + 'ñ', 'before c-row');
+      add(b2 + 'ṇ', 'before ṭ-row'); add(b2 + 'n', 'before t-row'); }
+    else if ((m = w.match(/^(.*)n$/))) { var b3 = m[1];
+      add(b3 + 'n', 'pausa'); add(b3 + 'nn', 'doubled before vowel'); add(b3 + 'ṃs', 'before t'); add(b3 + 'ṃś', 'before c');
+      add(b3 + 'ṃṣ', 'before ṭ'); add(b3 + 'ñ', 'before j, ś'); add(b3 + 'l', 'before l'); }
+    else if ((m = w.match(/^(.*)([aā])[ḥs]$/))) { var b4 = m[1] + m[2];
+      add(b4 + 'ḥ', 'pausa'); add(b4 + 's', 'before t / TITUS pausa'); add(b4 + 'ś', 'before c'); add(b4 + 'ṣ', 'before ṭ');
+      if (m[2] === 'a') { add(m[1] + 'o', 'before voiced'); add(m[1] + 'a', 'before vowel'); } else add(m[1] + 'ā', 'before voiced / vowel'); }
+    else if ((m = w.match(/^(.*[iīuūṛeoaiu])[ḥsr]$/))) { var b5 = m[1];
+      add(b5 + 'ḥ', 'pausa'); add(b5 + 'r', 'before voiced / vowel'); add(b5 + 's', 'before t / TITUS pausa'); add(b5 + 'ś', 'before c');
+      add(b5 + 'ṣ', 'before ṭ'); }
+    else if ((m = w.match(/^(.*)ai$/))) { add(m[1] + 'āy', 'before vowel'); add(m[1] + 'ā', 'before vowel'); }
+    else if ((m = w.match(/^(.*)au$/))) { add(m[1] + 'āv', 'before vowel'); }
+    else if ((m = w.match(/^(.*)[iī]$/))) add(m[1] + 'y', 'before vowel');
+    else if ((m = w.match(/^(.*)[uū]$/))) add(m[1] + 'v', 'before vowel');
+    else if ((m = w.match(/^(.*)ṛ$/))) add(m[1] + 'r', 'before vowel');
+    else if ((m = w.match(/^(.*)e$/))) { add(m[1] + 'a', 'before vowel'); add(m[1] + 'ay', 'before vowel'); }
+    else if ((m = w.match(/^(.*)o$/))) { add(m[1] + 'a', 'before vowel'); add(m[1] + 'av', 'before vowel'); }
+    return out;
+  }
+  function initials(list) {
+    var out = list.slice();
+    list.forEach(function (x) { if (/^ś/.test(x.f)) out.push({ f: 'ch' + x.f.slice(1), why: 'after t/n: ś → ch' }); });
+    return out;
+  }
+
+  // ---------- TITUS query encoding (mirrors TITUS's own query form, index.asp ch()/deescape()) ----------
+  // ASCII G..z pass through; everything else becomes its UTF-16 code unit as 4 hex digits, bytes swapped
+  // (ā U+0101 → "0101", ś U+015B → "5B01", ",", the OR separator, → "2C00").
+  function titusSpell(w) {
+    return w.normalize('NFC').replace(/ṛ/g, 'r̥').replace(/ṝ/g, 'r̥̄').replace(/ḷ/g, 'l̥');
+  }
+  function enc(s) {
+    var o = '';
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c >= 71 && c <= 122) o += s[i];
+      else { var h = ('0000' + c.toString(16).toUpperCase()).slice(-4); o += h.slice(2) + h.slice(0, 2); }
+    }
+    return o;
+  }
+  var BASE = 'https://titus.fkidg1.uni-frankfurt.de/database/titusinx/titusinx.asp';
+  function titusURL(forms, scope, mode) {
+    var word = enc(forms.map(titusSpell).join(','));
+    var all = scope === '531';
+    return BASE + '?LXLANG=' + scope + '&LXWORD=' + word + '&LCPL=' + (all ? 1 : 0) + '&TCPL=1&C=H&T=' + mode + '&LMT=-1&K=0&MM=0&QF=1';
+  }
+
+  // ---------- scopes (TITUS Sanskrit varieties; examples = texts TITUS returned for each in a test query) ----------
+  // Examples per scope = the texts TITUS returned most for the word "iti" in each variety (2026-10-08 survey). TITUS's
+  // varieties do not split cleanly by period (Manu sits with the unaccented metrical Vedic texts). The varieties
+  // vedic-accented-trl, vedic-unaccented-trl and epic-trl returned nothing, so they are left out.
+  var SCOPES = [
+    { v: '531', dv: 'All Sanskrit texts (Vedic + epic + classical)', ex: 'everything below, plus Buddhist and other texts' },
+    { v: '16915', dv: 'Vedic prose, accented', ex: 'Taittirīya-, Kāṭhaka-, Maitrāyaṇī-saṃhitā · Taittirīya-brāhmaṇa · Śatapatha-brāhmaṇa · Bṛhadāraṇyaka-upaniṣad' },
+    { v: '14867', dv: 'Vedic prose, unaccented', ex: 'Jaiminīya-, Aitareya-, Kauṣītaki-brāhmaṇa · Aitareya-āraṇyaka · gṛhyasūtras · Kauṣītaki-upaniṣad' },
+    { v: '18963', dv: 'Vedic verse, unaccented', ex: 'Paippalāda Atharvaveda · Atharva-pariśiṣṭa · Mānava-śrautasūtra · also Manusmṛti' },
+    { v: '21011', dv: 'Vedic verse, accented', ex: 'Ṛgveda-khilāni (few hits in the test query)' },
+    { v: '24083', dv: 'Ṛgveda (TITUS complete analysis)', ex: 'Ṛgveda-saṃhitā, word-analysed edition' },
+    { v: '1555', dv: 'Epic + classical', ex: 'Mahābhārata · Rāmāyaṇa · Arthaśāstra · Kāmasūtra · Varāhamihira' }
+  ];
+  var sel = document.getElementById('scope');
+  sel.innerHTML = SCOPES.map(function (s) { return '<option value="' + s.v + '">' + s.dv + '</option>'; }).join('');
+  function scopeHint() { var s = SCOPES.filter(function (x) { return x.v === sel.value; })[0]; document.getElementById('scopehint').textContent = s && s.ex ? 'e.g. ' + s.ex : ''; }
+
+  var MODEHINT = { '0': 'Recommended: only the spellings ticked below.', '1': 'TITUS adds its own spelling variants; uneven (vidyāt: 21 hits vs 306 for vidyād alone).', '2': 'Every inflected form of the lemma — very broad (vidyāt → 6,144 hits for all forms of vid).' };
+
+  // ---------- UI ----------
+  var q = document.getElementById('q'), formsEl = document.getElementById('forms'), out = document.getElementById('out');
+  var initvar = document.getElementById('initvar'), mode = document.getElementById('mode');
+  var unticked = {};
+  function render() {
+    var w = toIAST(q.value);
+    document.getElementById('iast').innerHTML = w ? 'IAST: <b>' + w + '</b>' : '&nbsp;';
+    document.getElementById('modehint').textContent = MODEHINT[mode.value];
+    scopeHint();
+    if (!w) { formsEl.innerHTML = ''; out.innerHTML = ''; return; }
+    var list = finals(w); if (initvar.checked) list = initials(list);
+    formsEl.innerHTML = list.map(function (x, i) {
+      return '<label class="f" title="' + x.why + '"><input type="checkbox" data-f="' + x.f + '"' + (unticked[x.f] ? '' : ' checked') + '><span>' + x.f + '</span> <span class="why">' + x.why + '</span></label>';
+    }).join('');
+    formsEl.querySelectorAll('input').forEach(function (cb) { cb.onchange = function () { unticked[cb.dataset.f] = !cb.checked; links(); }; });
+    links();
+  }
+  function links() {
+    var forms = [].slice.call(formsEl.querySelectorAll('input:checked')).map(function (cb) { return cb.dataset.f; });
+    if (!forms.length) { out.innerHTML = '<span class="warn">Tick at least one spelling.</span>'; return; }
+    if (mode.value !== '0') forms = forms.slice(0, 1);
+    var main = '<a class="go" target="_blank" rel="noopener" href="' + titusURL(forms, sel.value, mode.value) + '">Search TITUS ↗</a>';
+    var others = SCOPES.filter(function (s) { return s.v !== sel.value; }).map(function (s) {
+      return '<a class="go alt" target="_blank" rel="noopener" href="' + titusURL(forms, s.v, mode.value) + '">' + s.dv + ' ↗</a>';
+    }).join('');
+    out.innerHTML = main + '<div class="hint">Query: ' + forms.join(' · ') + (mode.value !== '0' ? ' (extended/thesaurus search uses the first spelling only)' : '') +
+      '</div><div style="margin-top:10px"><div class="hint">Same query in another scope:</div>' + others + '</div>';
+  }
+  [q, initvar, mode, sel].forEach(function (el) { el.addEventListener('input', render); el.addEventListener('change', render); });
+  var p = new URLSearchParams(location.search).get('q'); if (p) q.value = p;
+  render();
+
+  if (typeof module !== 'undefined') module.exports = { toIAST: toIAST, finals: finals, titusURL: titusURL, enc: enc, titusSpell: titusSpell };
+  window.VedicSearch = { toIAST: toIAST, finals: finals, titusURL: titusURL, enc: enc, titusSpell: titusSpell };
+})();
+</script>
+</body>
+</html>

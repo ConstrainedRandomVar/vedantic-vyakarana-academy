@@ -109,6 +109,31 @@ function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScrip
 const QUIET_HOVER_KEY = 'vv_quiet_hover';
 function quietHoverOn() { return localStorage.getItem(QUIET_HOVER_KEY) === '1'; }
 function setQuietHover(on) { localStorage.setItem(QUIET_HOVER_KEY, on ? '1' : '0'); }
+// ---- Dashboard TOOLS lane (Harsha 2026-10-11, feedback #5/#6/#7/#8). BUILT-IN cards appear on EVERY site (academy, its
+// public twin, साहित्य-व्याकरणम्, any future site): the Vedic word search (TITUS) and the reader's own library (bookmarks ·
+// collections · study notes). Site-specific cards come after: the sister site's SITE_CONFIG.tools, else the academy's
+// own (corpus chat · search · scratchpad) unless the site sets hideTools. A built-in is never listed twice. ----
+const ACADEMY_TOOLS = [
+    { href: "https://vyakarana-corpus-chat.onrender.com/", title: "🔎 जिज्ञासा · Ask the corpus", tag: "query all 15 texts", desc: "Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed." },
+    { href: "https://constrainedrandomvar.github.io/prasthanatrayi-search/", title: "🔦 अन्वेषण · Full-text search", tag: "find any phrase", desc: "Search the source texts &amp; commentaries for any word or phrase, with page-linked results." },
+    { href: "scratchpad.html", title: "📋 शेमुषी · Shared-reading scratchpad", tag: "present a Word / Doc", desc: "Load an instructor's Word / Google-Docs document — colour-coded pūrvapakṣa · siddhānta · pratīka come across verbatim — and share a live, script-independent read-along: students follow your scroll, highlight &amp; laser, each in their own lipi." },
+  ];
+function libraryCounts() {
+  const S = window.VVStore; if (!S) return null;
+  try { return { b: S.bookmarks.list().length, c: S.collections.list().length, n: S.notes.list().length }; } catch (e) { return null; }
+}
+function dashboardTools() {
+  const n = libraryCounts();
+  const builtin = [
+    { href: 'tool-vedic-search.html', title: '🔭 वैदिक-अन्वेषणम् · Vedic word search', tag: 'is a form attested?', desc: 'Type a word in ITRANS, IAST or देवनागरी — get a TITUS (Frankfurt) query over the Vedic saṃhitās, brāhmaṇas, sūtras, epics &amp; classical texts, with every sandhi spelling of the word included.' },
+    { href: 'library.html#collections', title: '★ सङ्ग्रहः · Bookmarks &amp; collections', tag: 'your own reading list', desc: 'Everything you ☆-bookmarked — verses, selected passages, search hits — grouped into named collections (e.g. Ānanda-vicāra in the bhāṣya). Share a collection as a link.', badge: n ? `${n.b} bookmark${n.b === 1 ? '' : 's'} · ${n.c} collection${n.c === 1 ? '' : 's'}` : '' },
+    { href: 'library.html#notes', title: '📝 टिप्पणी · My study notes', tag: 'one note per verse', desc: 'Notes you wrote with 📝 on the reading pages, by text and verse, each linking back. Saved only in this browser — Export keeps a copy.', badge: n ? `${n.n} note${n.n === 1 ? '' : 's'}` : '' },
+  ];
+  const cfg = window.SITE_CONFIG || {};
+  const site = cfg.tools ? cfg.tools : (cfg.hideTools ? [] : ACADEMY_TOOLS);
+  const seen = new Set(builtin.map(t => t.href.split('#')[0]));
+  return builtin.concat(site.filter(t => !seen.has(String(t.href).split('#')[0])));
+}
 function openSettings() {
   let ov = document.getElementById('settings-ov');
   if (!ov) {
@@ -122,12 +147,17 @@ function openSettings() {
       <div class="set-row">
         <div class="set-label">Script · reading pages</div>
         <select id="setScrSel" class="set-select">${SCRIPT_OPTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
-        <div class="set-hint">Applies to the “Read the texts” pages — shows the same Sanskrit in Devanāgarī, IAST, or another script (Kannada, Tamil, Telugu, Malayalam, Bengali, Gujarati, Cyrillic, Siddhaṃ, katakana). The quiz is unaffected.</div>
+        <div class="set-hint">Applies to the ग्रन्थाः (reading) pages — shows the same Sanskrit in Devanāgarī, IAST, or another script (Kannada, Tamil, Telugu, Malayalam, Bengali, Gujarati, Cyrillic, Siddhaṃ, katakana). The quiz is unaffected.</div>
       </div>
       <div class="set-row">
         <div class="set-label">Word cards · reading pages</div>
         <label class="set-check"><input type="checkbox" id="setQuietHover"> Quiet hover — show word cards only while holding <b>Cmd/Ctrl</b> (or <b>Alt</b>)</label>
         <div class="set-hint">For screen-sharing (e.g. on Zoom): cards stop popping up as you move the mouse; hold the key to see one. The same keys reveal cards when presenting with shared reading. Phones and tablets are unaffected.</div>
+      </div>
+      <div class="set-row" id="setFoldRow">
+        <div class="set-label">Commentary fold-outs · reading pages</div>
+        <div id="setFolds"></div>
+        <div class="set-hint">How collapsed commentary layers open when a page loads. Each page also has a <b>टीका ⇕</b> button in its top bar to expand or collapse them on that page only.</div>
       </div>
       <div style="text-align:right"><button class="secondary" id="setClose">Done</button></div>
     </div>`;
@@ -139,9 +169,17 @@ function openSettings() {
     document.getElementById('setScrSel').onchange = (e) => setReadingScript(e.target.value);
     const qh = document.getElementById('setQuietHover');
     qh.onchange = () => setQuietHover(qh.checked);
+    // fold-out defaults — the registry + prefs live in vv-store.js (shared with the reading pages' vv-reader.js)
+    const S = window.VVStore, fr = document.getElementById('setFolds');
+    if (!S || !S.folds) document.getElementById('setFoldRow').style.display = 'none';
+    else {
+      fr.innerHTML = S.folds.list().map(f => `<label class="set-check" style="justify-content:space-between;gap:10px"><span>${f.label} <span class="set-hint" style="display:inline">· ${f.sub || ''}</span></span><select class="set-select" data-fold="${f.key}"><option value="collapsed">Collapsed</option><option value="expanded">Expanded</option></select></label>`).join('');
+      fr.querySelectorAll('select[data-fold]').forEach(sel => { sel.onchange = () => S.folds.set(sel.dataset.fold, sel.value); });
+    }
   }
   document.getElementById('setAutoAdv').checked = autoAdvanceOn();
   document.getElementById('setQuietHover').checked = quietHoverOn();
+  if (window.VVStore && window.VVStore.folds) document.querySelectorAll('#setFolds select[data-fold]').forEach(sel => { sel.value = window.VVStore.folds.get(sel.dataset.fold); });
   reflectScriptSel();
   ov.classList.add('on');
 }
@@ -1390,15 +1428,7 @@ function renderDashboard() {
   app.innerHTML = `
     <div class="dash-head"><div>${masteredN} / ${CODES.length} nodes mastered</div></div>
     <div class="dash-lane">
-      <div class="lane-label">🧠 अभ्यास-मार्गाः · Three ways to study</div>
-      <div class="readgrid modegrid">
-        <a class="rcard modecard" id="readBtn"><div class="rtitle">📖 Read a verse</div><div class="modetag">know each word</div><div class="modedesc">Walk each word — recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the Drill pool.</div></a>
-        <a class="rcard modecard" id="tutorialBtn"><div class="rtitle">🧩 वाक्य-विग्रह</div><div class="modetag">parse the sentence</div><div class="modedesc">How the words relate across the whole sentence — kāraka, qualifier-of, coordination, clauses, uddeśya–vidheya, samāsa vigraha.</div></a>
-        <a class="rcard modecard" id="clauseBtn"><div class="rtitle">🪢 वाक्य-विभाग</div><div class="modetag">carve the clauses</div><div class="modedesc">Split the verse into clauses (वाक्य): find each clause-head, group its words, then supply the अध्याहार — the unstated कर्ता and any implied verb. The step before वाक्य-विग्रह.</div></a>
-      </div>
-    </div>
-    <div class="dash-lane">
-      <div class="lane-label">🪷 स्वाध्यायः · Read the texts</div>
+      <div class="lane-label">📚 ग्रन्थाः · The texts</div>
       ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? /* sister site: its own groups (build_sahitya_site.js) */
         '<div class="lane-sub">' + (window.SITE_CONFIG.svadhyayaSub || '') + '</div>' + window.SITE_CONFIG.readGroups.map(g =>
           `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.dv} <span class="lat">· ${g.lat}</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === g.key).length} · ${g.count || ''}</span></div><div class="readgrid">${readGroup(g.key)}</div></div>`).join('') : `
@@ -1418,6 +1448,14 @@ function renderDashboard() {
       `}
     </div>
     <div class="dash-lane">
+      <div class="lane-label">🧠 अभ्यास-मार्गाः · Ways to study</div>
+      <div class="readgrid modegrid">
+        <a class="rcard modecard" id="readBtn"><div class="rtitle">📖 Read a verse</div><div class="modetag">know each word</div><div class="modedesc">Walk each word — recall its vibhakti (case·vacana·liṅga), kāraka role, meaning, sandhi &amp; samāsa. Feeds the Drill pool.</div></a>
+        <a class="rcard modecard" id="tutorialBtn"><div class="rtitle">🧩 वाक्य-विग्रह</div><div class="modetag">parse the sentence</div><div class="modedesc">How the words relate across the whole sentence — kāraka, qualifier-of, coordination, clauses, uddeśya–vidheya, samāsa vigraha.</div></a>
+        <a class="rcard modecard" id="clauseBtn"><div class="rtitle">🪢 वाक्य-विभाग</div><div class="modetag">carve the clauses</div><div class="modedesc">Split the verse into clauses (वाक्य): find each clause-head, group its words, then supply the अध्याहार — the unstated कर्ता and any implied verb. The step before वाक्य-विग्रह.</div></a>
+      </div>
+    </div>
+    <div class="dash-lane">
       <div class="lane-label">🎯 साधना · Disciplined drill</div>
       <div class="dash-actions">
         <button class="secondary" id="mixBtn">🔀 Mix it up</button>
@@ -1428,19 +1466,10 @@ function renderDashboard() {
     <div class="grid">
       ${flatCodes.map(renderNodeCard).join('')}
     </div>
-    ${(window.SITE_CONFIG && window.SITE_CONFIG.tools) ? /* sister site: its own tool cards (build_sahitya_site.js) */ `
     <div class="dash-lane">
       <div class="lane-label">🔎 उपकरणानि · Tools</div>
-      <div class="readgrid modegrid">${window.SITE_CONFIG.tools.map(t => `<a class="rcard modecard" href="${t.href}"><div class="rtitle">${t.title}</div><div class="modetag">${t.tag}</div><div class="modedesc">${t.desc}</div></a>`).join('')}</div>
-    </div>` : (window.SITE_CONFIG && window.SITE_CONFIG.hideTools) ? '' : `
-    <div class="dash-lane">
-      <div class="lane-label">🔎 उपकरणानि · Other tools</div>
-      <div class="readgrid modegrid">
-        <a class="rcard modecard" href="https://vyakarana-corpus-chat.onrender.com/" target="_blank" rel="noopener"><div class="rtitle">🔎 जिज्ञासा · Ask the corpus</div><div class="modetag">query all 15 texts</div><div class="modedesc">Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed.</div></a>
-        <a class="rcard modecard" href="https://constrainedrandomvar.github.io/prasthanatrayi-search/" target="_blank" rel="noopener"><div class="rtitle">🔦 अन्वेषण · Full-text search</div><div class="modetag">find any phrase</div><div class="modedesc">Search the source texts &amp; commentaries for any word or phrase, with page-linked results.</div></a>
-        <a class="rcard modecard" href="scratchpad.html"><div class="rtitle">📝 शेमुषी · Shared-reading scratchpad</div><div class="modetag">present a Word / Doc</div><div class="modedesc">Load an instructor's Word / Google-Docs document — colour-coded pūrvapakṣa · siddhānta · pratīka come across verbatim — and share a live, script-independent read-along: students follow your scroll, highlight &amp; laser, each in their own lipi.</div></a>
-      </div>
-    </div>`}`;
+      <div class="readgrid modegrid">${dashboardTools().map(t => `<a class="rcard modecard" href="${t.href}"${/^https?:/.test(t.href) ? ' target="_blank" rel="noopener"' : ''}><div class="rtitle">${t.title}</div><div class="modetag">${t.tag}</div><div class="modedesc">${t.desc}</div>${t.badge ? `<div class="modetag" style="margin-top:6px">${t.badge}</div>` : ''}</a>`).join('')}</div>
+    </div>`;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };

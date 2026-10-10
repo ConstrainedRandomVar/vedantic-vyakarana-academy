@@ -459,20 +459,41 @@
   function nrmOf(raw) { var map = [], s = ''; for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || /\s/.test(c)) continue; map.push(i); s += canon(c); } return { s: s, map: map }; }
   var nterm = nrmOf(term).s;
   if (!nterm) return;
-  function highlightIn(root) {
-    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), node;
-    while ((node = w.nextNode())) {
-      var raw = node.nodeValue; if (!raw || !raw.trim()) continue;
-      var n = nrmOf(raw), pos = n.s.indexOf(nterm); if (pos < 0) continue;
-      var startRaw = n.map[pos], endRaw = n.map[pos + nterm.length - 1] + 1;
-      if (startRaw > 0 && COMBINING.test(raw[startRaw])) startRaw--;   // don't start mid-akṣara
-      try {
-        var rng = document.createRange(); rng.setStart(node, startRaw); rng.setEnd(node, endRaw);
-        var mark = document.createElement('mark'); mark.className = 'svhl'; rng.surroundContents(mark);
-        return mark;
-      } catch (e) { /* match crosses element boundary — keep scanning */ }
+  function highlightIn(root) { return highlightAcross(root); }
+  // Match over the concatenated VISIBLE text of root and mark each piece. In the bhāṣya every word is its own
+  // span (+ a hidden पद copy .bhsp), so a per-text-node match never found a multi-word phrase ("आत्मैवेदमग्र
+  // आसीत्", BS 3.3.16) and could land on the invisible पद copy instead (2026-10-10).
+  function highlightAcross(root) {
+    var vis = new Map();
+    function shown(el) {
+      if (!el || el === root.parentNode) return true;
+      if (vis.has(el)) return vis.get(el);
+      var v = getComputedStyle(el).display !== 'none' && shown(el.parentElement);
+      vis.set(el, v); return v;
     }
-    return null;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), node, s = '', map = [];   // map[k] = [node, offset]
+    while ((node = w.nextNode())) {
+      var raw = node.nodeValue; if (!raw || !raw.trim() || !shown(node.parentElement)) continue;
+      for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '\u200c' || c === '\u200d' || /\s/.test(c)) continue; map.push([node, i]); s += canon(c); }
+    }
+    var pos = s.indexOf(nterm); if (pos < 0) return null;
+    var first = map[pos];
+    if (first[1] > 0 && COMBINING.test(first[0].nodeValue[first[1]])) first = [first[0], first[1] - 1];
+    // one [node, start, end] segment per text node touched, wrapped back-to-front so offsets stay valid
+    var segs = [], k;
+    for (k = pos; k < pos + nterm.length; k++) {
+      var nd = map[k][0], off = map[k][1], sg = segs[segs.length - 1];
+      if (sg && sg[0] === nd) sg[2] = off + 1; else segs.push([nd, off, off + 1]);
+    }
+    segs[0][1] = first[1];
+    var mark = null;
+    for (k = segs.length - 1; k >= 0; k--) {
+      try {
+        var r = document.createRange(); r.setStart(segs[k][0], segs[k][1]); r.setEnd(segs[k][0], segs[k][2]);
+        var m = document.createElement('mark'); m.className = 'svhl'; r.surroundContents(m); mark = m;
+      } catch (e) {}
+    }
+    return mark;
   }
   function forwardFrom(el) {
     if (!el || !el.id || el.id.indexOf('v-') !== 0) return null;

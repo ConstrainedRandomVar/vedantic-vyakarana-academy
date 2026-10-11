@@ -1,7 +1,7 @@
 <!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kaṭha Upaniṣad · अध्याय 1 · वल्ली 1 — एकीकृत-पाठः</title><style>
 :root{
   /* shared shell */
-  --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:#d97706;--tm:#a7f3d0;
+  --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:#d97706;--tm:#a7f3d0;--tken:#166534;
   /* पदार्थ (mula hover analysis) */
   --moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;
   /* मनन (bhasya roles) */
@@ -11,7 +11,7 @@
   --mulatint:rgba(124,90,30,.05);
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;--tken:#86d39b;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
   --eka:#fb923c;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;--tika:#94a3b8;
@@ -19,7 +19,7 @@
   --mulatint:rgba(217,184,119,.07);
 }}
 :root[data-theme=dark]{
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;--tken:#86d39b;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
   --eka:#fb923c;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;--tika:#94a3b8;
@@ -139,6 +139,8 @@ body.metmode-pada .vjoin{display:none}
 /* ṭīkā parts, styled by structural role: avataraṇikā = muted-italic lead-in · pratīka = brown-bold
    catch-word (the bhāṣya lemma quoted, ending इति) · vyākhyā = normal-ink explanation · maṅgala accent. */
 .tk-ava{color:var(--muted);font-style:italic}
+.tk-en{display:none;margin:6px 0 2px;font-family:'Noto Serif',Georgia,serif;font-style:italic;font-size:14.5px;line-height:1.6;color:var(--tken)}
+body.tken .tk-en{display:block}
 .tk-prat{color:var(--tika);font-weight:700}
 .tk-vy{color:var(--ink)}
 .tk-mng{color:var(--ink);font-style:italic;font-weight:600}   /* maṅgala = commentator's own benedictory verse: ink + italic (verse presence), NOT the pratīka brown (--role) it used to share, and NOT the muted avataraṇikā (--muted). #9c: no colour reuse. */
@@ -734,4 +736,9 @@ document.getElementById('tog').onclick=function(){
   var saved='sandhi';try{saved=localStorage.getItem(KEY)||'sandhi';}catch(e){}
   apply(saved);
   btns.forEach(function(b){b.addEventListener('click',function(){var m=b.dataset.m;apply(m);try{localStorage.setItem(KEY,m);}catch(e){}});});
+})();</script><script>(function(){
+  var KEY='vv_reading_tken';var seg=document.getElementById('enseg');if(!seg)return;var b=seg.querySelector('button');
+  function apply(on){document.body.classList.toggle('tken',on);b.classList.toggle('on',on);}
+  var saved='0';try{saved=localStorage.getItem(KEY)||'0';}catch(e){}apply(saved==='1');
+  b.addEventListener('click',function(){var on=!document.body.classList.contains('tken');apply(on);try{localStorage.setItem(KEY,on?'1':'0');}catch(e){}});
 })();</script><script src="translit.js"></script></body></html>

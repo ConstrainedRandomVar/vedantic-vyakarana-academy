@@ -146,6 +146,7 @@
   // remember which reading site the reader last used, so the shared search page links results back to THAT site
   function rememberSite() { if (SITE !== 'search' && SITE !== 'local') { try { root.localStorage.setItem(K.site, JSON.stringify({ site: SITE, base: siteBase() })); } catch (e) {} } }
   function lastSite() { return load(K.site, null); }
+  rememberSite();   // on EVERY page that loads the store (the dashboard has no vv-reader.js) — else search links a stale site
 
   // ---- export / import (backup + device transfer). Import MERGES: same id → newer `updated` wins; nothing deleted ----
   function exportAll() {

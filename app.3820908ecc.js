@@ -1390,7 +1390,7 @@ function renderDashboard() {
     { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: पददीपिका · अ. १–७' },
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula'] },
     { dv: 'उपदेशसारम्', lat: 'Upadeśa Sāram', file: 'reading-ups.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीगणपतिमुनिः' },
-    { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीकपालिशास्त्री' },
+    { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीकपालिशास्त्री', tikaHide: 'sad-tika' },
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
     // निबन्धाः — modern monographs (not prakaraṇa): prose (Tamil / English) with Sanskrit quotations; reading-only (no
     // quiz / node / tutorial fan-out for non-Sanskrit texts — Harsha 2026-10-01). Built outside this repo: Tamil-Texts;
@@ -1403,9 +1403,11 @@ function renderDashboard() {
     + (t.offers.includes('bhasya') ? '<span class="pill bhasya">भाष्यम्</span>' : '')
     // prakaraṇa commentaries are टीका (PD/US/SD); VC's Candraśekhara-Bhāratī commentary is a व्याख्या — the only
     // exception in the current prakaraṇa set (Harsha, 2026-09-27). Same commentary pill style, own label.
-    + (t.offers.includes('tika') ? '<span class="pill bhasya tika">टीका</span>' : '')
+    // tikaHide: the public profile hides this text's ṭīkā (site-profiles.json `hide`) — tag its pill + note with the same
+    // vv-hide-<group> class, so the landing card doesn't advertise a ṭīkā the public reading page hides (Harsha 2026-10-11).
+    + (t.offers.includes('tika') ? '<span class="pill bhasya tika' + (t.tikaHide ? ' vv-hide-' + t.tikaHide : '') + '">टीका</span>' : '')
     + (t.offers.includes('vyakhya') ? '<span class="pill bhasya vyakhya">व्याख्या</span>' : '')
-    + (t.note ? '<span class="rnote">' + t.note + '</span>' : '') + '</div>';
+    + (t.note ? '<span class="rnote' + (t.tikaHide ? ' vv-hide-' + t.tikaHide : '') + '">' + t.note + '</span>' : '') + '</div>';
   const readCard = t => `<a class="rcard" data-reflect="${t.file}"><div class="rtitle">${t.dv}</div><div class="rlat">${t.lat}</div>${readOffers(t)}</a>`;
   const readGroup = g => READING_TEXTS.filter(t => t.group === g).map(readCard).join('');
   const masteredN = CODES.filter(c => progress[c].mastered).length;

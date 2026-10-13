@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>स्वाध्याय-दीपिका</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>स्वाध्याय-सहकारी</title><meta name="description" content="स्वाध्याय-सहकारी — वेदान्त-संस्कृत-पठन-पाठन-उपकारक">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3a2f2a">
 <style>
@@ -28,6 +28,17 @@
  .dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;color:#555;flex-wrap:wrap;gap:10px}
  .dash-actions{display:flex;gap:8px;flex-wrap:wrap}
  .dash-lane{margin-bottom:14px}
+ /* homepage sections (Harsha 2026-10-13): वेदान्त-ग्रन्थाः and व्याकरणम् as two clearly separate parts of the site */
+ .home-sec{margin:0 0 26px}
+ .site-tag{margin:2px 0 18px;font:600 16px "Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;color:#7a5a2a;letter-spacing:.01em}   /* the site's own description (Harsha 2026-10-13) */
+ .sec-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid #e8dcc4;font:700 22px "Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif;color:#7c4a03}
+ .sec-head .sec-lat{font:500 13px system-ui,sans-serif;color:#7a6a55}
+ .sec-head .sec-prog{margin-left:auto;font:500 13px system-ui,sans-serif;color:#555}
+ .vy-panel{background:#f4f6fb;border:1px solid #dde3f2;border-radius:12px;padding:14px 16px 6px}
+ .vy-panel .sec-head{color:#3b4a8a;border-bottom-color:#d3dbef}
+ .vy-panel.shut .vy-body{display:none} .vy-panel.shut{padding-bottom:4px} .vy-panel.shut .sec-head{border-bottom:0;margin-bottom:4px}
+ .sec-fold{background:none;border:0;cursor:pointer;font-size:15px;color:inherit;padding:0 2px 0 0;line-height:1}
+ /* order: वेदान्त-ग्रन्थाः → उपकरणानि → व्याकरणम् → (resources, TBD) — each its own heading */
  .lane-label{font-size:12px;font-weight:600;color:#7a6a55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
  .dash-setting{display:flex;align-items:center;gap:7px;font-size:13px;color:#555;margin-top:10px;cursor:pointer;user-select:none}
  .muted{color:#7a6a55}
@@ -153,6 +164,8 @@
  .pill.mula{color:#a07b1e;border-color:#d8c08a;background:#fbf6ea}
  .pill.bhasya{color:#1a56db;border-color:#b9cdf5;background:#fff}
  .rnote{font-size:10px;color:#7a6a55;font-style:italic;flex-basis:100%}   /* note always on its own line, never beside the pills */
+ .pill.xtra{display:none} .rcard:hover .pill.xtra,.rcard.allp .pill.xtra{display:inline-block} .rcard:hover .pill.more,.rcard.allp .pill.more{display:none}
+ .pill.more{color:#7a6a55;border-color:#d6d3d1;background:#fff;cursor:pointer}   /* "+N …" → the rest of the layers (hover / tap) */
  .modegrid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
  .modecard{padding:13px 15px;gap:4px}
  .modecard .rtitle{font-size:16px;font-family:inherit}
@@ -173,7 +186,7 @@
  .anv-legend{font-size:13px;color:#8a7a5a;margin:-4px 0 6px}
  .anv-q{font-family:'Noto Serif Devanagari',serif;font-size:19px;font-weight:700;color:#7c5a1e;margin-right:6px}
 </style></head><body>
-<header><button id="homeBtn" data-vv-brand data-short="स्वा·दीपिका" title="स्वाध्याय-दीपिका — Home" aria-label="स्वाध्याय-दीपिका — Home" style="background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;font-weight:800;font-size:16px;color:#f5b544;letter-spacing:.02em"><span class="bfull">स्वाध्याय-दीपिका</span><span class="bshort">स्वा·दीपिका</span></button><span style="flex:1"></span><button id="gearBtn" title="Settings" aria-label="Settings">⚙</button></header>
+<header><button id="homeBtn" data-vv-brand data-short="स्वा·सहकारी" title="स्वाध्याय-सहकारी — Home" aria-label="स्वाध्याय-सहकारी — Home" style="background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;font-weight:800;font-size:16px;color:#f5b544;letter-spacing:.02em"><span class="bfull">स्वाध्याय-सहकारी</span><span class="bshort">स्वा·सहकारी</span></button><span style="flex:1"></span><button id="gearBtn" title="Settings" aria-label="Settings">⚙</button></header>
 <div id="app">loading…</div>
 <footer style="text-align:center;font-size:13px;margin:28px 0 18px"><a href="about.html" style="color:#b45309">Sources &amp; attribution · आधाराः</a></footer>
 
@@ -187,8 +200,8 @@
 <script src="flagged-wrong.56332609a3.js"></script>
 <script src="samasa-peel.c7972057ef.js"></script>
 <script src="reading-nav.1d8a42d71b.js"></script>
-<script src="vv-store.c427a56909.js"></script>
-<script src="app.3820908ecc.js"></script>
+<script src="vv-store.ff05b39135.js"></script>
+<script src="app.23d70bdf12.js"></script>
 <script>
 // Freshness during churn: updateViaCache:'none' → the browser always network-fetches sw.js (never
 // its HTTP cache); reg.update() proactively checks on load; and when a NEW sw version takes control

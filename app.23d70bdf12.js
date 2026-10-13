@@ -1374,21 +1374,21 @@ function renderDashboard() {
   // A sister site (साहित्य-व्याकरणम्, build_sahitya_site.js) supplies its own list via window.SITE_CONFIG; the academy
   // has no SITE_CONFIG, so this academy list applies unchanged.
   const READING_TEXTS = (window.SITE_CONFIG && window.SITE_CONFIG.readingTexts) || [
-    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya'], note: 'भाष्यम्: pada + vākya' },
-    { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'प्रश्न', lat: 'Praśna', file: 'reading-prashna.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
-    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya'] },
+    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka'] },
+    { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
+    { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'], note: 'भाष्यम्: pada + vākya' },
+    { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
+    { dv: 'प्रश्न', lat: 'Praśna', file: 'reading-prashna.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
+    { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
+    { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'karika', 'bhasya', 'tika'] },
+    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika'] },
+    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
+    { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
+    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vsara'], note: 'वार्त्तिकम् + शास्त्रप्रकाशिका · वार्तिकसारः + लघुसङ्ग्रहा' },
+    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya'] },
     { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'vyakhya'], note: 'व्याख्या: श्रीचन्द्रशेखरभारती' },
-    { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: पददीपिका · अ. १–७' },
-    { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula'] },
+    { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: पददीपिका · अ. १–११' },
+    { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula', 'tika'] },
     { dv: 'उपदेशसारम्', lat: 'Upadeśa Sāram', file: 'reading-ups.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीगणपतिमुनिः' },
     { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीकपालिशास्त्री', tikaHide: 'sad-tika' },
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
@@ -1398,19 +1398,27 @@ function renderDashboard() {
     { dv: 'ब्रह्मसूत्रे प्रपञ्चमिथ्यात्वम्', lat: 'Brahma-sūtre prapañca-mithyātvam', file: 'reading-prapancha-mithyatva.html', group: 'nibandha', offers: [], note: 'தமிழ் · Brahmasri S. R. Krishnamurthi Sastrigal · English (draft)' },
     { dv: 'गीता उपनिषदश्च', lat: 'Gita and Upanishads', file: 'reading-vrk-gita-upanishads.html', group: 'nibandha', offers: [], note: 'English · V. R. Kalyanasundara Sastrigal · 20 doctrines, Upaniṣad ‖ Gītā passages' },
   ];
-  const readOffers = t => '<div class="offers">'
-    + (t.offers.includes('mula') ? '<span class="pill mula">मूलम्</span>' : '')
-    + (t.offers.includes('bhasya') ? '<span class="pill bhasya">भाष्यम्</span>' : '')
-    // prakaraṇa commentaries are टीका (PD/US/SD); VC's Candraśekhara-Bhāratī commentary is a व्याख्या — the only
-    // exception in the current prakaraṇa set (Harsha, 2026-09-27). Same commentary pill style, own label.
-    // tikaHide: the public profile hides this text's ṭīkā (site-profiles.json `hide`) — tag its pill + note with the same
-    // vv-hide-<group> class, so the landing card doesn't advertise a ṭīkā the public reading page hides (Harsha 2026-10-11).
-    + (t.offers.includes('tika') ? '<span class="pill bhasya tika' + (t.tikaHide ? ' vv-hide-' + t.tikaHide : '') + '">टीका</span>' : '')
-    + (t.offers.includes('vyakhya') ? '<span class="pill bhasya vyakhya">व्याख्या</span>' : '')
-    + (t.note ? '<span class="rnote' + (t.tikaHide ? ' vv-hide-' + t.tikaHide : '') + '">' + t.note + '</span>' : '') + '</div>';
+  // the layers a reading page carries, as pills (Harsha 2026-10-13: every commentary the page has, text names only).
+  // prakaraṇa commentaries are टीका (PD/US/SD/AB); VC's Candraśekhara-Bhāratī commentary is a व्याख्या (2026-09-27).
+  // tikaHide: the public profile hides this text's ṭīkā (site-profiles.json `hide`) — its pill + note carry the same
+  // vv-hide-<group> class, so the card doesn't advertise a ṭīkā the public reading page hides (2026-10-11).
+  const PILLS = { mula: ['मूलम्', 'mula'], karika: ['कारिका', 'mula'], bhasya: ['भाष्यम्', 'bhasya'], tika: ['टीका', 'bhasya tika'],
+    vyakhya: ['व्याख्या', 'bhasya vyakhya'], vartika: ['वार्त्तिकम्', 'bhasya'], vsara: ['वार्तिकसारः', 'bhasya'],
+    nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'] };
+  const MAXP = 4;   // more than this → the rest behind a "…" pill (shown on card hover, or a tap on "…")
+  const readOffers = t => {
+    const ps = t.offers.filter(k => PILLS[k]).map((k, i, a) => {
+      const [label, cls] = PILLS[k], hide = k === 'tika' && t.tikaHide ? ' vv-hide-' + t.tikaHide : '';
+      return '<span class="pill ' + cls + hide + (i >= MAXP && a.length > MAXP + 1 ? ' xtra' : '') + '">' + label + '</span>'; });
+    const extra = ps.filter(p => / xtra"/.test(p)).length;
+    return '<div class="offers">' + ps.join('') + (extra ? '<span class="pill more" title="more layers" data-more>+' + extra + ' …</span>' : '')
+      + (t.note ? '<span class="rnote' + (t.tikaHide ? ' vv-hide-' + t.tikaHide : '') + '">' + t.note + '</span>' : '') + '</div>';
+  };
   const readCard = t => `<a class="rcard" data-reflect="${t.file}"><div class="rtitle">${t.dv}</div><div class="rlat">${t.lat}</div>${readOffers(t)}</a>`;
   const readGroup = g => READING_TEXTS.filter(t => t.group === g).map(readCard).join('');
   const masteredN = CODES.filter(c => progress[c].mastered).length;
+  // व्याकरणम् panel collapsed? — remembered per reader (vv-store prefs; open by default) — Harsha 2026-10-13
+  const vyCollapsed = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:vyakarana-shut', false));
   // Node-card order (Harsha, 2026-08-29): समास first, then सन्धि, then the rest alphabetical.
   const KIND_PRIORITY = { samasa: 0, sandhi: 1 };
   const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
@@ -1428,15 +1436,16 @@ function renderDashboard() {
   // Two lanes: guided full-verse work (Read / वाक्य-विग्रह) vs MCQ drills (Mix / Practice + the topic
   // nodes below). Separates the two paradigms that used to sit in one flat button row (Harsha, 2026-08-22).
   app.innerHTML = `
-    <div class="dash-head"><div>${masteredN} / ${CODES.length} nodes mastered</div></div>
+    ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' /* sister site: its own identity */ : '<div class="site-tag">वेदान्त-संस्कृत-पठन-पाठन-उपकारक</div>'}
+    <section class="home-sec">
+    <h2 class="sec-head">${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? 'ग्रन्थाः <span class="sec-lat">· The texts</span>' /* sister site: not Vedānta */ : 'वेदान्त-ग्रन्थाः <span class="sec-lat">· Vedānta texts</span>'}</h2>
     <div class="dash-lane">
-      <div class="lane-label">📚 ग्रन्थाः · The texts</div>
       ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? /* sister site: its own groups (build_sahitya_site.js) */
         '<div class="lane-sub">' + (window.SITE_CONFIG.svadhyayaSub || '') + '</div>' + window.SITE_CONFIG.readGroups.map(g =>
           `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.dv} <span class="lat">· ${g.lat}</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === g.key).length} · ${g.count || ''}</span></div><div class="readgrid">${readGroup(g.key)}</div></div>`).join('') : `
-      <div class="lane-sub">Each text opens its reading page. <span class="mulahue">मूलम्</span> = word-by-word hover (kāraka · vibhakti · samāsa) · <span class="bhasyahue">भाष्यम्</span> = Śāṅkara-bhāṣya.</div>
+      <div class="lane-sub">Read each text with its commentaries — hover any word for its grammar; 🔍 searches the text.</div>
       <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 · मूलम् + भाष्यम्</span></div>
+        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 · मूलम् + भाष्यम् + टीका / वार्त्तिकम्</span></div>
         <div class="readgrid">${readGroup('prasthana')}</div>
       </div>
       <div class="readgroup">
@@ -1449,6 +1458,16 @@ function renderDashboard() {
       </div>
       `}
     </div>
+    </section>
+    <section class="home-sec tools-sec">
+    <h2 class="sec-head">उपकरणानि <span class="sec-lat">· Tools</span></h2>
+    <div class="dash-lane">
+      <div class="readgrid modegrid">${dashboardTools().map(t => `<a class="rcard modecard" href="${t.href}"${/^https?:/.test(t.href) ? ' target="_blank" rel="noopener"' : ''}><div class="rtitle">${t.title}</div><div class="modetag">${t.tag}</div><div class="modedesc">${t.desc}</div>${t.badge ? `<div class="modetag" style="margin-top:6px">${t.badge}</div>` : ''}</a>`).join('')}</div>
+    </div>
+    </section>
+    <section class="home-sec vy-panel${vyCollapsed ? ' shut' : ''}" id="vyPanel">
+    <h2 class="sec-head"><button class="sec-fold" id="vyFold" aria-expanded="${!vyCollapsed}" title="show / hide this section">${vyCollapsed ? '▸' : '▾'}</button>व्याकरणम् <span class="sec-lat">· Sanskrit grammar practice</span><span class="sec-prog">${masteredN} / ${CODES.length} nodes mastered</span></h2>
+    <div class="vy-body">
     <div class="dash-lane">
       <div class="lane-label">🧠 अभ्यास-मार्गाः · Ways to study</div>
       <div class="readgrid modegrid">
@@ -1468,16 +1487,20 @@ function renderDashboard() {
     <div class="grid">
       ${flatCodes.map(renderNodeCard).join('')}
     </div>
-    <div class="dash-lane">
-      <div class="lane-label">🔎 उपकरणानि · Tools</div>
-      <div class="readgrid modegrid">${dashboardTools().map(t => `<a class="rcard modecard" href="${t.href}"${/^https?:/.test(t.href) ? ' target="_blank" rel="noopener"' : ''}><div class="rtitle">${t.title}</div><div class="modetag">${t.tag}</div><div class="modedesc">${t.desc}</div>${t.badge ? `<div class="modetag" style="margin-top:6px">${t.badge}</div>` : ''}</a>`).join('')}</div>
-    </div>`;
+    </div>
+    </section>
+`;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
   document.getElementById('readBtn').onclick = () => { view = { screen: 'picker' }; renderReadingPicker(); };
   document.getElementById('tutorialBtn').onclick = () => { tutorialMode = 'vigraha'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
   { const cb = document.getElementById('clauseBtn'); if (cb) cb.onclick = () => { tutorialMode = 'clause'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); }; }
   { const ab = document.getElementById('anvayaBtn'); if (ab) ab.onclick = () => { tutorialMode = 'anvaya'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); }; }
+  { const vf = document.getElementById('vyFold'); if (vf) vf.onclick = () => {
+      const p = document.getElementById('vyPanel'), shut = !p.classList.contains('shut');
+      p.classList.toggle('shut', shut); vf.textContent = shut ? '▸' : '▾'; vf.setAttribute('aria-expanded', String(!shut));
+      try { VVStore.prefs.set('home:vyakarana-shut', shut); } catch (e) {} }; }
+  app.querySelectorAll('[data-more]').forEach(m => m.onclick = e => { e.stopPropagation(); m.closest('.rcard').classList.toggle('allp'); });   // tap "…" → all layers
   app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
 }

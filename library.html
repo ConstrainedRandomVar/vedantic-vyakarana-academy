@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>★ My library — स्वाध्याय-दीपिका</title>
+<title>★ My library — स्वाध्याय-सहकारी</title>
 <!-- library.html — the reader's own bookmarks, collections and study notes (Harsha 2026-10-11, feedback #6/#7).
      Everything is read from VVStore (vv-store.js) = this browser's localStorage, shared by every site on this origin;
      nothing is sent anywhere. Share links (#c=…) carry a collection snapshot inside the URL itself. -->
@@ -52,7 +52,7 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
 </head>
 <body>
 <header>
-  <a class="brand" href="index.html" data-vv-brand data-short="स्वा·दीपिका" title="स्वाध्याय-दीपिका — Home" aria-label="स्वाध्याय-दीपिका — Home"><span class="bf">स्वाध्याय-दीपिका</span><span class="bs">स्वा·दीपिका</span></a>
+  <a class="brand" href="index.html" data-vv-brand data-short="स्वा·सहकारी" title="स्वाध्याय-सहकारी — Home" aria-label="स्वाध्याय-सहकारी — Home"><span class="bf">स्वाध्याय-सहकारी</span><span class="bs">स्वा·सहकारी</span></a>
   <h1>★ My library</h1>
   <nav class="tabs"><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks</a><a href="#collections" data-tab="collections">🗂 Collections</a><a href="#notes" data-tab="notes">📝 Notes</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
   <button id="tog" title="light / dark">◐</button>
@@ -68,8 +68,8 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
   var S = window.VVStore, V = document.getElementById('view');
   var r = document.documentElement;
   document.getElementById('tog').onclick = function () { var c = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'); r.setAttribute('data-theme', c === 'dark' ? 'light' : 'dark'); };
-  // brand follows the site this copy is served from (academy / public = स्वाध्याय-दीपिका, sister site = साहित्य-व्याकरणम्)
-  if (S.SITE === 'sahitya') { var b = document.querySelector('.brand'); b.querySelector('.bf').textContent = 'साहित्य-व्याकरणम्'; b.querySelector('.bs').textContent = 'सा·व्या'; b.setAttribute('data-short', 'सा·व्या'); b.title = b.getAttribute('aria-label').replace('स्वाध्याय-दीपिका', 'साहित्य-व्याकरणम्'); r.style.setProperty('--brand', '#4f46e5'); r.style.setProperty('--acc', '#4f46e5'); document.title = document.title.replace('स्वाध्याय-दीपिका', 'साहित्य-व्याकरणम्'); }
+  // brand follows the site this copy is served from (academy / public = स्वाध्याय-सहकारी, sister site = साहित्य-व्याकरणम्)
+  if (S.SITE === 'sahitya') { var b = document.querySelector('.brand'); b.querySelector('.bf').textContent = 'साहित्य-व्याकरणम्'; b.querySelector('.bs').textContent = 'सा·व्या'; b.setAttribute('data-short', 'सा·व्या'); b.title = b.getAttribute('aria-label').replace('स्वाध्याय-सहकारी', 'साहित्य-व्याकरणम्'); r.style.setProperty('--brand', '#4f46e5'); r.style.setProperty('--acc', '#4f46e5'); document.title = document.title.replace('स्वाध्याय-सहकारी', 'साहित्य-व्याकरणम्'); }
   S.rememberSite();
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }

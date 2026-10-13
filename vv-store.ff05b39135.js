@@ -1,5 +1,5 @@
 // vv-store.js — the ONE personal-data store shared by every site on constrainedrandomvar.github.io (the academy
-// स्वाध्याय-दीपिका, its public twin, साहित्य-व्याकरणम्, and the prasthanatrayi-search page). localStorage is per-ORIGIN,
+// स्वाध्याय-सहकारी, its public twin, साहित्य-व्याकरणम्, and the prasthanatrayi-search page). localStorage is per-ORIGIN,
 // so all of them read and write the same keys: a passage bookmarked from search shows up in the academy's library.
 // Everything stays in the reader's browser; nothing is sent anywhere. Export/Import (and share links) are the backup.
 //
@@ -18,7 +18,7 @@
 
   // ---- site identity (first path segment on github.io; anything else = local dev) ----
   var SITES = { 'vedantic-vyakarana-academy': 'academy', 'svadhyaya-dipika': 'public', 'sahitya-vyakaranam': 'sahitya', 'prasthanatrayi-search': 'search' };
-  var SITE_NAMES = { academy: 'स्वाध्याय-दीपिका', public: 'स्वाध्याय-दीपिका (public)', sahitya: 'साहित्य-व्याकरणम्', search: 'अन्वेषण · search', local: 'local' };
+  var SITE_NAMES = { academy: 'स्वाध्याय-सहकारी', public: 'स्वाध्याय-सहकारी (public)', sahitya: 'साहित्य-व्याकरणम्', search: 'अन्वेषण · search', local: 'local' };
   function siteOf(href) {
     try {
       var u = new URL(href, root.location && root.location.href);
@@ -153,7 +153,7 @@
     return { kind: 'vvd-export', v: 1, exported: now(), bookmarks: db(K.bm), collections: db(K.col), notes: db(K.notes), searchHistory: history.list() };
   }
   function importAll(o) {
-    if (!o || o.kind !== 'vvd-export') throw new Error('not a स्वाध्याय-दीपिका export file');
+    if (!o || o.kind !== 'vvd-export') throw new Error('not a स्वाध्याय-सहकारी export file');
     var n = 0;
     [['bookmarks', K.bm], ['collections', K.col], ['notes', K.notes]].forEach(function (p) {
       var src = (o[p[0]] || {}).items || {}, d = db(p[1]);

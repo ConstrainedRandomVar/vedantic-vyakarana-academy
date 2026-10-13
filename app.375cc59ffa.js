@@ -122,6 +122,29 @@ function libraryCounts() {
   const S = window.VVStore; if (!S) return null;
   try { return { b: S.bookmarks.list().length, c: S.collections.list().length, n: S.notes.list().length }; } catch (e) { return null; }
 }
+// सहायक-सामग्री · Resources (Harsha 2026-10-13) — external sites in his order; one-line descriptions drafted from his notes and
+// approved by him. Academy / public homepage only (the sister site has its own identity).
+const RESOURCES = [
+  { group: 'Texts', items: [
+    { name: 'Advaita Śāradā (Sringeri)', url: 'https://advaitasharada.sringeri.net/', desc: 'Śaṅkara’s works with commentaries — the digital library of the Sringeri Śāradā Pīṭham.' },
+    { name: 'Mahesh Research Institute', url: 'https://dakshinamurtimath.com/', desc: 'Printed editions of Śaṅkara’s bhāṣyas with their ṭīkās; the base edition we follow.' },
+    { name: 'Centre for Brahmavidya', url: 'https://centreforbrahmavidya.org/', desc: 'Books, audio and video on Advaita Vedānta available on the internet, collated in one place for viewing or download.' },
+    { name: 'sanskritdocuments.org', url: 'https://sanskritdocuments.org/', desc: 'A large library of Sanskrit texts in Devanāgarī and transliteration.' },
+    { name: 'Ambuda', url: 'https://ambuda.org/', desc: 'An online Sanskrit library with a built-in reader and dictionary.' },
+    { name: 'Upasana Yoga', url: 'https://upasanayoga.org/', desc: 'Bhāṣyas with hyphenated words for easier reading, mūla pratīkas, English translation, and pūrvapakṣī / siddhāntī roles marked.' },
+    { name: 'Tamal Maharaj — Vedānta reader (RKMVERI)', url: 'https://cs.rkmvu.ac.in/~tamal/vedanta/index.html', desc: 'Word-by-word padaccheda with meanings and English translation.' },
+    { name: 'Swami Paramarthananda Ji’s transcribed lectures', url: 'https://arshaavinash.in/index.php/books-by-swami-paramarthananda/', desc: 'Transcripts of his classes on the Upaniṣads, Bhagavad Gītā, Tattva Bodha and more, free to download.' },
+  ] },
+  { group: 'Sanskrit grammar & language', items: [
+    { name: 'ashtadhyayi.com', url: 'https://ashtadhyayi.com/', desc: 'The sūtra-pāṭha with Kāśikā, Mahābhāṣya and Kaumudī; dhātu-pāṭha, śabda-pāṭha, and courses.' },
+    { name: 'sanskritkosha.com', url: 'https://sanskritkosha.com/', desc: 'A Sanskrit dictionary (kośa).' },
+    { name: 'Sanskrit from Home', url: 'https://www.sanskritfromhome.org/', desc: 'Online Sanskrit courses by Vyoma Labs.' },
+    { name: 'Books on Sanskrit grammar — Medha Michika Ji', url: 'https://arshaavinash.in/index.php/books-on-sanskrit-grammar/', desc: 'Her grammar books for students of Vedānta.' },
+    { name: 'Swami Shankarananda Ji — Sanskrit classes (YouTube)', url: 'https://www.youtube.com/playlist?list=PLFx8rf4WVNI50MObSuQUzxreYd5T9eHRp', desc: 'Recorded Sanskrit classes in English, to help Vedānta students read and appreciate the original texts.' },
+    { name: 'The Aruna coursebook', url: 'https://upasanayoga.org/AC.htm', desc: 'A quick overview of all the grammar needed to read Sanskrit with proficiency.' },
+  ] },
+];
+const resHost = u => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 function dashboardTools() {
   const n = libraryCounts();
   const builtin = [
@@ -1489,6 +1512,11 @@ function renderDashboard() {
     </div>
     </div>
     </section>
+    ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' : `<section class="home-sec res-sec">
+    <h2 class="sec-head">सहायक-सामग्री <span class="sec-lat">· Resources</span></h2>
+    ${RESOURCES.map(g => `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.group}</span></div>
+      <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
+    </section>`}
 `;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');

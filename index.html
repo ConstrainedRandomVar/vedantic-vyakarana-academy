@@ -38,7 +38,12 @@
  .vy-panel .sec-head{color:#3b4a8a;border-bottom-color:#d3dbef}
  .vy-panel.shut .vy-body{display:none} .vy-panel.shut{padding-bottom:4px} .vy-panel.shut .sec-head{border-bottom:0;margin-bottom:4px}
  .sec-fold{background:none;border:0;cursor:pointer;font-size:15px;color:inherit;padding:0 2px 0 0;line-height:1}
- /* order: वेदान्त-ग्रन्थाः → उपकरणानि → व्याकरणम् → (resources, TBD) — each its own heading */
+ /* order: वेदान्त-ग्रन्थाः → उपकरणानि → व्याकरणम् → सहायक-सामग्री (Resources) — each its own heading */
+ .readgrid.resgrid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));grid-auto-rows:auto}
+ .rcard.rescard{gap:3px}
+ .rcard.rescard .rtitle{font-size:14px;font-family:inherit;font-weight:600;line-height:1.35}
+ .rescard .ext{font-size:11px;color:#a8a29e;font-weight:400}
+ .rescard .rhost{font-size:11px;color:#0e7490;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  .lane-label{font-size:12px;font-weight:600;color:#7a6a55;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
  .dash-setting{display:flex;align-items:center;gap:7px;font-size:13px;color:#555;margin-top:10px;cursor:pointer;user-select:none}
  .muted{color:#7a6a55}
@@ -201,7 +206,7 @@
 <script src="samasa-peel.c7972057ef.js"></script>
 <script src="reading-nav.1d8a42d71b.js"></script>
 <script src="vv-store.ff05b39135.js"></script>
-<script src="app.23d70bdf12.js"></script>
+<script src="app.375cc59ffa.js"></script>
 <script>
 // Freshness during churn: updateViaCache:'none' → the browser always network-fetches sw.js (never
 // its HTTP cache); reg.update() proactively checks on load; and when a NEW sw version takes control

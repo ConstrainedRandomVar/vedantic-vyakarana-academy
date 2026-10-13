@@ -559,15 +559,23 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
   var jb=src.getAttribute('data-jbt'); if(jb) rows.push(jr('bk',ref,jb,''));
   if(pr&&pr.getAttribute('data-jti')){var ti=pr.getAttribute('data-jti'),vv0=document.getElementById('v-'+ref);   // MRI exact word index
     if(vv0&&vv0.querySelector('.bh .w[data-ti="'+ti+'"]'))rows.push(jr('pi',ref,ti,'bh'));}
-  var jt=!pr&&t.getAttribute('data-jtt'); if(jt) rows.push(jr('tk',ref,jt,''));
+  var jt=!pr&&t.getAttribute('data-jtt'); if(jt){ var tks=[jt].concat((t.getAttribute('data-jtx')||'').split(' ').filter(Boolean));
+    // one row PER commentary that quotes this word; named by commentary when the page carries more than one
+    var named=document.querySelectorAll('.seg button[data-side]:not([data-side=""]),button[data-side]:not([data-side=""])').length>1;
+    for(var x=0;x<tks.length;x++) rows.push(jr('tk',ref,tks[x],'',named?tkLabel(tks[x]):''));}
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
 // the element carrying data-k = key (the VISIBLE copy when a ṭīkā is shown both inline and in the side column)
 function byKey(k){if(!k)return null;var els=document.querySelectorAll('[data-k="'+k+'"]');
   for(var i=0;i<els.length;i++)if(els[i].offsetParent!==null)return els[i];return els[0]||null;}
-function jr(cat,ref,sk,zone){var lb={mk:'→ मूलम्',mq:'→ मूलम्',bk:'→ भाष्यम्',pi:'→ भाष्यम्',tk:'→ टीका'}[cat];
+// a ṭīkā pratīka key's commentary (':t<side>_') and its reader-facing name (the lane toggle's label)
+function tkSide(k){var m=/:t([A-Za-z]+)_[0-9]/.exec(k||'');return m?m[1]:'';}
+function tkLabel(k){var b=document.querySelector('button[data-side="'+tkSide(k)+'"]');return b?'→ '+b.textContent.trim():'';}
+function jr(cat,ref,sk,zone,lab){var lb=lab||{mk:'→ मूलम्',mq:'→ मूलम्',bk:'→ भाष्यम्',pi:'→ भाष्यम्',tk:'→ टीका'}[cat];
   return '<span class="jrow" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+sk+'" data-jz="'+(zone||'')+'">'+lb+'</span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
 function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
+  if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
+    if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
   if(cat==='mk'||cat==='bk'||cat==='tk')el=byKey(sk);
   else if(cat==='pi'){var vv1=document.getElementById('v-'+ref);el=vv1?vv1.querySelector('.bh .w[data-ti="'+sk+'"]'):null;}
   else if(cat==='mq'){ var tt=mqTarget(sk);                        // intro cross-verse quote

@@ -275,6 +275,8 @@
       tools.appendChild(fb);
     }
     if (bar) bar.appendChild(tools); else { var fl = el('div', { class: 'vvr-float' }); fl.appendChild(tools); document.body.appendChild(fl); }
+    // in-text search (🔍 next to ☆ 📝, 2026-10-13) — vv-insearch.js shows itself only on texts the search site indexes
+    var isrc = document.createElement('script'); isrc.src = 'vv-insearch.js'; isrc.async = true; document.head.appendChild(isrc);
     applyFoldDefaults();
     rememberPanels();
     paintMarkers();

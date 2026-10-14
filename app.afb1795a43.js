@@ -134,6 +134,7 @@ const RESOURCES = [
     { name: 'Upasana Yoga', url: 'https://upasanayoga.org/', desc: 'Bhāṣyas with hyphenated words for easier reading, mūla pratīkas, English translation, and pūrvapakṣī / siddhāntī roles marked.' },
     { name: 'Tamal Maharaj — Vedānta reader (RKMVERI)', url: 'https://cs.rkmvu.ac.in/~tamal/vedanta/index.html', desc: 'Word-by-word padaccheda with meanings and English translation.' },
     { name: 'Swami Paramarthananda Ji’s transcribed lectures', url: 'https://arshaavinash.in/index.php/books-by-swami-paramarthananda/', desc: 'Transcripts of his classes on the Upaniṣads, Bhagavad Gītā, Tattva Bodha and more, free to download.' },
+    { name: 'Advaita Vāridhi', url: 'https://varidhilibrary.xoidlabs.com/', desc: 'A compendium of Advaita wisdom (scriptures, commentaries, philosophical and devotional works) gathered in one place to explore, understand and preserve.' },
   ] },
   { group: 'Sanskrit grammar & language', items: [
     { name: 'ashtadhyayi.com', url: 'https://ashtadhyayi.com/', desc: 'The sūtra-pāṭha with Kāśikā, Mahābhāṣya and Kaumudī; dhātu-pāṭha, śabda-pāṭha, and courses.' },

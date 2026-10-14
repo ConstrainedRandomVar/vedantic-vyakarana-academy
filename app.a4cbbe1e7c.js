@@ -137,7 +137,7 @@ const RESOURCES = [
   ] },
   { group: 'Sanskrit grammar & language', items: [
     { name: 'ashtadhyayi.com', url: 'https://ashtadhyayi.com/', desc: 'The sūtra-pāṭha with Kāśikā, Mahābhāṣya and Kaumudī; dhātu-pāṭha, śabda-pāṭha, and courses.' },
-    { name: 'sanskritkosha.com', url: 'https://sanskritkosha.com/', desc: 'A Sanskrit dictionary (kośa).' },
+    { name: 'sanskritkosha.com', url: 'https://sanskritkosha.com/', desc: 'A user-friendly site and app for searching across 50+ Sanskrit dictionaries at once.' },
     { name: 'Sanskrit from Home', url: 'https://www.sanskritfromhome.org/', desc: 'Online Sanskrit courses by Vyoma Labs.' },
     { name: 'Books on Sanskrit grammar — Medha Michika Ji', url: 'https://arshaavinash.in/index.php/books-on-sanskrit-grammar/', desc: 'Her grammar books for students of Vedānta.' },
     { name: 'Swami Shankarananda Ji — Sanskrit classes (YouTube)', url: 'https://www.youtube.com/playlist?list=PLFx8rf4WVNI50MObSuQUzxreYd5T9eHRp', desc: 'Recorded Sanskrit classes in English, to help Vedānta students read and appreciate the original texts.' },

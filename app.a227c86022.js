@@ -144,6 +144,10 @@ const RESOURCES = [
     { name: 'Swami Shankarananda Ji — Sanskrit classes (YouTube)', url: 'https://www.youtube.com/playlist?list=PLFx8rf4WVNI50MObSuQUzxreYd5T9eHRp', desc: 'Recorded Sanskrit classes in English, to help Vedānta students read and appreciate the original texts.' },
     { name: 'The Aruna coursebook', url: 'https://upasanayoga.org/AC.htm', desc: 'A quick overview of all the grammar needed to read Sanskrit with proficiency.' },
   ] },
+  { group: 'Chanting', items: [
+    { name: 'Advaita Audio Libraries', url: 'https://gitaarchive-tech.github.io/advaita/', desc: 'Advaita Vedānta’s Sanskrit texts and related traditional works made listenable through modern text-to-speech.' },
+    { name: 'Vāgdhenu', url: 'https://prathosh.in/vagdhenu/', desc: 'A vṛtta (meter)-aware text-to-speech system that chants Sanskrit ślokas.' },
+  ] },
 ];
 const resHost = u => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 function dashboardTools() {

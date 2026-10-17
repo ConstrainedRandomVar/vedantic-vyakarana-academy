@@ -1,6 +1,6 @@
 {
-  "name": "स्वाध्याय-सहकारी — Vedāntic reading aid",
-  "short_name": "स्वा·सहकारी",
+  "name": "अध्ययन-सहकारी — Vedāntic reading aid",
+  "short_name": "अध्य·सहकारी",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -109,6 +109,15 @@ function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScrip
 const QUIET_HOVER_KEY = 'vv_quiet_hover';
 function quietHoverOn() { return localStorage.getItem(QUIET_HOVER_KEY) === '1'; }
 function setQuietHover(on) { localStorage.setItem(QUIET_HOVER_KEY, on ? '1' : '0'); }
+// Analysis pills on the reading pages (Harsha 2026-10-17): the reader may hide the pramāṇa pills (श्रुतिः/युक्तिः/अनुभवः), the
+// अभ्यु॰ concession mark and the महावाक्यम् pill. Shown by default ('0' = hidden). SET here; applied by vv-reader.js (html class).
+const PILL_PREFS = [
+  ['vv_pill_praman', 'प्रमाण pills — श्रुतिः · युक्तिः · अनुभवः'],
+  ['vv_pill_abhyu', 'अभ्यु॰ — concession mark'],
+  ['vv_pill_maha', 'महावाक्यम् pill'],
+];
+function pillShown(k) { return localStorage.getItem(k) !== '0'; }
+function setPillShown(k, on) { localStorage.setItem(k, on ? '1' : '0'); }
 // ---- Dashboard TOOLS lane (Harsha 2026-10-11, feedback #5/#6/#7/#8). BUILT-IN cards appear on EVERY site (academy, its
 // public twin, साहित्य-व्याकरणम्, any future site): the Vedic word search (TITUS) and the reader's own library (bookmarks ·
 // collections · study notes). Site-specific cards come after: the sister site's SITE_CONFIG.tools, else the academy's
@@ -135,6 +144,7 @@ const RESOURCES = [
     { name: 'Tamal Maharaj — Vedānta reader (RKMVERI)', url: 'https://cs.rkmvu.ac.in/~tamal/vedanta/index.html', desc: 'Word-by-word padaccheda with meanings and English translation.' },
     { name: 'Swami Paramarthananda Ji’s transcribed lectures', url: 'https://arshaavinash.in/index.php/books-by-swami-paramarthananda/', desc: 'Transcripts of his classes on the Upaniṣads, Bhagavad Gītā, Tattva Bodha and more, free to download.' },
     { name: 'Advaita Vāridhi', url: 'https://varidhilibrary.xoidlabs.com/', desc: 'A compendium of Advaita wisdom (scriptures, commentaries, philosophical and devotional works) gathered in one place to explore, understand and preserve.' },
+    { name: 'Jñāna Pravāha — books', url: 'https://jnanapravaha.in/resources-books/', desc: 'Includes Pūjya Swāmījī’s Bhagavad Gītā Home Study Course.' },
   ] },
   { group: 'Sanskrit grammar & language', items: [
     { name: 'ashtadhyayi.com', url: 'https://ashtadhyayi.com/', desc: 'The sūtra-pāṭha with Kāśikā, Mahābhāṣya and Kaumudī; dhātu-pāṭha, śabda-pāṭha, and courses.' },
@@ -160,8 +170,13 @@ function dashboardTools() {
   const cfg = window.SITE_CONFIG || {};
   const site = cfg.tools ? cfg.tools : (cfg.hideTools ? [] : ACADEMY_TOOLS);
   const seen = new Set(builtin.map(t => t.href.split('#')[0]));
-  return builtin.concat(site.filter(t => !seen.has(String(t.href).split('#')[0])));
+  const all = builtin.concat(site.filter(t => !seen.has(String(t.href).split('#')[0])));
+  // card order (Harsha 2026-10-17): full-text search · bookmarks · study notes · ask the corpus · Vedic word search · shared
+  // reading; any other (site-specific) card keeps its place after these
+  const rank = t => { const i = TOOL_ORDER.findIndex(re => re.test(t.href)); return i < 0 ? TOOL_ORDER.length : i; };
+  return all.map((t, i) => [t, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
 }
+const TOOL_ORDER = [/prasthanatrayi-search/, /library\.html#collections/, /library\.html#notes/, /corpus-chat/, /tool-vedic-search/, /scratchpad/];
 function openSettings() {
   let ov = document.getElementById('settings-ov');
   if (!ov) {
@@ -178,9 +193,14 @@ function openSettings() {
         <div class="set-hint">Applies to the ग्रन्थाः (reading) pages — shows the same Sanskrit in Devanāgarī, IAST, or another script (Kannada, Tamil, Telugu, Malayalam, Bengali, Gujarati, Cyrillic, Siddhaṃ, katakana). The quiz is unaffected.</div>
       </div>
       <div class="set-row">
-        <div class="set-label">Word cards · reading pages</div>
-        <label class="set-check"><input type="checkbox" id="setQuietHover"> Quiet hover — show word cards only while holding <b>Cmd/Ctrl</b> (or <b>Alt</b>)</label>
-        <div class="set-hint">For screen-sharing (e.g. on Zoom): cards stop popping up as you move the mouse; hold the key to see one. The same keys reveal cards when presenting with shared reading. Phones and tablets are unaffected.</div>
+        <div class="set-label">Quiet mode · reading pages</div>
+        <label class="set-check"><input type="checkbox" id="setQuietHover"> Quiet mode — show word cards and selection prompts only while holding <b>Cmd/Ctrl</b> (or <b>Alt</b>)</label>
+        <div class="set-hint">For screen-sharing (e.g. on Zoom): word cards stop popping up as you move the mouse, and highlighting text no longer offers “☆ bookmark passage”. Hold the key to see a card, or while finishing a selection to get the prompt. The same keys reveal cards when presenting with shared reading. Phones and tablets are unaffected.</div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">Analysis pills · reading pages</div>
+        ${PILL_PREFS.map(([k, l]) => `<label class="set-check"><input type="checkbox" data-pill="${k}"> Show ${l}</label>`).join('')}
+        <div class="set-hint">Untick to hide these marks in the commentary. The discourse-role colours and pills (पूर्वपक्षः · सिद्धान्तः · एकदेशी) always stay.</div>
       </div>
       <div class="set-row" id="setFoldRow">
         <div class="set-label">Commentary fold-outs · reading pages</div>
@@ -197,6 +217,7 @@ function openSettings() {
     document.getElementById('setScrSel').onchange = (e) => setReadingScript(e.target.value);
     const qh = document.getElementById('setQuietHover');
     qh.onchange = () => setQuietHover(qh.checked);
+    ov.querySelectorAll('input[data-pill]').forEach(c => { c.onchange = () => setPillShown(c.dataset.pill, c.checked); });
     // fold-out defaults — the registry + prefs live in vv-store.js (shared with the reading pages' vv-reader.js)
     const S = window.VVStore, fr = document.getElementById('setFolds');
     if (!S || !S.folds) document.getElementById('setFoldRow').style.display = 'none';
@@ -207,6 +228,7 @@ function openSettings() {
   }
   document.getElementById('setAutoAdv').checked = autoAdvanceOn();
   document.getElementById('setQuietHover').checked = quietHoverOn();
+  document.querySelectorAll('#settings-box input[data-pill]').forEach(c => { c.checked = pillShown(c.dataset.pill); });
   if (window.VVStore && window.VVStore.folds) document.querySelectorAll('#setFolds select[data-fold]').forEach(sel => { sel.value = window.VVStore.folds.get(sel.dataset.fold); });
   reflectScriptSel();
   ov.classList.add('on');
@@ -1447,6 +1469,8 @@ function renderDashboard() {
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   // व्याकरणम् panel collapsed? — remembered per reader (vv-store prefs; open by default) — Harsha 2026-10-13
   const vyCollapsed = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:vyakarana-shut', false));
+  // सहायक-सामग्री (Resources) — FOLDED by default, remembered once the reader opens it (Harsha 2026-10-17)
+  const resOpen = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:resources-open', false));
   // Node-card order (Harsha, 2026-08-29): समास first, then सन्धि, then the rest alphabetical.
   const KIND_PRIORITY = { samasa: 0, sandhi: 1 };
   const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
@@ -1517,10 +1541,12 @@ function renderDashboard() {
     </div>
     </div>
     </section>
-    ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' : `<section class="home-sec res-sec">
-    <h2 class="sec-head">सहायक-सामग्री <span class="sec-lat">· Resources</span></h2>
+    ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' : `<section class="home-sec res-sec${resOpen ? '' : ' shut'}" id="resPanel">
+    <h2 class="sec-head"><button class="sec-fold" id="resFold" aria-expanded="${resOpen}" title="show / hide this section">${resOpen ? '▾' : '▸'}</button>सहायक-सामग्री <span class="sec-lat">· Resources</span></h2>
+    <div class="res-body">
     ${RESOURCES.map(g => `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.group}</span></div>
       <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
+    </div>
     </section>`}
 `;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
@@ -1533,6 +1559,10 @@ function renderDashboard() {
       const p = document.getElementById('vyPanel'), shut = !p.classList.contains('shut');
       p.classList.toggle('shut', shut); vf.textContent = shut ? '▸' : '▾'; vf.setAttribute('aria-expanded', String(!shut));
       try { VVStore.prefs.set('home:vyakarana-shut', shut); } catch (e) {} }; }
+  { const rf = document.getElementById('resFold'); if (rf) rf.onclick = () => {
+      const p = document.getElementById('resPanel'), shut = !p.classList.contains('shut');
+      p.classList.toggle('shut', shut); rf.textContent = shut ? '▸' : '▾'; rf.setAttribute('aria-expanded', String(!shut));
+      try { VVStore.prefs.set('home:resources-open', !shut); } catch (e) {} }; }
   app.querySelectorAll('[data-more]').forEach(m => m.onclick = e => { e.stopPropagation(); m.closest('.rcard').classList.toggle('allp'); });   // tap "…" → all layers
   app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
@@ -5385,10 +5415,30 @@ function renderTutorialPicker() {
   });
 }
 
+// 🔍 in the header (Harsha 2026-10-17): a box that searches ALL texts — Enter opens the full-text search site with the query
+// (search.html runs ?q= on load; no text/category filter = every text), in the SAME tab, so Back returns here. "/" opens it
+// (not while typing in a field). Academy + public site only — the sister site's texts are not in that search index.
+const FULLTEXT_SEARCH_URL = 'https://constrainedrandomvar.github.io/prasthanatrayi-search/';
+function initHeaderSearch() {
+  const btn = document.getElementById('srchBtn'), form = document.getElementById('hsForm'), q = document.getElementById('hsQ');
+  if (!btn || !form || !q || (window.SITE_CONFIG && window.SITE_CONFIG.readGroups)) return;
+  btn.hidden = false;
+  const open = on => { form.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) q.focus(); };
+  btn.onclick = () => open(form.hidden);
+  form.onsubmit = e => { e.preventDefault(); const s = q.value.trim(); if (s) location.href = FULLTEXT_SEARCH_URL + '?q=' + encodeURIComponent(s); };
+  q.onkeydown = e => { if (e.key === 'Escape') { q.value = ''; open(false); } };
+  document.addEventListener('keydown', e => {
+    if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    e.preventDefault(); open(true);
+  });
+}
+
 // Boot: honor a ?tut=<ref>[&step=<type>][&cluster=<n>] testing back-gate (see jumpToTutorial), else
 // the normal dashboard.
 (function boot() {
   const g = document.getElementById('gearBtn'); if (g) g.onclick = openSettings;
+  initHeaderSearch();
   // Top-level banner Home button (persists across every SPA screen; header lives outside #app) — always
   // returns to the dashboard. Non-destructive: reading/quiz progress is already saved as you go. (Harsha, 2026-08-29.)
   const hb = document.getElementById('homeBtn'); if (hb) hb.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };

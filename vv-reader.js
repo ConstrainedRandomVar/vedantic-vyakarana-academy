@@ -11,6 +11,20 @@
   if (!S || window.__vvReader) return;
   window.__vvReader = true;
 
+  // ---- analysis pills the reader chose to hide in ⚙ Settings (Harsha 2026-10-17; '0' = hidden, shown by default). Applied at
+  // once — before the page settles — as an <html> class; the legend keeps its swatches so the reader can still see what each is.
+  (function () {
+    var P = { vv_pill_praman: ['praman', '.prb'], vv_pill_abhyu: ['abhyu', '.dm-conc::after'], vv_pill_maha: ['maha', '.maha-mark'] }, css = '';
+    for (var k in P) {
+      var off = false; try { off = localStorage.getItem(k) === '0'; } catch (e) {}
+      if (!off) continue;
+      document.documentElement.classList.add('vv-nopill-' + P[k][0]);
+      var sel = P[k][1].split('::'), base = sel[0] + ':not(.legend *)' + (sel[1] ? '::' + sel[1] : '');
+      css += 'html.vv-nopill-' + P[k][0] + ' ' + base + '{' + (sel[1] ? 'content:none!important' : 'display:none!important') + '}';
+    }
+    if (css) { var st = document.createElement('style'); st.id = 'vvr-pills'; st.textContent = css; (document.head || document.documentElement).appendChild(st); }
+  })();
+
   function ready(fn) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function el(tag, attrs, html) { var e = document.createElement(tag); for (var k in (attrs || {})) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
@@ -149,7 +163,14 @@
   // ---- selection ☆ : bookmark exactly the passage the reader selected (links back via ?hl= highlighter in sync.js) ----
   var selBtn = null;
   function hideSel() { if (selBtn) { selBtn.remove(); selBtn = null; } }
-  function onSelectionEnd() {
+  // Quiet mode (⚙, localStorage vv_quiet_hover — shared with peek.js's word cards): no selection prompt while screen-sharing,
+  // unless Cmd/Ctrl/Alt is held as the selection ends. Mouse selections only — phones and tablets are unaffected (as peek.js).
+  function quietSel(e) {
+    var on = false; try { on = localStorage.getItem('vv_quiet_hover') === '1'; } catch (x) {}
+    return on && e && e.type === 'mouseup' && !(e.metaKey || e.ctrlKey || e.altKey);
+  }
+  function onSelectionEnd(e) {
+    if (quietSel(e)) { hideSel(); return; }
     setTimeout(function () {
       var sel = window.getSelection(); hideSel();
       if (!sel || sel.isCollapsed || !sel.rangeCount) return;

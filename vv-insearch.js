@@ -127,7 +127,7 @@
     if (!ex.qn) return;
     var counts = {}, precise = [], poss = [];
     B.forEach(function (b) {
-      if (b._n === undefined) { b._n = SS.normalize(b.s); b._nc = SS.normalize(b.s, true); }
+      if (b._n === undefined) { b._n = SS.normalize(b.s); b._nc = b._n.replace(/ /g, ''); }   // _nc ≡ _n minus spaces (perf 2026-10-17)
       var p = SS.matches(b, ex), w = !p && exW && SS.matches(b, exW);
       if (!p && !w) return;
       counts[b._layer] = (counts[b._layer] || 0) + 1;

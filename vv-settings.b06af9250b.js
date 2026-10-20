@@ -56,6 +56,8 @@
     + '.vvset-conc{vertical-align:super;font-size:.56em;font-weight:700;color:var(--muted,#7a6a55);margin-inline-start:1px}'
     + '@media(prefers-color-scheme:dark){html:not([data-theme=light]) .vvset-prb{border-color:#d977de;color:#d977de}html:not([data-theme=light]) .vvset-maha{border-color:#f472b6;color:#f472b6}}'
     + 'html[data-theme=dark] .vvset-prb{border-color:#d977de;color:#d977de}html[data-theme=dark] .vvset-maha{border-color:#f472b6;color:#f472b6}'
+    + '#vvset-box .vvset-btn{font:inherit;border:1px solid var(--brand,#d97706);background:var(--brand,#d97706);color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer}'
+    + '#vvset-box .vvset-btn2{font:inherit;font-size:13px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;border-radius:8px;padding:4px 10px;cursor:pointer}'
     + '#vvset-box .done{text-align:right}#vvset-box .done button{font:inherit;border:1px solid var(--line,#ccc);background:var(--bg,#fff);color:inherit;border-radius:8px;padding:6px 14px;cursor:pointer}'
     + '@media(max-width:640px){#vvset-ov{align-items:flex-end;padding:0}#vvset-box{max-width:none;border-radius:14px 14px 0 0;max-height:85vh}}';
 
@@ -71,14 +73,21 @@
       + '<div class="hint">All text on the reading pages — mūla, commentaries, headings and word cards.</div></div>'
       + '<div class="row"><div class="lab">Script</div><select id="vvset-script">' + SCRIPTS.map(function (s) { return '<option value="' + s[0] + '">' + s[1] + '</option>'; }).join('') + '</select>'
       + '<div class="hint">Shows the same Sanskrit in Devanāgarī, IAST or another script.</div></div>'
-      + '<div class="row"><div class="lab">Word grammar on hover</div><label class="chk"><input type="checkbox" id="vvset-hover"' + (touch ? ' disabled' : '') + '> Show a word’s grammar card when the mouse rests on it, and “☆ bookmark passage” when you select text</label>'
-      + '<div class="hint">' + (touch ? 'Phones and tablets: just tap a word to see its grammar.' : 'Off by default (quiet) — hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) to see them anyway. The ☆ verse bookmark in the page bar always works.') + '</div></div>';
+      + '<div class="row"><div class="lab">Word grammar on hover</div><label class="chk"><input type="checkbox" id="vvset-hover"' + (touch ? ' disabled' : '') + '> Show a word’s grammar card when the mouse rests on it</label>'
+      + '<div class="hint">' + (touch ? 'Phones and tablets: just tap a word to see its grammar.' : 'Off by default (quiet) — hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) to see one anyway. To 🖍 highlight or ☆ bookmark a passage, select it and <b>right-click</b>; the ☆ in the page bar bookmarks the verse.') + '</div></div>';
     if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary markers</div><div class="hint" style="margin:0 0 8px">Small coloured tags in the bhāṣya that show how an argument works. Off by default, for a clean reading text.</div>'
       + MARKERS.map(function (m) { return '<div class="mk" data-mk="' + m[0] + '"><label class="chk"><input type="checkbox" data-pill="' + m[0] + '"> <span><b>' + m[1] + '</b> — ' + m[2] + '</span></label><div class="sample">' + m[3] + '</div></div>'; }).join('')
       + '</div>';
     if (folds.length) h += '<div class="row"><div class="lab">Commentary fold-outs</div>'
       + folds.map(function (f) { return '<label class="chk" style="justify-content:space-between;gap:10px;margin-bottom:4px"><span>' + esc(f.label) + ' <span class="hint" style="display:inline">· ' + esc(f.sub || '') + '</span></span><select data-fold="' + esc(f.key) + '"><option value="collapsed">Collapsed</option><option value="expanded">Expanded</option></select></label>'; }).join('')
       + '<div class="hint">How collapsed commentary layers open when a page loads. Each page’s <b>टीका ⇕</b> button expands or collapses them on that page only.</div></div>';
+    // ☁ Google-Drive sync is SHELVED (Harsha 2026-10-21: it must upload always, not stop after the ~1 h browser token) — the
+    // section and vv-sync.js stay in the repo, switched off here; set SYNC_ON = true to revive.
+    var SYNC_ON = false;
+    if (SYNC_ON && window.VVStore && VVStore.SITE !== 'search') h += '<div class="sep">☁ Your data</div>'
+      + '<div class="row" id="vvset-sync"><div class="lab">Sync with Google Drive</div>'
+      + '<div class="hint" style="margin:0 0 6px">Keep your bookmarks, highlights and notes in <b>your own</b> Google Drive, so they follow you to your other devices. They go into a hidden app folder only this site can use; we never receive them. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></div>'
+      + '<div class="vvset-syncst"></div></div>';
     h += '<div class="sep"><span class="dv">व्याकरणम्</span> · Grammar practice</div>'
       + '<div class="row"><label class="chk"><input type="checkbox" id="vvset-auto"> Auto-advance to the next question after answering</label></div>'
       + '<div class="done"><button type="button" id="vvset-done">Done</button></div>';
@@ -110,6 +119,31 @@
     var S = window.VVStore; [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.addEventListener('change', function () { if (S && S.folds) S.folds.set(s.getAttribute('data-fold'), s.value); }); });
     box.querySelector('#vvset-auto').addEventListener('change', function (e) { set('vyakarana_auto_advance', e.target.checked ? '1' : '0'); });
   }
+  // ☁ sync controls (vv-sync.js is loaded on first open of the panel)
+  function withSync(cb) { if (window.VVSync) return cb(); var sc = document.createElement('script'); sc.src = 'vv-sync.js'; sc.onload = function () { if (window.VVSync) cb(); }; document.head.appendChild(sc); }
+  function syncUI(box) {
+    var host = box.querySelector('.vvset-syncst'); if (!host) return;
+    withSync(function () {
+      var draw = function (st) {
+        var last = st.last ? (st.last.ok ? 'last synced ' + new Date(st.last.ts).toLocaleString() : '⚠ ' + esc(st.last.msg || 'sync failed')) : '';
+        host.innerHTML = !st.on
+          ? '<button type="button" class="vvset-btn" data-sync="on">Sign in with Google &amp; sync</button>'
+          : '<div class="hint" style="margin:0 0 6px">On' + (st.who ? ' · ' + esc(st.who) : '') + (last ? ' · ' + last : '') + (st.signedIn ? '' : ' · <b>sign in again to sync on this visit</b>') + '</div>'
+            + '<button type="button" class="vvset-btn" data-sync="' + (st.signedIn ? 'now' : 'signin') + '">' + (st.signedIn ? '⟳ Sync now' : 'Sign in again') + '</button> '
+            + '<button type="button" class="vvset-btn2" data-sync="off">Turn off</button> <button type="button" class="vvset-btn2" data-sync="del" title="Delete the copy in your Google Drive (this browser keeps its data)">Delete Drive copy</button>';
+      };
+      draw(VVSync.status()); if (!host.__vvWired) { host.__vvWired = true; VVSync.onStatus(draw); }
+      host.onclick = function (e) {
+        var a = e.target.getAttribute && e.target.getAttribute('data-sync'); if (!a) return;
+        var busy = function (p) { e.target.disabled = true; e.target.textContent = '…'; p.catch(function (x) { alert(x.message); }).then(function () { draw(VVSync.status()); }); };
+        if (a === 'on') busy(VVSync.enable());
+        else if (a === 'signin') busy(VVSync.signIn().then(VVSync.syncNow));
+        else if (a === 'now') busy(VVSync.syncNow());
+        else if (a === 'off' && confirm('Turn off sync? Your data stays in this browser and in your Drive copy.')) VVSync.disable();
+        else if (a === 'del' && confirm('Delete the copy in your Google Drive? This browser keeps its data.')) busy(VVSync.deleteRemote());
+      };
+    });
+  }
   var ovEl = null;
   function open() {
     if (!ovEl) {
@@ -119,6 +153,7 @@
       wire(ovEl, box);
     }
     reflect(ovEl.querySelector('#vvset-box'));
+    if (ovEl.querySelector('.vvset-syncst')) syncUI(ovEl.querySelector('#vvset-box'));
     ovEl.classList.add('on');
     if (window.__vvHintUsed) window.__vvHintUsed();   // opening ⚙ retires the reading-page hint (feedback #4)
   }

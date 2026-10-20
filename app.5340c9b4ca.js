@@ -1336,14 +1336,16 @@ function myStudyHtml() {
   const S = window.VVStore; if (!S) return '';
   const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const mine = r => !S.SITE || S.SITE === 'local' || !r.site || r.site === S.SITE;
-  let bms = [], notes = [], cols = 0;
-  try { bms = S.bookmarks.list().filter(mine).sort((a, b) => (b.created || '').localeCompare(a.created || '')); notes = S.notes.list().filter(mine); cols = S.collections.list().length; } catch (e) {}
-  if (!bms.length && !notes.length) return '<div class="study-empty">☆ on any reading page bookmarks the verse you are at; select text to bookmark a passage; 📝 keeps a note for the verse. They collect here.</div>';
+  let bms = [], notes = [], hls = [], cols = 0;
+  try { bms = S.bookmarks.list().filter(mine).sort((a, b) => (b.created || '').localeCompare(a.created || '')); notes = S.notes.list().filter(mine); cols = S.collections.list().length; hls = (S.highlights ? S.highlights.list() : []).filter(mine); } catch (e) {}
+  if (!bms.length && !notes.length && !hls.length) return '<div class="study-empty">☆ on any reading page bookmarks the verse you are at; select text to 🖍 highlight or bookmark a passage; 📝 keeps a note for the verse. They collect here.</div>';
+  const hlUrl = h => h.url.split('#')[0].split('?')[0] + '?hl=' + encodeURIComponent((h.text || '').split(/\s+/).slice(0, 8).join(' ')) + '&hv=1' + (h.ref ? '#v-' + h.ref : '');
   const row = (url, title, sub) => `<a class="study-row" href="${esc(url)}"><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</a>`;
   const cut = (x, n) => { x = String(x || '').replace(/\s+/g, ' ').trim(); return x.length > n ? x.slice(0, n) + '…' : x; };
-  return `<div class="study-counts">★ ${bms.length} bookmark${bms.length === 1 ? '' : 's'} · ${cols} collection${cols === 1 ? '' : 's'} · 📝 ${notes.length} note${notes.length === 1 ? '' : 's'} · <a href="library.html">Open my library →</a></div>
+  return `<div class="study-counts">★ ${bms.length} bookmark${bms.length === 1 ? '' : 's'} · ${cols} collection${cols === 1 ? '' : 's'} · 🖍 ${hls.length} highlight${hls.length === 1 ? '' : 's'} · 📝 ${notes.length} note${notes.length === 1 ? '' : 's'} · <a href="library.html">Open my library →</a></div>
     <div class="study-cols">
       <div class="study-col"><div class="study-h">Latest bookmarks</div>${bms.slice(0, 3).map(b => row(b.url, b.title || 'bookmark', cut(b.excerpt, 70))).join('') || '<div class="study-none">none yet</div>'}</div>
+      <div class="study-col"><div class="study-h">Latest highlights</div>${hls.slice(0, 3).map(h => row(hlUrl(h), h.title || h.ref, cut(h.text, 60) + ((h.tags || []).length ? '  #' + h.tags.join(' #') : ''))).join('') || '<div class="study-none">none yet</div>'}</div>
       <div class="study-col"><div class="study-h">Latest notes</div>${notes.slice(0, 3).map(n => row(n.url, (n.title || '') + (n.ref ? ' ' + n.ref : ''), cut(n.text, 70))).join('') || '<div class="study-none">none yet</div>'}</div>
     </div>`;
 }
@@ -1464,7 +1466,7 @@ function renderDashboard() {
     </section>`}
     <section class="home-sec study-sec">
     <h2 class="sec-head">मम स्वाध्यायः <span class="sec-lat">· My study</span></h2>
-    <div class="dash-lane"><div class="lane-sub">Bookmark a verse or passage, collect them, and keep notes — saved only in this browser.</div><div id="myStudy">${myStudyHtml()}</div></div>
+    <div class="dash-lane"><div class="lane-sub">Bookmark and 🖍 highlight passages, collect them, and keep notes — saved only in this browser.</div><div id="myStudy">${myStudyHtml()}</div></div>
     </section>
     ${PROFILE_OMIT.has('tools') ? '' /* prod: no Tools section (Harsha 2026-10-21 #12) */ : `<section class="home-sec tools-sec${toolsShut ? ' shut' : ''}" id="toolsPanel">
     <h2 class="sec-head"><button class="sec-fold" id="toolsFold" aria-expanded="${!toolsShut}" title="show / hide this section">${toolsShut ? '▸' : '▾'}</button>उपकरणानि <span class="sec-lat">· Tools</span></h2>

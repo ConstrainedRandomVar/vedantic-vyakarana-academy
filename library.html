@@ -41,6 +41,9 @@ textarea{width:100%;min-height:70px;font-family:"Noto Serif Devanagari",system-u
 h2{font-size:16px;margin:22px 0 8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
 .empty{color:var(--muted);font-style:italic;padding:8px 2px}
+.hlq{background:#ecfccb;border-radius:6px;padding:4px 8px;box-shadow:inset 0 -1px 0 #4d7c0f}[data-theme=dark] .hlq{background:rgba(163,230,53,.2);box-shadow:inset 0 -1px 0 #a3e635}
+.tagf{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px}.tagf button{font:12.5px system-ui,sans-serif;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:transparent;color:var(--ink);cursor:pointer}.tagf button.on{border-color:#4d7c0f;background:#ecfccb;color:#1a2e05}
+.warn{color:#b45309;font-size:12.5px}
 .colhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .colhead input{font-weight:600;font-size:15px;max-width:100%}
 .order{display:inline-flex;gap:2px}
@@ -54,11 +57,11 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
 <header>
   <a class="brand" href="index.html" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home"><span class="bf">अध्ययन-सहकारी</span><span class="bs">अध्य·सहकारी</span><img class="vv-logo" src="diya-40.png" alt="" aria-hidden="true" style="height:1.3em;width:auto;vertical-align:-.28em;margin-left:5px"></a>
   <h1>★ My library</h1>
-  <nav class="tabs"><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks</a><a href="#collections" data-tab="collections">🗂 Collections</a><a href="#notes" data-tab="notes">📝 Notes</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
+  <nav class="tabs"><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks</a><a href="#collections" data-tab="collections">🗂 Collections</a><a href="#notes" data-tab="notes">📝 Notes</a><a href="#highlights" data-tab="highlights">🖍 Highlights</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
   <button id="tog" title="light / dark">◐</button>
 </header>
 <main>
-  <p class="note-top">Stored only in this browser (shared by all our sites on this address) — nothing is sent to any server. Clearing browser data deletes it: use <a href="#backup">Backup → Export</a> to keep a copy or move it to another device.</p>
+  <p class="note-top">Stored in this browser (shared by all our sites on this address) — nothing is sent to any server (<a href="privacy.html">privacy</a>). Clearing browser data deletes it: use <a href="#backup">Backup → Export</a> to keep a copy or move it to another device.</p>
   <div id="view"></div>
 </main>
 <script src="vv-store.js"></script>
@@ -127,9 +130,35 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
     f.oninput = function () { var q = f.value.trim(); [].forEach.call(V.querySelectorAll('.card'), function (c) { c.style.display = !q || c.textContent.indexOf(q) >= 0 ? '' : 'none'; }); };
   }
 
+  // ---- 🖍 highlights (Harsha 2026-10-21): marked passages + note + tags; filter by tag; "not found" when the last visit couldn't
+  // place the words (the text changed in a rebuild) — the record is kept, never silently re-anchored. ----
+  var tagOn = null;
+  function hlUrl(h) {   // open the verse with the words marked (vv-landing ?hl= + hv=1 → verse-only)
+    var q = (h.text || '').split(/\s+/).slice(0, 8).join(' ');
+    return h.url.split('#')[0].split('?')[0] + (q ? '?hl=' + encodeURIComponent(q) + '&hv=1' : '') + (h.ref ? '#v-' + h.ref : '');
+  }
+  function renderHighlights() {
+    var hs = S.highlights.list().filter(function (h) { return !tagOn || (h.tags || []).indexOf(tagOn) >= 0; }), tags = S.highlights.tags();
+    var by = {}; hs.forEach(function (h) { var k = (h.title || '').replace(/\s+\S+$/, '') || h.page; (by[k] = by[k] || []).push(h); });
+    V.innerHTML = '<div class="toolbar"><input type="text" class="search" placeholder="search highlights, notes, tags…" id="flt"></div>'
+      + (tags.length ? '<div class="tagf"><button data-act="tag" data-tag=""' + (tagOn ? '' : ' class="on"') + '>all</button>' + tags.map(function (t) { return '<button data-act="tag" data-tag="' + esc(t.tag) + '"' + (tagOn === t.tag ? ' class="on"' : '') + '>#' + esc(t.tag) + ' <span class="cnt">' + t.n + '</span></button>'; }).join('') + '</div>' : '')
+      + (hs.length ? Object.keys(by).map(function (k) {
+          return '<h2 class="dv">' + esc(k) + ' <span class="cnt">' + by[k].length + '</span></h2>' + by[k].map(function (h) {
+            return '<div class="card" data-h="' + esc(h.id) + '"><div class="t"><a href="' + esc(hlUrl(h)) + '"' + (h.site && h.site !== S.SITE ? ' target="_blank" rel="noopener"' : '') + '>' + esc(h.title || h.ref) + '</a>' + siteTag(h.site)
+              + (h.placed === false ? ' <span class="warn" title="On your last visit the marked words were not found on that verse (the text was edited). The highlight is kept here; it is not painted on a guess.">⚠ not found on your last visit</span>' : '') + '</div>'
+              + '<div class="ex dv hlq">' + esc(h.text || '') + '</div>'
+              + (h.note ? '<div class="ex" style="white-space:pre-wrap;font-size:14px">✎ ' + esc(h.note) + '</div>' : '')
+              + '<div class="meta">' + day(h.created) + ' ' + (h.tags || []).map(function (t) { return '<span class="chip">#' + esc(t) + '</span>'; }).join(' ')
+              + ' <button class="mini" data-act="hnote">' + (h.note ? 'edit note' : 'add note') + '</button><button class="mini" data-act="htags">tags…</button><button class="mini" data-act="hdel">delete</button></div></div>';
+          }).join('');
+        }).join('') : '<div class="empty">' + (tagOn ? 'No highlights tagged #' + esc(tagOn) + '.' : 'No highlights yet — select words on a reading page and choose 🖍 highlight.') + '</div>');
+    var f = document.getElementById('flt');
+    f.oninput = function () { var q = f.value.trim(); [].forEach.call(V.querySelectorAll('.card'), function (c) { c.style.display = !q || c.textContent.indexOf(q) >= 0 ? '' : 'none'; }); };
+  }
+
   function renderBackup() {
-    var nb = S.bookmarks.list().length, nc = S.collections.list().length, nn = S.notes.list().length, nh = S.history.list().length;
-    V.innerHTML = '<div class="card"><b>Export</b> — download everything (' + nb + ' bookmarks, ' + nc + ' collections, ' + nn + ' notes, ' + nh + ' recent searches) as one file. Keep it safe, or import it on another device.<div class="meta"><button class="mini pri" data-act="export">⤓ export file</button></div></div>'
+    var nb = S.bookmarks.list().length, nc = S.collections.list().length, nn = S.notes.list().length, nh = S.history.list().length, nhl = S.highlights.list().length;
+    V.innerHTML = '<div class="card"><b>Export</b> — download everything (' + nb + ' bookmarks, ' + nc + ' collections, ' + nn + ' notes, ' + nhl + ' highlights, ' + nh + ' recent searches) as one file. Keep it safe, or import it on another device.<div class="meta"><button class="mini pri" data-act="export">⤓ export file</button></div></div>'
       + '<div class="card"><b>Import</b> — merge an exported file into this browser. Nothing here is deleted; where the same item exists in both, the more recently edited copy wins.<div class="meta"><input type="file" id="imp" accept=".json,application/json"></div><div id="impmsg" class="meta"></div></div>';
     document.getElementById('imp').onchange = function (e) {
       var f = e.target.files[0]; if (!f) return;
@@ -188,18 +217,25 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
     }
     else if (act === 'nedit') { var n = S.notes.get(nkey); var v2 = prompt('Edit note:', n.text); if (v2 !== null) { S.notes.set(nkey, Object.assign({}, n, { text: v2 })); render(); } }
     else if (act === 'ndel' && confirm('Delete this note?')) { S.notes.remove(nkey); render(); }
+    else if (act === 'tag') { tagOn = e.target.closest('[data-tag]').getAttribute('data-tag') || null; render(); }
+    else if (act === 'hnote' || act === 'htags' || act === 'hdel') {
+      var hid = e.target.closest('[data-h]').getAttribute('data-h'), h = S.highlights.get(hid); if (!h) return;
+      if (act === 'hdel' && confirm('Delete this highlight?')) { S.highlights.remove(hid); render(); }
+      else if (act === 'hnote') { var v3 = prompt('Note for this highlight:', h.note || ''); if (v3 !== null) { S.highlights.update(hid, { note: v3.trim() }); render(); } }
+      else if (act === 'htags') { var v4 = prompt('Tags (comma-separated):', (h.tags || []).join(', ')); if (v4 !== null) { S.highlights.update(hid, { tags: v4.split(',').map(function (x) { return x.trim().replace(/^#/, ''); }).filter(Boolean).filter(function (x, i, a) { return a.indexOf(x) === i; }) }); render(); } }
+    }
   });
   V.addEventListener('change', function (e) {
     if (e.target.getAttribute('data-act') === 'rename') { var sec = e.target.closest('[data-c]'); var v = e.target.value.trim(); if (v) S.collections.rename(sec.getAttribute('data-c'), v); }
   });
 
   var tab = 'bookmarks';
-  function render() { V.onclick = null; ({ bookmarks: renderBookmarks, collections: renderCollections, notes: renderNotes, backup: renderBackup })[tab](); }
+  function render() { V.onclick = null; ({ bookmarks: renderBookmarks, collections: renderCollections, notes: renderNotes, highlights: renderHighlights, backup: renderBackup })[tab](); }
   function route() {
     var h = location.hash.slice(1);
     [].forEach.call(document.querySelectorAll('nav.tabs a'), function (a) { a.classList.remove('on'); });
     if (h.indexOf('c=') === 0) { renderShared(h.slice(2)); return; }
-    tab = { bookmarks: 1, collections: 1, notes: 1, backup: 1 }[h] ? h : 'bookmarks';
+    tab = { bookmarks: 1, collections: 1, notes: 1, highlights: 1, backup: 1 }[h] ? h : 'bookmarks';
     document.querySelector('nav.tabs a[data-tab="' + tab + '"]').classList.add('on');
     render();
   }

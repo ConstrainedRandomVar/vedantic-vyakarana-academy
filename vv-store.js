@@ -9,11 +9,12 @@
 //     records are listed as plain cards (title · excerpt · note · link), never parsed;
 //   • unknown fields / unknown record kinds are preserved untouched (forward compatibility), never dropped.
 //
-// API: window.VVStore — bookmarks · collections · notes · history · prefs · folds · exportAll/importAll · share.
+// API: window.VVStore — bookmarks · collections · notes · highlights · history · prefs · folds · exportAll/importAll · share ·
+//      tombstones + merge (for the optional Google-Drive sync, vv-sync.js — the reader's OWN Drive; 2026-10-21).
 (function (root) {
   'use strict';
   var NS = 'vvd1:';
-  var K = { bm: NS + 'bookmarks', col: NS + 'collections', notes: NS + 'notes', hist: NS + 'searchHistory', prefs: NS + 'prefs', site: NS + 'lastSite' };
+  var K = { bm: NS + 'bookmarks', col: NS + 'collections', notes: NS + 'notes', hl: NS + 'highlights', tomb: NS + 'tombstones', hist: NS + 'searchHistory', prefs: NS + 'prefs', site: NS + 'lastSite' };
   var HIST_MAX = 30;
 
   // ---- site identity (first path segment on github.io; anything else = local dev) ----
@@ -53,6 +54,8 @@
   function now() { return new Date().toISOString(); }
   function absUrl(u) { try { return new URL(u, root.location && root.location.href).href; } catch (e) { return u; } }
   function db(key) { var d = load(key, null); if (!d || typeof d !== 'object') d = { v: 1, items: {} }; if (!d.items) d.items = {}; return d; }
+  // deletions leave a TOMBSTONE (kind:id → time) so a sync can tell "deleted here" from "never seen here" (vv-sync.js merge)
+  function tomb(kind, id) { var d = db(K.tomb); d.items[kind + ':' + id] = now(); save(K.tomb, d); }
 
   // ---- bookmarks: { id, site, url, title, ref, excerpt, note, src:'reading'|'search', query, created, updated } ----
   var bookmarks = {
@@ -71,9 +74,9 @@
     },
     update: function (id, patch) { var d = db(K.bm); if (!d.items[id]) return; Object.assign(d.items[id], patch, { updated: now() }); save(K.bm, d); },
     remove: function (id) {
-      var d = db(K.bm); delete d.items[id]; save(K.bm, d);
+      var d = db(K.bm); delete d.items[id]; save(K.bm, d); tomb('bookmarks', id);
       var c = db(K.col), touched = false;
-      for (var k in c.items) { var it = c.items[k].items || []; var j = it.indexOf(id); if (j >= 0) { it.splice(j, 1); touched = true; } }
+      for (var k in c.items) { var it = c.items[k].items || []; var j = it.indexOf(id); if (j >= 0) { it.splice(j, 1); c.items[k].updated = now(); touched = true; } }
       if (touched) save(K.col, c);
     },
   };
@@ -85,7 +88,7 @@
     byName: function (name) { var d = db(K.col); for (var k in d.items) if (d.items[k].name === name) return d.items[k]; return null; },
     create: function (name) { var ex = collections.byName(name); if (ex) return ex.id; var d = db(K.col), id = uid('c'); d.items[id] = { id: id, name: name, items: [], created: now(), updated: now() }; save(K.col, d); return id; },
     rename: function (id, name) { var d = db(K.col); if (!d.items[id]) return; d.items[id].name = name; d.items[id].updated = now(); save(K.col, d); },
-    remove: function (id) { var d = db(K.col); delete d.items[id]; save(K.col, d); },   // bookmarks themselves stay
+    remove: function (id) { var d = db(K.col); delete d.items[id]; save(K.col, d); tomb('collections', id); },   // bookmarks themselves stay
     addItem: function (id, bid) { var d = db(K.col), c = d.items[id]; if (!c) return; c.items = c.items || []; if (c.items.indexOf(bid) < 0) { c.items.push(bid); c.updated = now(); save(K.col, d); } },
     removeItem: function (id, bid) { var d = db(K.col), c = d.items[id]; if (!c) return; var j = (c.items || []).indexOf(bid); if (j >= 0) { c.items.splice(j, 1); c.updated = now(); save(K.col, d); } },
     move: function (id, bid, to) { var d = db(K.col), c = d.items[id]; if (!c) return; var j = c.items.indexOf(bid); if (j < 0) return; c.items.splice(j, 1); c.items.splice(Math.max(0, Math.min(to, c.items.length)), 0, bid); c.updated = now(); save(K.col, d); },
@@ -100,13 +103,35 @@
     get: function (key) { return db(K.notes).items[key] || null; },
     set: function (key, rec) {
       var d = db(K.notes);
-      if (!rec.text || !String(rec.text).trim()) { if (d.items[key]) { delete d.items[key]; save(K.notes, d); } return; }
+      if (!rec.text || !String(rec.text).trim()) { if (d.items[key]) { delete d.items[key]; save(K.notes, d); tomb('notes', key); } return; }
       d.items[key] = Object.assign({}, d.items[key] || {}, rec, { key: key, site: rec.site || SITE, url: absUrl(rec.url), updated: now() });
       save(K.notes, d);
     },
-    remove: function (key) { var d = db(K.notes); delete d.items[key]; save(K.notes, d); },
+    remove: function (key) { var d = db(K.notes); delete d.items[key]; save(K.notes, d); tomb('notes', key); },
     list: function () { var d = db(K.notes), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.updated || '').localeCompare(x.updated || ''); }); },
     onPage: function (page) { return notes.list().filter(function (n) { return n.site === SITE && n.page === page; }); },
+  };
+
+  // ---- passage highlights (Harsha 2026-10-21): a marked PORTION of text + optional note + tags. No colours — one fixed style.
+  // { id, site, url (page, absolute, no #), page, ref, title, quote, prefix, suffix, text, note, tags:[], placed, created, updated }
+  // quote/prefix/suffix = the ORIGINAL (Devanāgarī) text with whitespace/ZWJ removed, snapped to whole text nodes (vv-reader.js);
+  // placed = did the last page visit find the words (false → listed as "unplaced", never painted on a guess). ----
+  var highlights = {
+    list: function () { var d = db(K.hl), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.created || '').localeCompare(x.created || ''); }); },
+    get: function (id) { return db(K.hl).items[id] || null; },
+    onPage: function (page) { return highlights.list().filter(function (h) { return h.site === SITE && h.page === page; }); },
+    add: function (h) {
+      var d = db(K.hl), id = uid('h'), url = absUrl(h.url);
+      d.items[id] = Object.assign({ tags: [], note: '' }, h, { id: id, url: url, site: h.site || siteOf(url), created: now(), updated: now() });
+      save(K.hl, d); return id;
+    },
+    update: function (id, patch) { var d = db(K.hl); if (!d.items[id]) return; Object.assign(d.items[id], patch, { updated: now() }); save(K.hl, d); },
+    setPlaced: function (id, ok) { var d = db(K.hl); if (!d.items[id] || d.items[id].placed === ok) return; d.items[id].placed = ok; save(K.hl, d); },   // status only — not an edit
+    remove: function (id) { var d = db(K.hl); delete d.items[id]; save(K.hl, d); tomb('highlights', id); },
+    tags: function () {   // every tag in use → count, most used first (the tag picker + library filter)
+      var c = {}; highlights.list().forEach(function (h) { (h.tags || []).forEach(function (t) { c[t] = (c[t] || 0) + 1; }); });
+      return Object.keys(c).sort(function (a, b) { return c[b] - c[a] || a.localeCompare(b); }).map(function (t) { return { tag: t, n: c[t] }; });
+    },
   };
 
   // ---- search history (newest first, max 30, deduped by query+filters) : { q, filters, label, ts } ----
@@ -150,18 +175,44 @@
 
   // ---- export / import (backup + device transfer). Import MERGES: same id → newer `updated` wins; nothing deleted ----
   function exportAll() {
-    return { kind: 'vvd-export', v: 1, exported: now(), bookmarks: db(K.bm), collections: db(K.col), notes: db(K.notes), searchHistory: history.list() };
+    return { kind: 'vvd-export', v: 1, exported: now(), bookmarks: db(K.bm), collections: db(K.col), notes: db(K.notes), highlights: db(K.hl), tombstones: db(K.tomb), searchHistory: history.list() };
   }
   function importAll(o) {
     if (!o || o.kind !== 'vvd-export') throw new Error('not a अध्ययन-सहकारी export file');
     var n = 0;
-    [['bookmarks', K.bm], ['collections', K.col], ['notes', K.notes]].forEach(function (p) {
+    [['bookmarks', K.bm], ['collections', K.col], ['notes', K.notes], ['highlights', K.hl]].forEach(function (p) {
       var src = (o[p[0]] || {}).items || {}, d = db(p[1]);
       for (var k in src) { var a = d.items[k], b = src[k]; if (!a || (b.updated || '') > (a.updated || '')) { d.items[k] = b; n++; } }
       save(p[1], d);
     });
     (o.searchHistory || []).slice().reverse().forEach(function (e) { history.push(e); });
     return n;
+  }
+
+  // ---- SYNC MERGE (vv-sync.js; pure — unit-tested in Node). Two snapshots {bookmarks, collections, notes, highlights,
+  // tombstones} → one: per record the newer `updated` wins; tombstones union (latest time); a record is dropped when its
+  // tombstone is at/after its `updated` (a later edit on another device revives it). Unknown fields ride along untouched. ----
+  var SYNC_KINDS = ['bookmarks', 'collections', 'notes', 'highlights'];
+  function syncSnapshot() { return { kind: 'vvd-sync', v: 1, bookmarks: db(K.bm), collections: db(K.col), notes: db(K.notes), highlights: db(K.hl), tombstones: db(K.tomb) }; }
+  function mergeData(a, b) {
+    a = a || {}; b = b || {};
+    var out = { kind: 'vvd-sync', v: 1 }, T = {};
+    [a, b].forEach(function (x) { var t = (x.tombstones || {}).items || {}; for (var k in t) if (!T[k] || t[k] > T[k]) T[k] = t[k]; });
+    out.tombstones = { v: 1, items: T };
+    SYNC_KINDS.forEach(function (kind) {
+      var A = (a[kind] || {}).items || {}, B = (b[kind] || {}).items || {}, R = {}, k;
+      for (k in A) R[k] = A[k];
+      for (k in B) if (!R[k] || (B[k].updated || '') > (R[k].updated || '')) R[k] = B[k];
+      for (k in R) { var ts = T[kind + ':' + k]; if (ts && ts >= (R[k].updated || '')) delete R[k]; }
+      out[kind] = { v: 1, items: R };
+    });
+    return out;
+  }
+  function applySnapshot(m) {   // write a merged snapshot back (only the stores that changed → fewer storage events)
+    [['bookmarks', K.bm], ['collections', K.col], ['notes', K.notes], ['highlights', K.hl], ['tombstones', K.tomb]].forEach(function (p) {
+      var nv = m[p[0]] || { v: 1, items: {} };
+      if (JSON.stringify(db(p[1]).items) !== JSON.stringify(nv.items || {})) save(p[1], { v: 1, items: nv.items || {} });
+    });
   }
 
   // ---- share links: a collection → a self-contained snapshot in the URL fragment (deflate + base64url; no server) ----
@@ -197,9 +248,13 @@
 
   root.VVStore = {
     NS: NS, SITE: SITE, SITE_NAMES: SITE_NAMES, siteOf: siteOf, siteBase: siteBase, rememberSite: rememberSite, lastSite: lastSite,
-    bookmarks: bookmarks, collections: collections, notes: notes, history: history, prefs: prefs, folds: folds,
+    bookmarks: bookmarks, collections: collections, notes: notes, highlights: highlights, history: history, prefs: prefs, folds: folds,
+    syncSnapshot: syncSnapshot, mergeData: mergeData, applySnapshot: applySnapshot,
     exportAll: exportAll, importAll: importAll, encodeShare: encodeShare, decodeShare: decodeShare, importShared: importShared, snapshot: snapshot,
     onChange: onChange,
   };
+  // OPTIONAL Google-Drive sync (vv-sync.js, the reader's OWN Drive): loaded only on browsers where the reader switched it on
+  // (⚙ Settings → Sync). Not on the shared search site (it has no vv-sync.js), never in Node.
+  if (root.VV_SYNC_ENABLED && root.document && SITE !== 'search') { try { if (root.localStorage.getItem('vvsync:on') === '1') { var sc = root.document.createElement('script'); sc.src = 'vv-sync.js'; sc.async = true; (root.document.head || root.document.documentElement).appendChild(sc); } } catch (e) {} }
   if (typeof module !== 'undefined' && module.exports) module.exports = root.VVStore;
 })(typeof window !== 'undefined' ? window : globalThis);

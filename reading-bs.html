@@ -583,6 +583,8 @@ function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.class
 function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
     if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
+  if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){var e2=byKey(sk);   // lazy lane: load, then land
+      if(e2){e2.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e2);if(window.__vvJump)window.__vvJump(ref,sk);}});return;}
   if(cat==='mk'||cat==='bk'||cat==='tk')el=byKey(sk);
   else if(cat==='pi'){var vv1=document.getElementById('v-'+ref);el=vv1?vv1.querySelector('.bh .w[data-ti="'+sk+'"]'):null;}
   else if(cat==='mq'){ var tt=mqTarget(sk);                        // intro cross-verse quote
@@ -609,7 +611,7 @@ function show(t){
       if(gb&&gb.g)hh+='<div class="row"><span class="lb">व्याकरणम्</span> '+gb.g+'</div>';
       if(pl&&pl.length)hh+='<div class="peel">'+pl.join('<br>')+'</div>';
       base=hh;}}
-  else if(t.hasAttribute('data-g')&&GT[(t.querySelector('.bhsj')||t).textContent]){var tw=(t.querySelector('.bhsj')||t).textContent,gt=GT[tw];   // ṭīkā word (Tamal Maharaj's gloss) — same card shell, no kāraka (#9b)
+  else if(t.hasAttribute('data-g')&&(t.getAttribute('data-g')?(window.GTL&&GTL[t.getAttribute('data-g')]||{}):GT)[(t.querySelector('.bhsj')||t).textContent]){var tw=(t.querySelector('.bhsj')||t).textContent,gt=(t.getAttribute('data-g')?GTL[t.getAttribute('data-g')]:GT)[tw];   // ṭīkā word (Tamal Maharaj's gloss) — same card shell, no kāraka (#9b)
     var ht='<div class="tw">'+tw+'</div>';
     if(gt[1])ht+='<div class="tm">'+gt[1]+'</div>';
     if(gt[2])ht+='<div class="row"><span class="lb">पदच्छेद</span> '+gt[2]+'</div>';
@@ -743,6 +745,7 @@ document.getElementById('tog').onclick=function(){
     var sectionGran=!!(curBtn&&curBtn.getAttribute('data-gran')==='section');
     document.body.classList.toggle('parshve',place==='side'&&!!side);
     if(side)document.body.setAttribute('data-side',side);else document.body.removeAttribute('data-side');
+    if(side&&window.__vvLane)window.__vvLane(side);   // a lazy lane loads the first time it is chosen
     sideBtns.forEach(function(b){b.classList.toggle('on',(b.dataset.side||'')===(side||''));});
     placeBtns.forEach(function(b){
       if(b.dataset.place==='inter')b.textContent=sectionGran?'अधः':'अन्तः';

@@ -233,6 +233,9 @@
     var sel = document.getElementById('scriptpick'); if (sel && sel.value !== m) sel.value = m;
   }
 
+  // the ORIGINAL (Devanāgarī) text of a text node whatever script is showing — vv-reader.js highlights anchor on it (2026-10-21)
+  window.VVTranslit = { orig: function (n) { return orig.has(n) ? orig.get(n) : n.nodeValue; }, mode: function () { return mode; } };
+
   // ---- picker (dropdown, next to the ◐ theme button) ----
   function mount() {
     var st = document.createElement('style');

@@ -139,6 +139,12 @@
     if (side && window.__vvView && window.__vvView.apply) {
       var cur = window.__vvView.get && window.__vvView.get();
       if (!cur || cur.side !== side || cur.place !== 'inter') try { window.__vvView.apply(side, 'inter'); } catch (e) {}
+      // a LAZY lane (Gītā verse commentaries, 2026-10-21) is not in the page until loaded → load it, then land (re-enter once)
+      if (window.__vvLane && document.querySelector('.lzl[data-lz^="' + side + ':"]') && !opts.__laneWaited) {
+        var o2 = {}; for (var k in opts) o2[k] = opts[k]; o2.__laneWaited = true;
+        window.__vvLane(side).then(function () { run(o2); });
+        return;
+      }
       var root = scope || document.body, lanes = root.querySelectorAll('.tk-inline[data-side="' + side + '"]');
       var tryLanes = function () {
         for (var i = 0; i < lanes.length; i++) {

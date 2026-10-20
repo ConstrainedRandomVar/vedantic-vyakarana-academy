@@ -127,6 +127,19 @@
     + '.vvr-nb{float:right;font-size:13px;line-height:1;border:0;background:transparent;cursor:pointer;padding:2px 4px;opacity:.85}'
     + '[data-vv-brand]{display:inline-flex;align-items:center;gap:5px}.vv-logo{height:1.3em;width:auto;flex:none}'
     + '[data-vv-brand]:hover .rn-bf,[data-vv-brand]:hover .rn-bs,a[data-vv-brand]:hover{text-decoration:underline;text-underline-offset:3px}'
+    // passage highlights: ONE fixed style — a lime wash + ✎ mark. Lime (≈80–100°) is a FREE palette region (CLAUDE.md 9c audit
+    // 2026-10-21): clear of the search-landing yellow (48°), role/brand ambers (17–45°), सिद्धान्तः green (142°), every blue/violet/pink.
+    + ':root{--hl-wash:#ecfccb;--hl-mark:#4d7c0f}html[data-theme=dark]{--hl-wash:rgba(163,230,53,.2);--hl-mark:#a3e635}'
+    + '@media(prefers-color-scheme:dark){html:not([data-theme=light]){--hl-wash:rgba(163,230,53,.2);--hl-mark:#a3e635}}'
+    + 'mark.vvh{background:var(--hl-wash);color:inherit;border-radius:2px;padding:0;box-shadow:inset 0 -1px 0 var(--hl-mark)}'
+    + '.vvh-pin{cursor:pointer}.vvh-pin::before{content:"✎";font:700 10px/1 system-ui,sans-serif;color:#fff;background:var(--hl-mark);border-radius:3px;padding:1px 3px;margin-right:2px;vertical-align:super}'
+    + 'html[data-theme=dark] .vvh-pin::before{color:#1a2e05}'
+    + '.vvr-sel{display:flex;gap:6px}.vvr-sel button{font:13px system-ui,sans-serif;background:var(--brand,#d97706);color:#fff;border:0;border-radius:8px;padding:4px 9px;cursor:pointer}'
+    + '.vvr-sel button.hl{background:var(--hl-mark)}html[data-theme=dark] .vvr-sel button.hl{color:#1a2e05}'
+    + '.vvr-pop .vvh-q{font-family:"Noto Serif Devanagari",serif;font-size:14px;background:var(--hl-wash);border-radius:6px;padding:4px 7px;margin:0 0 6px;max-height:5.5em;overflow:auto}'
+    + '.vvr-pop textarea{width:100%;box-sizing:border-box;min-height:60px;font:14px/1.45 system-ui,sans-serif;border:1px solid var(--line,var(--rule,#ccc));border-radius:6px;padding:5px;background:transparent;color:inherit}'
+    + '.vvh-chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}.vvh-chip{font:12px system-ui,sans-serif;border:1px solid var(--hl-mark);border-radius:10px;padding:1px 7px;background:transparent;color:inherit;cursor:pointer}'
+    + '.vvh-chip.on{background:var(--hl-wash)}.vvh-chip.sug{opacity:.75;border-style:dashed}'
     + '.vvr-hint{font:13px/1.45 system-ui,sans-serif;color:var(--muted,#6b6455);margin:-4px 0 12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}'
     + '.vvr-hint a{color:var(--brand,#b45309)}.vvr-hint-x{border:0;background:transparent;color:inherit;cursor:pointer;font-size:12px;padding:0 4px;margin-left:2px}'
     + '.vvr-lnote{margin-left:6px;font:11px system-ui,sans-serif;color:var(--brand,#b45309);text-decoration:none;border:1px solid var(--line,#ddd);border-radius:6px;padding:0 5px}'
@@ -195,35 +208,167 @@
   // ---- selection ☆ : bookmark exactly the passage the reader selected (links back via ?hl= highlighter in sync.js) ----
   var selBtn = null;
   function hideSel() { if (selBtn) { selBtn.remove(); selBtn = null; } }
-  // Quiet mode (⚙, localStorage vv_quiet_hover — shared with peek.js's word cards): no selection prompt while screen-sharing,
-  // unless Cmd/Ctrl/Alt is held as the selection ends. Mouse selections only — phones and tablets are unaffected (as peek.js).
-  function quietSel(e) {
-    var on = true; try { on = localStorage.getItem('vv_quiet_hover') !== '0'; } catch (x) {}   // quiet by default (2026-10-21)
-    return on && e && e.type === 'mouseup' && !(e.metaKey || e.ctrlKey || e.altKey);
+  // The selection menu (🖍 highlight · ☆ bookmark) NEVER pops up on its own after a mouse selection (Harsha 2026-10-21, option A):
+  // an instructor selecting text while screen-sharing must not see it. It opens on a RIGHT-CLICK of the selection, or when
+  // Cmd/Ctrl/Alt is held as the selection ends. Touch: a long-press selection shows it (no Zoom/hover concern there).
+  function selInfo() {
+    var sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+    var txt = sel.toString().replace(/\s+/g, ' ').trim();
+    if (txt.length < 2 || txt.length > 2000) return null;
+    var range = sel.getRangeAt(0), host = range.commonAncestorContainer;
+    host = host.nodeType === 3 ? host.parentNode : host;
+    if (!host || host.closest('.vvr-drawer,.vvr-pop,input,textarea,select,#reading-nav,#tip,.gtip')) return null;
+    return { range: range, txt: txt };
+  }
+  function showSelMenu(info, at) {   // at = {x, y} page coords, else under the selection
+    hideSel();
+    var range = info.range, txt = info.txt, r = range.getBoundingClientRect(); if (!at && (!r || (!r.width && !r.height))) return;
+    selBtn = el('div', { class: 'vvr-sel', role: 'toolbar' }, '<button type="button" class="hl" title="Highlight this passage — then add a note or tags">🖍 highlight</button><button type="button" class="bm" title="Bookmark this passage">☆ bookmark</button>');
+    selBtn.style.top = (at ? at.y + 4 : window.scrollY + r.bottom + 6) + 'px';
+    selBtn.style.left = Math.max(window.scrollX + 8, Math.min(at ? at.x : window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - 230)) + 'px';
+    selBtn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    selBtn.querySelector('.hl').addEventListener('click', function () {
+      var res = createHighlight(range), at2 = selBtn; selBtn = null;
+      if (res.err) { at2.innerHTML = '<button type="button" disabled>' + esc(res.err) + '</button>'; setTimeout(function () { at2.remove(); }, 2200); return; }
+      try { window.getSelection().removeAllRanges(); } catch (x) {}
+      var pin = document.querySelector('.vvh-pin[data-hid="' + res.id + '"]'); editHighlight(res.id, pin || at2); at2.remove();
+      hintUsed();
+    });
+    selBtn.querySelector('.bm').addEventListener('click', function () {
+      var ref = refOfNode(range.startContainer);
+      var hl = txt.split(' ').slice(0, 8).join(' ');
+      var bid = S.bookmarks.add({ url: PAGE + '?hl=' + encodeURIComponent(hl) + (ref ? '#v-' + ref : ''), title: textName() + (ref ? ' ' + ref : ''), ref: ref, excerpt: txt.slice(0, 400), src: 'reading' });
+      var at2 = selBtn; selBtn = null; collectPopover(bid, at2, true); at2.remove(); refreshStar();
+    });
+    document.body.appendChild(selBtn);
   }
   function onSelectionEnd(e) {
-    if (quietSel(e)) { hideSel(); return; }
-    setTimeout(function () {
-      var sel = window.getSelection(); hideSel();
-      if (!sel || sel.isCollapsed || !sel.rangeCount) return;
-      var txt = sel.toString().replace(/\s+/g, ' ').trim();
-      if (txt.length < 3 || txt.length > 2000) return;
-      var range = sel.getRangeAt(0), host = range.commonAncestorContainer;
-      host = host.nodeType === 3 ? host.parentNode : host;
-      if (!host || host.closest('.vvr-drawer,.vvr-pop,input,textarea,select,#reading-nav,#tip,.gtip')) return;
-      var r = range.getBoundingClientRect(); if (!r || (!r.width && !r.height)) return;
-      selBtn = el('button', { class: 'vvr-sel', type: 'button', title: 'Bookmark this passage' }, '☆ bookmark passage');
-      selBtn.style.top = (window.scrollY + r.bottom + 6) + 'px';
-      selBtn.style.left = (window.scrollX + Math.max(8, Math.min(r.left, document.documentElement.clientWidth - 170))) + 'px';
-      selBtn.addEventListener('mousedown', function (e) { e.preventDefault(); });
-      selBtn.addEventListener('click', function () {
-        var ref = refOfNode(range.startContainer);
-        var hl = txt.split(' ').slice(0, 8).join(' ');
-        var bid = S.bookmarks.add({ url: PAGE + '?hl=' + encodeURIComponent(hl) + (ref ? '#v-' + ref : ''), title: textName() + (ref ? ' ' + ref : ''), ref: ref, excerpt: txt.slice(0, 400), src: 'reading' });
-        var at = selBtn; selBtn = null; collectPopover(bid, at, true); at.remove(); refreshStar();
+    var mouse = e && e.type === 'mouseup';
+    if (mouse && e.button === 2) return;                                         // right-click: the contextmenu handler decides
+    if (mouse && !(e.metaKey || e.ctrlKey || e.altKey)) { if (selBtn && !(e.target.closest && e.target.closest('.vvr-sel'))) hideSel(); return; }
+    setTimeout(function () { var info = selInfo(); if (info) showSelMenu(info); else hideSel(); }, 0);
+  }
+  function onContextMenu(e) {   // right-click ON the selected text → our menu instead of the browser's; anywhere else → the browser's
+    var info = selInfo(); if (!info) return;
+    var t = e.target; if (!(t && (info.range.intersectsNode(t) || (t.nodeType === 1 && t.contains(info.range.commonAncestorContainer))))) return;
+    e.preventDefault(); showSelMenu(info, { x: e.pageX, y: e.pageY });
+  }
+
+  // ---- 🖍 PASSAGE HIGHLIGHTS (Harsha 2026-10-21): a marked portion of text + optional note + tags, in ONE fixed style.
+  // Anchor = verse (#v-<ref>) + the exact ORIGINAL text (Devanāgarī via translit.js VVTranslit.orig, whatever script is showing)
+  // snapped to whole text nodes + a little context either side. Painting wraps those same nodes in <mark class="vvh"> (the nodes
+  // themselves move, so translit and the gloss cards keep working). Not found (text changed in a rebuild) → never painted on a
+  // guess: the record is marked unplaced and the library lists it (the CLAUDE.md 9e spirit). Data: VVStore.highlights. ----
+  function origText(n) { return (window.VVTranslit && VVTranslit.orig) ? VVTranslit.orig(n) : n.nodeValue; }
+  function canon(x) { return String(x || '').replace(/[\s‌‍]+/g, ''); }
+  var HL_SKIP = '#tip,.gtip,.vvr-pop,.vvr-drawer,.vvr-sel,.vvr-hint,#vvs,.vvh-pin,script,style,.legend';
+  function verseOf(node) { var e = node && (node.nodeType === 3 ? node.parentElement : node); return e && e.closest ? e.closest('[id^="v-"]') : null; }
+  function textNodes(root) {   // visible text nodes in document order (whitespace-only ones included — they keep the wash continuous)
+    var vis = new Map();
+    function shown(e) { if (!e || e === root.parentNode) return true; if (vis.has(e)) return vis.get(e); var v = getComputedStyle(e).display !== 'none' && shown(e.parentElement); vis.set(e, v); return v; }
+    // a bhāṣya word carries a joined copy (.bhsj) and a split पद copy (.bhsp), one of them hidden by the view: ALWAYS anchor on the
+    // joined copy (whichever view is showing), so a highlight made in पद view still paints in सन्धि view and vice versa
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n, out = [];
+    while ((n = w.nextNode())) {
+      var p = n.parentElement; if (!p || p.closest(HL_SKIP) || p.closest('.bhsp')) continue;
+      var j = p.closest('.bhsj');
+      if (!shown(j ? (j.parentElement || p) : p)) continue;
+      out.push(n);
+    }
+    return out;
+  }
+  function hitsRange(range, n) { var j = n.parentElement && n.parentElement.closest('.bhsj'); return range.intersectsNode(j ? (j.parentElement || n) : n); }
+  function createHighlight(range) {
+    var v = verseOf(range.startContainer);
+    if (!v) return { err: 'highlights work inside a verse' };
+    if (verseOf(range.endContainer) !== v) return { err: 'a highlight stays within one verse' };
+    var all = textNodes(v), i = -1, j = -1;
+    for (var k = 0; k < all.length; k++) if (hitsRange(range, all[k]) && canon(all[k].nodeValue)) { if (i < 0) i = k; j = k; }
+    if (i < 0) return { err: 'nothing to highlight here' };
+    var seg = all.slice(i, j + 1), quote = canon(seg.map(origText).join(''));
+    if (quote.length < 2) return { err: 'select a little more text' };
+    var pre = canon(all.slice(Math.max(0, i - 12), i).map(origText).join('')).slice(-40), post = canon(all.slice(j + 1, j + 13).map(origText).join('')).slice(0, 40);
+    var ref = v.id.slice(2);
+    var id = S.highlights.add({ url: PAGE, page: PAGE, ref: ref, title: textName() + ' ' + ref, quote: quote, prefix: pre, suffix: post,
+      text: seg.map(origText).join('').replace(/\s+/g, ' ').trim().slice(0, 400), placed: true });
+    paintOne(S.highlights.get(id));
+    return { id: id };
+  }
+  function paintOne(h) {
+    var v = document.getElementById('v-' + h.ref); if (!v) return false;
+    var all = textNodes(v), T = all.map(function (n) { return canon(origText(n)); }), best = null;
+    for (var i = 0; i < all.length; i++) {
+      if (!T[i] || h.quote.indexOf(T[i]) !== 0) continue;
+      var acc = '', j = i;
+      for (; j < all.length && acc.length < h.quote.length; j++) { acc += T[j]; if (h.quote.indexOf(acc) !== 0) break; }
+      if (acc !== h.quote) continue;
+      // score = how much of the stored context still matches on each side (several occurrences in a verse → the right one)
+      var before = T.slice(Math.max(0, i - 12), i).join(''), after = T.slice(j, j + 12).join(''), sc = 0;
+      for (var a = 1; a <= Math.min(before.length, (h.prefix || '').length); a++) { if (before.slice(-a) === h.prefix.slice(-a)) sc = a; else break; }
+      for (var b = 1; b <= Math.min(after.length, (h.suffix || '').length); b++) { if (after.slice(0, b) === h.suffix.slice(0, b)) sc++; else break; }
+      if (!best || sc > best.sc) best = { i: i, j: j - 1, sc: sc };
+    }
+    if (!best) return false;
+    var first = null;
+    for (var k = best.i; k <= best.j; k++) {
+      var n = all[k], m = document.createElement('mark'); m.className = 'vvh'; m.setAttribute('data-hid', h.id);
+      n.parentNode.insertBefore(m, n); m.appendChild(n); if (!first) first = m;
+      var jj = m.parentElement && m.parentElement.closest('.bhsj'), sp = jj && jj.nextElementSibling;   // wash the पद copy too
+      if (sp && sp.classList.contains('bhsp') && !sp.querySelector('mark.vvh')) { var m2 = document.createElement('mark'); m2.className = 'vvh'; m2.setAttribute('data-hid', h.id); while (sp.firstChild) m2.appendChild(sp.firstChild); sp.appendChild(m2); }
+    }
+    var pin = el('span', { class: 'vvh-pin', 'data-hid': h.id, role: 'button', tabindex: '0', title: (h.note ? h.note + '\n' : '') + ((h.tags || []).length ? '#' + h.tags.join(' #') + '\n' : '') + 'highlight — click to add a note / tags' });
+    var at = (first.parentElement && first.parentElement.closest('.bhsj')) ? first.parentElement.closest('.bhsj').parentElement : first;   // outside both copies → visible in either view
+    at.parentNode.insertBefore(pin, at);
+    return true;
+  }
+  function unpaintAll() {
+    [].forEach.call(document.querySelectorAll('.vvh-pin'), function (p) { p.remove(); });
+    [].forEach.call(document.querySelectorAll('mark.vvh'), function (m) { var p = m.parentNode; while (m.firstChild) p.insertBefore(m.firstChild, m); p.removeChild(m); });
+  }
+  var paintRetry = null;
+  function paintAll() {
+    unpaintAll();
+    var miss = [];
+    S.highlights.onPage(PAGE).forEach(function (h) { if (paintOne(h)) S.highlights.setPlaced(h.id, true); else miss.push(h.id); });
+    // commentary lanes can fill in after load → retry before calling a highlight "unplaced"
+    clearTimeout(paintRetry);
+    if (miss.length) paintRetry = setTimeout(function () {
+      miss.forEach(function (id) { var h = S.highlights.get(id); if (!h || document.querySelector('.vvh-pin[data-hid="' + id + '"]')) return; S.highlights.setPlaced(id, paintOne(h)); });
+    }, 2500);
+  }
+  function editHighlight(id, anchor) {
+    var h = S.highlights.get(id); if (!h) return;
+    var tagsNow = function () { return (S.highlights.get(id) || {}).tags || []; };
+    var chips = function () {
+      var mine = tagsNow(), sug = S.highlights.tags().map(function (t) { return t.tag; }).filter(function (t) { return mine.indexOf(t) < 0; }).slice(0, 10);
+      return mine.map(function (t) { return '<button class="vvh-chip on" data-t="' + esc(t) + '" title="remove this tag">#' + esc(t) + ' ×</button>'; }).join('')
+        + sug.map(function (t) { return '<button class="vvh-chip sug" data-add="' + esc(t) + '" title="add this tag">+ ' + esc(t) + '</button>'; }).join('');
+    };
+    openPop(anchor, '<h4>🖍 Highlight · ' + esc(h.title || h.ref) + '</h4><div class="vvh-q">' + esc(h.text || '') + '</div>'
+      + '<textarea placeholder="Note (optional) — saved as you type"></textarea>'
+      + '<div class="row"><input type="text" placeholder="add a tag, then Enter (e.g. for class)"></div><div class="vvh-chips"></div>'
+      + '<div class="row" style="justify-content:space-between"><button class="vvr-mini" data-act="del">remove highlight</button><a href="library.html#highlights">All highlights →</a><button class="vvr-mini" data-act="ok">Done</button></div>', function (p) {
+      var ta = p.querySelector('textarea'), inp = p.querySelector('input'), box = p.querySelector('.vvh-chips'), t = null;
+      ta.value = h.note || ''; box.innerHTML = chips();
+      ta.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { S.highlights.update(id, { note: ta.value.trim() }); }, 350); });
+      inp.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return; e.preventDefault();
+        var v = inp.value.trim().replace(/^#/, ''); if (!v) return;
+        var cur = tagsNow(); if (cur.indexOf(v) < 0) S.highlights.update(id, { tags: cur.concat([v]) }); inp.value = ''; box.innerHTML = chips();
       });
-      document.body.appendChild(selBtn);
-    }, 0);
+      box.addEventListener('click', function (e) {
+        var d = e.target.getAttribute('data-t'), a = e.target.getAttribute('data-add');
+        if (d != null) S.highlights.update(id, { tags: tagsNow().filter(function (x) { return x !== d; }) });
+        if (a != null) S.highlights.update(id, { tags: tagsNow().concat([a]) });
+        box.innerHTML = chips();
+      });
+      p.addEventListener('click', function (e) {
+        var act = e.target.getAttribute && e.target.getAttribute('data-act');
+        if (act === 'del') { S.highlights.remove(id); closePop(); }
+        else if (act === 'ok') { clearTimeout(t); S.highlights.update(id, { note: ta.value.trim() }); closePop(); }
+      });
+    });
   }
 
   // ---- 📝 study-notes drawer ----
@@ -331,7 +476,7 @@
     if (n >= 5) { hintUsed(); return; }
     var h1 = document.querySelector('h1'); if (!h1) return;
     S.prefs.set('hint:grammar-n', n + 1);
-    hintEl = el('div', { class: 'vvr-hint' }, (touch ? 'Tap a word to see its grammar' : 'Hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) over a word to see its grammar')
+    hintEl = el('div', { class: 'vvr-hint' }, (touch ? 'Tap a word to see its grammar · long-press to select and 🖍 highlight' : 'Hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) over a word to see its grammar · select words and <b>right-click</b> to 🖍 highlight')
       + ' · <a href="#" class="vvr-hint-set">⚙ for reading options</a> <button class="vvr-hint-x" type="button" aria-label="Dismiss">✕</button>');
     var after = (h1.nextElementSibling && /\bsub\b/.test(h1.nextElementSibling.className)) ? h1.nextElementSibling : h1;
     after.parentNode.insertBefore(hintEl, after.nextSibling);
@@ -405,9 +550,15 @@
     var t = null;
     window.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(refreshStar, 150); }, { passive: true });
     document.addEventListener('mouseup', onSelectionEnd);
+    document.addEventListener('contextmenu', onContextMenu);
     document.addEventListener('touchend', onSelectionEnd);
     document.addEventListener('selectionchange', function () { var s = window.getSelection(); if (selBtn && (!s || s.isCollapsed)) hideSel(); });
+    paintAll();
+    document.addEventListener('click', function (e) { var p = e.target.closest && e.target.closest('.vvh-pin'); if (p) { e.preventDefault(); e.stopPropagation(); editHighlight(p.getAttribute('data-hid'), p); } }, true);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('vvh-pin')) editHighlight(e.target.getAttribute('data-hid'), e.target); });
+    var hlT = null;
     S.onChange(function (key) {
+      if (key === S.NS + 'highlights') { clearTimeout(hlT); hlT = setTimeout(paintAll, 60); }   // another tab, a sync, an edit
       if (key === S.NS + 'notes') { paintMarkers(); renderOthers(); }
       if (key === S.NS + 'bookmarks') refreshStar();
     });

@@ -17,7 +17,7 @@
   var HIST_MAX = 30;
 
   // ---- site identity (first path segment on github.io; anything else = local dev) ----
-  var SITES = { 'vedantic-vyakarana-academy': 'academy', 'svadhyaya-dipika': 'public', 'sahitya-vyakaranam': 'sahitya', 'prasthanatrayi-search': 'search' };
+  var SITES = { 'vedantic-vyakarana-academy': 'academy', 'adhyayana-sahakari': 'public', 'sahitya-vyakaranam': 'sahitya', 'prasthanatrayi-search': 'search' };
   var SITE_NAMES = { academy: 'अध्ययन-सहकारी', public: 'अध्ययन-सहकारी (public)', sahitya: 'साहित्य-व्याकरणम्', search: 'अन्वेषण · search', local: 'local' };
   function siteOf(href) {
     try {

@@ -184,7 +184,7 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
     }
     else if (act === 'export') {
       var blob = new Blob([JSON.stringify(S.exportAll(), null, 1)], { type: 'application/json' });
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'svadhyaya-dipika-library-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'adhyayana-sahakari-library-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
     }
     else if (act === 'nedit') { var n = S.notes.get(nkey); var v2 = prompt('Edit note:', n.text); if (v2 !== null) { S.notes.set(nkey, Object.assign({}, n, { text: v2 })); render(); } }
     else if (act === 'ndel' && confirm('Delete this note?')) { S.notes.remove(nkey); render(); }

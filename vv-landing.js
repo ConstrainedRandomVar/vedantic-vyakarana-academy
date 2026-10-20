@@ -21,7 +21,8 @@
   var COMBINING = /[ािीुूृॄॢेैोौंँः्]/;   // if a match starts on one of these, extend back to its base consonant
   function canon(c) { return VMAP[c] || c; }
   function nrmOf(raw) { var map = [], s = ''; for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || /\s/.test(c)) continue; map.push(i); s += canon(c); } return { s: s, map: map }; }
-  var nterm = '';
+  var nterm = '', rawTerm = '', fold = false;   // fold: relaxedIn's spelling-tolerant pass (nasal+्→ं, avagraha dropped)
+  function foldStr(x) { return x.replace(/ऽ/g, '').replace(/[ङञणनम]्/g, 'ं'); }
   function highlightIn(root) { return highlightAcross(root); }
   // Match over the concatenated VISIBLE text of root and mark each piece. In the bhāṣya every word is its own
   // span (+ a hidden पद copy .bhsp), so a per-text-node match never found a multi-word phrase ("आत्मैवेदमग्र
@@ -37,7 +38,9 @@
     var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), node, s = '', map = [];   // map[k] = [node, offset]
     while ((node = w.nextNode())) {
       var raw = node.nodeValue; if (!raw || !raw.trim() || !shown(node.parentElement) || node.parentElement.closest('#vvs')) continue;   // never the in-text search panel's own snippets
-      for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '\u200c' || c === '\u200d' || /\s/.test(c)) continue; map.push([node, i]); s += canon(c); }
+      for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '\u200c' || c === '\u200d' || /\s/.test(c)) continue;
+        if (fold) { if (c === 'ऽ') continue; if ('ङञणनम'.indexOf(c) >= 0 && raw[i + 1] === '्') { map.push([node, i, i + 2]); s += 'ं'; i++; continue; } }
+        map.push([node, i, i + 1]); s += canon(c); }
     }
     var pos = s.indexOf(nterm); if (pos < 0) return null;
     var first = map[pos];
@@ -45,8 +48,8 @@
     // one [node, start, end] segment per text node touched, wrapped back-to-front so offsets stay valid
     var segs = [], k;
     for (k = pos; k < pos + nterm.length; k++) {
-      var nd = map[k][0], off = map[k][1], sg = segs[segs.length - 1];
-      if (sg && sg[0] === nd) sg[2] = off + 1; else segs.push([nd, off, off + 1]);
+      var nd = map[k][0], off = map[k][1], en = map[k][2], sg = segs[segs.length - 1];
+      if (sg && sg[0] === nd) sg[2] = en; else segs.push([nd, off, en]);
     }
     segs[0][1] = first[1];
     var mark = null;
@@ -67,12 +70,32 @@
     }
     return null;
   }
+  // ?hv=1 — a CITATION link (cite_links hlHref): the quoted words belong to THIS verse only. If they aren't there verbatim,
+  // retry the sandhi-edge forms a quotation loses inside a verse — the initial अ absorbed/elided (‘अन्या…’ in …मन्या… /
+  // …तेऽन्या…) and a final visarga/anusvāra/halant (…वाचः → वाचो) — still inside the verse; never onward, never page-wide.
+  function relaxedIn(root) {
+    // tried in order, first hit wins: the whole quote, then its first 3 words (a long quote often varies later on); each
+    // verbatim, then spelling-folded (म्/ं, avagraha); each with the edge forms — initial अ absorbed/elided, final
+    // visarga/anusvāra/halant, final mātrā (‘…आत्मा’ quoted, …आत्मेति in the verse). Measured over the 2093 citation links
+    // (2026-10-20): 58.5% found verbatim → 76.3% with these, the rest just scroll to the verse as before.
+    var orig = nterm, m = null, tried = {}, words = rawTerm.split(/\s+/).filter(Boolean);
+    var bases = [rawTerm]; if (words.length > 3) bases.push(words.slice(0, 3).join(' '));
+    var edges = function (t) { var a = t.charAt(0) === 'अ' ? t.slice(1) : t, z = function (x) { return x.replace(/[ःं्]$/, ''); },
+      zm = function (x) { return x.replace(/[ािीुूृेैोौःं्]+$/, ''); }; return [t, a, z(t), z(a), zm(t), zm(a)]; };
+    outer: for (var bi = 0; bi < bases.length; bi++) for (var f = 0; f < 2; f++) {
+      var base = nrmOf(bases[bi]).s; if (f) base = foldStr(base);
+      var vs = edges(base);
+      for (var vi = 0; vi < vs.length; vi++) { var v = vs[vi], key = f + '|' + v;
+        if (v.length < 3 || tried[key] || (!f && v === orig)) continue; tried[key] = 1;
+        nterm = v; fold = !!f; m = highlightIn(root); if (m) break outer; } }
+    nterm = orig; fold = false; return m;
+  }
   function clearMarks() {
     document.querySelectorAll('mark.svhl').forEach(function (m) { var p = m.parentNode; while (m.firstChild) p.insertBefore(m.firstChild, m); p.removeChild(m); p.normalize(); });
   }
   // opts: {side, vk, id} — id = the verse element id to search first (else the URL hash); scrollTo(el) overrides scrolling
   function land(t, opts) {
-    opts = opts || {}; nterm = nrmOf(trimTerm(t)).s; if (!nterm) return;
+    opts = opts || {}; rawTerm = trimTerm(t); nterm = nrmOf(rawTerm).s; if (!nterm) return;
     clearMarks(); run(opts);
   }
   window.__vvLand = land;
@@ -140,12 +163,13 @@
     // verses (BG bhāṣya [45,47] anchors to #v-6.45) has its phrase in a later verse of the range, and a
     // whole-page search would stop at the chapter's FIRST occurrence, possibly an earlier verse (2026-10-10).
     // verse known → that verse, then the verses AFTER it (a span block), never the whole page (#9e); no verse → the page
-    var hit = scope ? (highlightIn(scope) || (vn && highlightIn(vn)) || (chapLevel ? null : forwardFrom(scope))) : highlightIn(document.body);
+    var verseOnly = 'hv' in opts ? opts.hv : qs.get('hv') === '1';
+    var hit = scope ? (highlightIn(scope) || (verseOnly ? relaxedIn(scope) : ((vn && highlightIn(vn)) || (chapLevel ? null : forwardFrom(scope))))) : highlightIn(document.body);
     if (hit) setTimeout(function () { scrollEl(hit); }, 60);
     else if (scope) setTimeout(function () { scrollEl(scope); }, 60);
   }
   if (term) {
-    nterm = nrmOf(term).s;
+    rawTerm = term; nterm = nrmOf(term).s;
     if (nterm) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(run, 150); }); else setTimeout(run, 150); }
   }
 })();

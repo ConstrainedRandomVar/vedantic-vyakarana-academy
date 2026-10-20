@@ -41,6 +41,18 @@
  .vy-panel .sec-head{color:#3b4a8a;border-bottom-color:#d3dbef}
  .vy-panel.shut .vy-body{display:none} .vy-panel.shut{padding-bottom:4px} .vy-panel.shut .sec-head{border-bottom:0;margin-bottom:4px}
  .res-sec.shut .res-body{display:none} .res-sec.shut .sec-head{border-bottom:0;margin-bottom:4px}
+ .tools-sec.shut .tools-body{display:none} .tools-sec.shut .sec-head{border-bottom:0;margin-bottom:4px}
+ .fold-group.shut .readgrid{display:none} .fold-group .readgroup-head .sec-fold{font-size:13px}
+ .lane-sub a{color:#b45309}
+ #myStudy .study-counts{font-size:13px;color:#57534e;margin:0 0 8px} #myStudy .study-counts a{color:#b45309;font-weight:600}
+ #myStudy .study-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+ #myStudy .study-col{background:#fff;border:1px solid #e7e2d6;border-radius:10px;padding:8px 10px}
+ #myStudy .study-h{font-size:12px;font-weight:600;color:#7a6a55;margin:0 0 4px}
+ #myStudy .study-row{display:block;text-decoration:none;color:inherit;padding:4px 0;border-top:1px dashed #eee;font-size:13px}
+ #myStudy .study-row:first-of-type{border-top:0} #myStudy .study-row b{font-family:'Noto Serif Devanagari',serif;color:#3a2f2a;font-weight:600;margin-right:6px}
+ #myStudy .study-row span{color:#78716c;font-family:'Noto Serif Devanagari',serif} #myStudy .study-none,#myStudy .study-empty{font-size:13px;color:#78716c}
+ #homeBtn{display:inline-flex;align-items:center;gap:6px} #homeBtn .vv-logo{height:26px;width:auto} #homeBtn:hover .bfull,#homeBtn:hover .bshort{text-decoration:underline;text-underline-offset:3px}
+ #dictBtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:16px;line-height:1;border-radius:8px;padding:6px 8px;cursor:pointer} #dictBtn:hover{background:rgba(255,255,255,.12)}
  .sec-fold{background:none;border:0;cursor:pointer;font-size:15px;color:inherit;padding:0 2px 0 0;line-height:1}
  /* order: वेदान्त-ग्रन्थाः → उपकरणानि → व्याकरणम् → सहायक-सामग्री (Resources) — each its own heading */
  .readgrid.resgrid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));grid-auto-rows:auto}
@@ -194,23 +206,24 @@
  .anv-cur{background:#fbf7ee;border-radius:4px}
  .anv-legend{font-size:13px;color:#8a7a5a;margin:-4px 0 6px}
  .anv-q{font-family:'Noto Serif Devanagari',serif;font-size:19px;font-weight:700;color:#7c5a1e;margin-right:6px}
-</style></head><body>
-<header><button id="homeBtn" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home" style="background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;font-weight:800;font-size:16px;color:#f5b544;letter-spacing:.02em"><span class="bfull">अध्ययन-सहकारी</span><span class="bshort">अध्य·सहकारी</span></button><span style="flex:1"></span><form id="hsForm" role="search" hidden><input id="hsQ" type="search" placeholder="search all texts…  e.g. devaH · देवः" autocomplete="off" aria-label="Search all texts"></form><button id="srchBtn" title="Search all texts ( / )" aria-label="Search all texts" aria-expanded="false" hidden>🔍</button><button id="gearBtn" title="Settings" aria-label="Settings">⚙</button></header>
+</style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body>
+<header><button id="homeBtn" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home" style="background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;font-weight:800;font-size:16px;color:#f5b544;letter-spacing:.02em"><span class="bfull">अध्ययन-सहकारी</span><span class="bshort">अध्य·सहकारी</span></button><span style="flex:1"></span><form id="hsForm" role="search" hidden><input id="hsQ" type="search" placeholder="search all texts…  e.g. devaH · देवः" autocomplete="off" aria-label="Search all texts"></form><button id="srchBtn" title="Search all texts ( / )" aria-label="Search all texts" aria-expanded="false" hidden>🔍</button><button id="dictBtn" title="Sanskrit dictionary — sanskritkosha.com" aria-label="Sanskrit dictionary">📖</button><button id="gearBtn" title="Settings" aria-label="Settings">⚙</button></header>
 <div id="app">loading…</div>
 <footer style="text-align:center;font-size:13px;margin:28px 0 18px"><a href="about.html" style="color:#b45309">Sources &amp; attribution · आधाराः</a></footer>
 
 <script src="quiz-items.727c6b6145.js"></script>
 <script src="axis-manifest.d690a90c0f.js"></script>
-<script src="tutorial-manifest.9da044b936.js"></script>
+<script src="tutorial-manifest.56d3df4715.js"></script>
 <script src="anvaya-manifest.ed70b6d8c6.js"></script>
 <script src="anvaya_check.026bcdf19c.js"></script>
-<script src="walk-manifest.b8d585c15c.js"></script>
+<script src="walk-manifest.e1114883b7.js"></script>
 <script src="pratipadika_endings.8fcd363513.js"></script>
 <script src="flagged-wrong.56332609a3.js"></script>
 <script src="samasa-peel.5c964b3f68.js"></script>
 <script src="reading-nav.1d8a42d71b.js"></script>
 <script src="vv-store.c6e336a820.js"></script>
-<script src="app.14faeda766.js"></script>
+<script src="vv-settings.81acaa1ba7.js"></script>
+<script src="app.bb2a1e7a43.js"></script>
 <script>
 // Freshness during churn: updateViaCache:'none' → the browser always network-fetches sw.js (never
 // its HTTP cache); reg.update() proactively checks on load; and when a NEW sw version takes control

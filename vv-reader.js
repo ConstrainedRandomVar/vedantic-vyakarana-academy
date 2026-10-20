@@ -11,19 +11,46 @@
   if (!S || window.__vvReader) return;
   window.__vvReader = true;
 
-  // ---- analysis pills the reader chose to hide in ⚙ Settings (Harsha 2026-10-17; '0' = hidden, shown by default). Applied at
-  // once — before the page settles — as an <html> class; the legend keeps its swatches so the reader can still see what each is.
-  (function () {
+  // ---- commentary markers (⚙ Settings · "Commentary markers"): HIDDEN by default since 2026-10-21 (Harsha, feedback #5) —
+  // '1' = shown; a reader's explicit earlier choice ('0'/'1') is kept. Applied at once — before the page settles — as an <html>
+  // class; the legend keeps its swatches (with a "⚙ to show" note while off). vv-settings.js re-runs it live (__vvApplyPills).
+  function applyPills() {
     var P = { vv_pill_praman: ['praman', '.prb'], vv_pill_abhyu: ['abhyu', '.dm-conc::after'], vv_pill_maha: ['maha', '.maha-mark'] }, css = '';
+    var old = document.getElementById('vvr-pills'); if (old) old.remove();
     for (var k in P) {
-      var off = false; try { off = localStorage.getItem(k) === '0'; } catch (e) {}
-      if (!off) continue;
-      document.documentElement.classList.add('vv-nopill-' + P[k][0]);
+      var on = false; try { on = localStorage.getItem(k) === '1'; } catch (e) {}
+      document.documentElement.classList.toggle('vv-nopill-' + P[k][0], !on);
+      if (on) continue;
       var sel = P[k][1].split('::'), base = sel[0] + ':not(.legend *)' + (sel[1] ? '::' + sel[1] : '');
       css += 'html.vv-nopill-' + P[k][0] + ' ' + base + '{' + (sel[1] ? 'content:none!important' : 'display:none!important') + '}';
     }
     if (css) { var st = document.createElement('style'); st.id = 'vvr-pills'; st.textContent = css; (document.head || document.documentElement).appendChild(st); }
-  })();
+    if (window.__vvLegendNotes) window.__vvLegendNotes();
+  }
+  applyPills();
+  window.__vvApplyPills = applyPills;
+
+  // ---- reading text size (⚙ Settings · "Text size", Harsha 2026-10-21 #3) — scales ALL page text, not the layout: every px
+  // font-size in the page's styles (and inline style attributes) becomes calc(Npx * var(--vvfs)), and rem/em follow the root.
+  // NOT CSS zoom: zoom also scales the coordinates the word cards / laser / bookmark button are placed with (measured
+  // 2026-10-21: a card landed ~95px off at zoom 1.2); font scaling keeps every position measurement live and correct.
+  var fsReady = false, fsBase = 0;
+  function scaleDecl(st) { if (st && st.fontSize && /^[\d.]+px$/.test(st.fontSize)) st.fontSize = 'calc(' + st.fontSize + ' * var(--vvfs, 1))'; }
+  function scaleRules(list) { [].forEach.call(list || [], function (r) { if (r.style) scaleDecl(r.style); if (r.cssRules) scaleRules(r.cssRules); }); }
+  function textScale(s) {
+    s = +s || 1; var root = document.documentElement;
+    if (s !== 1 && !fsReady) {
+      fsReady = true; fsBase = parseFloat(getComputedStyle(root).fontSize) || 16;
+      [].forEach.call(document.styleSheets, function (sh) { try { scaleRules(sh.cssRules); } catch (e) {} });   // cross-origin sheets: skipped
+      [].forEach.call(document.querySelectorAll('[style*="font-size"]'), function (e) { scaleDecl(e.style); });
+      new MutationObserver(function (ms) { ms.forEach(function (m) { [].forEach.call(m.addedNodes, function (n) {   // styles added later (cards, panels)
+        if (n.tagName === 'STYLE' && n.sheet) { try { scaleRules(n.sheet.cssRules); } catch (e) {} } }); }); }).observe(document.head, { childList: true });
+    }
+    root.style.setProperty('--vvfs', s);
+    if (fsReady) root.style.fontSize = s === 1 ? '' : (fsBase * s) + 'px';
+  }
+  window.__vvTextScale = textScale;
+  function savedScale() { var v = 1; try { v = parseFloat(localStorage.getItem('vv_text_size')) || 1; } catch (e) {} return v; }
 
   function ready(fn) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -98,7 +125,12 @@
     + '.vvr-drawer .others a b{color:var(--brand,#b45309);margin-right:6px}'
     + '.vvr-drawer footer{padding:10px 14px;border-top:1px solid var(--line,var(--rule,#ddd));font-size:12px;color:var(--muted,#6b6455)}'
     + '.vvr-nb{float:right;font-size:13px;line-height:1;border:0;background:transparent;cursor:pointer;padding:2px 4px;opacity:.85}'
-    + '@media print{.vvr-tools,.vvr-float,.vvr-drawer,.vvr-nb,.vvr-sel,.vvr-pop{display:none!important}}';
+    + '[data-vv-brand]{display:inline-flex;align-items:center;gap:5px}.vv-logo{height:1.3em;width:auto;flex:none}'
+    + '[data-vv-brand]:hover .rn-bf,[data-vv-brand]:hover .rn-bs,a[data-vv-brand]:hover{text-decoration:underline;text-underline-offset:3px}'
+    + '.vvr-hint{font:13px/1.45 system-ui,sans-serif;color:var(--muted,#6b6455);margin:-4px 0 12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}'
+    + '.vvr-hint a{color:var(--brand,#b45309)}.vvr-hint-x{border:0;background:transparent;color:inherit;cursor:pointer;font-size:12px;padding:0 4px;margin-left:2px}'
+    + '.vvr-lnote{margin-left:6px;font:11px system-ui,sans-serif;color:var(--brand,#b45309);text-decoration:none;border:1px solid var(--line,#ddd);border-radius:6px;padding:0 5px}'
+    + '@media print{.vvr-tools,.vvr-float,.vvr-drawer,.vvr-nb,.vvr-sel,.vvr-pop,.vvr-hint,.vvr-lnote{display:none!important}}';
 
   var popEl = null;
   function closePop() { if (popEl) { popEl.remove(); popEl = null; } }
@@ -166,7 +198,7 @@
   // Quiet mode (⚙, localStorage vv_quiet_hover — shared with peek.js's word cards): no selection prompt while screen-sharing,
   // unless Cmd/Ctrl/Alt is held as the selection ends. Mouse selections only — phones and tablets are unaffected (as peek.js).
   function quietSel(e) {
-    var on = false; try { on = localStorage.getItem('vv_quiet_hover') === '1'; } catch (x) {}
+    var on = true; try { on = localStorage.getItem('vv_quiet_hover') !== '0'; } catch (x) {}   // quiet by default (2026-10-21)
     return on && e && e.type === 'mouseup' && !(e.metaKey || e.ctrlKey || e.altKey);
   }
   function onSelectionEnd(e) {
@@ -270,6 +302,61 @@
     });
   }
 
+  // ---- brand diya (Harsha 2026-10-21 #1/#13): the logo sits INSIDE the brand link, right of the text, so text + logo are one
+  // home target. Added here at ready — AFTER nav.js has moved the brand into the bar (it rebuilds the link's innerHTML) —
+  // and never on the sister site's own brand. Hover cue (underline) instead of a separate 🏠 (CLAUDE.md 9a). ----
+  function brandLogo() {
+    [].forEach.call(document.querySelectorAll('[data-vv-brand]'), function (b) {
+      if (b.querySelector('.vv-logo') || /साहित्य|सा·व्या/.test(b.textContent)) return;
+      b.appendChild(el('img', { class: 'vv-logo', src: 'diya-40.png', alt: '', width: '21', height: '20', 'aria-hidden': 'true' }));
+    });
+  }
+
+  // ---- ⚙ Settings + 📖 dictionary (Harsha 2026-10-21 #6/#10): the SAME panel as the homepage ⚙, from vv-settings.js (loaded on first use) ----
+  function withSettings(cb) {
+    if (window.VVSettings) return cb();
+    var sc = document.createElement('script'); sc.src = 'vv-settings.js'; sc.onload = cb; document.head.appendChild(sc);
+  }
+  // ---- first-time hint (Harsha 2026-10-21 #4): one muted line under the title. Gone for good once the reader clicks ✕, uses
+  // the feature (peeks with Cmd/Ctrl/Alt, taps a word, opens ⚙) or has seen it on 5 reading pages. Never shown while
+  // word cards are set to always show (quiet off). Per browser (VVStore prefs). ----
+  var hintEl = null;
+  function hintUsed() { try { S.prefs.set('hint:grammar-done', true); } catch (e) {} if (hintEl) { hintEl.remove(); hintEl = null; } }
+  window.__vvHintUsed = hintUsed;
+  function showHint() {
+    var quiet = true; try { quiet = localStorage.getItem('vv_quiet_hover') !== '0'; } catch (e) {}
+    var touch = window.matchMedia && !matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (S.prefs.get('hint:grammar-done', false) || (!quiet && !touch)) return;
+    var n = +S.prefs.get('hint:grammar-n', 0) || 0;
+    if (n >= 5) { hintUsed(); return; }
+    var h1 = document.querySelector('h1'); if (!h1) return;
+    S.prefs.set('hint:grammar-n', n + 1);
+    hintEl = el('div', { class: 'vvr-hint' }, (touch ? 'Tap a word to see its grammar' : 'Hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) over a word to see its grammar')
+      + ' · <a href="#" class="vvr-hint-set">⚙ for reading options</a> <button class="vvr-hint-x" type="button" aria-label="Dismiss">✕</button>');
+    var after = (h1.nextElementSibling && /\bsub\b/.test(h1.nextElementSibling.className)) ? h1.nextElementSibling : h1;
+    after.parentNode.insertBefore(hintEl, after.nextSibling);
+    hintEl.querySelector('.vvr-hint-x').addEventListener('click', hintUsed);
+    hintEl.querySelector('.vvr-hint-set').addEventListener('click', function (e) { e.preventDefault(); withSettings(function () { VVSettings.open(); }); });
+    var peek = function (e) { if (hintEl && (e.metaKey || e.ctrlKey || e.altKey) && e.target.closest && e.target.closest('.w')) hintUsed(); };
+    document.addEventListener('mouseover', peek); document.addEventListener('mousemove', peek, { passive: true });   // a peek = a modifier held over a word
+    document.addEventListener('click', function (e) { if (hintEl && e.target.closest && e.target.closest('.w')) hintUsed(); });
+  }
+  // legend: a "⚙ to show" note on each commentary-marker entry while that marker is off (the swatch itself stays visible)
+  function legendNotes() {
+    var L = document.querySelector('details.legend'); if (!L) return;
+    var M = [['vv_pill_praman', '.prb'], ['vv_pill_abhyu', 'sup'], ['vv_pill_maha', '.maha-mark']];
+    M.forEach(function (m) {
+      var it = [].filter.call(L.querySelectorAll('.item'), function (x) { var q = x.querySelector(m[1]); return q && (m[0] !== 'vv_pill_abhyu' || /अभ्यु/.test(q.textContent)); })[0];
+      if (!it) return;
+      var on = false; try { on = localStorage.getItem(m[0]) === '1'; } catch (e) {}
+      var note = it.querySelector('.vvr-lnote');
+      if (on) { if (note) note.remove(); return; }
+      if (!note) { note = el('a', { class: 'vvr-lnote', href: '#', title: 'Commentary markers are off by default — turn this one on in ⚙ Settings' }, '⚙ to show');
+        note.addEventListener('click', function (e) { e.preventDefault(); withSettings(function () { VVSettings.open(); }); }); it.appendChild(note); }
+    });
+  }
+  window.__vvLegendNotes = legendNotes;
+
   // ---- page furniture: legend / contents remember their last open state (no setting — Harsha 2026-10-11) ----
   function rememberPanels() {
     [].forEach.call(document.querySelectorAll('details.legend, details.toc'), function (d) {
@@ -289,13 +376,26 @@
     var noteBtn = el('button', { class: 'vvr-btn', type: 'button', title: 'Study notes for the verse you are at', 'aria-label': 'Study notes' }, '📝');
     noteBtn.addEventListener('click', function () { if (drawer && drawer.classList.contains('open')) closeDrawer(); else openDrawer(); });
     tools.appendChild(starBtn); tools.appendChild(noteBtn);
+    // 📖 Sanskrit dictionary (sanskritkosha.com, new tab) — a selected word pre-fills the box (Harsha 2026-10-21 #10)
+    var dictSel = '';
+    var dictBtn = el('button', { class: 'vvr-btn vvr-dict', type: 'button', title: 'Look up a word in the Sanskrit dictionary (sanskritkosha.com)', 'aria-label': 'Dictionary' }, '📖');
+    dictBtn.addEventListener('mousedown', function () { var x = window.getSelection(); dictSel = x ? x.toString() : ''; });
+    dictBtn.addEventListener('click', function () { var pre = (dictSel.match(/[\u0900-\u097F]+/) || [''])[0]; withSettings(function () { VVSettings.dict(dictBtn, pre); }); });
+    tools.appendChild(dictBtn);
     if (presentFolds().length) {
       var fb = el('button', { class: 'vvr-btn', type: 'button', title: 'Expand / collapse the commentary fold-outs on this page' }, 'टीका ⇕');
       fb.style.fontSize = '13px';
       fb.addEventListener('click', function () { foldPopover(fb); });
       tools.appendChild(fb);
     }
+    var gearBtn = el('button', { class: 'vvr-btn vvr-gear', type: 'button', title: 'Settings — text size, script, word grammar, commentary markers…', 'aria-label': 'Settings' }, '⚙');
+    gearBtn.addEventListener('click', function () { withSettings(function () { VVSettings.open(); }); });
+    tools.appendChild(gearBtn);
     if (bar) bar.appendChild(tools); else { var fl = el('div', { class: 'vvr-float' }); fl.appendChild(tools); document.body.appendChild(fl); }
+    brandLogo();
+    if (savedScale() !== 1) textScale(savedScale());
+    showHint();
+    legendNotes();
     // in-text search (🔍 next to ☆ 📝, 2026-10-13) — vv-insearch.js shows itself only on texts the search site indexes
     var isrc = document.createElement('script'); isrc.src = 'vv-insearch.js'; isrc.async = true; document.head.appendChild(isrc);
     applyFoldDefaults();

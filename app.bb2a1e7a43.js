@@ -95,36 +95,19 @@ const AUTO_ADVANCE_DELAY_WRONG = 1100;
 const AUTO_ADVANCE_KEY = 'vyakarana_auto_advance';
 function autoAdvanceOn() { return localStorage.getItem(AUTO_ADVANCE_KEY) !== '0'; }
 function setAutoAdvance(on) { localStorage.setItem(AUTO_ADVANCE_KEY, on ? '1' : '0'); }
-// ---- Settings (⚙ gear): auto-advance + reading-page script + quiet hover. The script pref (vv_script) is only SET
-// here; it's READ + applied by the reading pages' translit.js (the quiz itself is never transliterated).
-// Shared localStorage key, so the gear default and the reading-page picker stay in sync. ----
-const SCRIPT_KEY = 'vv_script';
-const SCRIPT_OPTS = [['dev', 'देवनागरी'], ['iast', 'IAST'], ['kannada', 'ಕನ್ನಡ'], ['tamil', 'தமிழ்'], ['telugu', 'తెలుగు'], ['malayalam', 'മലയാളം'], ['bengali', 'বাংলা'], ['gujarati', 'ગુজરાતી'], ['cyrillic', 'Русский'], ['siddham', 'Siddhaṃ 梵字'], ['katakana', 'カタカナ']];
-function readingScript() { const v = localStorage.getItem(SCRIPT_KEY); return ['iast', 'kannada', 'tamil'].includes(v) ? v : 'dev'; }
-function reflectScriptSel() { const el = document.getElementById('setScrSel'); if (el) el.value = readingScript(); }
-function setReadingScript(s) { localStorage.setItem(SCRIPT_KEY, s); reflectScriptSel(); }
-// Quiet hover (reading pages): word cards appear only while Cmd/Ctrl or Alt is held — for instructors who
-// screen-share (Zoom etc.) without our sync feature. SET here; READ + applied by the reading pages' peek.js
-// (shared with the sync-scrolling presenter peek, so both use the same keys). Hover-capable devices only.
-const QUIET_HOVER_KEY = 'vv_quiet_hover';
-function quietHoverOn() { return localStorage.getItem(QUIET_HOVER_KEY) === '1'; }
-function setQuietHover(on) { localStorage.setItem(QUIET_HOVER_KEY, on ? '1' : '0'); }
-// Analysis pills on the reading pages (Harsha 2026-10-17): the reader may hide the pramāṇa pills (श्रुतिः/युक्तिः/अनुभवः), the
-// अभ्यु॰ concession mark and the महावाक्यम् pill. Shown by default ('0' = hidden). SET here; applied by vv-reader.js (html class).
-const PILL_PREFS = [
-  ['vv_pill_praman', 'प्रमाण pills — श्रुतिः · युक्तिः · अनुभवः'],
-  ['vv_pill_abhyu', 'अभ्यु॰ — concession mark'],
-  ['vv_pill_maha', 'महावाक्यम् pill'],
-];
-function pillShown(k) { return localStorage.getItem(k) !== '0'; }
-function setPillShown(k, on) { localStorage.setItem(k, on ? '1' : '0'); }
+// ---- Settings (⚙): ONE shared panel, app/vv-settings.js (Harsha 2026-10-21 #6/#8) — the SAME panel opens from the reading
+// pages' ⚙. Text size · script · word grammar on hover · commentary markers · fold-out defaults, then grammar practice
+// (auto-advance, AUTO_ADVANCE_KEY above). Every setting is a plain localStorage key read where it applies. ----
+// Prod (public profile) omissions (site-profiles.json public.omit → window.VV_PROFILE.omit, injected by build_deploy):
+// 'nibandha' · 'tools' (the whole Tools section) · 'corpus-chat' · 'vedic-search' · 'scratchpad' (Harsha 2026-10-21 #9/#10/#12).
+const PROFILE_OMIT = new Set((window.VV_PROFILE && window.VV_PROFILE.omit) || []);
 // ---- Dashboard TOOLS lane (Harsha 2026-10-11, feedback #5/#6/#7/#8). BUILT-IN cards appear on EVERY site (academy, its
 // public twin, साहित्य-व्याकरणम्, any future site): the Vedic word search (TITUS) and the reader's own library (bookmarks ·
 // collections · study notes). Site-specific cards come after: the sister site's SITE_CONFIG.tools, else the academy's
 // own (corpus chat · search · scratchpad) unless the site sets hideTools. A built-in is never listed twice. ----
 const ACADEMY_TOOLS = [
-    { href: "https://vyakarana-corpus-chat.onrender.com/", title: "🔎 जिज्ञासा · Ask the corpus", tag: "query all 15 texts", desc: "Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed." },
-    { href: "https://constrainedrandomvar.github.io/prasthanatrayi-search/", title: "🔦 अन्वेषण · Full-text search", tag: "find any phrase", desc: "Search the source texts &amp; commentaries for any word or phrase, with page-linked results." },
+    { href: "https://vyakarana-corpus-chat.onrender.com/", title: "💬 जिज्ञासा · Ask the corpus", tag: "query all 15 texts", desc: "Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed." },
+    { href: "https://constrainedrandomvar.github.io/prasthanatrayi-search/", title: "🔍 अन्वेषण · Full-text search", tag: "find any phrase", desc: "Search the source texts &amp; commentaries for any word or phrase, with page-linked results." },
     { href: "scratchpad.html", title: "📋 शेमुषी · Shared-reading scratchpad", tag: "present a Word / Doc", desc: "Load an instructor's Word / Google-Docs document — colour-coded pūrvapakṣa · siddhānta · pratīka come across verbatim — and share a live, script-independent read-along: students follow your scroll, highlight &amp; laser, each in their own lipi." },
   ];
 function libraryCounts() {
@@ -134,38 +117,34 @@ function libraryCounts() {
 // सहायक-सामग्री · Resources (Harsha 2026-10-13) — external sites in his order; one-line descriptions drafted from his notes and
 // approved by him. Academy / public homepage only (the sister site has its own identity).
 const RESOURCES = [
-  { group: 'Texts', items: [
+  { group: 'Resources for Vedānta', items: [   // order + names: Harsha 2026-10-21 #15 (people's names in plain English)
+    { name: 'Pujya Swami Dayananda Saraswati’s books', url: 'https://jnanapravaha.in/resources-books/', desc: 'Includes Pūjya Swāmījī’s Bhagavad Gītā Home Study Course.' },
+    { name: 'Swami Paramarthananda Ji’s transcribed lectures', url: 'https://arshaavinash.in/index.php/books-by-swami-paramarthananda/', desc: 'Transcripts of his classes on the Upaniṣads, Bhagavad Gītā, Tattva Bodha and more, free to download.' },
+    { name: 'Centre for Brahmavidya', url: 'https://centreforbrahmavidya.org/', desc: 'Books, audio and video on Advaita Vedānta available on the internet, collated in one place for viewing or download.' },
+    { name: 'Tamal Maharaj — Vedānta reader (RKMVERI)', url: 'https://cs.rkmvu.ac.in/~tamal/vedanta/index.html', desc: 'Word-by-word padaccheda with meanings and English translation.' },
+    { name: 'Upasana Yoga', url: 'https://upasanayoga.org/', desc: 'Bhāṣyas with hyphenated words for easier reading, mūla pratīkas, English translation, and pūrvapakṣī / siddhāntī roles marked.' },
+    { name: 'Advaita Vāridhi', url: 'https://varidhilibrary.xoidlabs.com/', desc: 'A compendium of Advaita wisdom (scriptures, commentaries, philosophical and devotional works) gathered in one place to explore, understand and preserve.' },
     { name: 'Advaita Śāradā (Sringeri)', url: 'https://advaitasharada.sringeri.net/', desc: 'Śaṅkara’s works with commentaries — the digital library of the Sringeri Śāradā Pīṭham.' },
     { name: 'Mahesh Research Institute', url: 'https://dakshinamurtimath.com/', desc: 'Printed editions of Śaṅkara’s bhāṣyas with their ṭīkās; the base edition we follow.' },
-    { name: 'Centre for Brahmavidya', url: 'https://centreforbrahmavidya.org/', desc: 'Books, audio and video on Advaita Vedānta available on the internet, collated in one place for viewing or download.' },
-    { name: 'sanskritdocuments.org', url: 'https://sanskritdocuments.org/', desc: 'A large library of Sanskrit texts in Devanāgarī and transliteration.' },
     { name: 'Ambuda', url: 'https://ambuda.org/', desc: 'An online Sanskrit library with a built-in reader and dictionary.' },
-    { name: 'Upasana Yoga', url: 'https://upasanayoga.org/', desc: 'Bhāṣyas with hyphenated words for easier reading, mūla pratīkas, English translation, and pūrvapakṣī / siddhāntī roles marked.' },
-    { name: 'Tamal Maharaj — Vedānta reader (RKMVERI)', url: 'https://cs.rkmvu.ac.in/~tamal/vedanta/index.html', desc: 'Word-by-word padaccheda with meanings and English translation.' },
-    { name: 'Swami Paramarthananda Ji’s transcribed lectures', url: 'https://arshaavinash.in/index.php/books-by-swami-paramarthananda/', desc: 'Transcripts of his classes on the Upaniṣads, Bhagavad Gītā, Tattva Bodha and more, free to download.' },
-    { name: 'Advaita Vāridhi', url: 'https://varidhilibrary.xoidlabs.com/', desc: 'A compendium of Advaita wisdom (scriptures, commentaries, philosophical and devotional works) gathered in one place to explore, understand and preserve.' },
-    { name: 'Jñāna Pravāha — books', url: 'https://jnanapravaha.in/resources-books/', desc: 'Includes Pūjya Swāmījī’s Bhagavad Gītā Home Study Course.' },
+    { name: 'sanskritdocuments.org', url: 'https://sanskritdocuments.org/', desc: 'A large library of Sanskrit texts in Devanāgarī and transliteration.' },
   ] },
-  { group: 'Sanskrit grammar & language', items: [
+  { group: 'Resources for Sanskrit grammar and language', items: [
     { name: 'ashtadhyayi.com', url: 'https://ashtadhyayi.com/', desc: 'The sūtra-pāṭha with Kāśikā, Mahābhāṣya and Kaumudī; dhātu-pāṭha, śabda-pāṭha, and courses.' },
     { name: 'sanskritkosha.com', url: 'https://sanskritkosha.com/', desc: 'A user-friendly site and app for searching across 50+ Sanskrit dictionaries at once.' },
     { name: 'Sanskrit from Home', url: 'https://www.sanskritfromhome.org/', desc: 'Online Sanskrit courses by Vyoma Labs.' },
     { name: 'Books on Sanskrit grammar — Medha Michika Ji', url: 'https://arshaavinash.in/index.php/books-on-sanskrit-grammar/', desc: 'Her grammar books for students of Vedānta.' },
-    { name: 'Swami Shankarananda Ji — Sanskrit classes (YouTube)', url: 'https://www.youtube.com/playlist?list=PLFx8rf4WVNI50MObSuQUzxreYd5T9eHRp', desc: 'Recorded Sanskrit classes in English, to help Vedānta students read and appreciate the original texts.' },
-    { name: 'The Aruna coursebook', url: 'https://upasanayoga.org/AC.htm', desc: 'A quick overview of all the grammar needed to read Sanskrit with proficiency.' },
   ] },
-  { group: 'Chanting', items: [
+];
+// पारायणम् · Chanting — its own homepage section right after the texts, so a reader can listen (Harsha 2026-10-21 #14)
+const CHANTING = [
     { name: 'Advaita Audio Libraries', url: 'https://gitaarchive-tech.github.io/advaita/', desc: 'Advaita Vedānta’s Sanskrit texts and related traditional works made listenable through modern text-to-speech.' },
     { name: 'Vāgdhenu', url: 'https://prathosh.in/vagdhenu/', desc: 'A vṛtta (meter)-aware text-to-speech system that chants Sanskrit ślokas.' },
-  ] },
 ];
 const resHost = u => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 function dashboardTools() {
-  const n = libraryCounts();
   const builtin = [
     { href: 'tool-vedic-search.html', title: '🔭 वैदिक-अन्वेषणम् · Vedic word search', tag: 'is a form attested?', desc: 'Type a word in ITRANS, IAST or देवनागरी — get a TITUS (Frankfurt) query over the Vedic saṃhitās, brāhmaṇas, sūtras, epics &amp; classical texts, with every sandhi spelling of the word included.' },
-    { href: 'library.html#collections', title: '★ सङ्ग्रहः · Bookmarks &amp; collections', tag: 'your own reading list', desc: 'Everything you ☆-bookmarked — verses, selected passages, search hits — grouped into named collections (e.g. Ānanda-vicāra in the bhāṣya). Share a collection as a link.', badge: n ? `${n.b} bookmark${n.b === 1 ? '' : 's'} · ${n.c} collection${n.c === 1 ? '' : 's'}` : '' },
-    { href: 'library.html#notes', title: '📝 टिप्पणी · My study notes', tag: 'one note per verse', desc: 'Notes you wrote with 📝 on the reading pages, by text and verse, each linking back. Saved only in this browser — Export keeps a copy.', badge: n ? `${n.n} note${n.n === 1 ? '' : 's'}` : '' },
   ];
   const cfg = window.SITE_CONFIG || {};
   const site = cfg.tools ? cfg.tools : (cfg.hideTools ? [] : ACADEMY_TOOLS);
@@ -174,65 +153,11 @@ function dashboardTools() {
   // card order (Harsha 2026-10-17): full-text search · bookmarks · study notes · ask the corpus · Vedic word search · shared
   // reading; any other (site-specific) card keeps its place after these
   const rank = t => { const i = TOOL_ORDER.findIndex(re => re.test(t.href)); return i < 0 ? TOOL_ORDER.length : i; };
-  return all.map((t, i) => [t, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
+  const omit = t => (PROFILE_OMIT.has('corpus-chat') && /corpus-chat/.test(t.href)) || (PROFILE_OMIT.has('vedic-search') && /tool-vedic-search/.test(t.href)) || (PROFILE_OMIT.has('scratchpad') && /scratchpad/.test(t.href));
+  return all.filter(t => !omit(t)).map((t, i) => [t, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
 }
-const TOOL_ORDER = [/prasthanatrayi-search/, /library\.html#collections/, /library\.html#notes/, /corpus-chat/, /tool-vedic-search/, /scratchpad/];
-function openSettings() {
-  let ov = document.getElementById('settings-ov');
-  if (!ov) {
-    ov = document.createElement('div'); ov.id = 'settings-ov';
-    ov.innerHTML = `<div id="settings-box">
-      <h2>⚙ Settings</h2>
-      <div class="set-row">
-        <div class="set-label">Practice</div>
-        <label class="set-check"><input type="checkbox" id="setAutoAdv"> Auto-advance to the next question after answering</label>
-      </div>
-      <div class="set-row">
-        <div class="set-label">Script · reading pages</div>
-        <select id="setScrSel" class="set-select">${SCRIPT_OPTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>
-        <div class="set-hint">Applies to the ग्रन्थाः (reading) pages — shows the same Sanskrit in Devanāgarī, IAST, or another script (Kannada, Tamil, Telugu, Malayalam, Bengali, Gujarati, Cyrillic, Siddhaṃ, katakana). The quiz is unaffected.</div>
-      </div>
-      <div class="set-row">
-        <div class="set-label">Quiet mode · reading pages</div>
-        <label class="set-check"><input type="checkbox" id="setQuietHover"> Quiet mode — show word cards and selection prompts only while holding <b>Cmd/Ctrl</b> (or <b>Alt</b>)</label>
-        <div class="set-hint">For screen-sharing (e.g. on Zoom): word cards stop popping up as you move the mouse, and highlighting text no longer offers “☆ bookmark passage”. Hold the key to see a card, or while finishing a selection to get the prompt. The same keys reveal cards when presenting with shared reading. Phones and tablets are unaffected.</div>
-      </div>
-      <div class="set-row">
-        <div class="set-label">Analysis pills · reading pages</div>
-        ${PILL_PREFS.map(([k, l]) => `<label class="set-check"><input type="checkbox" data-pill="${k}"> Show ${l}</label>`).join('')}
-        <div class="set-hint">Untick to hide these marks in the commentary. The discourse-role colours and pills (पूर्वपक्षः · सिद्धान्तः · एकदेशी) always stay.</div>
-      </div>
-      <div class="set-row" id="setFoldRow">
-        <div class="set-label">Commentary fold-outs · reading pages</div>
-        <div id="setFolds"></div>
-        <div class="set-hint">How collapsed commentary layers open when a page loads. Each page also has a <b>टीका ⇕</b> button in its top bar to expand or collapse them on that page only.</div>
-      </div>
-      <div style="text-align:right"><button class="secondary" id="setClose">Done</button></div>
-    </div>`;
-    document.body.appendChild(ov);
-    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('on'); });
-    document.getElementById('setClose').onclick = () => ov.classList.remove('on');
-    const chk = document.getElementById('setAutoAdv');
-    chk.onchange = () => setAutoAdvance(chk.checked);
-    document.getElementById('setScrSel').onchange = (e) => setReadingScript(e.target.value);
-    const qh = document.getElementById('setQuietHover');
-    qh.onchange = () => setQuietHover(qh.checked);
-    ov.querySelectorAll('input[data-pill]').forEach(c => { c.onchange = () => setPillShown(c.dataset.pill, c.checked); });
-    // fold-out defaults — the registry + prefs live in vv-store.js (shared with the reading pages' vv-reader.js)
-    const S = window.VVStore, fr = document.getElementById('setFolds');
-    if (!S || !S.folds) document.getElementById('setFoldRow').style.display = 'none';
-    else {
-      fr.innerHTML = S.folds.list().map(f => `<label class="set-check" style="justify-content:space-between;gap:10px"><span>${f.label} <span class="set-hint" style="display:inline">· ${f.sub || ''}</span></span><select class="set-select" data-fold="${f.key}"><option value="collapsed">Collapsed</option><option value="expanded">Expanded</option></select></label>`).join('');
-      fr.querySelectorAll('select[data-fold]').forEach(sel => { sel.onchange = () => S.folds.set(sel.dataset.fold, sel.value); });
-    }
-  }
-  document.getElementById('setAutoAdv').checked = autoAdvanceOn();
-  document.getElementById('setQuietHover').checked = quietHoverOn();
-  document.querySelectorAll('#settings-box input[data-pill]').forEach(c => { c.checked = pillShown(c.dataset.pill); });
-  if (window.VVStore && window.VVStore.folds) document.querySelectorAll('#setFolds select[data-fold]').forEach(sel => { sel.value = window.VVStore.folds.get(sel.dataset.fold); });
-  reflectScriptSel();
-  ov.classList.add('on');
-}
+const TOOL_ORDER = [/prasthanatrayi-search/, /corpus-chat/, /tool-vedic-search/, /scratchpad/];
+function openSettings() { if (window.VVSettings) window.VVSettings.open(); }
 const RECENT_ANSWER_WINDOW = 12; // ~3 questions' worth of shown strings (correct + distractors)
 
 // ---- sound feedback (per-answer ding/buzz + a batch-of-10-complete fanfare, à la Khan Academy) ----
@@ -1404,6 +1329,24 @@ function renderCategorySection(kind, codes) {
       <div class="grid">${codes.map(renderNodeCard).join('')}</div>
     </details>`;
 }
+// मम स्वाध्यायः · My study (Harsha 2026-10-21 #11): bookmarks + notes promoted out of Tools into their own section — a live
+// summary (counts, 3 latest bookmarks, 3 latest notes, each linking to its verse) + "Open my library". This site's own records
+// (they carry `site`; a local/dev copy shows all). Data stays in this browser (vv-store.js, CLAUDE.md 9i).
+function myStudyHtml() {
+  const S = window.VVStore; if (!S) return '';
+  const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const mine = r => !S.SITE || S.SITE === 'local' || !r.site || r.site === S.SITE;
+  let bms = [], notes = [], cols = 0;
+  try { bms = S.bookmarks.list().filter(mine).sort((a, b) => (b.created || '').localeCompare(a.created || '')); notes = S.notes.list().filter(mine); cols = S.collections.list().length; } catch (e) {}
+  if (!bms.length && !notes.length) return '<div class="study-empty">☆ on any reading page bookmarks the verse you are at; select text to bookmark a passage; 📝 keeps a note for the verse. They collect here.</div>';
+  const row = (url, title, sub) => `<a class="study-row" href="${esc(url)}"><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</a>`;
+  const cut = (x, n) => { x = String(x || '').replace(/\s+/g, ' ').trim(); return x.length > n ? x.slice(0, n) + '…' : x; };
+  return `<div class="study-counts">★ ${bms.length} bookmark${bms.length === 1 ? '' : 's'} · ${cols} collection${cols === 1 ? '' : 's'} · 📝 ${notes.length} note${notes.length === 1 ? '' : 's'} · <a href="library.html">Open my library →</a></div>
+    <div class="study-cols">
+      <div class="study-col"><div class="study-h">Latest bookmarks</div>${bms.slice(0, 3).map(b => row(b.url, b.title || 'bookmark', cut(b.excerpt, 70))).join('') || '<div class="study-none">none yet</div>'}</div>
+      <div class="study-col"><div class="study-h">Latest notes</div>${notes.slice(0, 3).map(n => row(n.url, (n.title || '') + (n.ref ? ' ' + n.ref : ''), cut(n.text, 70))).join('') || '<div class="study-none">none yet</div>'}</div>
+    </div>`;
+}
 function renderDashboard() {
   // Fold समास-विच्छेद (SAMR peel) into the समास node as a child card, so समास becomes a PARENT (like
   // sandhi) with two children — SAMASA (classify) + SAMR (peel). Peel also runs inside वाक्य-विग्रह;
@@ -1424,7 +1367,7 @@ function renderDashboard() {
   // A sister site (साहित्य-व्याकरणम्, build_sahitya_site.js) supplies its own list via window.SITE_CONFIG; the academy
   // has no SITE_CONFIG, so this academy list applies unchanged.
   const READING_TEXTS = (window.SITE_CONFIG && window.SITE_CONFIG.readingTexts) || [
-    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka'] },
+    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka', 'sridhari', 'nilakanthi', 'madhusudani'] },
     { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'], note: 'भाष्यम्: pada + vākya' },
     { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
@@ -1442,7 +1385,7 @@ function renderDashboard() {
     { dv: 'उपदेशसारम्', lat: 'Upadeśa Sāram', file: 'reading-ups.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीगणपतिमुनिः' },
     { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीकपालिशास्त्री', tikaHide: 'sad-tika' },
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
-    // निबन्धाः — modern monographs (not prakaraṇa): prose (Tamil / English) with Sanskrit quotations; reading-only (no
+    // निबन्धाः · In-depth studies (renamed from "Monographs" 2026-10-21; academy only, not on prod) — modern studies (not prakaraṇa): prose (Tamil / English) with Sanskrit quotations; reading-only (no
     // quiz / node / tutorial fan-out for non-Sanskrit texts — Harsha 2026-10-01). Built outside this repo: Tamil-Texts;
     // sanskrit-texts/monograph/vrk-gita-upanishads (DATA-PROVENANCE §12, §14).
     { dv: 'ब्रह्मसूत्रे प्रपञ्चमिथ्यात्वम्', lat: 'Brahma-sūtre prapañca-mithyātvam', file: 'reading-prapancha-mithyatva.html', group: 'nibandha', offers: [], note: 'தமிழ் · Brahmasri S. R. Krishnamurthi Sastrigal · English (draft)' },
@@ -1454,7 +1397,8 @@ function renderDashboard() {
   // vv-hide-<group> class, so the card doesn't advertise a ṭīkā the public reading page hides (2026-10-11).
   const PILLS = { mula: ['मूलम्', 'mula'], karika: ['कारिका', 'mula'], bhasya: ['भाष्यम्', 'bhasya'], tika: ['टीका', 'bhasya tika'],
     vyakhya: ['व्याख्या', 'bhasya vyakhya'], vartika: ['वार्त्तिकम्', 'bhasya'], vsara: ['वार्तिकसारः', 'bhasya'],
-    nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'] };
+    nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'],
+    sridhari: ['श्रीधरी', 'bhasya'], madhusudani: ['मधुसूदनी', 'bhasya'], nilakanthi: ['नीलकण्ठी', 'bhasya'] };   // Gītā verse-commentary lanes (2026-10-21)
   const MAXP = 4;   // more than this → the rest behind a "…" pill (shown on card hover, or a tap on "…")
   const readOffers = t => {
     const ps = t.offers.filter(k => PILLS[k]).map((k, i, a) => {
@@ -1469,6 +1413,9 @@ function renderDashboard() {
   const masteredN = CODES.filter(c => progress[c].mastered).length;
   // व्याकरणम् panel collapsed? — remembered per reader (vv-store prefs; open by default) — Harsha 2026-10-13
   const vyCollapsed = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:vyakarana-shut', false));
+  // निबन्धाः · In-depth studies — collapsed by default, remembered (Harsha 2026-10-21 #9); Tools — open by default, foldable (#12)
+  const nibOpen = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:nibandha-open', false));
+  const toolsShut = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:tools-shut', false));
   // सहायक-सामग्री (Resources) — FOLDED by default, remembered once the reader opens it (Harsha 2026-10-17)
   const resOpen = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:resources-open', false));
   // Node-card order (Harsha, 2026-08-29): समास first, then सन्धि, then the rest alphabetical.
@@ -1495,7 +1442,7 @@ function renderDashboard() {
       ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? /* sister site: its own groups (build_sahitya_site.js) */
         '<div class="lane-sub">' + (window.SITE_CONFIG.svadhyayaSub || '') + '</div>' + window.SITE_CONFIG.readGroups.map(g =>
           `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.dv} <span class="lat">· ${g.lat}</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === g.key).length} · ${g.count || ''}</span></div><div class="readgrid">${readGroup(g.key)}</div></div>`).join('') : `
-      <div class="lane-sub">Read each text with its commentaries — hover any word for its grammar; 🔍 searches the text.</div>
+      <div class="lane-sub">Read each text with its commentaries. <a href="#" data-open-settings>⚙ Settings</a> turns on word grammar, argument markers and more.</div>
       <div class="readgroup">
         <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 · मूलम् + भाष्यम् + टीका / वार्त्तिकम्</span></div>
         <div class="readgrid">${readGroup('prasthana')}</div>
@@ -1504,19 +1451,29 @@ function renderDashboard() {
         <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'prakarana').length} · मूलम् + टीका / व्याख्या</span></div>
         <div class="readgrid">${readGroup('prakarana')}</div>
       </div>
-      <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">निबन्धाः <span class="lat">· Monographs</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'nibandha').length} · Tamil / English + Sanskrit</span></div>
+      ${PROFILE_OMIT.has('nibandha') ? '' /* prod: not offered (Harsha 2026-10-21 #9) */ : `<div class="readgroup fold-group${nibOpen ? '' : ' shut'}" id="nibGroup">
+        <div class="readgroup-head"><button class="sec-fold" id="nibFold" aria-expanded="${nibOpen}" title="show / hide">${nibOpen ? '▾' : '▸'}</button><span class="gtitle">निबन्धाः <span class="lat">· In-depth studies</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'nibandha').length} · Tamil / English + Sanskrit</span></div>
         <div class="readgrid">${readGroup('nibandha')}</div>
-      </div>
+      </div>`}
       `}
     </div>
     </section>
-    <section class="home-sec tools-sec">
-    <h2 class="sec-head">उपकरणानि <span class="sec-lat">· Tools</span></h2>
+    ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' : `<section class="home-sec chant-sec">
+    <h2 class="sec-head">पारायणम् <span class="sec-lat">· Chanting</span></h2>
+    <div class="dash-lane"><div class="readgrid resgrid">${CHANTING.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="rdesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>
+    </section>`}
+    <section class="home-sec study-sec">
+    <h2 class="sec-head">मम स्वाध्यायः <span class="sec-lat">· My study</span></h2>
+    <div class="dash-lane"><div class="lane-sub">Bookmark a verse or passage, collect them, and keep notes — saved only in this browser.</div><div id="myStudy">${myStudyHtml()}</div></div>
+    </section>
+    ${PROFILE_OMIT.has('tools') ? '' /* prod: no Tools section (Harsha 2026-10-21 #12) */ : `<section class="home-sec tools-sec${toolsShut ? ' shut' : ''}" id="toolsPanel">
+    <h2 class="sec-head"><button class="sec-fold" id="toolsFold" aria-expanded="${!toolsShut}" title="show / hide this section">${toolsShut ? '▸' : '▾'}</button>उपकरणानि <span class="sec-lat">· Tools</span></h2>
+    <div class="tools-body">
     <div class="dash-lane">
       <div class="readgrid modegrid">${dashboardTools().map(t => `<a class="rcard modecard" href="${t.href}"${/^https?:/.test(t.href) ? ' target="_blank" rel="noopener"' : ''}><div class="rtitle">${t.title}</div><div class="modetag">${t.tag}</div><div class="modedesc">${t.desc}</div>${t.badge ? `<div class="modetag" style="margin-top:6px">${t.badge}</div>` : ''}</a>`).join('')}</div>
     </div>
-    </section>
+    </div>
+    </section>`}
     <section class="home-sec vy-panel${vyCollapsed ? ' shut' : ''}" id="vyPanel">
     <h2 class="sec-head"><button class="sec-fold" id="vyFold" aria-expanded="${!vyCollapsed}" title="show / hide this section">${vyCollapsed ? '▸' : '▾'}</button>व्याकरणम् <span class="sec-lat">· Sanskrit grammar practice</span><span class="sec-prog">${masteredN} / ${CODES.length} nodes mastered</span></h2>
     <div class="vy-body">
@@ -1563,6 +1520,15 @@ function renderDashboard() {
       const p = document.getElementById('resPanel'), shut = !p.classList.contains('shut');
       p.classList.toggle('shut', shut); rf.textContent = shut ? '▸' : '▾'; rf.setAttribute('aria-expanded', String(!shut));
       try { VVStore.prefs.set('home:resources-open', !shut); } catch (e) {} }; }
+  { const tf = document.getElementById('toolsFold'); if (tf) tf.onclick = () => {
+      const p = document.getElementById('toolsPanel'), shut = !p.classList.contains('shut');
+      p.classList.toggle('shut', shut); tf.textContent = shut ? '▸' : '▾'; tf.setAttribute('aria-expanded', String(!shut));
+      try { VVStore.prefs.set('home:tools-shut', shut); } catch (e) {} }; }
+  { const nf = document.getElementById('nibFold'); if (nf) nf.onclick = () => {
+      const g = document.getElementById('nibGroup'), open = g.classList.contains('shut');
+      g.classList.toggle('shut', !open); nf.textContent = open ? '▾' : '▸'; nf.setAttribute('aria-expanded', String(open));
+      try { VVStore.prefs.set('home:nibandha-open', open); } catch (e) {} }; }
+  app.querySelectorAll('[data-open-settings]').forEach(a => a.onclick = e => { e.preventDefault(); openSettings(); });
   app.querySelectorAll('[data-more]').forEach(m => m.onclick = e => { e.stopPropagation(); m.closest('.rcard').classList.toggle('allp'); });   // tap "…" → all layers
   app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
@@ -5434,6 +5400,18 @@ function initHeaderSearch() {
   });
 }
 
+// 📖 in the header (Harsha 2026-10-21 #10): Sanskrit dictionary — the shared box in vv-settings.js (sanskritkosha.com, new tab).
+// Every site incl. the sister site. And the brand diya (#1/#13), larger here than on the reading pages, inside the home button.
+function initHeaderDict() {
+  const b = document.getElementById('dictBtn'); if (!b) return;
+  b.onclick = () => { if (window.VVSettings) window.VVSettings.dict(b, ''); };
+}
+function initBrandLogo() {
+  const hb = document.getElementById('homeBtn'); if (!hb || hb.querySelector('.vv-logo') || /साहित्य|सा·व्या/.test(hb.textContent)) return;
+  const img = document.createElement('img'); img.className = 'vv-logo'; img.src = 'diya-104.png'; img.alt = ''; img.setAttribute('aria-hidden', 'true');
+  hb.appendChild(img);
+}
+
 // Boot: honor a ?tut=<ref>[&step=<type>][&cluster=<n>] testing back-gate (see jumpToTutorial), else
 // the normal dashboard.
 (function boot() {
@@ -5441,7 +5419,8 @@ function initHeaderSearch() {
   initHeaderSearch();
   // Top-level banner Home button (persists across every SPA screen; header lives outside #app) — always
   // returns to the dashboard. Non-destructive: reading/quiz progress is already saved as you go. (Harsha, 2026-08-29.)
-  const hb = document.getElementById('homeBtn'); if (hb) hb.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
+  const hb = document.getElementById('homeBtn'); if (hb) hb.onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); } };
+  initBrandLogo(); initHeaderDict();
   try {
     const q = new URLSearchParams(location.search);
     // अन्वय tutorial (in testing, not linked from the home page): ?mode=anvaya opens its picker (text → verse)

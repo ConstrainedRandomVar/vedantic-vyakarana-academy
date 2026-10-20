@@ -78,7 +78,8 @@
     document.head.appendChild(el('style', {}, CSS));
     var nav = document.getElementById('reading-nav'); if (!nav) return;   // (pages without the bar — e.g. a single monograph — get no search)
     var btn = el('button', {id: 'vvs-btn', title: 'search this text  ( / )', 'aria-label': 'search this text'}, '🔍');
-    (document.querySelector('.vvr-tools') || nav.querySelector('.rn-tools') || nav).appendChild(btn);
+    var tl = document.querySelector('.vvr-tools') || nav.querySelector('.rn-tools') || nav, dict = tl.querySelector('.vvr-dict');
+    if (dict) tl.insertBefore(btn, dict); else tl.appendChild(btn);   // bar order: ☆ 📝 🔍 📖 टीका ⇕ ⚙ (2026-10-21)
     box = el('div', {id: 'vvs'});
     box.innerHTML = '<div class="row"><input type="search" placeholder="search this text — देवनागरी or ITRANS (sandhi-tolerant)" autocomplete="off">' +
       '<span class="scope"><label><input type="radio" name="vvs-sc" value="text" checked> this text</label>' +

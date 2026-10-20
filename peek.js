@@ -1,6 +1,7 @@
 // peek.js — THE ONE controller for hiding the word-analysis cards on reading pages (#tip = mūla card,
 // .gtip = commentary card) via body.vvnopeek. Cards are hidden when EITHER
-//   (a) the reader turned on "Quiet hover" in the app's ⚙ Settings (localStorage vv_quiet_hover = '1') — for
+//   (a) Quiet mode — the DEFAULT since 2026-10-21 (Harsha #4); the reader can switch "Word grammar on hover" on in ⚙ Settings
+//       (localStorage vv_quiet_hover = '0'; unset or '1' = quiet) — originally for
 //       instructors screen-sharing (Zoom etc.) who don't want cards popping up as the mouse moves; or
 //   (b) a sync-scrolling presenter is presenting (sync.js → VVPeek.setPresenting(true)): hover drives the laser.
 // Holding Cmd (Mac) / Ctrl (Windows) or Alt (Option) reveals the cards while held — the SAME keys in both modes
@@ -17,7 +18,7 @@
   var st = document.createElement('style');
   st.textContent = 'body.vvnopeek #tip,body.vvnopeek .gtip{display:none !important}';
   (document.head || document.documentElement).appendChild(st);
-  function quiet() { try { return canHover && localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
+  function quiet() { try { return canHover && localStorage.getItem(KEY) !== '0'; } catch (e) { return false; } }   // quiet by DEFAULT (Harsha 2026-10-21 #4); '0' = always show
   function apply() {
     if (!document.body) return;
     document.body.classList.toggle('vvnopeek', (presenting || quiet()) && !held);

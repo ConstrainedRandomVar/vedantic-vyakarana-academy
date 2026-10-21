@@ -45,7 +45,9 @@ a{color:var(--mula);text-decoration:none}
 .seg button{white-space:nowrap}   /* a lane label never breaks mid-word (श्रीध|री on phones, 2026-10-21) */
 .seg button.on{background:var(--moola);color:var(--bg);font-weight:600}
 /* mūlam-only view: hide all bhāṣya prose (intro, preambles, bhāṣya zones, end-notes) */
-body.moola-only .introbox,body.moola-only .pre-zone,body.moola-only .bh-zone,body.moola-only .post-zone{display:none}
+body.moola-only .introbox,body.moola-only .pre-zone,body.moola-only .post-zone{display:none}
+body.moola-only .bh-zone>:not(.vc-pre){display:none} body.moola-only .bh-zone{padding:0;margin:0 13px;border-left:0}   /* मूलम्: only a verse-level commentary's notes (batch 2 #10) */
+.segsep{display:inline-block;width:1px;align-self:stretch;background:var(--conn);margin:3px 4px;opacity:.7}
 body.moola-only .mula-zone{margin-bottom:14px}
 button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
   border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
@@ -270,7 +272,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 .v{scroll-margin-top:78px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .v.navhit{animation:navflash 1.6s ease-out}</style>
-<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika">आनन्दगिरि-टीका</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
+<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika" data-on="bhashya" data-first title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">आनन्दगिरि-टीका</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
 <script>'use strict';
 /*
  * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
@@ -723,7 +725,7 @@ document.getElementById('tog').onclick=function(){
   var pseg=document.getElementById('placeseg');
   var sideBtns=[].slice.call(seg.querySelectorAll('button'));
   var placeBtns=pseg?[].slice.call(pseg.querySelectorAll('button')):[];
-  var firstBtn=seg.querySelector('button[data-side]:not([data-side=""])');
+  var firstBtn=seg.querySelector('button[data-first]')||seg.querySelector('button[data-side]:not([data-side=""])');
   var firstKey=firstBtn?firstBtn.getAttribute('data-side'):'';
   var savedSide=null;try{savedSide=localStorage.getItem(CKEY);}catch(e){}
   var side=(savedSide===null)?firstKey:savedSide;                    // first visit → ṭīkā ON
@@ -746,7 +748,12 @@ document.getElementById('tog').onclick=function(){
   render();
   function fire(){ if(window.__vvView&&window.__vvView.onChange)window.__vvView.onChange(side,place); }
   sideBtns.forEach(function(b){b.addEventListener('click',function(){
-    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}render();fire();});});
+    side=b.dataset.side||'';try{localStorage.setItem(CKEY,side);}catch(e){}
+    // the view follows the pick (batch 2 #10): a verse commentary → मूलम् (verse alone), a bhāṣya ṭīkā → मूलम् + भाष्यम्.
+    // A starting point only — the reader can switch the view afterwards. (Not on a remote/sync apply.)
+    var on=b.dataset.on,vb=on&&document.querySelector('#viewseg button[data-v="'+(on==='mula'?'moola':'both')+'"]');
+    if(vb&&!vb.classList.contains('on'))vb.click();
+    render();fire();});});
   placeBtns.forEach(function(b){b.addEventListener('click',function(){
     place=b.dataset.place;try{localStorage.setItem(PKEY,place);}catch(e){}render();fire();});});
   // shared-reading bridge: expose the current view + a remote-apply (no persist, no re-broadcast) to sync.js

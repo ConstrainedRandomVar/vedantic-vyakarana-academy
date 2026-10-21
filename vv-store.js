@@ -149,6 +149,34 @@
   };
 
   // ---- prefs (small key→value bag shared across sites, e.g. fold defaults) ----
+  // ---- reusable tabs (Harsha 2026-10-21 batch 2 #2): searches open ONE search tab (reused for every later search) and the
+  // dictionary ONE kosha tab, so a reader ends up with site · search · kosha. This tab names itself vv-site-<id> first, so the
+  // search site can send a result back HERE (it reads opener.name — same github.io origin) instead of opening a 4th tab. ----
+  function openTab(url, name) {
+    try { if (!/^vv-site-/.test(root.name || '')) root.name = 'vv-site-' + Math.random().toString(36).slice(2, 8); } catch (e) {}
+    var w = root.open(url, name);
+    if (w && name === 'vv-kosha') try { w.opener = null; } catch (e) {}   // external site: no handle back to us
+    if (w) try { w.focus(); } catch (e) {}
+    return w;
+  }
+  var SEARCH_TAB = 'vv-search', KOSHA_TAB = 'vv-kosha';
+
+  // ---- page controls the reader can hide (⚙ Settings, Harsha 2026-10-21 batch 2): the ⚑/🚩 report-an-issue buttons (SHOWN by
+  // default; vv_show_report='0' hides) and the ⇉ Share reading starter (HIDDEN by default; vv_show_share='1' shows — a presenter
+  // link ?session=…&role=present always shows it, so a class in progress is never cut off). CSS classes on <html>. ----
+  function applyChrome() {
+    var d = root.document; if (!d || !d.documentElement) return;
+    var g = function (k) { try { return root.localStorage.getItem(k); } catch (e) { return null; } };
+    var present = /[?&]role=(present|p)(&|$)/.test((root.location && root.location.search) || '');
+    d.documentElement.classList.toggle('vv-no-report', g('vv_show_report') === '0');
+    d.documentElement.classList.toggle('vv-no-share', g('vv_show_share') !== '1' && !present);
+    if (!d.getElementById('vv-chrome-css')) { var st = d.createElement('style'); st.id = 'vv-chrome-css';
+      st.textContent = 'html.vv-no-report #rpt-btn,html.vv-no-report #tutReportBtn,html.vv-no-report #reportCurrentBtn,html.vv-no-report #reportPreviousBtn{display:none!important}'
+        + 'html.vv-no-share #vvstart,html.vv-no-share #vvstart-pop{display:none!important}';
+      (d.head || d.documentElement).appendChild(st); }
+  }
+  if (root.document) applyChrome();
+
   var prefs = {
     get: function (k, dflt) { var p = load(K.prefs, {}); return (p && k in p) ? p[k] : dflt; },
     set: function (k, v) { var p = load(K.prefs, {}) || {}; p[k] = v; save(K.prefs, p); },
@@ -248,7 +276,7 @@
 
   root.VVStore = {
     NS: NS, SITE: SITE, SITE_NAMES: SITE_NAMES, siteOf: siteOf, siteBase: siteBase, rememberSite: rememberSite, lastSite: lastSite,
-    bookmarks: bookmarks, collections: collections, notes: notes, highlights: highlights, history: history, prefs: prefs, folds: folds,
+    bookmarks: bookmarks, collections: collections, notes: notes, highlights: highlights, history: history, prefs: prefs, folds: folds, openTab: openTab, applyChrome: applyChrome, SEARCH_TAB: SEARCH_TAB, KOSHA_TAB: KOSHA_TAB,
     syncSnapshot: syncSnapshot, mergeData: mergeData, applySnapshot: applySnapshot,
     exportAll: exportAll, importAll: importAll, encodeShare: encodeShare, decodeShare: decodeShare, importShared: importShared, snapshot: snapshot,
     onChange: onChange,

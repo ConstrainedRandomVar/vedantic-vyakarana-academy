@@ -81,7 +81,7 @@
     var tl = document.querySelector('.vvr-tools') || nav.querySelector('.rn-tools') || nav, dict = tl.querySelector('.vvr-dict');
     if (dict) tl.insertBefore(btn, dict); else tl.appendChild(btn);   // bar order: ☆ 📝 🔍 📖 टीका ⇕ ⚙ (2026-10-21)
     box = el('div', {id: 'vvs'});
-    box.innerHTML = '<div class="row"><input type="search" placeholder="search this text — देवनागरी or ITRANS (sandhi-tolerant)" autocomplete="off">' +
+    box.innerHTML = '<div class="row"><input type="search" placeholder="' + (matchMedia('(max-width:640px)').matches ? 'Sandhi-aware search · आत्मा एव' : 'Smart sandhi-aware search — e.g. आत्मा एव (finds आत्मैव)') + '" autocomplete="off">' +
       '<span class="scope"><label><input type="radio" name="vvs-sc" value="text" checked> this text</label>' +
       '<label><input type="radio" name="vvs-sc" value="all"> all texts ↗</label></span>' +
       '<span class="nav"><button data-d="-1" title="previous hit (Shift+Enter)">‹</button> <span class="pos"></span> <button data-d="1" title="next hit (Enter)">›</button> <button data-x="list" title="show / hide the hit list">≡ list</button></span>' +
@@ -100,7 +100,7 @@
     possibleEl.onchange = run;
     box.querySelectorAll('.nav button').forEach(function (b) { b.onclick = function () { step(+b.dataset.d); }; });
     box.querySelectorAll('input[name=vvs-sc]').forEach(function (r) { r.onchange = function () {
-      if (r.value === 'all' && r.checked) { window.open(SEARCH + (inp.value.trim() ? '?q=' + encodeURIComponent(inp.value.trim()) : ''), '_blank', 'noopener'); box.querySelector('input[value=text]').checked = true; } }; });
+      if (r.value === 'all' && r.checked) { var su = SEARCH + (inp.value.trim() ? '?q=' + encodeURIComponent(inp.value.trim()) : ''); if (window.VVStore && VVStore.openTab) VVStore.openTab(su, VVStore.SEARCH_TAB); else window.open(su, 'vv-search'); box.querySelector('input[value=text]').checked = true; } }; });
     res.addEventListener('click', function (e) { var h = e.target.closest('.h'); if (h) go(+h.dataset.i); });
     document.addEventListener('keydown', function (e) {
       if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName) && !e.metaKey && !e.ctrlKey) { e.preventDefault(); toggle(true); }

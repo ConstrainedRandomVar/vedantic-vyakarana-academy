@@ -7,6 +7,7 @@
 //   vv_pill_*      commentary markers: HIDDEN by default ('1' = shown) — applied by vv-reader.js (__vvApplyPills)
 //   fold:<key>     commentary fold-out defaults (VVStore.folds)
 //   vyakarana_auto_advance  grammar practice (app.js), on by default
+//   vv_show_report / vv_show_share  ⚑ report buttons (shown by default) / ⇉ Share reading (hidden by default) — VVStore.applyChrome
 // A reader's explicit earlier choice ('0'/'1' already stored) is always kept; only unset keys take the defaults above.
 (function () {
   'use strict';
@@ -64,7 +65,8 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function build() {
     var S = window.VVStore, folds = (S && S.folds) ? S.folds.list() : [];
-    var h = '<h2>⚙ Settings</h2>'
+    var helpOk = !sisterSite() && !(window.VVStore && VVStore.SITE === 'search');   // help-settings.html ships with the academy + public sites only
+    var h = '<h2>⚙ Settings' + (helpOk ? ' <a href="help-settings.html" target="_blank" rel="noopener" style="float:right;font-size:13px;font-weight:500;color:var(--brand,#b45309)">What do these do? ↗</a>' : '') + '</h2>'
       + '<div class="sep"><span class="dv">पठनम्</span> · Reading</div>'
       + '<div class="row"><div class="lab">Text size</div><div class="sizes"><span class="aa" style="font-size:12px">अ</span>'
       + SIZES.map(function (s) { return '<button type="button" data-size="' + s[0] + '">' + s[1] + '</button>'; }).join('')
@@ -78,6 +80,11 @@
     if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary markers</div><div class="hint" style="margin:0 0 8px">Small coloured tags in the bhāṣya that show how an argument works. Off by default, for a clean reading text.</div>'
       + MARKERS.map(function (m) { return '<div class="mk" data-mk="' + m[0] + '"><label class="chk"><input type="checkbox" data-pill="' + m[0] + '"> <span><b>' + m[1] + '</b> — ' + m[2] + '</span></label><div class="sample">' + m[3] + '</div></div>'; }).join('')
       + '</div>';
+    h += '<div class="row"><div class="lab">Page buttons</div>'
+      + '<label class="chk"><input type="checkbox" id="vvset-report"> Show the ⚑ report-an-issue buttons</label>'
+      + '<div class="hint" style="margin:2px 0 8px 24px">On reading pages and in the Sanskrit gym — tell us about a wrong word, gloss or analysis.</div>'
+      + '<label class="chk"><input type="checkbox" id="vvset-share"> Show ⇉ Share reading</label>'
+      + '<div class="hint" style="margin:2px 0 0 24px">For a teacher leading a class: students follow your scrolling live, each in their own script. Off by default.</div></div>';
     if (folds.length) h += '<div class="row"><div class="lab">Commentary fold-outs</div>'
       + folds.map(function (f) { return '<label class="chk" style="justify-content:space-between;gap:10px;margin-bottom:4px"><span>' + esc(f.label) + ' <span class="hint" style="display:inline">· ' + esc(f.sub || '') + '</span></span><select data-fold="' + esc(f.key) + '"><option value="collapsed">Collapsed</option><option value="expanded">Expanded</option></select></label>'; }).join('')
       + '<div class="hint">How collapsed commentary layers open when a page loads. Each page’s <b>टीका ⇕</b> button expands or collapses them on that page only.</div></div>';
@@ -88,7 +95,7 @@
       + '<div class="row" id="vvset-sync"><div class="lab">Sync with Google Drive</div>'
       + '<div class="hint" style="margin:0 0 6px">Keep your bookmarks, highlights and notes in <b>your own</b> Google Drive, so they follow you to your other devices. They go into a hidden app folder only this site can use; we never receive them. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></div>'
       + '<div class="vvset-syncst"></div></div>';
-    h += '<div class="sep"><span class="dv">व्याकरणम्</span> · Grammar practice</div>'
+    h += '<div class="sep"><span class="dv">संस्कृत-भाषा-व्यायाम-शाला</span> · Sanskrit gym</div>'
       + '<div class="row"><label class="chk"><input type="checkbox" id="vvset-auto"> Auto-advance to the next question after answering</label></div>'
       + '<div class="done"><button type="button" id="vvset-done">Done</button></div>';
     return h;
@@ -102,6 +109,8 @@
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.checked = markerOn(c.getAttribute('data-pill')); c.closest('.mk').classList.toggle('off', !c.checked); });
     var S = window.VVStore; if (S && S.folds) [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.value = S.folds.get(s.getAttribute('data-fold')); });
     var au = box.querySelector('#vvset-auto'); if (au) au.checked = get('vyakarana_auto_advance') !== '0';
+    var rp = box.querySelector('#vvset-report'); if (rp) rp.checked = get('vv_show_report') !== '0';
+    var sh = box.querySelector('#vvset-share'); if (sh) sh.checked = get('vv_show_share') === '1';
   }
   function wire(ov, box) {
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
@@ -118,6 +127,9 @@
       set(c.getAttribute('data-pill'), c.checked ? '1' : '0'); if (window.__vvApplyPills) window.__vvApplyPills(); reflect(box); }); });
     var S = window.VVStore; [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.addEventListener('change', function () { if (S && S.folds) S.folds.set(s.getAttribute('data-fold'), s.value); }); });
     box.querySelector('#vvset-auto').addEventListener('change', function (e) { set('vyakarana_auto_advance', e.target.checked ? '1' : '0'); });
+    var chrome = function () { if (window.VVStore && VVStore.applyChrome) VVStore.applyChrome(); };
+    box.querySelector('#vvset-report').addEventListener('change', function (e) { set('vv_show_report', e.target.checked ? '1' : '0'); chrome(); });
+    box.querySelector('#vvset-share').addEventListener('change', function (e) { set('vv_show_share', e.target.checked ? '1' : '0'); chrome(); });
   }
   // ☁ sync controls (vv-sync.js is loaded on first open of the panel)
   function withSync(cb) { if (window.VVSync) return cb(); var sc = document.createElement('script'); sc.src = 'vv-sync.js'; sc.onload = function () { if (window.VVSync) cb(); }; document.head.appendChild(sc); }
@@ -179,7 +191,7 @@
     loadLib();
     dictEl = document.createElement('div'); dictEl.className = 'vvset-dict'; dictEl.setAttribute('role', 'dialog');
     dictEl.innerHTML = '<form><input type="search" placeholder="Sanskrit word — देवनागरी or ITRANS" aria-label="Sanskrit word" autocomplete="off"><button type="submit">Look up ↗</button></form>'
-      + '<small>Opens sanskritkosha.com (50+ dictionaries) in a new tab.</small>';
+      + '<small>Opens sanskritkosha.com (50+ dictionaries) in its own tab, reused for every look-up.</small>';
     document.body.appendChild(dictEl);
     var r = anchor.getBoundingClientRect(), w = dictEl.offsetWidth;
     dictEl.style.top = (r.bottom + 6) + 'px';
@@ -187,7 +199,7 @@
     var inp = dictEl.querySelector('input'); inp.value = prefill || ''; inp.focus(); inp.select();
     dictEl.querySelector('form').addEventListener('submit', function (e) {
       e.preventDefault(); var q = inp.value.trim(); if (!q) return;
-      var tab = window.open(KOSHA + encodeURIComponent(deva(q)), '_blank'); if (tab) try { tab.opener = null; } catch (x) {}
+      var ku = KOSHA + encodeURIComponent(deva(q)); if (window.VVStore && VVStore.openTab) VVStore.openTab(ku, VVStore.KOSHA_TAB); else { var tab = window.open(ku, 'vv-kosha'); if (tab) try { tab.opener = null; } catch (x) {} }   // ONE reusable kosha tab (batch 2 #2)
       closeDict();
     });
     inp.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDict(); });

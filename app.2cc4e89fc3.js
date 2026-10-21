@@ -138,8 +138,8 @@ const RESOURCES = [
 ];
 // पारायणम् · Chanting — its own homepage section right after the texts, so a reader can listen (Harsha 2026-10-21 #14)
 const CHANTING = [
-    { name: 'Advaita Audio Libraries', url: 'https://gitaarchive-tech.github.io/advaita/', desc: 'Advaita Vedānta’s Sanskrit texts and related traditional works made listenable through modern text-to-speech.' },
-    { name: 'Vāgdhenu', url: 'https://prathosh.in/vagdhenu/', desc: 'A vṛtta (meter)-aware text-to-speech system that chants Sanskrit ślokas.' },
+    { name: 'Advaita Audio Libraries', url: 'https://gitaarchive-tech.github.io/advaita/', desc: 'Listen to the Prasthāna-trayī — mūlam and Śaṅkara’s bhāṣyam — and many prakaraṇa, vyākaraṇa and darśana texts, read aloud by AI text-to-speech (Vāgdhenu, Hear2Read).' },
+    { name: 'Vāgdhenu', url: 'https://prathosh.in/vagdhenu/', desc: 'Chant any verse: an AI system from IISc that detects the verse’s metre (vṛtta) and chants it in pārāyaṇa style, with careful Sanskrit pronunciation (visarga, aspirates, sibilants, anusvāra).' },
 ];
 const resHost = u => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 function dashboardTools() {
@@ -1413,13 +1413,21 @@ function renderDashboard() {
   const readCard = t => `<a class="rcard" data-reflect="${t.file}"><div class="rtitle">${t.dv}</div><div class="rlat">${t.lat}</div>${readOffers(t)}</a>`;
   const readGroup = g => READING_TEXTS.filter(t => t.group === g).map(readCard).join('');
   const masteredN = CODES.filter(c => progress[c].mastered).length;
-  // व्याकरणम् panel collapsed? — remembered per reader (vv-store prefs; open by default) — Harsha 2026-10-13
-  const vyCollapsed = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:vyakarana-shut', false));
-  // निबन्धाः · In-depth studies — collapsed by default, remembered (Harsha 2026-10-21 #9); Tools — open by default, foldable (#12)
+  // Homepage sections (Harsha 2026-10-21 batch 2 #8): the texts open, every other section FOLDED by default; each remembers the
+  // reader's choice (vv-store prefs — a choice saved under the older keys is kept); the whole heading row toggles; a folded
+  // heading shows a count so it is not a mystery. FOLD_SECS: id → [pref key, value meaning "shut", default shut].
+  const FOLD_SECS = { textsPanel: ['home:texts-shut', true, false], chantPanel: ['home:chant-shut', true, true],
+    studyPanel: ['home:study-shut', true, true], toolsPanel: ['home:tools-shut', true, true],
+    resPanel: ['home:resources-open', false, true], vyPanel: ['home:vyakarana-shut', true, true] };
+  const isShut = id => { const [k, shutVal, dflt] = FOLD_SECS[id]; let v; try { v = VVStore.prefs.get(k, undefined); } catch (e) {} return v === undefined ? dflt : v === shutVal; };
+  const foldHead = (id, inner, count) => `<h2 class="sec-head" data-fold="${id}"><button class="sec-fold" aria-expanded="${!isShut(id)}" title="show / hide this section">${isShut(id) ? '▸' : '▾'}</button>${inner}${count ? `<span class="sec-prog">${count}</span>` : ''}</h2>`;
+  const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const studyCount = (() => { const S = window.VVStore; if (!S) return ''; try { const mine = r => !S.SITE || S.SITE === 'local' || !r.site || r.site === S.SITE;
+    const b = S.bookmarks.list().filter(mine).length, h = (S.highlights ? S.highlights.list() : []).filter(mine).length, n = S.notes.list().filter(mine).length;
+    return b + h + n ? `★ ${b} · 🖍 ${h} · 📝 ${n}` : 'none yet'; } catch (e) { return ''; } })();
+  // निबन्धाः · In-depth studies — collapsed by default, remembered (Harsha 2026-10-21 #9)
   const nibOpen = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:nibandha-open', false));
-  const toolsShut = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:tools-shut', false));
-  // सहायक-सामग्री (Resources) — FOLDED by default, remembered once the reader opens it (Harsha 2026-10-17)
-  const resOpen = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:resources-open', false));
+  const sister = !!(window.SITE_CONFIG && window.SITE_CONFIG.readGroups);
   // Node-card order (Harsha, 2026-08-29): समास first, then सन्धि, then the rest alphabetical.
   const KIND_PRIORITY = { samasa: 0, sandhi: 1 };
   const kinds = Object.keys(CODES_BY_KIND).sort((a, b) => {
@@ -1438,15 +1446,16 @@ function renderDashboard() {
   // nodes below). Separates the two paradigms that used to sit in one flat button row (Harsha, 2026-08-22).
   app.innerHTML = `
     ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' /* sister site: its own identity */ : '<div class="site-tag">वेदान्त-संस्कृत-पठन-पाठन-उपकारक</div>'}
-    <section class="home-sec">
-    <h2 class="sec-head">${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? 'ग्रन्थाः <span class="sec-lat">· The texts</span>' /* sister site: not Vedānta */ : 'वेदान्त-ग्रन्थाः <span class="sec-lat">· Vedānta texts</span>'}</h2>
-    <div class="dash-lane">
-      ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? /* sister site: its own groups (build_sahitya_site.js) */
+    <section class="home-sec fold-sec${isShut('textsPanel') ? ' shut' : ''}" id="textsPanel">
+    ${foldHead('textsPanel', sister ? 'ग्रन्थाः <span class="sec-lat">· The texts</span>' /* sister site: not Vedānta */ : 'वेदान्त-ग्रन्थाः <span class="sec-lat">· Vedānta texts</span>', plural(READING_TEXTS.filter(t => !(PROFILE_OMIT.has('nibandha') && t.group === 'nibandha')).length, 'text'))}
+    <div class="dash-lane fold-body">
+      ${sister ? /* sister site: its own groups (build_sahitya_site.js) */
         '<div class="lane-sub">' + (window.SITE_CONFIG.svadhyayaSub || '') + '</div>' + window.SITE_CONFIG.readGroups.map(g =>
           `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.dv} <span class="lat">· ${g.lat}</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === g.key).length} · ${g.count || ''}</span></div><div class="readgrid">${readGroup(g.key)}</div></div>`).join('') : `
-      <div class="lane-sub">Read each text with its commentaries. <a href="#" data-open-settings>⚙ Settings</a> turns on word grammar, argument markers and more.</div>
+      <div class="lane-sub">Vedānta texts — study and search with pratīkas, padaccheda, grammar for every word, and more. <a href="#" data-open-settings>⚙ Settings</a> — explore and turn on useful features, such as the grammar of each word.</div>
       <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī</span></span><span class="gcount">12 · मूलम् + भाष्यम् + टीका / वार्त्तिकम्</span></div>
+        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī with commentaries</span></span><span class="gcount">12 · मूलम् + भाष्यम् + टीका / वार्त्तिकम्</span></div>
+        <div class="gnote">ṭīkā = Ānandagiri's ṭīkā unless stated otherwise</div>
         <div class="readgrid">${readGroup('prasthana')}</div>
       </div>
       <div class="readgroup">
@@ -1460,25 +1469,33 @@ function renderDashboard() {
       `}
     </div>
     </section>
-    ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' : `<section class="home-sec chant-sec">
-    <h2 class="sec-head">पारायणम् <span class="sec-lat">· Chanting</span></h2>
-    <div class="dash-lane"><div class="readgrid resgrid">${CHANTING.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="rdesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>
+    ${sister ? '' : `<section class="home-sec fold-sec chant-sec${isShut('chantPanel') ? ' shut' : ''}" id="chantPanel">
+    ${foldHead('chantPanel', 'पारायणम् <span class="sec-lat">· Chanting — AI-enabled mūlam, bhāṣyam and tools for chanting any verse</span>', plural(CHANTING.length, 'link'))}
+    <div class="dash-lane fold-body"><div class="readgrid resgrid">${CHANTING.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>
     </section>`}
-    <section class="home-sec study-sec">
-    <h2 class="sec-head">मट्टिप्पणीसञ्चयः <span class="sec-lat">· My bookmarks, highlights &amp; notes</span></h2>
-    <div class="dash-lane"><div class="lane-sub">Bookmark and 🖍 highlight passages, collect them, and keep notes — saved only in this browser.</div><div id="myStudy">${myStudyHtml()}</div></div>
+    <section class="home-sec fold-sec study-sec${isShut('studyPanel') ? ' shut' : ''}" id="studyPanel">
+    ${foldHead('studyPanel', 'मट्टिप्पणीसञ्चयः <span class="sec-lat">· My bookmarks, highlights &amp; notes</span>', studyCount)}
+    <div class="dash-lane fold-body"><div class="lane-sub">Bookmark and 🖍 highlight passages, collect them, and keep notes — saved only in this browser.</div><div id="myStudy">${myStudyHtml()}</div></div>
     </section>
-    ${PROFILE_OMIT.has('tools') ? '' /* prod: no Tools section (Harsha 2026-10-21 #12) */ : `<section class="home-sec tools-sec${toolsShut ? ' shut' : ''}" id="toolsPanel">
-    <h2 class="sec-head"><button class="sec-fold" id="toolsFold" aria-expanded="${!toolsShut}" title="show / hide this section">${toolsShut ? '▸' : '▾'}</button>उपकरणानि <span class="sec-lat">· Tools</span></h2>
-    <div class="tools-body">
+    ${PROFILE_OMIT.has('tools') ? '' /* prod: no Tools section (Harsha 2026-10-21 #12) */ : `<section class="home-sec fold-sec tools-sec${isShut('toolsPanel') ? ' shut' : ''}" id="toolsPanel">
+    ${foldHead('toolsPanel', 'उपकरणानि <span class="sec-lat">· Tools</span>', plural(dashboardTools().length, 'tool'))}
+    <div class="tools-body fold-body">
     <div class="dash-lane">
       <div class="readgrid modegrid">${dashboardTools().map(t => `<a class="rcard modecard" href="${t.href}"${/^https?:/.test(t.href) ? ' target="_blank" rel="noopener"' : ''}><div class="rtitle">${t.title}</div><div class="modetag">${t.tag}</div><div class="modedesc">${t.desc}</div>${t.badge ? `<div class="modetag" style="margin-top:6px">${t.badge}</div>` : ''}</a>`).join('')}</div>
     </div>
     </div>
     </section>`}
-    <section class="home-sec vy-panel${vyCollapsed ? ' shut' : ''}" id="vyPanel">
-    <h2 class="sec-head"><button class="sec-fold" id="vyFold" aria-expanded="${!vyCollapsed}" title="show / hide this section">${vyCollapsed ? '▸' : '▾'}</button>व्याकरणम् <span class="sec-lat">· Sanskrit grammar practice</span><span class="sec-prog">${masteredN} / ${CODES.length} nodes mastered</span></h2>
-    <div class="vy-body">
+    ${sister ? '' : `<section class="home-sec fold-sec res-sec${isShut('resPanel') ? ' shut' : ''}" id="resPanel">
+    ${foldHead('resPanel', 'सहायक-सामग्री <span class="sec-lat">· Additional resources for Vedānta and Sanskrit study</span>', plural(RESOURCES.reduce((n, g) => n + g.items.length, 0), 'link'))}
+    <div class="res-body fold-body">
+    ${RESOURCES.map(g => `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.group}</span></div>
+      <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
+    </div>
+    </section>`}
+    <section class="home-sec fold-sec vy-panel${isShut('vyPanel') ? ' shut' : ''}" id="vyPanel">
+    ${foldHead('vyPanel', 'संस्कृत-भाषा-व्यायाम-शाला <span class="sec-lat">· Sanskrit gym' + (sister ? '' : ' — workouts with Vedānta texts') + '</span>', `${masteredN} / ${CODES.length} nodes mastered`)}
+    <div class="vy-body fold-body">
+    <div class="lane-sub">Grammar practice on the words of the texts — vibhakti, kāraka, samāsa, sandhi, dhātu and more.</div>
     <div class="dash-lane">
       <div class="lane-label">🧠 अभ्यास-मार्गाः · Ways to study</div>
       <div class="readgrid modegrid">
@@ -1500,13 +1517,6 @@ function renderDashboard() {
     </div>
     </div>
     </section>
-    ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' : `<section class="home-sec res-sec${resOpen ? '' : ' shut'}" id="resPanel">
-    <h2 class="sec-head"><button class="sec-fold" id="resFold" aria-expanded="${resOpen}" title="show / hide this section">${resOpen ? '▾' : '▸'}</button>सहायक-सामग्री <span class="sec-lat">· Resources</span></h2>
-    <div class="res-body">
-    ${RESOURCES.map(g => `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.group}</span></div>
-      <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
-    </div>
-    </section>`}
 `;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
@@ -1514,18 +1524,12 @@ function renderDashboard() {
   document.getElementById('tutorialBtn').onclick = () => { tutorialMode = 'vigraha'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); };
   { const cb = document.getElementById('clauseBtn'); if (cb) cb.onclick = () => { tutorialMode = 'clause'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); }; }
   { const ab = document.getElementById('anvayaBtn'); if (ab) ab.onclick = () => { tutorialMode = 'anvaya'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); }; }
-  { const vf = document.getElementById('vyFold'); if (vf) vf.onclick = () => {
-      const p = document.getElementById('vyPanel'), shut = !p.classList.contains('shut');
-      p.classList.toggle('shut', shut); vf.textContent = shut ? '▸' : '▾'; vf.setAttribute('aria-expanded', String(!shut));
-      try { VVStore.prefs.set('home:vyakarana-shut', shut); } catch (e) {} }; }
-  { const rf = document.getElementById('resFold'); if (rf) rf.onclick = () => {
-      const p = document.getElementById('resPanel'), shut = !p.classList.contains('shut');
-      p.classList.toggle('shut', shut); rf.textContent = shut ? '▸' : '▾'; rf.setAttribute('aria-expanded', String(!shut));
-      try { VVStore.prefs.set('home:resources-open', !shut); } catch (e) {} }; }
-  { const tf = document.getElementById('toolsFold'); if (tf) tf.onclick = () => {
-      const p = document.getElementById('toolsPanel'), shut = !p.classList.contains('shut');
-      p.classList.toggle('shut', shut); tf.textContent = shut ? '▸' : '▾'; tf.setAttribute('aria-expanded', String(!shut));
-      try { VVStore.prefs.set('home:tools-shut', shut); } catch (e) {} }; }
+  // whole heading row toggles (links inside a heading keep working); the choice is remembered under the section's pref key
+  app.querySelectorAll('.sec-head[data-fold]').forEach(h => h.onclick = e => {
+    if (e.target.closest('a')) return;
+    const id = h.dataset.fold, p = document.getElementById(id), shut = !p.classList.contains('shut'), [k, shutVal] = FOLD_SECS[id];
+    p.classList.toggle('shut', shut); const b = h.querySelector('.sec-fold'); b.textContent = shut ? '▸' : '▾'; b.setAttribute('aria-expanded', String(!shut));
+    try { VVStore.prefs.set(k, shut ? shutVal : !shutVal); } catch (e2) {} });
   { const nf = document.getElementById('nibFold'); if (nf) nf.onclick = () => {
       const g = document.getElementById('nibGroup'), open = g.classList.contains('shut');
       g.classList.toggle('shut', !open); nf.textContent = open ? '▾' : '▸'; nf.setAttribute('aria-expanded', String(open));
@@ -5384,7 +5388,7 @@ function renderTutorialPicker() {
 }
 
 // 🔍 in the header (Harsha 2026-10-17): a box that searches ALL texts — Enter opens the full-text search site with the query
-// (search.html runs ?q= on load; no text/category filter = every text), in the SAME tab, so Back returns here. "/" opens it
+// (search.html runs ?q= on load; no text/category filter = every text) in ONE reusable search tab (batch 2 #2, was same tab). "/" opens it
 // (not while typing in a field). Academy + public site only — the sister site's texts are not in that search index.
 const FULLTEXT_SEARCH_URL = 'https://constrainedrandomvar.github.io/prasthanatrayi-search/';
 function initHeaderSearch() {
@@ -5393,7 +5397,11 @@ function initHeaderSearch() {
   btn.hidden = false;
   const open = on => { form.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) q.focus(); };
   btn.onclick = () => open(form.hidden);
-  form.onsubmit = e => { e.preventDefault(); const s = q.value.trim(); if (s) location.href = FULLTEXT_SEARCH_URL + '?q=' + encodeURIComponent(s); };
+  form.onsubmit = e => { e.preventDefault(); const s = q.value.trim(); if (!s) return; const u = FULLTEXT_SEARCH_URL + '?q=' + encodeURIComponent(s);
+    if (window.VVStore && VVStore.openTab) VVStore.openTab(u, VVStore.SEARCH_TAB); else window.open(u, 'vv-search'); };
+  // grey placeholder (batch 2 #1): the example shows the sandhi-awareness — the split query finds the fused text
+  const ph = () => { q.placeholder = matchMedia('(max-width:640px)').matches ? 'Sandhi-aware search · आत्मा एव' : 'Smart sandhi-aware search — e.g. आत्मा एव (finds आत्मैव)'; };
+  ph(); matchMedia('(max-width:640px)').addEventListener('change', ph);
   q.onkeydown = e => { if (e.key === 'Escape') { q.value = ''; open(false); } };
   document.addEventListener('keydown', e => {
     if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;

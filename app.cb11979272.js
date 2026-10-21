@@ -1446,20 +1446,21 @@ function renderDashboard() {
   // nodes below). Separates the two paradigms that used to sit in one flat button row (Harsha, 2026-08-22).
   app.innerHTML = `
     ${(window.SITE_CONFIG && window.SITE_CONFIG.readGroups) ? '' /* sister site: its own identity */ : '<div class="site-tag">वेदान्त-संस्कृत-पठन-पाठन-उपकारक</div>'}
+    ${sister ? '' : /* the site's lead line ABOVE the sections, so it stands out and stays visible when the texts are folded (Harsha 2026-10-21 batch 3) */
+      '<div class="home-lead"><div class="l1">Read, search and study Vedānta texts — with pratīkas, padaccheda, grammar for every word, and more.</div><div class="l2"><a href="#" data-open-settings>⚙ Settings</a> — explore and turn on useful features, such as the grammar of each word.</div></div>'}
     <section class="home-sec fold-sec${isShut('textsPanel') ? ' shut' : ''}" id="textsPanel">
     ${foldHead('textsPanel', sister ? 'ग्रन्थाः <span class="sec-lat">· The texts</span>' /* sister site: not Vedānta */ : 'वेदान्त-ग्रन्थाः <span class="sec-lat">· Vedānta texts</span>', plural(READING_TEXTS.filter(t => !(PROFILE_OMIT.has('nibandha') && t.group === 'nibandha')).length, 'text'))}
     <div class="dash-lane fold-body">
       ${sister ? /* sister site: its own groups (build_sahitya_site.js) */
         '<div class="lane-sub">' + (window.SITE_CONFIG.svadhyayaSub || '') + '</div>' + window.SITE_CONFIG.readGroups.map(g =>
           `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.dv} <span class="lat">· ${g.lat}</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === g.key).length} · ${g.count || ''}</span></div><div class="readgrid">${readGroup(g.key)}</div></div>`).join('') : `
-      <div class="lane-sub">Vedānta texts — study and search with pratīkas, padaccheda, grammar for every word, and more. <a href="#" data-open-settings>⚙ Settings</a> — explore and turn on useful features, such as the grammar of each word.</div>
       <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī with commentaries</span></span><span class="gcount">12 · मूलम् + भाष्यम् + टीका / वार्त्तिकम्</span></div>
+        <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī with commentaries</span></span><span class="gcount">मूलम् + भाष्यम् + टीका / वार्त्तिकम्</span></div>
         <div class="gnote">ṭīkā = Ānandagiri's ṭīkā unless stated otherwise</div>
         <div class="readgrid">${readGroup('prasthana')}</div>
       </div>
       <div class="readgroup">
-        <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">${READING_TEXTS.filter(t => t.group === 'prakarana').length} · मूलम् + टीका / व्याख्या</span></div>
+        <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">मूलम् + टीका / व्याख्या</span></div>
         <div class="readgrid">${readGroup('prakarana')}</div>
       </div>
       ${PROFILE_OMIT.has('nibandha') ? '' /* prod: not offered (Harsha 2026-10-21 #9) */ : `<div class="readgroup fold-group${nibOpen ? '' : ' shut'}" id="nibGroup">
@@ -1485,15 +1486,8 @@ function renderDashboard() {
     </div>
     </div>
     </section>`}
-    ${sister ? '' : `<section class="home-sec fold-sec res-sec${isShut('resPanel') ? ' shut' : ''}" id="resPanel">
-    ${foldHead('resPanel', 'सहायक-सामग्री <span class="sec-lat">· Additional resources for Vedānta and Sanskrit study</span>', plural(RESOURCES.reduce((n, g) => n + g.items.length, 0), 'link'))}
-    <div class="res-body fold-body">
-    ${RESOURCES.map(g => `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.group}</span></div>
-      <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
-    </div>
-    </section>`}
     <section class="home-sec fold-sec vy-panel${isShut('vyPanel') ? ' shut' : ''}" id="vyPanel">
-    ${foldHead('vyPanel', 'संस्कृत-भाषा-व्यायाम-शाला <span class="sec-lat">· Sanskrit gym' + (sister ? '' : ' — workouts with Vedānta texts') + '</span>', `${masteredN} / ${CODES.length} nodes mastered`)}
+    ${foldHead('vyPanel', 'संस्कृत-भाषा-व्यायाम-शाला <span class="sec-lat">· Sanskrit gym' + (sister ? '' : ' — exercise your Sanskrit on Vedānta texts') + '</span>', `${masteredN} / ${CODES.length} nodes mastered`)}
     <div class="vy-body fold-body">
     <div class="lane-sub">Grammar practice on the words of the texts — vibhakti, kāraka, samāsa, sandhi, dhātu and more.</div>
     <div class="dash-lane">
@@ -1517,6 +1511,14 @@ function renderDashboard() {
     </div>
     </div>
     </section>
+    ${sister ? '' : `<section class="home-sec fold-sec res-sec${isShut('resPanel') ? ' shut' : ''}" id="resPanel">
+    ${foldHead('resPanel', 'सहायक-सामग्री <span class="sec-lat">· Additional resources for Vedānta and Sanskrit study</span>', plural(RESOURCES.reduce((n, g) => n + g.items.length, 0), 'link'))}
+    <div class="res-body fold-body">
+    ${RESOURCES.map(g => `<div class="readgroup"><div class="readgroup-head"><span class="gtitle">${g.group}</span></div>
+      <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
+    </div>
+    </section>`}
+    ${sister ? '' : '<footer class="vv-credit">Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>. Translations and grammatical apparatus are new (partly machine-made).</footer>'}
 `;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');

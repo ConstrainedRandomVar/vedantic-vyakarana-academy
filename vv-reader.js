@@ -95,6 +95,7 @@
 
   // ---- styles (page tokens with fallbacks: academy pages use --card/--line, VS uses --bg/--rule) ----
   var CSS = ''
+    + '.vv-credit{max-width:860px;margin:28px auto 18px;padding:10px 16px 0;border-top:1px solid var(--line,#e5ded0);font:12px/1.5 system-ui,-apple-system,sans-serif;color:var(--muted,#7a6a55);text-align:center}.vv-credit a{color:inherit;text-decoration:underline}'
     + '.vvr-tools{display:inline-flex;gap:4px;align-items:center;margin-left:auto}'
     + '#reading-nav .rn-picker+.vvr-tools{margin-left:6px}'
     + '.vvr-btn{font:inherit;font-size:15px;line-height:1;border:1px solid var(--line,var(--rule,#ddd));background:var(--card,var(--bg,#fff));color:var(--ink,#222);border-radius:8px;padding:4px 7px;cursor:pointer}'
@@ -541,6 +542,11 @@
     if (savedScale() !== 1) textScale(savedScale());
     showHint();
     legendNotes();
+    // copyright / provenance line at the foot of every reading page (Harsha 2026-10-21, after Tamal Maharaj's disclaimer) —
+    // not on the sister site, whose texts are not Sringeri's. Same wording as the homepage (app.js).
+    if (S.SITE !== 'sahitya' && !document.querySelector('.vv-credit')) {
+      var cr = el('footer', { class: 'vv-credit' }); cr.innerHTML = 'Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>. Translations and grammatical apparatus are new (partly machine-made).';
+      document.body.appendChild(cr); }
     // in-text search (🔍 next to ☆ 📝, 2026-10-13) — vv-insearch.js shows itself only on texts the search site indexes
     var isrc = document.createElement('script'); isrc.src = 'vv-insearch.js'; isrc.async = true; document.head.appendChild(isrc);
     applyFoldDefaults();

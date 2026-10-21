@@ -1329,7 +1329,7 @@ function renderCategorySection(kind, codes) {
       <div class="grid">${codes.map(renderNodeCard).join('')}</div>
     </details>`;
 }
-// मम स्वाध्यायः · My study (Harsha 2026-10-21 #11): bookmarks + notes promoted out of Tools into their own section — a live
+// मट्टिप्पणीसञ्चयः · My bookmarks, highlights & notes (Harsha 2026-10-21 #11; renamed from «मम स्वाध्यायः · My study» the same day): bookmarks + notes promoted out of Tools into their own section — a live
 // summary (counts, 3 latest bookmarks, 3 latest notes, each linking to its verse) + "Open my library". This site's own records
 // (they carry `site`; a local/dev copy shows all). Data stays in this browser (vv-store.js, CLAUDE.md 9i).
 function myStudyHtml() {
@@ -1465,7 +1465,7 @@ function renderDashboard() {
     <div class="dash-lane"><div class="readgrid resgrid">${CHANTING.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="rdesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>
     </section>`}
     <section class="home-sec study-sec">
-    <h2 class="sec-head">मम स्वाध्यायः <span class="sec-lat">· My study</span></h2>
+    <h2 class="sec-head">मट्टिप्पणीसञ्चयः <span class="sec-lat">· My bookmarks, highlights &amp; notes</span></h2>
     <div class="dash-lane"><div class="lane-sub">Bookmark and 🖍 highlight passages, collect them, and keep notes — saved only in this browser.</div><div id="myStudy">${myStudyHtml()}</div></div>
     </section>
     ${PROFILE_OMIT.has('tools') ? '' /* prod: no Tools section (Harsha 2026-10-21 #12) */ : `<section class="home-sec tools-sec${toolsShut ? ' shut' : ''}" id="toolsPanel">

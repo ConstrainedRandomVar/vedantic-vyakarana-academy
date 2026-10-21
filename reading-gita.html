@@ -185,7 +185,12 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 }
 
 /* bhasya role colours */
-.mula{color:var(--mula);font-weight:650}.msub{color:var(--mula);font-weight:650}.gloss{color:var(--gloss)}
+.mula{color:var(--mula);font-weight:650}.msub{color:var(--mula);font-weight:650}
+/* blue = LINKED (CLAUDE.md 9c; Harsha 2026-10-21): a quote word jump_resolve could not pin to ONE verse word (repeated च, a
+   paraphrase the annotation marked) gets no data-jmt → it is NOT blue (exact-or-nothing, 9e). data-jmq (cross-verse intro
+   quotes, resolved at runtime) keeps its colour. */
+.mula .w[data-jm]:not([data-jmt]),.w:not([data-jmt]) .msub{color:inherit;font-weight:inherit}   /* sub-word marks too: an unlinked part-quote is plain */
+.mula .w[data-jm]:not([data-jmt]){color:var(--ink);font-weight:400}.gloss{color:var(--gloss)}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
 .purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}
 /* role PILL — start-anchored role marker for a rebuttal/objection whose words carry another colour

@@ -152,7 +152,11 @@
   // ---- reusable tabs (Harsha 2026-10-21 batch 2 #2): searches open ONE search tab (reused for every later search) and the
   // dictionary ONE kosha tab, so a reader ends up with site · search · kosha. This tab names itself vv-site-<id> first, so the
   // search site can send a result back HERE (it reads opener.name — same github.io origin) instead of opening a 4th tab. ----
+  // iOS home-screen app (navigator.standalone is iOS-only): window.open there leaves the app for a Safari view with SAFARI's
+  // storage (search history / bookmarks made there never reach the app's library) — so stay in the app's own window instead.
+  var IOS_APP = !!(root.navigator && root.navigator.standalone === true);
   function openTab(url, name) {
+    if (IOS_APP) { root.location.href = url; return null; }
     try { if (!/^vv-site-/.test(root.name || '')) root.name = 'vv-site-' + Math.random().toString(36).slice(2, 8); } catch (e) {}
     var w = root.open(url, name);
     if (w && name === 'vv-kosha') try { w.opener = null; } catch (e) {}   // external site: no handle back to us
@@ -284,5 +288,8 @@
   // OPTIONAL Google-Drive sync (vv-sync.js, the reader's OWN Drive): loaded only on browsers where the reader switched it on
   // (⚙ Settings → Sync). Not on the shared search site (it has no vv-sync.js), never in Node.
   if (root.VV_SYNC_ENABLED && root.document && SITE !== 'search') { try { if (root.localStorage.getItem('vvsync:on') === '1') { var sc = root.document.createElement('script'); sc.src = 'vv-sync.js'; sc.async = true; (root.document.head || root.document.documentElement).appendChild(sc); } } catch (e) {} }
+  // ask the browser to keep this origin's storage (the library) under storage pressure instead of evicting it — Safari 17+ /
+  // Chrome; a no-op where unsupported or already granted. Matters most for an iOS home-screen app, whose storage is its own.
+  try { var ns = root.navigator && root.navigator.storage; if (ns && ns.persist && ns.persisted) ns.persisted().then(function (p) { if (!p) ns.persist(); }).catch(function () {}); } catch (e) {}
   if (typeof module !== 'undefined' && module.exports) module.exports = root.VVStore;
 })(typeof window !== 'undefined' ? window : globalThis);

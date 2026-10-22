@@ -114,6 +114,7 @@ body.view-both .mulq{border-bottom:1.5px dotted var(--mula)}
 #tip .jumps,.gtip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline,rgba(255,255,255,.2));display:flex;flex-wrap:wrap;gap:5px 8px}
 #tip .jrow,.gtip .jrow{cursor:pointer;color:var(--tipacc,#a7f3d0);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc,#a7f3d0) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
 #tip .jrow:hover,.gtip .jrow:hover{background:color-mix(in srgb,var(--tipacc,#a7f3d0) 16%,transparent)}
+#tip .jrow .jof{opacity:.8;font-size:11px}#tip .jrow .jnext{margin-left:7px;padding-left:7px;border-left:1px solid color-mix(in srgb,var(--tipacc,#a7f3d0) 40%,transparent);font-weight:700}#tip .jrow .jnext:hover{text-decoration:underline}
 .gtip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text}
 body.vvnopeek .gtip{display:none !important}
 @keyframes navflashw{0%{background:rgba(217,119,6,.42);box-shadow:0 0 0 2px rgba(217,119,6,.5)}100%{background:transparent;box-shadow:0 0 0 2px transparent}}
@@ -379,12 +380,16 @@ document.addEventListener('click',function(e){var p=e.target.closest('.pratika')
 window.__vcNav=function(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit')},1800);
   var k=el.getAttribute('data-k'),sec=el.closest('[id^="v-"],[id^="vb-"]'),ref=k?k.split(':')[1]:(sec?sec.id.replace(/^vb?-/,''):null);
   if(ref&&window.__vvJump)window.__vvJump(ref,k||null);};   // presenter → carry followers
-window.__vcMulaJump=function(t){if(!t||!t.__prat||!document.body.classList.contains('view-both'))return '';var p=null;
-  for(var i=0;i<t.__prat.length&&!p;i++){var q=t.__prat[i];if(q.offsetParent!==null){p=q;break;}
-    // a pratīka inside a sandhi-fused unit sits in the hidden पद copy (.fumembers) in सन्धि mode → land on the visible fused word
-    var fu=q.closest('.fu'),host=fu?fu.querySelector('.bhfuse'):null;if(host&&host.offsetParent!==null)p=host;}
-  if(!p)return '';window.__vcJumpTo=p;
-  return '<div class="jumps"><span class="jrow" data-jp="1">→ '+(window.__vcJL||'भाष्यम्')+'</span></div>';};
+// "→ भाष्यम् (1 of N) · next ›" (Harsha 2026-10-21): EVERY visible pratīka on this mūla word, in page order (t.__prat comes from the
+// build-time data-t targets — no click-time matching). __vcJumpList/__vcJumpIdx drive "next ›" (build_vc_reading_view tip handler).
+window.__vcMulaJump=function(t){if(!t||!t.__prat||!document.body.classList.contains('view-both'))return '';var P=[];
+  for(var i=0;i<t.__prat.length;i++){var q=t.__prat[i],p=null;if(q.offsetParent!==null)p=q;
+    else{// a pratīka inside a sandhi-fused unit sits in the hidden पद copy (.fumembers) in सन्धि mode → land on the visible fused word
+      var fu=q.closest('.fu'),host=fu?fu.querySelector('.bhfuse'):null;if(host&&host.offsetParent!==null)p=host;}
+    if(p&&P.indexOf(p)<0)P.push(p);}
+  if(!P.length)return '';window.__vcJumpList=P;window.__vcJumpIdx=0;window.__vcJumpTo=P[0];
+  var lb='→ '+(window.__vcJL||'भाष्यम्');
+  return '<div class="jumps"><span class="jrow'+(P.length>1?' jrn':'')+'" data-jp="1">'+lb+(P.length>1?' <span class="jof">(1 of '+P.length+')</span><span class="jnext" title="next quotation of this word">next ›</span>':'')+'</span></div>';};
 (function(){var tip=document.createElement('div');tip.className='gtip';document.body.appendChild(tip);var pinned=null;tip.classList.remove('pinned');
 function card(el){
   // fused सन्धि unit (.bhfuse): no inline data — build the combined card from the sibling पद member spans
@@ -437,7 +442,11 @@ document.addEventListener('mouseover',e=>{if(touch||pinned)return;const t=e.targ
 document.addEventListener('mouseout',e=>{if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
 document.addEventListener('click',e=>{if(tip.contains(e.target))return;const t=e.target.closest('.w');if(t){pinned=true;show(t);tip.classList.add('pinned');return;}hideTip(true);});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Esc')hideTip(true);});
-tip.addEventListener('click',e=>{const jr=e.target.closest('.jrow');if(jr&&window.__vcJumpTo&&window.__vcNav){e.stopPropagation();hideTip(true);window.__vcNav(window.__vcJumpTo);}});   // mūla → commentary (cross-layer link)
+tip.addEventListener('click',e=>{
+  const nx=e.target.closest('.jnext'),L=window.__vcJumpList;   // "next ›": the next pratīka on this word; the card stays pinned and follows it
+  if(nx&&L&&L.length>1&&window.__vcNav){e.stopPropagation();const i=((window.__vcJumpIdx||0)+1)%L.length;window.__vcJumpIdx=i;window.__vcJumpTo=L[i];
+    const of=nx.parentNode.querySelector('.jof');if(of)of.textContent='('+(i+1)+' of '+L.length+')';window.__vcNav(L[i]);setTimeout(()=>place(L[i]),450);return;}
+  const jr=e.target.closest('.jrow');if(jr&&window.__vcJumpTo&&window.__vcNav){e.stopPropagation();hideTip(true);window.__vcNav(window.__vcJumpTo);}});   // mūla → commentary (cross-layer link)
 const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script><style>
 #rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
   background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;

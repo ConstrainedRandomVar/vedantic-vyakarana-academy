@@ -249,6 +249,8 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 #tip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline);display:flex;flex-wrap:wrap;gap:5px 8px}
 #tip .jrow{cursor:pointer;color:var(--tipacc);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap}
 #tip .jrow:hover{background:color-mix(in srgb,var(--tipacc) 16%,transparent)}
+#tip .jrow .jof{opacity:.8;font-size:11px}#tip .jrow .jnext{margin-left:7px;padding-left:7px;border-left:1px solid color-mix(in srgb,var(--tipacc) 40%,transparent);font-weight:700}
+#tip .jrow .jnext:hover{text-decoration:underline}
 .seglbl{font-size:12.5px;color:var(--muted);align-self:center;margin-right:-2px}
 @media(max-width:520px){.topbar{flex-wrap:wrap}.topbar .grow{width:100%;justify-content:flex-start}
   .topbar .seg button{padding:5px 8px;font-size:11.5px}.seglbl{font-size:11px}
@@ -566,13 +568,16 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
   // data-jmt → the mūla word · data-jbt → the bhāṣya word · data-jtt → the ṭīkā pratīka (absent = ambiguous → no link)
   var jm=src.getAttribute('data-jmt'); if(jm) rows.push(jr('mk',ref,jm,''));
   else if(!pr&&t.getAttribute('data-jmq')){var sk=SK(surfOf(t)); if(sk&&mqTarget(sk)) rows.push(jr('mq','',sk,''));}   // intro cross-verse quote (unique verse only)
-  var jb=src.getAttribute('data-jbt'); if(jb) rows.push(jr('bk',ref,jb,''));
+  // a VERSE word: "→ भाष्यम् (1 of N) · next ›" — every quotation of it in a layer, in reading order (quotesOf); one quote → plain row
+  var isM=!pr&&!!t.closest('.mula-zone')&&t.getAttribute('data-k');
+  var jb=src.getAttribute('data-jbt'); if(jb){var qb=isM?quotesOf(ref,t.getAttribute('data-k'),''):[]; rows.push(qb.length>1?jrN('bk',ref,qb,''):jr('bk',ref,jb,''));}
   if(pr&&pr.getAttribute('data-jti')){var ti=pr.getAttribute('data-jti'),vv0=document.getElementById('v-'+ref);   // MRI exact word index
     if(vv0&&vv0.querySelector('.bh .w[data-ti="'+ti+'"]'))rows.push(jr('pi',ref,ti,'bh'));}
   var jt=!pr&&t.getAttribute('data-jtt'); if(jt){ var tks=[jt].concat((t.getAttribute('data-jtx')||'').split(' ').filter(Boolean));
     // one row PER commentary that quotes this word; named by commentary when the page carries more than one
     var named=document.querySelectorAll('.seg button[data-side]:not([data-side=""]),button[data-side]:not([data-side=""])').length>1;
-    for(var x=0;x<tks.length;x++) rows.push(jr('tk',ref,tks[x],'',named?tkLabel(tks[x]):''));}
+    for(var x=0;x<tks.length;x++){var qt=isM?quotesOf(ref,t.getAttribute('data-k'),tkSide(tks[x])):[];   // counted PER commentary
+      rows.push(qt.length>1?jrN('tk',ref,qt,'',named?tkLabel(tks[x]):''):jr('tk',ref,tks[x],'',named?tkLabel(tks[x]):''));}}
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
 // the element carrying data-k = key (the VISIBLE copy when a ṭīkā is shown both inline and in the side column)
 function byKey(k){if(!k)return null;var els=document.querySelectorAll('[data-k="'+k+'"]');
@@ -582,8 +587,21 @@ function tkSide(k){var m=/:t([A-Za-z]+)_[0-9]/.exec(k||'');return m?m[1]:'';}
 function tkLabel(k){var b=document.querySelector('button[data-side="'+tkSide(k)+'"]');return b?'→ '+b.textContent.trim():'';}
 function jr(cat,ref,sk,zone,lab){var lb=lab||{mk:'→ मूलम्',mq:'→ मूलम्',bk:'→ भाष्यम्',pi:'→ भाष्यम्',tk:'→ टीका'}[cat];
   return '<span class="jrow" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+sk+'" data-jz="'+(zone||'')+'">'+lb+'</span>';}
+// "1 of N" (Harsha 2026-10-21): all quotations of verse word mk in ONE layer (side '' = Śaṅkara's bhāṣya incl. its prelude; else that
+// commentary lane), in page order — read off the EXACT build-time targets (data-jmt on each quoting word/pratīka, jump_resolve.js),
+// never matched at click time (#9e). Side/inline copies of a lane share keys → de-duplicated. A lazy lane not yet loaded → [] (plain row).
+function quotesOf(ref,mk,side){var c=document.getElementById('v-'+ref);if(!c||!mk)return [];var out=[],seen={};
+  var els=c.querySelectorAll('[data-jmt="'+mk+'"]');
+  for(var i=0;i<els.length;i++){var e=els[i],lane=e.closest('.tk-inline,.side-zone'),w=null;
+    if(side){if(!lane||lane.getAttribute('data-side')!==side)continue;w=e.classList.contains('w')?e:e.querySelector('.w[data-k]');}
+    else{if(lane||e.closest('.mula-zone'))continue;w=e.classList.contains('w')?e:e.closest('.w');}
+    var k=w&&w.getAttribute('data-k');if(k&&!seen[k]){seen[k]=1;out.push(k);}}
+  return out;}
+function jrN(cat,ref,list,zone,lab){var lb=lab||{bk:'→ भाष्यम्',tk:'→ टीका'}[cat];
+  return '<span class="jrow jrn" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+list[0]+'" data-jl="'+list.join('|')+'" data-ji="0" data-jz="'+(zone||'')+'">'+lb
+    +' <span class="jof">(1 of '+list.length+')</span><span class="jnext" title="next quotation of this word">next ›</span></span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
-function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
+function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
     if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
   if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){var e2=byKey(sk);   // lazy lane: load, then land
@@ -593,8 +611,8 @@ function doJump(jrEl){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute
   else if(cat==='mq'){ var tt=mqTarget(sk);                        // intro cross-verse quote
     if(tt&&tt.el) el=tt.el;
     else if(tt&&tt.page){ hideTip(true); location.assign(tt.page===CURPAGE?('#v-'+tt.ref):(tt.page+'#v-'+tt.ref)); return; } }
-  hideTip(true);
-  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});navFlash(el);}
+  if(!keep)hideTip(true);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});navFlash(el);if(keep)setTimeout(function(){place(el);},450);}   // "next ›": the card follows the quote
   else{var vv=document.getElementById('v-'+ref);if(vv){vv.scrollIntoView({behavior:'smooth',block:'start'});vv.classList.remove('navhit');void vv.offsetWidth;vv.classList.add('navhit');setTimeout(function(){vv.classList.remove('navhit');},1700);}}
   if(window.__vvJump)window.__vvJump(ref,el?el.getAttribute('data-k'):null);}   // presenter → carry followers
 function show(t){
@@ -634,7 +652,10 @@ var pinned=false;
 function hideTip(force){if(pinned&&!force)return;pinned=false;tip.style.opacity=0;tip.classList.remove('pinned');}
 // a jump row is only clickable once the card is PINNED (#tip pointer-events flips on .pinned). stopPropagation
 // so neither the page's pin-toggle nor sync.js's onWordTap (laser clear) fires for a row click.
-tip.addEventListener('click',function(e){var jr=e.target.closest('.jrow');if(jr){e.stopPropagation();doJump(jr);}});
+tip.addEventListener('click',function(e){
+  var nx=e.target.closest('.jnext');if(nx){e.stopPropagation();var row=nx.closest('.jrn'),L=row.getAttribute('data-jl').split('|'),i=(+row.getAttribute('data-ji')+1)%L.length;
+    row.setAttribute('data-ji',i);row.setAttribute('data-jk',L[i]);row.querySelector('.jof').textContent='('+(i+1)+' of '+L.length+')';doJump(row,true);return;}   // next quotation; card stays pinned
+  var jr=e.target.closest('.jrow');if(jr){e.stopPropagation();doJump(jr);}});
 document.addEventListener('mouseover',function(e){if(touch||pinned)return;var t=e.target.closest('.w');if(t)show(t);});
 document.addEventListener('mouseout',function(e){if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
 document.addEventListener('click',function(e){

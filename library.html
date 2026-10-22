@@ -159,7 +159,7 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
   function renderBackup() {
     var nb = S.bookmarks.list().length, nc = S.collections.list().length, nn = S.notes.list().length, nh = S.history.list().length, nhl = S.highlights.list().length;
     V.innerHTML = '<div class="card"><b>Export</b> — download everything (' + nb + ' bookmarks, ' + nc + ' collections, ' + nn + ' notes, ' + nhl + ' highlights, ' + nh + ' recent searches) as one file. Keep it safe, or import it on another device.<div class="meta"><button class="mini pri" data-act="export">⤓ export file</button></div></div>'
-      + '<div class="card"><b>Import</b> — merge an exported file into this browser. Nothing here is deleted; where the same item exists in both, the more recently edited copy wins.<div class="meta"><input type="file" id="imp" accept=".json,application/json"></div><div id="impmsg" class="meta"></div></div>';
+      + '<div class="card"><b>Import</b> — merge an exported file into this browser. Nothing here is deleted; where the same item exists in both, the more recently edited copy wins.' + (S.SITE === 'sahitya' ? '' : ' On a phone or tablet app, see <a href="help-mobile.html#library">📱 keeping your library safe</a>.') + '<div class="meta"><input type="file" id="imp" accept=".json,application/json"></div><div id="impmsg" class="meta"></div></div>';
     document.getElementById('imp').onchange = function (e) {
       var f = e.target.files[0]; if (!f) return;
       f.text().then(function (t) { var n = S.importAll(JSON.parse(t)); document.getElementById('impmsg').textContent = 'Imported — ' + n + ' item(s) added or updated.'; })
@@ -213,7 +213,13 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
     }
     else if (act === 'export') {
       var blob = new Blob([JSON.stringify(S.exportAll(), null, 1)], { type: 'application/json' });
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'adhyayana-sahakari-library-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+      var fname = 'adhyayana-sahakari-library-' + new Date().toISOString().slice(0, 10) + '.json';
+      var download = function () { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; a.click(); };
+      // iOS home-screen app: a download link is unreliable there — hand the file to the share sheet (Save to Files / AirDrop / Mail)
+      var file = null; try { file = new File([blob], fname, { type: 'application/json' }); } catch (x) {}
+      if (navigator.standalone === true && file && navigator.canShare && navigator.canShare({ files: [file] }))
+        navigator.share({ files: [file], title: fname }).catch(function (err) { if (!err || err.name !== 'AbortError') download(); });
+      else download();
     }
     else if (act === 'nedit') { var n = S.notes.get(nkey); var v2 = prompt('Edit note:', n.text); if (v2 !== null) { S.notes.set(nkey, Object.assign({}, n, { text: v2 })); render(); } }
     else if (act === 'ndel' && confirm('Delete this note?')) { S.notes.remove(nkey); render(); }

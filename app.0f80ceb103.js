@@ -1518,7 +1518,7 @@ function renderDashboard() {
       <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
     </div>
     </section>`}
-    ${sister ? '' : '<footer class="vv-credit">Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>. Translations and grammatical apparatus are new (partly machine-made).</footer>'}
+    ${sister ? '' : '<footer class="vv-credit">Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>. Translations and grammatical apparatus are new (partly machine-made). · <a href="help-mobile.html">📱 Use it as an app</a></footer>'}
 `;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');

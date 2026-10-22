@@ -6,7 +6,7 @@
 <title>Use it as an app — अध्ययन-सहकारी</title>
 <!-- help-mobile.html — installing the site as a phone/tablet app + keeping the library safe (Harsha 2026-10-22). Linked from the
      homepage (app.js), help-settings.html and the library Backup tab. Static page; shipped by build_deploy.js (PERSONAL list).
-     Keep the offline paragraph in step with sw.js. -->
+     Keep the offline card in step with build_deploy.js §7 (sw.js) + vv-offline.js. -->
 <style>
 :root{--bg:#fbfaf7;--card:#fff;--ink:#22201b;--muted:#6b6455;--line:#e6e0d4;--brand:#d97706;--acc:#b45309}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--acc:#f5b544}}
@@ -64,10 +64,13 @@ ol{margin:6px 0 0;padding-left:22px;color:var(--muted);font-size:14.5px}ol li{ma
 <li>Where you want it, open ★ Library → Backup → <b>Import</b> and pick that file. Nothing already there is deleted; if the same item exists in both, the more recently edited copy is kept.</li></ol>
 <p>Export every now and then — it is your only backup.</p></div>
 
-<div class="card"><h2>Without a connection</h2>
-<p>Pages you have opened recently can often be read offline, but for now an update to the site clears them. A proper offline mode — save a whole text to your device and read it anywhere — is being built. Search and the dictionary always need a connection.</p></div>
+<div class="card" id="offline"><h2>Without a connection</h2>
+<p>To read a text anywhere — on a flight, with no signal — open any of its pages while online and choose <b>☰ → ⤓ Save this text for offline</b>. The menu shows how much space it takes before you save. Saved texts stay up to date on their own: whenever you are online, only what changed is fetched again.</p>
+<ul><li>Pages you have simply opened are also kept, so a page you read recently usually opens offline too.</li>
+<li>See or remove saved texts in <a href="library.html#offline">★ My library → Offline</a>.</li>
+<li>Search and the dictionary always need a connection.</li></ul></div>
 
-<p class="foot">Last updated 22 October 2026. <a href="help-settings.html">⚙ Settings help</a> · <a href="privacy.html">Privacy</a> · <a href="about.html">Sources &amp; attribution</a></p>
+<p class="foot">Last updated 23 October 2026. <a href="help-settings.html">⚙ Settings help</a> · <a href="privacy.html">Privacy</a> · <a href="about.html">Sources &amp; attribution</a></p>
 </main>
 <script>(function(){var r=document.documentElement;document.getElementById('tog').onclick=function(){var c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');};})();</script>
 </body>

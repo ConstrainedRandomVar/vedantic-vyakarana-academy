@@ -5427,7 +5427,8 @@ function initBrandLogo() {
 // Boot: honor a ?tut=<ref>[&step=<type>][&cluster=<n>] testing back-gate (see jumpToTutorial), else
 // the normal dashboard.
 (function boot() {
-  const g = document.getElementById('gearBtn'); if (g) g.onclick = openSettings;
+  // ☰ menu (2026-10-23): ⚙ Settings · ★ library · help · sources (vv-settings.js); falls back to the bare Settings panel
+  const g = document.getElementById('gearBtn'); if (g) g.onclick = () => { if (window.VVSettings && VVSettings.menu) VVSettings.menu(g); else openSettings(); };
   initHeaderSearch();
   // Top-level banner Home button (persists across every SPA screen; header lives outside #app) — always
   // returns to the dashboard. Non-destructive: reading/quiz progress is already saved as you go. (Harsha, 2026-08-29.)

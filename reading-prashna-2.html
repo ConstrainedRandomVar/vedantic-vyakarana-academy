@@ -186,6 +186,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 
 /* bhasya role colours */
 .mula{color:var(--mula);font-weight:650}.msub{color:var(--mula);font-weight:650}
+.w[data-msubeq] .bhsp .msub:last-of-type::after{content:" =";color:var(--muted,#888);font-weight:400}   /* pratīka = gloss inside ONE word (पद view only; visual, not text) */
 /* blue = LINKED (CLAUDE.md 9c; Harsha 2026-10-21): a quote word jump_resolve could not pin to ONE verse word (repeated च, a
    paraphrase the annotation marked) gets no data-jmt → it is NOT blue (exact-or-nothing, 9e). data-jmq (cross-verse intro
    quotes, resolved at runtime) keeps its colour. */

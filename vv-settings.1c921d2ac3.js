@@ -1,4 +1,4 @@
-// vv-settings.js — THE ONE ⚙ Settings panel (Harsha 2026-10-21, feedback #3 #4 #5 #6 #8): opened by the homepage ⚙ (app.js)
+// vv-settings.js — THE ONE ⚙ Settings panel (+ the ☰ menu that opens it, 2026-10-23) (Harsha 2026-10-21, feedback #3 #4 #5 #6 #8): opened by the homepage ⚙ (app.js)
 // AND by the ⚙ on every reading page (vv-reader.js loads this file on first click). Same content, wording and order in both
 // places. Every setting is a plain localStorage key shared by the whole site (and its other pages/tabs):
 //   vv_text_size   reading-page text scale (0.85 · 0.92 · 1 · 1.1 · 1.2; default 1) — applied by vv-reader.js (__vvTextScale)
@@ -75,8 +75,13 @@
       + '<div class="hint">All text on the reading pages — mūla, commentaries, headings and word cards.</div></div>'
       + '<div class="row"><div class="lab">Script</div><select id="vvset-script">' + SCRIPTS.map(function (s) { return '<option value="' + s[0] + '">' + s[1] + '</option>'; }).join('') + '</select>'
       + '<div class="hint">Shows the same Sanskrit in Devanāgarī, IAST or another script.</div></div>'
-      + '<div class="row"><div class="lab">Word grammar on hover</div><label class="chk"><input type="checkbox" id="vvset-hover"' + (touch ? ' disabled' : '') + '> Show a word’s grammar card when the mouse rests on it</label>'
-      + '<div class="hint">' + (touch ? 'Phones and tablets: just tap a word to see its grammar.' : 'Off by default (quiet) — hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) to see one anyway. To 🖍 highlight or ☆ bookmark a passage, select it and <b>right-click</b>; the ☆ in the page bar bookmarks the verse.') + '</div></div>';
+      + (touch
+        // phones/tablets: a tap opens a word's card and a scroll never does — nothing to set (Harsha 2026-10-23: reassure, don't show a dead switch)
+        ? '<div class="row"><div class="lab">Word grammar cards</div><div class="hint" style="font-size:13px;color:inherit">Tap any word to see its grammar card. Scrolling never opens one, so there is nothing to set here.</div>'
+          + '<div class="hint">To 🖍 highlight or ☆ bookmark a passage, long-press to select it, then use the menu; the ☆ in the page bar bookmarks the verse.</div></div>'
+        : '<div class="row"><div class="lab">Word grammar on hover <span class="hint" style="display:inline;font-weight:400">(computers with a mouse)</span></div><label class="chk"><input type="checkbox" id="vvset-hover"> Show a word’s grammar card when the mouse rests on it</label>'
+          + '<div class="hint">Off by default (quiet) — hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) to see one anyway. <b>This setting doesn’t apply to phones and tablets; there, tapping a word always shows its card.</b></div>'
+          + '<div class="hint">To 🖍 highlight or ☆ bookmark a passage, select it and <b>right-click</b>; the ☆ in the page bar bookmarks the verse.</div></div>');
     if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary markers</div><div class="hint" style="margin:0 0 8px">Small coloured tags in the bhāṣya that show how an argument works. Off by default, for a clean reading text.</div>'
       + MARKERS.map(function (m) { return '<div class="mk" data-mk="' + m[0] + '"><label class="chk"><input type="checkbox" data-pill="' + m[0] + '"> <span><b>' + m[1] + '</b> — ' + m[2] + '</span></label><div class="sample">' + m[3] + '</div></div>'; }).join('')
       + '</div>';
@@ -121,7 +126,7 @@
     var sc = box.querySelector('#vvset-script'); sc.addEventListener('change', function () {
       set('vv_script', sc.value); var pick = document.getElementById('scriptpick');   // reading page: translit.js applies it live
       if (pick) { pick.value = sc.value; pick.dispatchEvent(new Event('change')); } });
-    var hv = box.querySelector('#vvset-hover'); hv.addEventListener('change', function () {
+    var hv = box.querySelector('#vvset-hover'); if (hv) hv.addEventListener('change', function () {
       set('vv_quiet_hover', hv.checked ? '0' : '1'); if (window.VVPeek && VVPeek.refresh) VVPeek.refresh(); if (window.__vvHintUsed) window.__vvHintUsed(); });
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.addEventListener('change', function () {
       set(c.getAttribute('data-pill'), c.checked ? '1' : '0'); if (window.__vvApplyPills) window.__vvApplyPills(); reflect(box); }); });
@@ -206,5 +211,73 @@
     setTimeout(function () { document.addEventListener('mousedown', function off(e) { if (!dictEl) { document.removeEventListener('mousedown', off); return; }
       if (!dictEl.contains(e.target) && e.target !== anchor) { closeDict(); document.removeEventListener('mousedown', off); } }); }, 0);
   }
-  window.VVSettings = { open: open, close: close, dict: dict, textScale: textScale, quietOn: quietOn, markerOn: markerOn };
+  // ---- ☰ MENU (Harsha 2026-10-23, replaces the bare ⚙ on the homepage and every reading page): ⚙ Settings first, then the
+  // reader's library, "Save this text for offline" (reading pages, via vv-offline.js), and the help / sources pages — which
+  // used to be reachable only from footers. Items for pages a site doesn't ship (sister site: no help/about) are left out. ----
+  var MCSS = '.vvset-menu{position:fixed;z-index:2001;background:var(--card,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:6px;width:min(300px,92vw);font:14px/1.35 system-ui,-apple-system,sans-serif}'
+    + '.vvset-menu a,.vvset-menu button{display:flex;gap:10px;align-items:flex-start;width:100%;box-sizing:border-box;padding:7px 9px;border:0;border-radius:7px;background:none;color:inherit;font:inherit;text-align:left;text-decoration:none;cursor:pointer}'
+    + '.vvset-menu a:hover,.vvset-menu button:hover,.vvset-menu a:focus-visible,.vvset-menu button:focus-visible{background:var(--line,#f1ece2);outline:none}'
+    + '.vvset-menu .ic{width:1.3em;flex:none;text-align:center}.vvset-menu small{display:block;color:var(--muted,#7a6a55);font-size:12px}'
+    + '.vvset-menu hr{border:0;border-top:1px solid var(--line,#e5ded0);margin:4px 6px}'
+    + '.vvset-menu button[disabled]{cursor:default;opacity:.8}';
+  var menuEl = null;
+  function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
+  function item(ic, label, sub, href) {
+    return (href ? '<a href="' + href + '" role="menuitem">' : '<button type="button" role="menuitem">') + '<span class="ic">' + ic + '</span><span>' + label
+      + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (href ? '</a>' : '</button>');
+  }
+  function menu(anchor) {
+    if (menuEl) { closeMenu(); return; }
+    if (!document.getElementById('vvset-mcss')) { var st = document.createElement('style'); st.id = 'vvset-mcss'; st.textContent = MCSS; document.head.appendChild(st); }
+    var sister = sisterSite();
+    menuEl = document.createElement('div'); menuEl.className = 'vvset-menu'; menuEl.setAttribute('role', 'menu');
+    menuEl.innerHTML = '<div data-m="set">' + item('⚙', 'Settings', 'Text size, script, word grammar, markers') + '</div>'
+      + item('★', 'My library', 'Bookmarks, highlights, notes · backup', 'library.html')
+      + '<div data-m="off" hidden></div>'
+      + (sister ? '' : '<hr>' + item('📱', 'Use it as an app', 'Install on a phone or tablet · offline', 'help-mobile.html')
+        + item('❓', 'What the settings do', '', 'help-settings.html')
+        + item('ℹ', 'Sources &amp; attribution', '', 'about.html') + item('🔒', 'Privacy', '', 'privacy.html'));
+    document.body.appendChild(menuEl);
+    var r = anchor.getBoundingClientRect(), w = menuEl.offsetWidth;
+    menuEl.style.top = (r.bottom + 6) + 'px';
+    menuEl.style.left = Math.max(8, Math.min(r.right - w, document.documentElement.clientWidth - w - 8)) + 'px';
+    menuEl.querySelector('[data-m="set"] button').addEventListener('click', function () { closeMenu(); open(); });
+    if (readingPage()) offlineItem(menuEl.querySelector('[data-m="off"]'));
+    var first = menuEl.querySelector('button,a'); if (first) first.focus();
+    menuEl.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeMenu(); anchor.focus(); } });
+    setTimeout(function () { document.addEventListener('mousedown', function off(e) { if (!menuEl) { document.removeEventListener('mousedown', off); return; }
+      if (!menuEl.contains(e.target) && e.target !== anchor) { closeMenu(); document.removeEventListener('mousedown', off); } }); }, 0);
+  }
+  // "⤓ Save this text for offline (N MB)" ⇄ "✓ Saved for offline · remove" — only where offline.json lists this page
+  function withOffline(cb) { if (window.VVOffline) return cb(); var sc = document.createElement('script'); sc.src = 'vv-offline.js'; sc.onload = function () { if (window.VVOffline) cb(); }; document.head.appendChild(sc); }
+  function offlineItem(slot) {
+    withOffline(function () {
+      if (!VVOffline.supported()) return;
+      VVOffline.info().then(function (inf) {
+        if (!inf || !slot.isConnected) return;
+        var draw = function () {
+          slot.innerHTML = '<hr>' + (inf.saved
+            ? item('✓', 'Saved for offline', esc(inf.title) + ' · tap to remove from this device')
+            : item('⤓', 'Save this text for offline', esc(inf.title) + ' · about ' + VVOffline.mb(inf.bytes) + ' on this device'));
+          slot.hidden = false;
+          var b = slot.querySelector('button');
+          b.addEventListener('click', function () {
+            if (inf.saved) {
+              if (!confirm('Remove “' + inf.title + '” from this device? You can save it again any time.')) return;
+              VVOffline.remove(inf.key).then(function () { inf.saved = false; draw(); });
+              return;
+            }
+            if (!navigator.onLine) { alert('You are offline — connect to the internet to save this text.'); return; }
+            b.disabled = true;
+            var lab = b.querySelector('span:last-child');
+            VVOffline.save(inf.key, function (done, total) { lab.innerHTML = 'Saving… ' + Math.floor(100 * done / total) + '%<small>' + esc(inf.title) + ' · keep this page open</small>'; })
+              .then(function () { inf.saved = true; draw(); }, function (err) {
+                b.disabled = false; lab.innerHTML = 'Could not save — try again<small>' + esc((err && err.message) || 'network error') + '</small>'; });
+          });
+        };
+        draw();
+      }).catch(function () {});
+    });
+  }
+  window.VVSettings = { open: open, close: close, menu: menu, dict: dict, textScale: textScale, quietOn: quietOn, markerOn: markerOn };
 })();

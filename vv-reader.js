@@ -440,7 +440,7 @@
     var fs = presentFolds();
     openPop(anchor, '<h4>Commentary fold-outs on this page</h4>' + fs.map(function (f) {
       return '<div class="fold"><span>' + esc(f.label) + '<small>' + esc(f.sub || '') + '</small></span><button class="vvr-mini" data-k="' + esc(f.key) + '" data-o="1">▾ expand all</button><button class="vvr-mini" data-k="' + esc(f.key) + '" data-o="0">▸ collapse all</button></div>';
-    }).join('') + '<div style="font-size:12px;color:var(--muted,#6b6455);margin-top:6px">This page only. The default for every page is set in the dashboard ⚙ Settings.</div>', function (p) {
+    }).join('') + '<div style="font-size:12px;color:var(--muted,#6b6455);margin-top:6px">This page only. The default for every page is set in ☰ → ⚙ Settings.</div>', function (p) {
       p.addEventListener('click', function (e) {
         var k = e.target.getAttribute && e.target.getAttribute('data-k'); if (!k) return;
         var f = fs.filter(function (x) { return x.key === k; })[0]; if (f) setFold(f, e.target.getAttribute('data-o') === '1');
@@ -478,7 +478,7 @@
     var h1 = document.querySelector('h1'); if (!h1) return;
     S.prefs.set('hint:grammar-n', n + 1);
     hintEl = el('div', { class: 'vvr-hint' }, (touch ? 'Tap a word to see its grammar · long-press to select and 🖍 highlight' : 'Hold <b>Cmd/Ctrl</b> (or <b>Alt</b>) over a word to see its grammar · select words and <b>right-click</b> to 🖍 highlight')
-      + ' · <a href="#" class="vvr-hint-set">⚙ for reading options</a> <button class="vvr-hint-x" type="button" aria-label="Dismiss">✕</button>');
+      + ' · <a href="#" class="vvr-hint-set">☰ ⚙ Settings for reading options</a> <button class="vvr-hint-x" type="button" aria-label="Dismiss">✕</button>');
     var after = (h1.nextElementSibling && /\bsub\b/.test(h1.nextElementSibling.className)) ? h1.nextElementSibling : h1;
     after.parentNode.insertBefore(hintEl, after.nextSibling);
     hintEl.querySelector('.vvr-hint-x').addEventListener('click', hintUsed);
@@ -497,7 +497,7 @@
       var on = false; try { on = localStorage.getItem(m[0]) === '1'; } catch (e) {}
       var note = it.querySelector('.vvr-lnote');
       if (on) { if (note) note.remove(); return; }
-      if (!note) { note = el('a', { class: 'vvr-lnote', href: '#', title: 'Commentary markers are off by default — turn this one on in ⚙ Settings' }, '⚙ to show');
+      if (!note) { note = el('a', { class: 'vvr-lnote', href: '#', title: 'Commentary markers are off by default — turn this one on in ☰ → ⚙ Settings' }, '⚙ to show');
         note.addEventListener('click', function (e) { e.preventDefault(); withSettings(function () { VVSettings.open(); }); }); it.appendChild(note); }
     });
   }
@@ -534,8 +534,9 @@
       fb.addEventListener('click', function () { foldPopover(fb); });
       tools.appendChild(fb);
     }
-    var gearBtn = el('button', { class: 'vvr-btn vvr-gear', type: 'button', title: 'Settings — text size, script, word grammar, commentary markers…', 'aria-label': 'Settings' }, '⚙');
-    gearBtn.addEventListener('click', function () { withSettings(function () { VVSettings.open(); }); });
+    // ☰ menu (Harsha 2026-10-23): ⚙ Settings · ★ library · ⤓ save this text offline · help · sources — vv-settings.js VVSettings.menu
+    var gearBtn = el('button', { class: 'vvr-btn vvr-gear', type: 'button', title: 'Menu — settings, library, save offline, help', 'aria-label': 'Menu', 'aria-haspopup': 'true' }, '☰');
+    gearBtn.addEventListener('click', function () { withSettings(function () { VVSettings.menu(gearBtn); }); });
     tools.appendChild(gearBtn);
     if (bar) bar.appendChild(tools); else { var fl = el('div', { class: 'vvr-float' }); fl.appendChild(tools); document.body.appendChild(fl); }
     brandLogo();
@@ -549,6 +550,10 @@
       document.body.appendChild(cr); }
     // in-text search (🔍 next to ☆ 📝, 2026-10-13) — vv-insearch.js shows itself only on texts the search site indexes
     var isrc = document.createElement('script'); isrc.src = 'vv-insearch.js'; isrc.async = true; document.head.appendChild(isrc);
+    // offline reading (vv-offline.js): register the service worker from reading pages too, and bring saved texts up to date
+    var osrc = document.createElement('script'); osrc.src = 'vv-offline.js'; osrc.async = true;
+    osrc.onload = function () { if (!window.VVOffline) return; VVOffline.register(); setTimeout(function () { VVOffline.refresh(); }, 4000); };
+    document.head.appendChild(osrc);
     applyFoldDefaults();
     rememberPanels();
     paintMarkers();

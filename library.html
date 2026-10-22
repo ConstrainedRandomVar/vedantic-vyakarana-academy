@@ -57,7 +57,7 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
 <header>
   <a class="brand" href="index.html" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home"><span class="bf">अध्ययन-सहकारी</span><span class="bs">अध्य·सहकारी</span><img class="vv-logo" src="diya-40.png" alt="" aria-hidden="true" style="height:1.3em;width:auto;vertical-align:-.28em;margin-left:5px"></a>
   <h1>★ My library</h1>
-  <nav class="tabs"><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks</a><a href="#collections" data-tab="collections">🗂 Collections</a><a href="#notes" data-tab="notes">📝 Notes</a><a href="#highlights" data-tab="highlights">🖍 Highlights</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
+  <nav class="tabs"><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks</a><a href="#collections" data-tab="collections">🗂 Collections</a><a href="#notes" data-tab="notes">📝 Notes</a><a href="#highlights" data-tab="highlights">🖍 Highlights</a><a href="#offline" data-tab="offline">📶 Offline</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
   <button id="tog" title="light / dark">◐</button>
 </header>
 <main>
@@ -65,6 +65,7 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
   <div id="view"></div>
 </main>
 <script src="vv-store.js"></script>
+<script src="vv-offline.js"></script>
 <script>
 (function () {
   'use strict';
@@ -235,13 +236,36 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
     if (e.target.getAttribute('data-act') === 'rename') { var sec = e.target.closest('[data-c]'); var v = e.target.value.trim(); if (v) S.collections.rename(sec.getAttribute('data-c'), v); }
   });
 
+  // 📶 Offline (2026-10-23): texts saved with ☰ → "Save this text for offline" on a reading page (vv-offline.js); each opens
+  // offline and can be removed. Saved texts refresh themselves (only changed files) whenever the reader is online.
+  function renderOffline() {
+    var O = window.VVOffline;
+    if (!O || !O.supported()) { V.innerHTML = '<div class="empty">Offline reading isn’t available in this browser or on this site.</div>'; return; }
+    V.innerHTML = '<div class="empty">Loading…</div>';
+    O.list().then(function (rows) {
+      if (tab !== 'offline') return;
+      var tot = rows.reduce(function (n, r) { return n + (r.bytes || 0); }, 0);
+      V.innerHTML = '<p class="note-top" style="margin-top:0">To read a text without a connection, open any of its pages and choose <b>☰ → ⤓ Save this text for offline</b>. Saved texts update themselves when you are online. Pages you have simply opened are kept too. <a href="help-mobile.html#offline">More</a></p>'
+        + (rows.length ? rows.map(function (r) {
+            return '<div class="card" data-k="' + esc(r.key) + '"><b>' + esc(r.title) + '</b><div class="meta">' + O.mb(r.bytes || 0) + ' · saved ' + esc(r.at ? new Date(r.at).toLocaleDateString() : '')
+              + ' · <a href="' + esc(r.first) + '">open</a> <button class="mini" data-act="offdel">remove</button></div></div>';
+          }).join('') + '<div class="meta">' + rows.length + ' text' + (rows.length === 1 ? '' : 's') + ' · ' + O.mb(tot) + ' in all</div>'
+          : '<div class="empty">No texts saved yet.</div>');
+      V.onclick = function (e) {
+        var b = e.target.closest && e.target.closest('[data-act="offdel"]'); if (!b) return;
+        var k = b.closest('[data-k]').getAttribute('data-k'), t = b.closest('.card').querySelector('b').textContent;
+        if (confirm('Remove “' + t + '” from this device? You can save it again any time.')) O.remove(k).then(render);
+      };
+      if (navigator.onLine) O.refresh();
+    }, function () { V.innerHTML = '<div class="empty">Offline reading isn’t available on this site.</div>'; });
+  }
   var tab = 'bookmarks';
-  function render() { V.onclick = null; ({ bookmarks: renderBookmarks, collections: renderCollections, notes: renderNotes, highlights: renderHighlights, backup: renderBackup })[tab](); }
+  function render() { V.onclick = null; ({ bookmarks: renderBookmarks, collections: renderCollections, notes: renderNotes, highlights: renderHighlights, offline: renderOffline, backup: renderBackup })[tab](); }
   function route() {
     var h = location.hash.slice(1);
     [].forEach.call(document.querySelectorAll('nav.tabs a'), function (a) { a.classList.remove('on'); });
     if (h.indexOf('c=') === 0) { renderShared(h.slice(2)); return; }
-    tab = { bookmarks: 1, collections: 1, notes: 1, highlights: 1, backup: 1 }[h] ? h : 'bookmarks';
+    tab = { bookmarks: 1, collections: 1, notes: 1, highlights: 1, offline: 1, backup: 1 }[h] ? h : 'bookmarks';
     document.querySelector('nav.tabs a[data-tab="' + tab + '"]').classList.add('on');
     render();
   }

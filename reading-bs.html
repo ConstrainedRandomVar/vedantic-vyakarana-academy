@@ -250,6 +250,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 #tip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline);display:flex;flex-wrap:wrap;gap:5px 8px}
 #tip .jrow{cursor:pointer;color:var(--tipacc);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap}
 #tip .jrow:hover{background:color-mix(in srgb,var(--tipacc) 16%,transparent)}
+.navmem{background:color-mix(in srgb,var(--tipacc,#f59e0b) 45%,transparent);border-radius:3px}
 #tip .jrow .jof{opacity:.8;font-size:11px}#tip .jrow .jnext{margin-left:7px;padding-left:7px;border-left:1px solid color-mix(in srgb,var(--tipacc) 40%,transparent);font-weight:700}
 #tip .jrow .jnext:hover{text-decoration:underline}
 .seglbl{font-size:12.5px;color:var(--muted);align-self:center;margin-right:-2px}
@@ -571,11 +572,18 @@ function findTikaEl(ref,sk,pre){if(!sk)return null;var c=document.getElementById
 function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'),src=pr||t;
   // EXACT targets written at build time by jump_resolve.js (CLAUDE.md #9e) — no click-time matching:
   // data-jmt → the mūla word · data-jbt → the bhāṣya word · data-jtt → the ṭīkā pratīka (absent = ambiguous → no link)
-  var jm=src.getAttribute('data-jmt'); if(jm) rows.push(jr('mk',ref,jm,''));
+  var jm=src.getAttribute('data-jmt'), jmm=src.getAttribute('data-jmm');
+  if(jm){ if(jmm){ var tw=byKey(jm), mem=tw?memText(tw.textContent,jmm):''; rows.push(jr('mk',ref,jm,'','→ मूलम्'+(mem?' · '+mem:'')).replace('class="jrow"','class="jrow" data-jmm="'+jmm+'"')); } else rows.push(jr('mk',ref,jm,'')); }
   else if(!pr&&t.getAttribute('data-jmq')){var sk=SK(surfOf(t)); if(sk&&mqTarget(sk)) rows.push(jr('mq','',sk,''));}   // intro cross-verse quote (unique verse only)
   // a VERSE word: "→ भाष्यम् (1 of N) · next ›" — every quotation of it in a layer, in reading order (quotesOf); one quote → plain row
   var isM=!pr&&!!t.closest('.mula-zone')&&t.getAttribute('data-k');
-  var jb=src.getAttribute('data-jbt'); if(jb){var qb=isM?quotesOf(ref,t.getAttribute('data-k'),''):[]; rows.push(qb.length>1?jrN('bk',ref,qb,''):jr('bk',ref,jb,''));}
+  var jb=src.getAttribute('data-jbt'); if(jb){var qb=isM?quotesOf(ref,t.getAttribute('data-k'),''):[];
+    // a verse COMPOUND quoted member by member (data-jmm on the quotes): one row per member — "→ भाष्यम् · मित्र (1 of N) · next ›"
+    var byM={}, whole=[]; qb.forEach(function(k){ var e=byKey(k), mm=e&&e.getAttribute('data-jmm'); if(mm)(byM[mm]=byM[mm]||[]).push(k); else whole.push(k); });
+    var mks=Object.keys(byM).sort(function(a,b){return parseInt(a)-parseInt(b);});
+    if(isM&&mks.length){ if(whole.length) rows.push(whole.length>1?jrN('bk',ref,whole,''):jr('bk',ref,whole[0],''));
+      mks.forEach(function(mm){ var L=byM[mm], lab='→ भाष्यम् · '+memText(t.textContent,mm); rows.push(L.length>1?jrN('bk',ref,L,'',lab):jr('bk',ref,L[0],'',lab)); }); }
+    else rows.push(qb.length>1?jrN('bk',ref,qb,''):jr('bk',ref,jb,''));}
   if(pr&&pr.getAttribute('data-jti')){var ti=pr.getAttribute('data-jti'),vv0=document.getElementById('v-'+ref);   // MRI exact word index
     if(vv0&&vv0.querySelector('.bh .w[data-ti="'+ti+'"]'))rows.push(jr('pi',ref,ti,'bh'));}
   var jt=!pr&&t.getAttribute('data-jtt'); if(jt){ var tks=[jt].concat((t.getAttribute('data-jtx')||'').split(' ').filter(Boolean));
@@ -595,6 +603,13 @@ function jr(cat,ref,sk,zone,lab){var lb=lab||{mk:'→ मूलम्',mq:'→ �
 // "1 of N" (Harsha 2026-10-21): all quotations of verse word mk in ONE layer (side '' = Śaṅkara's bhāṣya incl. its prelude; else that
 // commentary lane), in page order — read off the EXACT build-time targets (data-jmt on each quoting word/pratīka, jump_resolve.js),
 // never matched at click time (#9e). Side/inline copies of a lane share keys → de-duplicated. A lazy lane not yet loaded → [] (plain row).
+// member text(s) of a verse compound "a-b-c" for data-jmm "1" or "1-2"
+function memText(txt,jmm){ var ms=String(txt||'').split('-'), p=String(jmm).split('-'), a=+p[0], b=p.length>1?+p[1]:a; return ms.slice(a,b+1).join('-'); }
+// briefly highlight member(s) jmm inside the landed compound word (runtime only — the page text is untouched)
+function flashMember(el,jmm){ try{ if(!el||el.childNodes.length!==1||el.firstChild.nodeType!==3)return; var t=el.firstChild.nodeValue, ms=t.split('-'), p=String(jmm).split('-'), a=+p[0], b=p.length>1?+p[1]:a;
+    var st=0; for(var i=0;i<a;i++)st+=ms[i].length+1; var en=st; for(var j=a;j<=b;j++)en+=ms[j].length+(j<b?1:0);
+    var r=document.createRange(); r.setStart(el.firstChild,st); r.setEnd(el.firstChild,en); var sp=document.createElement('span'); sp.className='navmem'; r.surroundContents(sp);
+    setTimeout(function(){ var pa=sp.parentNode; if(!pa)return; while(sp.firstChild)pa.insertBefore(sp.firstChild,sp); pa.removeChild(sp); pa.normalize(); },2200); }catch(e){} }
 function quotesOf(ref,mk,side){var c=document.getElementById('v-'+ref);if(!c||!mk)return [];var out=[],seen={};
   var els=c.querySelectorAll('[data-jmt="'+mk+'"]');
   for(var i=0;i<els.length;i++){var e=els[i],lane=e.closest('.tk-inline,.side-zone'),w=null;
@@ -617,7 +632,7 @@ function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttr
     if(tt&&tt.el) el=tt.el;
     else if(tt&&tt.page){ hideTip(true); location.assign(tt.page===CURPAGE?('#v-'+tt.ref):(tt.page+'#v-'+tt.ref)); return; } }
   if(!keep)hideTip(true);
-  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});navFlash(el);if(keep)setTimeout(function(){place(el);},450);}   // "next ›": the card follows the quote
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});navFlash(el);if(jrEl.getAttribute('data-jmm'))flashMember(el,jrEl.getAttribute('data-jmm'));if(keep)setTimeout(function(){place(el);},450);}   // "next ›": the card follows the quote
   else{var vv=document.getElementById('v-'+ref);if(vv){vv.scrollIntoView({behavior:'smooth',block:'start'});vv.classList.remove('navhit');void vv.offsetWidth;vv.classList.add('navhit');setTimeout(function(){vv.classList.remove('navhit');},1700);}}
   if(window.__vvJump)window.__vvJump(ref,el?el.getAttribute('data-k'):null);}   // presenter → carry followers
 function show(t){

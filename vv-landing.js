@@ -20,7 +20,10 @@
   var VMAP = { 'आ': 'ा', 'इ': 'ि', 'ई': 'ी', 'उ': 'ु', 'ऊ': 'ू', 'ऋ': 'ृ', 'ॠ': 'ॄ', 'ऌ': 'ॢ', 'ए': 'े', 'ऐ': 'ै', 'ओ': 'ो', 'औ': 'ौ' };
   var COMBINING = /[ािीुूृॄॢेैोौंँः्]/;   // if a match starts on one of these, extend back to its base consonant
   function canon(c) { return VMAP[c] || c; }
-  function nrmOf(raw) { var map = [], s = ''; for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || /\s/.test(c)) continue; map.push(i); s += canon(c); } return { s: s, map: map }; }
+  // AID: our reading-aid connectors (gloss "=", purport "→", unit "|") are never part of the text — skipped like whitespace on both sides,
+  // else any phrase spanning one never matched (Ch 7.4.2 «…सङ्क्लृप्त्यै = सङ्कल्पनिमित्तम्», Harsha 2026-10-23)
+  var AID = { '=': 1, '→': 1, '|': 1 };
+  function nrmOf(raw) { var map = [], s = ''; for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || AID[c] || /\s/.test(c)) continue; map.push(i); s += canon(c); } return { s: s, map: map }; }
   var nterm = '', rawTerm = '', fold = false;   // fold: relaxedIn's spelling-tolerant pass (nasal+्→ं, avagraha dropped)
   function foldStr(x) { return x.replace(/ऽ/g, '').replace(/[ङञणनम]्/g, 'ं'); }
   function highlightIn(root) { return highlightAcross(root); }
@@ -38,7 +41,7 @@
     var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), node, s = '', map = [];   // map[k] = [node, offset]
     while ((node = w.nextNode())) {
       var raw = node.nodeValue; if (!raw || !raw.trim() || !shown(node.parentElement) || node.parentElement.closest('#vvs')) continue;   // never the in-text search panel's own snippets
-      for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '\u200c' || c === '\u200d' || /\s/.test(c)) continue;
+      for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '\u200c' || c === '\u200d' || AID[c] || /\s/.test(c)) continue;
         if (fold) { if (c === 'ऽ') continue; if ('ङञणनम'.indexOf(c) >= 0 && raw[i + 1] === '्') { map.push([node, i, i + 2]); s += 'ं'; i++; continue; } }
         map.push([node, i, i + 1]); s += canon(c); }
     }

@@ -1380,7 +1380,7 @@ function renderDashboard() {
     { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vsara'], note: 'वार्त्तिकम् + शास्त्रप्रकाशिका · वार्तिकसारः + लघुसङ्ग्रहा' },
-    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya', 'ratnaprabha', 'purnanandi'] },
+    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya', 'ratnaprabha', 'purnanandi', 'brahmatattva'] },
     { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'vyakhya'], note: 'व्याख्या: श्रीचन्द्रशेखरभारती' },
     { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: पददीपिका · अ. १–११' },
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula', 'tika'] },
@@ -1401,7 +1401,8 @@ function renderDashboard() {
     vyakhya: ['व्याख्या', 'bhasya vyakhya'], vartika: ['वार्त्तिकम्', 'bhasya'], vsara: ['वार्तिकसारः', 'bhasya'],
     nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'],
     sridhari: ['श्रीधरी', 'bhasya'], madhusudani: ['मधुसूदनी', 'bhasya'], nilakanthi: ['नीलकण्ठी', 'bhasya'],   // Gītā verse-commentary lanes (2026-10-21)
-    vanamala: ['वनमाला', 'bhasya'], ratnaprabha: ['रत्नप्रभा', 'bhasya'], purnanandi: ['पूर्णानन्दी', 'bhasya'] };   // Taittirīya / BS lanes (2026-10-24)
+    vanamala: ['वनमाला', 'bhasya'], ratnaprabha: ['रत्नप्रभा', 'bhasya'], purnanandi: ['पूर्णानन्दी', 'bhasya'],   // Taittirīya / BS lanes (2026-10-24)
+    brahmatattva: ['ब्रह्मतत्त्वप्रकाशिका', 'bhasya'] };   // BS vṛtti lane (2026-10-25)
   const MAXP = 4;   // more than this → the rest behind a "+N …" pill (shown on card hover, or a tap on "…"); the card's note line folds
                     // with them (Harsha 2026-10-25: the Bṛhad card folds like the Gītā's — even a single extra pill, "+1 …")
   const readOffers = t => {

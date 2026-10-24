@@ -1490,6 +1490,7 @@ function renderDashboard() {
     ${foldHead('vyPanel', 'संस्कृत-भाषा-व्यायाम-शाला <span class="sec-lat">· Sanskrit gym' + (sister ? '' : ' — exercise your Sanskrit on Vedānta texts') + '</span>', `${masteredN} / ${CODES.length} nodes mastered`)}
     <div class="vy-body fold-body">
     <div class="lane-sub">Grammar practice on the words of the texts — vibhakti, kāraka, samāsa, sandhi, dhātu and more.</div>
+    <div class="lane-sub gym-note">Questions and answers are drawn largely from machine (AI) analysis of the texts, cross-checked against our sources, so some answers may be wrong. If you think one is, use ⚑ report: your report helps us fix it.</div>   <!-- expectation-setting note (Harsha 2026-10-24) -->
     <div class="dash-lane">
       <div class="lane-label">🧠 अभ्यास-मार्गाः · Ways to study</div>
       <div class="readgrid modegrid">
@@ -1518,7 +1519,7 @@ function renderDashboard() {
       <div class="readgrid resgrid">${g.items.map(r => `<a class="rcard rescard" href="${r.url}" target="_blank" rel="noopener"><div class="rtitle">${r.name} <span class="ext">↗</span></div><div class="rhost">${resHost(r.url)}</div>${r.desc ? `<div class="modedesc">${r.desc}</div>` : ''}</a>`).join('')}</div></div>`).join('')}
     </div>
     </section>`}
-    ${sister ? '' : '<footer class="vv-credit">Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>. Translations and grammatical apparatus are new (partly machine-made). · <a href="help-mobile.html">📱 Use it as an app</a></footer>'}
+    ${sister ? '' : '<footer class="vv-credit">Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>. Translations and grammatical apparatus are new (partly machine-made).</footer>'}
 `;
   document.getElementById('adaptiveBtn').onclick = () => startQuiz('adaptive');
   document.getElementById('mixBtn').onclick = () => startQuiz('mixed');
@@ -2226,7 +2227,7 @@ function renderReportArea() {
         <textarea class="report-copy" readonly rows="10" onclick="this.select()">${esc(buildReportDetails(target).details)}</textarea>
       </label>
       <label>Your name <input type="text" id="reportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
-      <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
+      <label>Your email <input type="email" id="reportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — needed if you’d like a reply"></label>
       <label>Add your own comments
         <textarea id="reportReason" placeholder="optional — why do you think this is wrong?"></textarea>
       </label>
@@ -4413,7 +4414,7 @@ function renderTutorialReportArea(sentence, step, verse) {
         <textarea class="report-copy" readonly rows="9" onclick="this.select()">${esc(buildTutorialReportDetails(target).details)}</textarea>
       </label>
       <label>Your name <input type="text" id="tutReportName" value="${esc(loadReporterName())}" placeholder="optional"></label>
-      <label>Your email <input type="email" id="tutReportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — in case we need to follow up"></label>
+      <label>Your email <input type="email" id="tutReportEmail" value="${esc(loadReporterEmail())}" placeholder="optional — needed if you’d like a reply"></label>
       <label>Add your own comments
         <textarea id="tutReportReason" placeholder="optional — what looks wrong here?"></textarea>
       </label>

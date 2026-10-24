@@ -147,6 +147,7 @@ body.metmode-pada .vjoin{display:none}
 .tk-en{display:none;margin:6px 0 2px;font-family:'Noto Serif',Georgia,serif;font-style:italic;font-size:14.5px;line-height:1.6;color:var(--tken)}
 body.tken .tk-en{display:block}
 .tk-prat{color:var(--tika);font-weight:700}
+.w[data-flag]::after{content:"⚑";font-size:.62em;vertical-align:super;color:var(--muted);margin-left:1px}
 .tk-vy{color:var(--ink)}
 .tk-mng{color:var(--ink);font-style:italic;font-weight:600}   /* maṅgala = commentator's own benedictory verse: ink + italic (verse presence), NOT the pratīka brown (--role) it used to share, and NOT the muted avataraṇikā (--muted). #9c: no colour reuse. */
 /* interleaved inline note — a tinted, indented aside inside the bhāṣya flow */
@@ -262,7 +263,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
    each row fills the width, rows divided by the buttons' own bottom rule (the bar's outer bottom border is dropped) */
 @media(max-width:640px){#sideseg{display:flex;flex-wrap:wrap;width:100%;border-bottom:0}
   #sideseg button{flex:1 1 auto;border-bottom:1px solid var(--line)}}
-body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}body[data-side="vartika"] .side-zone[data-side="vartika"]{display:block}@media(max-width:1024px){body[data-side="vartika"].parshve .paira{display:block}body[data-side="vartika"].parshve .wrap{max-width:860px}}html,body{overflow-x:clip}</style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home">अध्ययन-सहकारी</a><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>तैत्तिरीयोपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:block}@media(max-width:900px){body[data-side="tika"] .tk-inline[data-side="tika"]{display:block}body.parshve[data-side="tika"] .side-zone[data-side="tika"]{display:none}}body[data-side="vanamala"]:not(.parshve) .tk-inline[data-side="vanamala"]{display:block}body.parshve[data-side="vanamala"] .side-zone[data-side="vanamala"]{display:block}@media(max-width:900px){body[data-side="vanamala"] .tk-inline[data-side="vanamala"]{display:block}body.parshve[data-side="vanamala"] .side-zone[data-side="vanamala"]{display:none}}body[data-side="vartika"] .side-zone[data-side="vartika"]{display:block}@media(max-width:1024px){body[data-side="vartika"].parshve .paira{display:block}body[data-side="vartika"].parshve .wrap{max-width:860px}}html,body{overflow-x:clip}</style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body class="metmode-sandhi"><div class="wrap"><div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home">अध्ययन-सहकारी</a><a href="index.html" style="color:var(--muted);font-size:13px">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div><h1>तैत्तिरीयोपनिषद् — <span class="dv">एकीकृत-पाठः</span></h1><p class="sub">मूलम् (पदार्थ) + शाङ्करभाष्यम् (मनन) · एकत्र · प्रस्थानत्रयी-क्रमेण</p><style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
 #reading-nav .rn-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
 #reading-nav .rn-tools>*{margin:0 !important}
 #reading-nav .rn-picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
@@ -277,7 +278,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 .v{scroll-margin-top:78px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .v.navhit{animation:navflash 1.6s ease-out}</style>
-<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika" data-on="bhashya" data-first title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">आनन्दगिरि-टीका</button><button type="button" data-side="vartika" data-on="bhashya" data-gran="section" title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">सुरेश्वर-वार्त्तिकम्</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
+<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika" data-on="bhashya" data-first title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">आनन्दगिरि-टीका</button><button type="button" data-side="vanamala" data-on="bhashya" title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">वनमाला</button><button type="button" data-side="vartika" data-on="bhashya" data-gran="section" title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">सुरेश्वर-वार्त्तिकम्</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
 <script>'use strict';
 /*
  * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
@@ -498,7 +499,8 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
       <span class="item">व्याख्या — the explanation</span>
     </div>
     <div class="legnote" style="margin-top:5px">Show it inline in the bhāṣya (अन्तः) or beside it (पार्श्वे) from the top bar; on phones it's always inline.</div>
-  </div>
+  </div><div class="legdiv"></div>
+  <div class="leggrp"><div class="leghd">वनमाला</div><div class="legrow"><span class="item">⚑ — पाठभेदः: the Vanamālā (with the MRI print) quotes a reading our bhāṣya text does not print; its link goes to the words our text has there — tap the pratīka for both readings (वनमाला)</span></div></div>
   <div class="legdiv"></div>
   <div class="leggrp"><div class="leghd">सुरेश्वर-वार्त्तिकम् · vārttika</div>
     <div class="legnote">Sureśvara's verse-vārttika on the whole brāhmaṇa (AdvaitaSharada-style). Choose it from the top bar; it reads पार्श्वे beside the last mantra of each section (and, on phones, below it). Numbers are Sureśvara's own verse-count.</div>
@@ -561,6 +563,9 @@ function findTikaEl(ref,sk,pre){if(!sk)return null;var c=document.getElementById
 // We scope each jump to the RIGHT zone (never cross them) so a prelude ṭīkā links to the prelude bhāṣya and a
 // mantra ṭīkā to the mantra bhāṣya, even on a section-opener verse that shows both. Zone is carried in data-jz.
 function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'),src=pr||t;
+  // a sub-ṭīkā pratīka (Pūrṇānandī) → the exact word of the commentary note it explains; that word → back to the pratīka
+  var sp=t.closest('.tk-sprat'); if(sp&&sp.getAttribute('data-jst')) rows.push(jr('tk',ref,sp.getAttribute('data-jst'),'',tkLabel(sp.getAttribute('data-jst'))||'→ टीका'));
+  var js=!pr&&!sp&&t.getAttribute('data-jsb'); if(js){var jse=document.querySelector('[data-k="'+js+'"]'),jsd=jse&&jse.closest('details.tk-sub'); rows.push(jr('tk',ref,js,'','→ '+(jsd?jsd.getAttribute('data-label'):'टीका')));}
   // EXACT targets written at build time by jump_resolve.js (CLAUDE.md #9e) — no click-time matching:
   // data-jmt → the mūla word · data-jbt → the bhāṣya word · data-jtt → the ṭīkā pratīka (absent = ambiguous → no link)
   var jm=src.getAttribute('data-jmt'), jmm=src.getAttribute('data-jmm');
@@ -612,11 +617,14 @@ function jrN(cat,ref,list,zone,lab){var lb=lab||{bk:'→ भाष्यम्',
   return '<span class="jrow jrn" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+list[0]+'" data-jl="'+list.join('|')+'" data-ji="0" data-jz="'+(zone||'')+'">'+lb
     +' <span class="jof">(1 of '+list.length+')</span><span class="jnext" title="next quotation of this word">next ›</span></span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
+// a target inside a collapsed sub-ṭīkā fold-out: open that fold in the copy the reader sees (inline or side) before landing
+function openFolds(k){[].forEach.call(document.querySelectorAll('[data-k="'+k+'"]'),function(e){var d=e.closest('details.tk-sub');if(!d||d.open)return;var c=d.closest('.tk-inline,.side-zone');if(!c||c.offsetParent!==null)d.open=true;});}
 function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
     if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
-  if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){var e2=byKey(sk);   // lazy lane: load, then land
+  if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){openFolds(sk);var e2=byKey(sk);   // lazy lane: load, then land
       if(e2){e2.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e2);if(window.__vvJump)window.__vvJump(ref,sk);}});return;}
+  if(cat==='tk')openFolds(sk);
   if(cat==='mk'||cat==='bk'||cat==='tk')el=byKey(sk);
   else if(cat==='pi'){var vv1=document.getElementById('v-'+ref);el=vv1?vv1.querySelector('.bh .w[data-ti="'+sk+'"]'):null;}
   else if(cat==='mq'){ var tt=mqTarget(sk);                        // intro cross-verse quote
@@ -760,6 +768,20 @@ document.getElementById('tog').onclick=function(){
     var mo=b.dataset.v==='moola';apply(mo);
     try{localStorage.setItem(KEY,mo?'1':'0');}catch(e){}
   });});
+})();</script><script>(function(){
+  var BASE=(location.pathname.split('/').pop()||'').replace(/^reading-/,'').replace(/.html$/,''),done={},pend={};
+  window.__vvLane=function(side){
+    if(!side||done[side])return Promise.resolve();
+    if(pend[side])return pend[side];
+    if(!document.querySelector('.lzl[data-lz^="'+side+':"]')){done[side]=1;return Promise.resolve();}
+    pend[side]=fetch('lane-'+BASE+'-'+side+'.json').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){
+      if(j.gt){window.GTL=window.GTL||{};GTL[side]=j.gt;}   // the lane's own cards (data-g="<side>")
+      if(j.gtx){window.GTL=window.GTL||{};for(var gk in j.gtx)GTL[gk]=j.gtx[gk];}   // its sub-ṭīkā's own cards (Pūrṇānandī: data-g="purnanandi")
+      [].forEach.call(document.querySelectorAll('.lzl[data-lz^="'+side+':"]'),function(el){
+        var h=j.h[+el.getAttribute('data-lz').split(':')[1]];if(h!=null)el.insertAdjacentHTML('afterend',h);el.parentNode.removeChild(el);});
+      done[side]=1;delete pend[side];try{document.dispatchEvent(new CustomEvent('vv:lane',{detail:side}));}catch(e){}
+    }).catch(function(e){delete pend[side];if(window.console)console.warn('lane '+side+' failed to load',e);});
+    return pend[side];};
 })();</script><script>(function(){
   var CKEY='vv_reading_side',PKEY='vv_reading_place';
   var seg=document.getElementById('sideseg');if(!seg)return;

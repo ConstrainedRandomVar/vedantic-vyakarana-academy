@@ -163,7 +163,8 @@
         // the hit's verse is known → search ONLY there (CLAUDE.md #9e: no mark beats a wrong occurrence); else the page
         var hit2 = tryLanes() || (scope ? highlightIn(scope) : highlightIn(document.body));
         if (!hit2 && vn) { root = vn; lanes = vn.querySelectorAll('.tk-inline[data-side="' + side + '"]'); hit2 = tryLanes() || highlightIn(vn); }
-        if (hit2) setTimeout(function () { scrollEl(hit2); }, 60);
+        if (hit2) { for (var dd = hit2.closest && hit2.closest('details'); dd; dd = dd.parentElement && dd.parentElement.closest('details')) dd.open = true;   // a hit in a collapsed fold-out (Pūrṇānandī) — open it first
+          setTimeout(function () { scrollEl(hit2); }, 60); }
         else if (scope) setTimeout(function () { scrollEl(scope); }, 60);
       }, vk ? 120 : 0);
       return;

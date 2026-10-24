@@ -436,6 +436,7 @@
   function presentFolds() { return S.folds.list().filter(function (f) { return document.querySelector(f.selector); }); }
   function setFold(f, open) { [].forEach.call(document.querySelectorAll(f.selector), function (d) { d.open = open; }); }
   function applyFoldDefaults() { presentFolds().forEach(function (f) { if (S.folds.get(f.key) === 'expanded') setFold(f, true); }); }
+  document.addEventListener('vv:lane', function () { applyFoldDefaults(); });   // folds that arrive with a lazy lane (Pūrṇānandī in the Ratnaprabhā lane)
   function foldPopover(anchor) {
     var fs = presentFolds();
     openPop(anchor, '<h4>Commentary fold-outs on this page</h4>' + fs.map(function (f) {

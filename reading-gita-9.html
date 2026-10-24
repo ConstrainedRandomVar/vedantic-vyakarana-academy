@@ -597,6 +597,9 @@ function findTikaEl(ref,sk,pre){if(!sk)return null;var c=document.getElementById
 // We scope each jump to the RIGHT zone (never cross them) so a prelude ṭīkā links to the prelude bhāṣya and a
 // mantra ṭīkā to the mantra bhāṣya, even on a section-opener verse that shows both. Zone is carried in data-jz.
 function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'),src=pr||t;
+  // a sub-ṭīkā pratīka (Pūrṇānandī) → the exact word of the commentary note it explains; that word → back to the pratīka
+  var sp=t.closest('.tk-sprat'); if(sp&&sp.getAttribute('data-jst')) rows.push(jr('tk',ref,sp.getAttribute('data-jst'),'',tkLabel(sp.getAttribute('data-jst'))||'→ टीका'));
+  var js=!pr&&!sp&&t.getAttribute('data-jsb'); if(js){var jse=document.querySelector('[data-k="'+js+'"]'),jsd=jse&&jse.closest('details.tk-sub'); rows.push(jr('tk',ref,js,'','→ '+(jsd?jsd.getAttribute('data-label'):'टीका')));}
   // EXACT targets written at build time by jump_resolve.js (CLAUDE.md #9e) — no click-time matching:
   // data-jmt → the mūla word · data-jbt → the bhāṣya word · data-jtt → the ṭīkā pratīka (absent = ambiguous → no link)
   var jm=src.getAttribute('data-jmt'), jmm=src.getAttribute('data-jmm');
@@ -648,11 +651,14 @@ function jrN(cat,ref,list,zone,lab){var lb=lab||{bk:'→ भाष्यम्',
   return '<span class="jrow jrn" data-jc="'+cat+'" data-jr="'+ref+'" data-jk="'+list[0]+'" data-jl="'+list.join('|')+'" data-ji="0" data-jz="'+(zone||'')+'">'+lb
     +' <span class="jof">(1 of '+list.length+')</span><span class="jnext" title="next quotation of this word">next ›</span></span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
+// a target inside a collapsed sub-ṭīkā fold-out: open that fold in the copy the reader sees (inline or side) before landing
+function openFolds(k){[].forEach.call(document.querySelectorAll('[data-k="'+k+'"]'),function(e){var d=e.closest('details.tk-sub');if(!d||d.open)return;var c=d.closest('.tk-inline,.side-zone');if(!c||c.offsetParent!==null)d.open=true;});}
 function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
     if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
-  if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){var e2=byKey(sk);   // lazy lane: load, then land
+  if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){openFolds(sk);var e2=byKey(sk);   // lazy lane: load, then land
       if(e2){e2.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e2);if(window.__vvJump)window.__vvJump(ref,sk);}});return;}
+  if(cat==='tk')openFolds(sk);
   if(cat==='mk'||cat==='bk'||cat==='tk')el=byKey(sk);
   else if(cat==='pi'){var vv1=document.getElementById('v-'+ref);el=vv1?vv1.querySelector('.bh .w[data-ti="'+sk+'"]'):null;}
   else if(cat==='mq'){ var tt=mqTarget(sk);                        // intro cross-verse quote
@@ -883,6 +889,7 @@ addEventListener('resize',function(){ if(openPill)place(openPill); });
     if(!document.querySelector('.lzl[data-lz^="'+side+':"]')){done[side]=1;return Promise.resolve();}
     pend[side]=fetch('lane-'+BASE+'-'+side+'.json').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){
       if(j.gt){window.GTL=window.GTL||{};GTL[side]=j.gt;}   // the lane's own cards (data-g="<side>")
+      if(j.gtx){window.GTL=window.GTL||{};for(var gk in j.gtx)GTL[gk]=j.gtx[gk];}   // its sub-ṭīkā's own cards (Pūrṇānandī: data-g="purnanandi")
       [].forEach.call(document.querySelectorAll('.lzl[data-lz^="'+side+':"]'),function(el){
         var h=j.h[+el.getAttribute('data-lz').split(':')[1]];if(h!=null)el.insertAdjacentHTML('afterend',h);el.parentNode.removeChild(el);});
       done[side]=1;delete pend[side];try{document.dispatchEvent(new CustomEvent('vv:lane',{detail:side}));}catch(e){}

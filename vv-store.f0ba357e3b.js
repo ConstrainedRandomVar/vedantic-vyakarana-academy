@@ -193,6 +193,7 @@
     { key: 'brha-shastraprakashika', label: 'शास्त्रप्रकाशिका', sub: 'वार्तिक-टीका · Bṛhad', selector: 'details.vk-tk:not(.vs-tk):not(.vs-fold)' },
     { key: 'brha-laghusangraha', label: 'लघुसङ्ग्रहा टीका', sub: 'वार्तिकसार-टीका · Bṛhad', selector: 'details.vs-tk' },
     { key: 'brha-vartikasara', label: 'वार्तिकसारः', sub: 'block (with its ṭīkā) · Bṛhad', selector: 'details.vs-fold' },
+    { key: 'bs-purnanandi', label: 'पूर्णानन्दी', sub: 'रत्नप्रभा-टीका · Brahmasūtra', selector: 'details.tk-sub[data-sub="purnanandi"]' },
   ];
   var folds = {
     list: function () { return FOLDS.slice(); },

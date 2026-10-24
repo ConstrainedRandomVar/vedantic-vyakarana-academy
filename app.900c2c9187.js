@@ -2078,6 +2078,42 @@ function deviceInfoLine() {
     return `build: app.${appBuildId()}\ndevice: ${device} · ${os} · ${browser} · viewport ${vp}\napp cache: ${ACTIVE_CACHE} (${ctrl})\nuser-agent: ${ua}`;
   } catch (e) { return `build: app.${appBuildId()}\napp cache: ${ACTIVE_CACHE}\ndevice: (unavailable)`; }
 }
+// After a samāsa answer (Harsha 2026-10-24, reader report samasa-8748 "give me the correct compound"): HOW the compound
+// breaks up — the vigraha + type + sūtra (item.an, from the samāsa peel or a hand-written entry; build_samasa_items.js), else
+// its members as split in the source, plus the source's meaning gloss (item.m). A "not a samāsa" word shows just its meaning.
+function samasaExplainHtml(item) {
+  const m = item.m ? `<div class="muted" style="margin-top:3px">“${esc(item.m)}”</div>` : '';
+  if (item.an && item.an.v) return `<div class="tut-explain"><b>विग्रहः</b> ${esc(item.an.v)} · ${esc(item.an.t || '')}${item.an.s ? ` <span class="muted">(${esc(item.an.s)})</span>` : ''}${m}</div>`;
+  if (item.category === 'N/A') return m ? `<div class="tut-explain">${esc(item.word)} — not a compound.${m}</div>` : '';
+  return `<div class="tut-explain"><b>पदानि</b> ${esc(String(item.word).split('-').join(' + '))}${m}</div>`;
+}
+// ?item=<report-key> (Harsha 2026-10-24): opens exactly the reported gym question — same word, context and correct answer
+// (the distractors are drawn afresh). Every report carries the link (buildReportDetails → "open:"). Pool items only: their
+// keys are the item ids (samāsa ids are content-derived and stable; other pools' ids are positional). A read-a-verse report
+// key (chapter:signature) can't be opened this way. After the question the session carries on in that node as usual.
+const ITEM_AXIS_PREFIX = [[/^vibhakti-1-items-/, 'VIB1'], [/^vibhakti-2-items-/, 'VIB2'], [/^vibhakti-3-items-/, 'VIB3'], [/^karaka-items-/, 'KAR'],
+  [/^dhatu-items-/, 'DHT'], [/^meaning-1-items-/, 'MNG1'], [/^meaning-2-items-/, 'MNG2']];
+function itemUrl(key) { return location.href.split('#')[0].split('?')[0].replace(/index\.html$/, '') + '?item=' + encodeURIComponent(key); }
+function openItemById(id) {
+  const find = () => window.QUIZ_ITEMS.find(it => it.id === id) || null;
+  const missing = () => { view = { screen: 'dashboard' }; renderDashboard();
+    setTimeout(() => alert(`Question “${id}” is not in the practice pool any more — it may have been fixed or removed. (Read-a-verse report keys can't be opened by link.)`), 50); };
+  const go = item => {
+    const c = item.code;
+    walkItemPools = computeItemPools(window.QUIZ_ITEMS);
+    session = { mode: 'node', fixedCode: c, batchCount: 0, batchCorrect: 0 };
+    let built = null;
+    for (let attempt = 0; attempt < MAX_OPTION_RETRIES; attempt++) { built = buildOptions(item, c); if (built.options && built.options.length >= 2) break; }
+    if (!built || !built.options || built.options.length < 2) return missing();
+    view = { screen: 'quiz', code: c, item, options: built.options, correctIndex: built.correctIndex, acceptIndices: built.acceptIndices || [], answered: false, picked: -1, justMastered: false, key: reportKey(item, c), chapterKeyForReport: null, moola: null, verseLabel: null, hintRevealed: false };
+    renderQuiz();
+  };
+  const hit = find();
+  if (hit) return go(hit);
+  const ax = ITEM_AXIS_PREFIX.find(([re]) => re.test(id)) || (/-mula-/.test(id) ? [null, 'ABT'] : null);
+  if (!ax) return missing();
+  ensureAxisLoaded(ax[1]).then(() => { const it = find(); it ? go(it) : missing(); }).catch(missing);
+}
 function buildReportDetails(target) {
   const { item, code, options, correctIndex, acceptIndices = [], key, chapterKeyForReport, moola, verseLabel, answered, picked } = target;
   const { word: promptWord, question } = extractPromptText(item);
@@ -2085,6 +2121,7 @@ function buildReportDetails(target) {
   const yourAnswer = answered && picked >= 0 && options[picked] !== undefined ? displayOption(item, options[picked]) : '(not answered — flagged before choosing)';
   const details = [
     `report-key: ${key}`,
+    item.id && key === item.id ? `open: ${itemUrl(key)}` : null,
     `kind: ${item.kind || 'sandhi'}${item.subtype ? ' / subtype: ' + item.subtype : ''}`,
     `code: ${code}`,
     chapterKeyForReport ? `chapterKey: ${chapterKeyForReport}` : null,
@@ -2269,6 +2306,7 @@ function renderQuiz() {
         : `not quite — correct answer highlighted. ${item.sutra ? '(' + esc(item.sutra) + ')' : ''}`) : ''}</div>
     ${answered && item.entry && (item.kind === 'dhatu' || item.kind === 'krdanta') ? `<div class="tut-explain">धातुः ${esc(item.entry)}</div>` : ''}
     ${answered && item.kind === 'karaka' && item.roleSpecific && item.roleSpecific !== item.role ? `<div class="tut-explain">${esc(item.word)}: ${esc(item.roleSpecific)}</div>` : ''}
+    ${answered && item.kind === 'samasa' ? samasaExplainHtml(item) : ''}
     ${renderReportArea()}
     ${bottom}`;
   document.getElementById('backBtn').onclick = () => { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); };
@@ -2341,7 +2379,10 @@ function renderQuiz() {
     // Don't auto-advance out from under someone mid-report — they cancel or submit to move on. Also
     // don't auto-advance when the answer was REVEALED (Harsha, 2026-08-17): they chose not to guess
     // precisely so they could read the answer, so let them move on with an explicit Next click.
-    if (!view.reportOpen && !view.revealed && autoAdvanceOn()) {
+    // …nor after a WRONG answer to a question that shows an explanation (samāsa vigraha, Harsha 2026-10-24): 1.1 s is too short
+    // to read it; a correct answer still moves on.
+    const explainedMiss = !isCorrectIdx(picked) && item.kind === 'samasa' && !!samasaExplainHtml(item);
+    if (!view.reportOpen && !view.revealed && !explainedMiss && autoAdvanceOn()) {
       pendingAdvanceTimer = setTimeout(() => goToNextQuestion(mode), isCorrectIdx(picked) ? AUTO_ADVANCE_DELAY_CORRECT : AUTO_ADVANCE_DELAY_WRONG);
     }
   } else {
@@ -5438,6 +5479,7 @@ function initBrandLogo() {
     const q = new URLSearchParams(location.search);
     // अन्वय tutorial (in testing, not linked from the home page): ?mode=anvaya opens its picker (text → verse)
     if (q.get('mode') === 'anvaya' && !q.get('tut')) { tutorialMode = 'anvaya'; view = { screen: 'tutorialPicker' }; renderTutorialPicker(); return; }
+    if (q.get('item')) { openItemById(q.get('item')); return; }
     if (q.get('tut')) {
       if (q.get('cstyle') === 'guided' || q.get('cstyle') === 'socratic') clauseStyle = q.get('cstyle');
       if (['all', 'smart', 'auto'].includes(q.get('cskip'))) clauseSkip = q.get('cskip');

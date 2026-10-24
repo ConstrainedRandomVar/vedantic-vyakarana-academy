@@ -1369,7 +1369,7 @@ function renderDashboard() {
   // A sister site (साहित्य-व्याकरणम्, build_sahitya_site.js) supplies its own list via window.SITE_CONFIG; the academy
   // has no SITE_CONFIG, so this academy list applies unchanged.
   const READING_TEXTS = (window.SITE_CONFIG && window.SITE_CONFIG.readingTexts) || [
-    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka', 'sridhari', 'nilakanthi', 'madhusudani'] },
+    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka', 'dhanapati', 'sridhari', 'nilakanthi', 'madhusudani'] },
     { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'], note: 'भाष्यम्: pada + vākya' },
     { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
@@ -1399,7 +1399,7 @@ function renderDashboard() {
   // vv-hide-<group> class, so the card doesn't advertise a ṭīkā the public reading page hides (2026-10-11).
   const PILLS = { mula: ['मूलम्', 'mula'], karika: ['कारिका', 'mula'], bhasya: ['भाष्यम्', 'bhasya'], tika: ['टीका', 'bhasya tika'],
     vyakhya: ['व्याख्या', 'bhasya vyakhya'], vartika: ['वार्त्तिकम्', 'bhasya'], vsara: ['वार्तिकसारः', 'bhasya'],
-    nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'],
+    nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'], dhanapati: ['भाष्योत्कर्षदीपिका', 'bhasya'],
     sridhari: ['श्रीधरी', 'bhasya'], madhusudani: ['मधुसूदनी', 'bhasya'], nilakanthi: ['नीलकण्ठी', 'bhasya'],   // Gītā verse-commentary lanes (2026-10-21)
     vanamala: ['वनमाला', 'bhasya'], ratnaprabha: ['रत्नप्रभा', 'bhasya'], purnanandi: ['पूर्णानन्दी', 'bhasya'],   // Taittirīya / BS lanes (2026-10-24)
     brahmatattva: ['ब्रह्मतत्त्वप्रकाशिका', 'bhasya'] };   // BS vṛtti lane (2026-10-25)

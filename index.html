@@ -187,7 +187,7 @@
  .pill.mula{color:#a07b1e;border-color:#d8c08a;background:#fbf6ea}
  .pill.bhasya{color:#1a56db;border-color:#b9cdf5;background:#fff}
  .rnote{font-size:10px;color:#7a6a55;font-style:italic;flex-basis:100%}   /* note always on its own line, never beside the pills */
- .pill.xtra{display:none} .rcard:hover .pill.xtra,.rcard.allp .pill.xtra{display:inline-block} .rcard:hover .pill.more,.rcard.allp .pill.more{display:none}
+ .pill.xtra{display:none} .rcard:hover .pill.xtra,.rcard.allp .pill.xtra{display:inline-block} .rcard:hover .pill.more,.rcard.allp .pill.more{display:none} .rnote.xtra{display:none} .rcard:hover .rnote.xtra,.rcard.allp .rnote.xtra{display:block}   /* a folded card's note shows with its extra pills */
  .pill.more{color:#7a6a55;border-color:#d6d3d1;background:#fff;cursor:pointer}   /* "+N …" → the rest of the layers (hover / tap) */
  .modegrid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
  .modecard{padding:13px 15px;gap:4px}
@@ -279,7 +279,7 @@
 <script src="reading-nav.1d8a42d71b.js"></script>
 <script src="vv-store.f0ba357e3b.js"></script>
 <script src="vv-settings.60bb728dee.js"></script>
-<script src="app.6d283e9120.js"></script>
+<script src="app.7ae045d796.js"></script>
 <script>
 // Freshness during churn: updateViaCache:'none' → the browser always network-fetches sw.js (never
 // its HTTP cache); reg.update() proactively checks on load; and when a NEW sw version takes control

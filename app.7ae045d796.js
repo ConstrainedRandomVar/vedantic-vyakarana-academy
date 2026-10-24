@@ -1376,11 +1376,11 @@ function renderDashboard() {
     { dv: 'प्रश्न', lat: 'Praśna', file: 'reading-prashna.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'karika', 'bhasya', 'tika'] },
-    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika'] },
+    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vanamala'] },
     { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vsara'], note: 'वार्त्तिकम् + शास्त्रप्रकाशिका · वार्तिकसारः + लघुसङ्ग्रहा' },
-    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya'] },
+    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya', 'ratnaprabha', 'purnanandi'] },
     { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'vyakhya'], note: 'व्याख्या: श्रीचन्द्रशेखरभारती' },
     { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: पददीपिका · अ. १–११' },
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula', 'tika'] },
@@ -1400,15 +1400,17 @@ function renderDashboard() {
   const PILLS = { mula: ['मूलम्', 'mula'], karika: ['कारिका', 'mula'], bhasya: ['भाष्यम्', 'bhasya'], tika: ['टीका', 'bhasya tika'],
     vyakhya: ['व्याख्या', 'bhasya vyakhya'], vartika: ['वार्त्तिकम्', 'bhasya'], vsara: ['वार्तिकसारः', 'bhasya'],
     nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'],
-    sridhari: ['श्रीधरी', 'bhasya'], madhusudani: ['मधुसूदनी', 'bhasya'], nilakanthi: ['नीलकण्ठी', 'bhasya'] };   // Gītā verse-commentary lanes (2026-10-21)
-  const MAXP = 4;   // more than this → the rest behind a "…" pill (shown on card hover, or a tap on "…")
+    sridhari: ['श्रीधरी', 'bhasya'], madhusudani: ['मधुसूदनी', 'bhasya'], nilakanthi: ['नीलकण्ठी', 'bhasya'],   // Gītā verse-commentary lanes (2026-10-21)
+    vanamala: ['वनमाला', 'bhasya'], ratnaprabha: ['रत्नप्रभा', 'bhasya'], purnanandi: ['पूर्णानन्दी', 'bhasya'] };   // Taittirīya / BS lanes (2026-10-24)
+  const MAXP = 4;   // more than this → the rest behind a "+N …" pill (shown on card hover, or a tap on "…"); the card's note line folds
+                    // with them (Harsha 2026-10-25: the Bṛhad card folds like the Gītā's — even a single extra pill, "+1 …")
   const readOffers = t => {
     const ps = t.offers.filter(k => PILLS[k]).map((k, i, a) => {
       const [label, cls] = PILLS[k], hide = k === 'tika' && t.tikaHide ? ' vv-hide-' + t.tikaHide : '';
-      return '<span class="pill ' + cls + hide + (i >= MAXP && a.length > MAXP + 1 ? ' xtra' : '') + '">' + label + '</span>'; });
+      return '<span class="pill ' + cls + hide + (i >= MAXP ? ' xtra' : '') + '">' + label + '</span>'; });
     const extra = ps.filter(p => / xtra"/.test(p)).length;
     return '<div class="offers">' + ps.join('') + (extra ? '<span class="pill more" title="more layers" data-more>+' + extra + ' …</span>' : '')
-      + (t.note ? '<span class="rnote' + (t.tikaHide ? ' vv-hide-' + t.tikaHide : '') + '">' + t.note + '</span>' : '') + '</div>';
+      + (t.note ? '<span class="rnote' + (extra ? ' xtra' : '') + (t.tikaHide ? ' vv-hide-' + t.tikaHide : '') + '">' + t.note + '</span>' : '') + '</div>';
   };
   const readCard = t => `<a class="rcard" data-reflect="${t.file}"><div class="rtitle">${t.dv}</div><div class="rlat">${t.lat}</div>${readOffers(t)}</a>`;
   const readGroup = g => READING_TEXTS.filter(t => t.group === g).map(readCard).join('');

@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>अध्ययन-सहकारी</title><meta name="description" content="अध्ययन-सहकारी — वेदान्त-संस्कृत-पठन-पाठन-उपकारक">
+<!doctype html><html><head><script data-vv-theme>(function(){var d=document.documentElement,K="vv_theme",m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)"),last=null;function pref(){try{var t=localStorage.getItem(K);return t==="light"||t==="dark"?t:""}catch(e){return ""}}function apply(){last=pref()||(m&&m.matches?"dark":"light");d.setAttribute("data-theme",last)}apply();if(m&&m.addEventListener)m.addEventListener("change",function(){if(!pref())apply()});window.addEventListener("storage",function(e){if(e.key===K)apply()});try{new MutationObserver(function(){var v=d.getAttribute("data-theme");if(v!==last&&(v==="light"||v==="dark")){last=v;try{localStorage.setItem(K,v)}catch(e){}}}).observe(d,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}window.__vvTheme={get:pref,set:function(v){try{v?localStorage.setItem(K,v):localStorage.removeItem(K)}catch(e){}apply()}}})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>अध्ययन-सहकारी</title><meta name="description" content="अध्ययन-सहकारी — वेदान्त-संस्कृत-पठन-पाठन-उपकारक">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3a2f2a">
 <style>
@@ -208,6 +208,60 @@
  .anv-cur{background:#fbf7ee;border-radius:4px}
  .anv-legend{font-size:13px;color:#8a7a5a;margin:-4px 0 6px}
  .anv-q{font-family:'Noto Serif Devanagari',serif;font-size:19px;font-weight:700;color:#7c5a1e;margin-right:6px}
+ /* ===== DARK MODE (Harsha 2026-10-24, reader feedback): the homepage had none — light page under a dark header, while every
+    reading page went dark. <html data-theme> is ALWAYS set by the head script build_deploy injects (the reader's ☰ ⚙ Theme choice,
+    else the computer's), so one :root[data-theme=dark] block covers it. Palette = the reading pages' dark tokens. ===== */
+ :root[data-theme=dark]{color-scheme:dark;--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--brand:#f5b544}
+ :root[data-theme=dark] body{background:#14161a;color:#e6e8ec}
+ :root[data-theme=dark] header{background:#241d1a;border-bottom:1px solid #2b2f38}
+ :root[data-theme=dark] #hsQ{background:#1c1f26;color:#e6e8ec;border-color:#4a4f5a}
+ :root[data-theme=dark] .site-tag{color:#e0b46a}
+ :root[data-theme=dark] .sec-head{color:#f0b76a;border-bottom-color:#3a3226}
+ :root[data-theme=dark] .sec-head .sec-lat{color:#c9bda6}
+ :root[data-theme=dark] .sec-head .sec-prog,:root[data-theme=dark] .dash-head{color:#bcc2cb}
+ :root[data-theme=dark] .vy-panel{background:#1a1f2b;border-color:#2b3550}
+ :root[data-theme=dark] .vy-panel .sec-head{color:#9fb3f5;border-bottom-color:#2b3550}
+ :root[data-theme=dark] .fold-sec .sec-head:hover .sec-fold{color:#f5b544}
+ :root[data-theme=dark] .vv-credit{border-top-color:#3a3226;color:#bcc2cb}
+ :root[data-theme=dark] .home-lead .l1{color:#e6e8ec}
+ :root[data-theme=dark] .home-lead .l2,:root[data-theme=dark] .gnote,:root[data-theme=dark] .muted,:root[data-theme=dark] .picker-sub,:root[data-theme=dark] .lane-label,:root[data-theme=dark] .lane-sub,:root[data-theme=dark] .dash-setting,:root[data-theme=dark] .stats,:root[data-theme=dark] .category-stats,:root[data-theme=dark] .card .label,:root[data-theme=dark] .picker-level label,:root[data-theme=dark] .scope-toggle,:root[data-theme=dark] .scope-toggle .scope-head,:root[data-theme=dark] .deep-toggle,:root[data-theme=dark] .skills-toggle,:root[data-theme=dark] .skills-toggle .skills-head,:root[data-theme=dark] .quiz-head .label,:root[data-theme=dark] .quiz-head .mode-tag,:root[data-theme=dark] .quiz-head .batch,:root[data-theme=dark] .quiz-head .streak,:root[data-theme=dark] .prompt-hint,:root[data-theme=dark] .src,:root[data-theme=dark] .report-area,:root[data-theme=dark] .report-autosent-note,:root[data-theme=dark] .celebrate p,:root[data-theme=dark] .tutorial-head,:root[data-theme=dark] .tutcode,:root[data-theme=dark] .readgroup-head .gtitle .lat,:root[data-theme=dark] .readgroup-head .gcount,:root[data-theme=dark] .rcard .rlat,:root[data-theme=dark] .rnote,:root[data-theme=dark] .modedesc,:root[data-theme=dark] .anv-legend,:root[data-theme=dark] .set-row .set-hint{color:#bcc2cb}
+ :root[data-theme=dark] .home-lead .l2 a,:root[data-theme=dark] .lane-sub a,:root[data-theme=dark] #myStudy .study-counts a{color:#f5b544}
+ :root[data-theme=dark] #myStudy .study-counts,:root[data-theme=dark] #myStudy .study-h,:root[data-theme=dark] #myStudy .study-row span,:root[data-theme=dark] #myStudy .study-none,:root[data-theme=dark] #myStudy .study-empty{color:#bcc2cb}
+ :root[data-theme=dark] #myStudy .study-col{background:#1c1f26;border-color:#2b2f38}
+ :root[data-theme=dark] #myStudy .study-row{border-top-color:#2b2f38}
+ :root[data-theme=dark] #myStudy .study-row b{color:#ece6d6}
+ :root[data-theme=dark] .rescard .ext{color:#bcc2cb} :root[data-theme=dark] .rescard .rhost{color:#67d3e8}
+ :root[data-theme=dark] .primary{background:#b45309;color:#fff} :root[data-theme=dark] .primary:hover{background:#92400e}
+ :root[data-theme=dark] .secondary{background:#1c1f26;border-color:#4a4f5a;color:#e6e8ec} :root[data-theme=dark] .secondary:hover{border-color:#f5b544}
+ :root[data-theme=dark] .link{color:#6fd08f}
+ :root[data-theme=dark] .category,:root[data-theme=dark] .card,:root[data-theme=dark] .question,:root[data-theme=dark] .rcard,:root[data-theme=dark] #settings-box{background:#1c1f26;border-color:#2b2f38}
+ :root[data-theme=dark] .card:hover,:root[data-theme=dark] .rcard:hover{box-shadow:0 2px 10px rgba(0,0,0,.5);border-color:#c9a35a}
+ :root[data-theme=dark] .card.mastered{border-color:#2f6b45;background:#16261c}
+ :root[data-theme=dark] .category summary,:root[data-theme=dark] .card .code,:root[data-theme=dark] .picker-head h2,:root[data-theme=dark] .quiz-head .code,:root[data-theme=dark] .celebrate h2,:root[data-theme=dark] .tut-step-label,:root[data-theme=dark] .readgroup-head .gtitle,:root[data-theme=dark] .report-breadcrumb .ref,:root[data-theme=dark] #settings-box h2,:root[data-theme=dark] .set-row .set-label,:root[data-theme=dark] .set-check{color:#e6e8ec}
+ :root[data-theme=dark] .rcard .rtitle{color:#ece6d6}
+ :root[data-theme=dark] .picker-level select,:root[data-theme=dark] .verse-jump select,:root[data-theme=dark] .set-select,:root[data-theme=dark] .report-area input,:root[data-theme=dark] .report-area textarea{background:#1c1f26;color:#e6e8ec;border-color:#4a4f5a}
+ :root[data-theme=dark] .set-seg{border-color:#4a4f5a} :root[data-theme=dark] .set-seg button{background:#1c1f26;color:#bcc2cb} :root[data-theme=dark] .set-seg button.on{background:#f5b544;color:#1a1410}
+ :root[data-theme=dark] .badge{color:#8fe0a8;background:#16261c;border-color:#2f6b45}
+ :root[data-theme=dark] .bar{background:#2b2f38}
+ :root[data-theme=dark] .prompt .plus,:root[data-theme=dark] .prompt .arrow{color:#bcc2cb}
+ :root[data-theme=dark] .context,:root[data-theme=dark] .feedback{color:#cfd3da}
+ :root[data-theme=dark] .opt{background:#1c1f26;border-color:#4a4f5a;color:#e6e8ec}
+ :root[data-theme=dark] .opt:hover:not(:disabled){border-color:#f5b544}
+ :root[data-theme=dark] .opt.correct,:root[data-theme=dark] .tutword.correct,:root[data-theme=dark] .tutword.missed{background:#16261c;border-color:#3f9e5f;color:#8fe0a8}
+ :root[data-theme=dark] .opt.wrong,:root[data-theme=dark] .tutword.wrong{background:#2a1715;border-color:#c0392b;color:#f19a8f}
+ :root[data-theme=dark] .report-copy,:root[data-theme=dark] .report-breadcrumb,:root[data-theme=dark] .tut-explain{background:#23262d;color:#cfd3da;border-color:#2b2f38}
+ :root[data-theme=dark] .report-area.reported{color:#6fd08f} :root[data-theme=dark] .report-status.error{color:#f19a8f}
+ :root[data-theme=dark] .tutword:hover{background:#262a33}
+ :root[data-theme=dark] .tutword.selected{background:#3a3226;border-color:#c9a35a}
+ :root[data-theme=dark] .tut-elided{color:#a89f8f}
+ :root[data-theme=dark] .clause-group{border-color:#4a4f5a} :root[data-theme=dark] .clause-group.current,:root[data-theme=dark] .anv-cur{background:#231f17;border-color:#c9a35a}
+ :root[data-theme=dark] .mulahue,:root[data-theme=dark] .modetag,:root[data-theme=dark] .anv-q{color:#e0bd6a} :root[data-theme=dark] .bhasyahue{color:#7ab0ff}
+ :root[data-theme=dark] .pill.mula{color:#e0bd6a;border-color:#6b5a2c;background:#241f12}
+ :root[data-theme=dark] .pill.bhasya{color:#7ab0ff;border-color:#2c4570;background:#151d2c}
+ :root[data-theme=dark] .pill.more{color:#bcc2cb;border-color:#3a3f4a;background:#1c1f26}
+ :root[data-theme=dark] .anv-line{border-color:#6b5a2c} :root[data-theme=dark] .anv-model{background:#241f12}
+ :root[data-theme=dark] body>footer a{color:#f5b544 !important}   /* the Sources link carries an inline light-mode colour */
+ :root[data-theme=dark] .anv-sup{color:#6fd08f} :root[data-theme=dark] .anv-park{color:#8a909a} :root[data-theme=dark] .anv-gap{color:#4a4f5a}
 </style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body>
 <header><button id="homeBtn" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home" style="background:none;border:none;padding:0;margin:0;cursor:pointer;font:inherit;font-weight:800;font-size:16px;color:#f5b544;letter-spacing:.02em"><span class="bfull">अध्ययन-सहकारी</span><span class="bshort">अध्य·सहकारी</span></button><span style="flex:1"></span><form id="hsForm" role="search" hidden><input id="hsQ" type="search" placeholder="Smart sandhi-aware search — e.g. आत्मा एव (finds आत्मैव)" autocomplete="off" aria-label="Search all texts"></form><button id="srchBtn" title="Smart sandhi-aware search — all texts ( / )" aria-label="Search all texts" aria-expanded="false" hidden>🔍</button><button id="dictBtn" title="Sanskrit dictionary — sanskritkosha.com" aria-label="Sanskrit dictionary">📖</button><button id="gearBtn" title="Menu — settings, library, help" aria-label="Menu" aria-haspopup="true">☰</button></header>
 <div id="app">loading…</div>
@@ -224,7 +278,7 @@
 <script src="samasa-peel.5c964b3f68.js"></script>
 <script src="reading-nav.1d8a42d71b.js"></script>
 <script src="vv-store.e20137c3df.js"></script>
-<script src="vv-settings.1c921d2ac3.js"></script>
+<script src="vv-settings.502a089995.js"></script>
 <script src="app.16d43db1b7.js"></script>
 <script>
 // Freshness during churn: updateViaCache:'none' → the browser always network-fetches sw.js (never

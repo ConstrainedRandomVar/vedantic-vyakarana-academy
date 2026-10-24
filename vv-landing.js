@@ -115,7 +115,7 @@
     } catch (e) {}
     if (!document.getElementById('svhl-style')) {
       var st = document.createElement('style'); st.id = 'svhl-style';
-      st.textContent = '.svhl{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px;box-shadow:0 0 0 2px #fde68a}@media(prefers-color-scheme:dark){.svhl{background:#8a7414;color:#fff;box-shadow:0 0 0 2px #8a7414}}';
+      st.textContent = '.svhl{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px;box-shadow:0 0 0 2px #fde68a}@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .svhl{background:#8a7414;color:#fff;box-shadow:0 0 0 2px #8a7414}}:root[data-theme=dark] .svhl{background:#8a7414;color:#fff;box-shadow:0 0 0 2px #8a7414}';
       document.head.appendChild(st);
     }
     var scope = null, h = opts.id || (location.hash || '').replace(/^#/, '');

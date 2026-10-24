@@ -1,6 +1,7 @@
 // vv-settings.js — THE ONE ⚙ Settings panel (+ the ☰ menu that opens it, 2026-10-23) (Harsha 2026-10-21, feedback #3 #4 #5 #6 #8): opened by the homepage ⚙ (app.js)
 // AND by the ⚙ on every reading page (vv-reader.js loads this file on first click). Same content, wording and order in both
 // places. Every setting is a plain localStorage key shared by the whole site (and its other pages/tabs):
+//   vv_theme       'light' | 'dark' (unset = match the computer) — applied before paint by the head script build_deploy injects
 //   vv_text_size   reading-page text scale (0.85 · 0.92 · 1 · 1.1 · 1.2; default 1) — applied by vv-reader.js (__vvTextScale)
 //   vv_script      reading-page script — applied by translit.js (#scriptpick)
 //   vv_quiet_hover word cards + "bookmark passage" prompt on hover: OFF by default = quiet ('0' = always show) — peek.js
@@ -68,6 +69,8 @@
     var helpOk = !sisterSite() && !(window.VVStore && VVStore.SITE === 'search');   // help-settings.html ships with the academy + public sites only
     var h = '<h2>⚙ Settings' + (helpOk ? ' <a href="help-settings.html" target="_blank" rel="noopener" style="float:right;font-size:13px;font-weight:500;color:var(--brand,#b45309)">What do these do? ↗</a>' : '') + '</h2>'
       + '<div class="sep"><span class="dv">पठनम्</span> · Reading</div>'
+      + '<div class="row"><div class="lab">Theme</div><select id="vvset-theme"><option value="">Match my computer</option><option value="light">Light</option><option value="dark">Dark</option></select>'
+      + '<div class="hint">Every page, on this device. The ◐ button on a page changes it too.</div></div>'
       + '<div class="row"><div class="lab">Text size</div><div class="sizes"><span class="aa" style="font-size:12px">अ</span>'
       + SIZES.map(function (s) { return '<button type="button" data-size="' + s[0] + '">' + s[1] + '</button>'; }).join('')
       + '<span class="aa" style="font-size:18px">अ</span></div>'
@@ -110,6 +113,7 @@
     [].forEach.call(box.querySelectorAll('[data-size]'), function (b) { b.classList.toggle('on', b.getAttribute('data-size') === sz); });
     var prev = box.querySelector('#vvset-prev'); if (prev) prev.style.fontSize = (17 * parseFloat(sz)) + 'px';
     var sc = box.querySelector('#vvset-script'); if (sc) sc.value = get('vv_script') || 'dev';
+    var th = box.querySelector('#vvset-theme'); if (th) { var tv = get('vv_theme'); th.value = tv === 'light' || tv === 'dark' ? tv : ''; }
     var hv = box.querySelector('#vvset-hover'); if (hv) hv.checked = !quietOn();
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.checked = markerOn(c.getAttribute('data-pill')); c.closest('.mk').classList.toggle('off', !c.checked); });
     var S = window.VVStore; if (S && S.folds) [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.value = S.folds.get(s.getAttribute('data-fold')); });
@@ -126,6 +130,12 @@
     var sc = box.querySelector('#vvset-script'); sc.addEventListener('change', function () {
       set('vv_script', sc.value); var pick = document.getElementById('scriptpick');   // reading page: translit.js applies it live
       if (pick) { pick.value = sc.value; pick.dispatchEvent(new Event('change')); } });
+    // theme (2026-10-24): the head script build_deploy puts in every page owns it (__vvTheme); fallback = set the key + attribute here
+    box.querySelector('#vvset-theme').addEventListener('change', function (e) {
+      var v = e.target.value;
+      if (window.__vvTheme) window.__vvTheme.set(v);
+      else { if (v) set('vv_theme', v); else try { localStorage.removeItem('vv_theme'); } catch (x) {}
+        var d = document.documentElement; if (v) d.setAttribute('data-theme', v); else d.removeAttribute('data-theme'); } });
     var hv = box.querySelector('#vvset-hover'); if (hv) hv.addEventListener('change', function () {
       set('vv_quiet_hover', hv.checked ? '0' : '1'); if (window.VVPeek && VVPeek.refresh) VVPeek.refresh(); if (window.__vvHintUsed) window.__vvHintUsed(); });
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.addEventListener('change', function () {

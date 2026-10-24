@@ -1,4 +1,4 @@
-<!doctype html><html lang="sa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>प्रश्नोपनिषद् · प्रश्नः 3 — एकीकृत-पाठः</title><style>
+<!doctype html><html lang="sa"><head><script data-vv-theme>(function(){var d=document.documentElement,K="vv_theme",m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)"),last=null;function pref(){try{var t=localStorage.getItem(K);return t==="light"||t==="dark"?t:""}catch(e){return ""}}function apply(){last=pref()||(m&&m.matches?"dark":"light");d.setAttribute("data-theme",last)}apply();if(m&&m.addEventListener)m.addEventListener("change",function(){if(!pref())apply()});window.addEventListener("storage",function(e){if(e.key===K)apply()});try{new MutationObserver(function(){var v=d.getAttribute("data-theme");if(v!==last&&(v==="light"||v==="dark")){last=v;try{localStorage.setItem(K,v)}catch(e){}}}).observe(d,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}window.__vvTheme={get:pref,set:function(v){try{v?localStorage.setItem(K,v):localStorage.removeItem(K)}catch(e){}apply()}}})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>प्रश्नोपनिषद् · प्रश्नः 3 — एकीकृत-पाठः</title><style>
 :root{
   /* shared shell */
   --bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--brand:#d97706;--tm:#a7f3d0;--tken:#166534;
@@ -11,7 +11,7 @@
   --mulatint:rgba(124,90,30,.05);
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;--tken:#86d39b;
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;--tken:#86d39b;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
   --eka:#fb923c;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;--tika:#94a3b8;
@@ -19,7 +19,7 @@
   --mulatint:rgba(217,184,119,.07);
 }}
 :root[data-theme=dark]{
-  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#9aa1ac;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;--tken:#86d39b;
+  --bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--brand:#f5b544;--tm:#15803d;--tken:#86d39b;
   --moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;
   --mula:#7ab0ff;--gloss:#c2c8d2;--import:#c9b6f7;--vyak:#b8b2a8;--purva:#f79a9a;
   --eka:#fb923c;--sid:#83e0a0;--cite:#67d3e8;--conn:#5a5f6b;--spine:#d9b877;--tarka:#9aa7b8;--drs:#fcd34d;--maha:#f472b6;--praman:#e67bea;--introbg:#232028;--tika:#94a3b8;
@@ -133,7 +133,8 @@ body.metmode-pada .vjoin{display:none}
 .bhcite{color:var(--muted);font-size:.92em}/* re-injected pramāṇa citation (from the Zenodo body); an in-corpus one wraps an a.cite.lk deep-link, a non-hosted one (मनु …) stays plain */
 .cite.lk{color:var(--cite);text-decoration:none;border-bottom:1px dotted var(--cite);cursor:pointer}
 .cite.lk:hover{background:rgba(14,116,144,.14);border-radius:3px}.cite{color:var(--cite)}
-@media(prefers-color-scheme:dark){.cite.lk,.cite{color:var(--cite);border-color:var(--cite)}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .cite.lk,:root:not([data-theme=light]) .cite{color:var(--cite);border-color:var(--cite)}}
+:root[data-theme=dark] .cite.lk,:root[data-theme=dark] .cite{color:var(--cite);border-color:var(--cite)}
 :root[data-theme=dark] .cite.lk,:root[data-theme=dark] .cite{color:var(--cite);border-color:var(--cite)}
 
 /* व्याख्या · side-commentary (Ānandagiri-ṭīkā etc.). TWO placements:

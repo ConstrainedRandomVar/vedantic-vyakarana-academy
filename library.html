@@ -246,13 +246,16 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
     O.list().then(function (rows) {
       if (tab !== 'offline') return;
       var tot = rows.reduce(function (n, r) { return n + (r.bytes || 0); }, 0);
-      V.innerHTML = '<p class="note-top" style="margin-top:0">To read a text without a connection, open any of its pages and choose <b>☰ → ⤓ Save this text for offline</b>. Saved texts update themselves when you are online. Pages you have simply opened are kept too. <a href="help-mobile.html#offline">More</a></p>'
+      V.innerHTML = '<p class="note-top" style="margin-top:0">To read a text without a connection, open any of its pages and choose <b>☰ → ⤓ Save this text for offline</b> (you pick which separate commentaries, and search within the text, to include). Saved texts update themselves when you are online. Pages you have simply opened are kept too. <a href="help-mobile.html#offline">More</a></p>'
         + (rows.length ? rows.map(function (r) {
-            return '<div class="card" data-k="' + esc(r.key) + '"><b>' + esc(r.title) + '</b><div class="meta">' + O.mb(r.bytes || 0) + ' · saved ' + esc(r.at ? new Date(r.at).toLocaleDateString() : '')
-              + ' · <a href="' + esc(r.first) + '">open</a> <button class="mini" data-act="offdel">remove</button></div></div>';
+            return '<div class="card" data-k="' + esc(r.key) + '"><b>' + esc(r.title) + '</b>' + (r.includes && r.includes.length ? '<div class="meta">with ' + esc(r.includes.join(' · ')) + '</div>' : '')
+              + '<div class="meta">' + O.mb(r.bytes || 0) + ' · saved ' + esc(r.at ? new Date(r.at).toLocaleDateString() : '')
+              + ' · <a href="' + esc(r.first) + '">open</a> <button class="mini" data-act="offchg">change</button> <button class="mini" data-act="offdel">remove</button></div></div>';
           }).join('') + '<div class="meta">' + rows.length + ' text' + (rows.length === 1 ? '' : 's') + ' · ' + O.mb(tot) + ' in all</div>'
           : '<div class="empty">No texts saved yet.</div>');
       V.onclick = function (e) {
+        var c = e.target.closest && e.target.closest('[data-act="offchg"]');   // the save dialog: which commentaries + search to keep
+        if (c) { O.chooser(c.closest('[data-k]').getAttribute('data-k'), function () { if (tab === 'offline') render(); }); return; }
         var b = e.target.closest && e.target.closest('[data-act="offdel"]'); if (!b) return;
         var k = b.closest('[data-k]').getAttribute('data-k'), t = b.closest('.card').querySelector('b').textContent;
         if (confirm('Remove “' + t + '” from this device? You can save it again any time.')) O.remove(k).then(render);

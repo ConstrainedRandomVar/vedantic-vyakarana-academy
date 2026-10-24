@@ -903,7 +903,8 @@ addEventListener('resize',function(){ if(openPill)place(openPill); });
       [].forEach.call(document.querySelectorAll('.lzl[data-lz^="'+side+':"]'),function(el){
         var h=j.h[+el.getAttribute('data-lz').split(':')[1]];if(h!=null)el.insertAdjacentHTML('afterend',h);el.parentNode.removeChild(el);});
       done[side]=1;delete pend[side];try{document.dispatchEvent(new CustomEvent('vv:lane',{detail:side}));}catch(e){}
-    }).catch(function(e){delete pend[side];if(window.console)console.warn('lane '+side+' failed to load',e);});
+    }).catch(function(e){delete pend[side];if(window.console)console.warn('lane '+side+' failed to load',e);
+      try{document.dispatchEvent(new CustomEvent('vv:lanefail',{detail:side}));}catch(_){}});   // vv-reader.js tells the reader (offline: not saved)
     return pend[side];};
 })();</script><script>(function(){
   var CKEY='vv_reading_side',PKEY='vv_reading_place';

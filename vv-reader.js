@@ -11,6 +11,25 @@
   if (!S || window.__vvReader) return;
   window.__vvReader = true;
 
+  // a separately loaded commentary (lane-<page>-<side>.json) that could not be fetched — offline, it was left out when the text
+  // was saved (☰ → Saved for offline lets the reader add it). Listening from the start: the page may ask for its lane while parsing.
+  var laneNote = null;
+  document.addEventListener('vv:lanefail', function (e) {
+    var btn = document.querySelector('#sideseg button[data-side="' + e.detail + '"]');
+    var name = btn ? btn.textContent.trim() : 'This commentary';
+    if (laneNote) laneNote.remove();
+    laneNote = document.createElement('div');
+    laneNote.setAttribute('role', 'status');
+    laneNote.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2050;max-width:min(520px,92vw);background:#292524;color:#fafaf9;'
+      + 'border-radius:10px;padding:10px 14px;font:14px/1.45 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3)';
+    laneNote.innerHTML = '<span style="font-family:\'Noto Serif Devanagari\',serif">' + name.replace(/[&<>]/g, '') + '</span> '
+      + (navigator.onLine ? 'could not be loaded — check your connection and choose it again.'
+        : 'was not saved for offline reading. Connect to the internet to read it, or add it with ☰ → Saved for offline.');
+    document.body.appendChild(laneNote);
+    var n = laneNote; setTimeout(function () { if (n.isConnected) n.remove(); }, 8000);
+    n.addEventListener('click', function () { n.remove(); });
+  });
+
   // ---- commentary markers (⚙ Settings · "Commentary markers"): HIDDEN by default since 2026-10-21 (Harsha, feedback #5) —
   // '1' = shown; a reader's explicit earlier choice ('0'/'1') is kept. Applied at once — before the page settles — as an <html>
   // class; the legend keeps its swatches (with a "⚙ to show" note while off). vv-settings.js re-runs it live (__vvApplyPills).

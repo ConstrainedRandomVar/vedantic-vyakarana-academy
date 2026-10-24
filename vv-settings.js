@@ -280,35 +280,20 @@
     setTimeout(function () { document.addEventListener('mousedown', function off(e) { if (!menuEl) { document.removeEventListener('mousedown', off); return; }
       if (!menuEl.contains(e.target) && e.target !== anchor) { closeMenu(); document.removeEventListener('mousedown', off); } }); }, 0);
   }
-  // "⤓ Save this text for offline (N MB)" ⇄ "✓ Saved for offline · remove" — only where offline.json lists this page
+  // "⤓ Save this text for offline…" ⇄ "✓ Saved for offline · change or remove" — only where offline.json lists this page; both open
+  // VVOffline.chooser (pick the separate commentaries + search within the text, 2026-10-25)
   function withOffline(cb) { if (window.VVOffline) return cb(); var sc = document.createElement('script'); sc.src = 'vv-offline.js'; sc.onload = function () { if (window.VVOffline) cb(); }; document.head.appendChild(sc); }
   function offlineItem(slot, onGrow) {
     withOffline(function () {
       if (!VVOffline.supported()) return;
       VVOffline.info().then(function (inf) {
         if (!inf || !slot.isConnected) return;
-        var draw = function () {
-          slot.innerHTML = '<hr>' + (inf.saved
-            ? item('✓', 'Saved for offline', esc(inf.title) + ' · tap to remove from this device')
-            : item('⤓', 'Save this text for offline', esc(inf.title) + ' · about ' + VVOffline.mb(inf.bytes) + ' on this device'));
-          slot.hidden = false;
-          if (onGrow) onGrow();
-          var b = slot.querySelector('button');
-          b.addEventListener('click', function () {
-            if (inf.saved) {
-              if (!confirm('Remove “' + inf.title + '” from this device? You can save it again any time.')) return;
-              VVOffline.remove(inf.key).then(function () { inf.saved = false; draw(); });
-              return;
-            }
-            if (!navigator.onLine) { alert('You are offline — connect to the internet to save this text.'); return; }
-            b.disabled = true;
-            var lab = b.querySelector('span:last-child');
-            VVOffline.save(inf.key, function (done, total) { lab.innerHTML = 'Saving… ' + Math.floor(100 * done / total) + '%<small>' + esc(inf.title) + ' · keep this page open</small>'; })
-              .then(function () { inf.saved = true; draw(); }, function (err) {
-                b.disabled = false; lab.innerHTML = 'Could not save — try again<small>' + esc((err && err.message) || 'network error') + '</small>'; });
-          });
-        };
-        draw();
+        slot.innerHTML = '<hr>' + (inf.saved
+          ? item('✓', 'Saved for offline', esc(inf.title) + ' · change what is kept, or remove')
+          : item('⤓', 'Save this text for offline…', esc(inf.title) + ' · from ' + VVOffline.mb(inf.bytes) + ' · choose commentaries + search'));
+        slot.hidden = false;
+        if (onGrow) onGrow();
+        slot.querySelector('button').addEventListener('click', function () { closeMenu(); VVOffline.chooser(inf.key); });
       }).catch(function () {});
     });
   }

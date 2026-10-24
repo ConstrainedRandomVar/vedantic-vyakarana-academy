@@ -351,12 +351,20 @@
     unpaintAll();
     var miss = [];
     S.highlights.onPage(PAGE).forEach(function (h) { if (paintOne(h)) S.highlights.setPlaced(h.id, true); else miss.push(h.id); });
-    // commentary lanes can fill in after load → retry before calling a highlight "unplaced"
+    // commentary lanes can fill in after load → retry before calling a highlight "unplaced"; while a lazy lane is still out of
+    // the page (.lzl placeholder — the reader is on another commentary, or it hasn't arrived) a miss is NOT final: paintLate()
+    // runs again when a lane arrives (vv:lane). Since 2026-10-25 the ṭīkā itself is a lazy lane.
     clearTimeout(paintRetry);
-    if (miss.length) paintRetry = setTimeout(function () {
-      miss.forEach(function (id) { var h = S.highlights.get(id); if (!h || document.querySelector('.vvh-pin[data-hid="' + id + '"]')) return; S.highlights.setPlaced(id, paintOne(h)); });
-    }, 2500);
+    if (miss.length) paintRetry = setTimeout(paintLate, 2500);
   }
+  function paintLate() {
+    S.highlights.onPage(PAGE).forEach(function (h) {
+      if (document.querySelector('.vvh-pin[data-hid="' + h.id + '"]')) return;
+      var ok = paintOne(h);
+      if (ok || !document.querySelector('.lzl')) S.highlights.setPlaced(h.id, ok);
+    });
+  }
+  document.addEventListener('vv:lane', function () { paintLate(); });
   function editHighlight(id, anchor) {
     var h = S.highlights.get(id); if (!h) return;
     var tagsNow = function () { return (S.highlights.get(id) || {}).tags || []; };

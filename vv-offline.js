@@ -42,8 +42,22 @@
   function sizeOf(files) { return files.reduce(function (n, r) { return n + r[1]; }, 0); }
   function mb(bytes) { var v = bytes / 1048576; return (v < 10 ? v.toFixed(1) : Math.round(v)) + ' MB'; }
   function lanes(m, key) { return (m.texts[key] && m.texts[key].parts) || []; }
-  // the parts a saved entry chose; a save made before parts existed had every lane and no search
-  function chosenOf(m, key, rec) { return rec && rec.parts ? rec.parts : lanes(m, key).map(function (p) { return p.id; }); }
+  // the parts a saved entry chose; a save made before parts existed had every lane and no search. A lane the dialog never OFFERED
+  // (a commentary split out of the page later — the ṭīkā, vārttika … on 2026-10-25 — or newly added) is saved too: it was part of
+  // the text when the reader saved it, or is new; dropping it silently would shrink their copy. rec.offered = the part ids the
+  // dialog showed; entries from before it was recorded were offered exactly the 2026-10-25 lanes + search.
+  var OFFERED_0 = ['sridhara', 'nilakantha', 'madhusudana', 'dhanapati', 'ratnaprabha', 'vanamala', 'search'];
+  function chosenOf(m, key, rec) {
+    var all = lanes(m, key).map(function (p) { return p.id; });
+    if (!rec || !rec.parts) return all;
+    var off = rec.offered || OFFERED_0;
+    return rec.parts.concat(all.filter(function (id) { return off.indexOf(id) < 0 && rec.parts.indexOf(id) < 0; }));
+  }
+  function offeredOf(m, key, rec) {
+    var off = ((rec && rec.offered) || OFFERED_0).slice();
+    lanes(m, key).forEach(function (p) { if (off.indexOf(p.id) < 0) off.push(p.id); });
+    return off;
+  }
 
   // ---- "Search within this text": the search site's search-meta.json + engine + this text's shards (hashed names) ----
   var L = null, lP = null;
@@ -105,8 +119,10 @@
         return caches.open(m.saved).then(function (cache) {
           return fetchInto(cache, files, function (r) { done += r[1]; if (onProgress) onProgress(Math.min(done, total), total); }).then(function () {
             var idx = loadIdx(m), h = {}, old = (idx[key] && idx[key].files) || {};
+            var offered = parts.map(function (p) { return p.id; });   // + what an earlier dialog offered (search, if unreachable now)
+            ((idx[key] && idx[key].offered) || []).forEach(function (x) { if (offered.indexOf(x) < 0) offered.push(x); });
             files.forEach(function (r) { h[r[0]] = r[2]; });
-            idx[key] = { title: m.texts[key].title, bytes: total, at: new Date().toISOString(), files: h, parts: chosen };
+            idx[key] = { title: m.texts[key].title, bytes: total, at: new Date().toISOString(), files: h, parts: chosen, offered: offered };
             saveIdx(m, idx);
             var still = usedElsewhere(idx, key);   // parts the reader just dropped
             return Promise.all(Object.keys(old).filter(function (f) { return !h[f] && !still[f]; }).map(function (f) { return cache.delete(abs(f)); }))
@@ -185,7 +201,7 @@
             plan.forEach(function (p) {
               var h = {}; p.files.forEach(function (r) { h[r[0]] = r[2]; });
               if (p.keepSearch) Object.keys(idx[p.k].files || {}).forEach(function (f) { if (f.indexOf(SEARCH) === 0) h[f] = idx[p.k].files[f]; });
-              idx[p.k].files = h; idx[p.k].parts = chosenOf(m, p.k, idx[p.k]); idx[p.k].title = m.texts[p.k].title;
+              idx[p.k].files = h; idx[p.k].parts = chosenOf(m, p.k, idx[p.k]); idx[p.k].offered = offeredOf(m, p.k, idx[p.k]); idx[p.k].title = m.texts[p.k].title;
               if (!p.keepSearch) idx[p.k].bytes = sizeOf(p.files);
             });
             saveIdx(m, idx);
@@ -229,7 +245,7 @@
         var base = sizeOf(t.files.concat(m.shell)), lanesP = parts.filter(function (p) { return p.id !== 'search'; }), sp = parts.filter(function (p) { return p.id === 'search'; })[0];
         var row = function (p) { return '<label><input type="checkbox" data-p="' + esc(p.id) + '"' + (chosen.indexOf(p.id) >= 0 ? ' checked' : '') + '><span' + (p.id === 'search' ? '' : ' class="dev"') + '>' + esc(p.label) + '</span><span class="sz">' + mb(sizeOf(p.files)) + '</span></label>'; };
         box.innerHTML = '<h3>' + (rec ? 'Saved for offline' : 'Save for offline') + '</h3><div class="sub">' + esc(t.title) + (rec ? ' · choose what stays on this device' : ' · choose what to keep on this device') + '</div>'
-          + '<label class="fixed"><input type="checkbox" checked disabled><span>The text, with the commentaries shown in its pages</span><span class="sz">' + mb(base) + '</span></label>'
+          + '<label class="fixed"><input type="checkbox" checked disabled><span>The text itself' + (lanesP.length ? ' (with any commentary not listed below)' : '') + '</span><span class="sz">' + mb(base) + '</span></label>'
           + (lanesP.length ? '<div class="grp">Commentaries loaded separately</div>' + lanesP.map(row).join('') : '')
           + (sp ? '<div class="grp">Search</div>' + row(sp) : (navigator.onLine ? '' : '<div class="msg">Search within this text can be added when you are online.</div>'))
           + '<div class="tot">About <span class="sum"></span> on this device</div><div class="msg st"></div>'

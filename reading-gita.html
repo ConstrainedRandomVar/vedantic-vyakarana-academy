@@ -776,6 +776,11 @@ document.getElementById('tog').onclick=function(){
   });});
 })();</script><script>(function(){
   var BASE=(location.pathname.split('/').pop()||'').replace(/^reading-/,'').replace(/.html$/,''),done={},pend={};
+  // what the reader is looking at (the element just under the reading bar): a lane arriving ABOVE it — the default ṭīkā loads
+  // right after the page, often after a #v-ref landing — must not push it away; restored after the insert (works without
+  // browser scroll anchoring, e.g. Safari; the browser's own anchoring is paused meanwhile so the two never both correct)
+  function anchor(){ if(scrollY<1)return null; var n=document.getElementById('reading-nav'),y=(n?Math.max(0,n.getBoundingClientRect().bottom):0)+12;
+    var e=document.elementFromPoint(innerWidth/2,y); if(!e||e===document.body||e===document.documentElement)return null; return {e:e,t:e.getBoundingClientRect().top}; }
   window.__vvLane=function(side){
     if(!side||done[side])return Promise.resolve();
     if(pend[side])return pend[side];
@@ -783,8 +788,11 @@ document.getElementById('tog').onclick=function(){
     pend[side]=fetch('lane-'+BASE+'-'+side+'.json').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){
       if(j.gt){window.GTL=window.GTL||{};GTL[side]=j.gt;}   // the lane's own cards (data-g="<side>")
       if(j.gtx){window.GTL=window.GTL||{};for(var gk in j.gtx)GTL[gk]=j.gtx[gk];}   // its sub-ṭīkā's own cards (Pūrṇānandī: data-g="purnanandi")
+      var a=anchor(),R=document.documentElement;R.style.overflowAnchor='none';
       [].forEach.call(document.querySelectorAll('.lzl[data-lz^="'+side+':"]'),function(el){
         var h=j.h[+el.getAttribute('data-lz').split(':')[1]];if(h!=null)el.insertAdjacentHTML('afterend',h);el.parentNode.removeChild(el);});
+      if(a&&a.e.isConnected){var d=a.e.getBoundingClientRect().top-a.t;if(Math.abs(d)>1)scrollBy(0,d);}
+      requestAnimationFrame(function(){R.style.overflowAnchor='';});
       done[side]=1;delete pend[side];try{document.dispatchEvent(new CustomEvent('vv:lane',{detail:side}));}catch(e){}
     }).catch(function(e){delete pend[side];if(window.console)console.warn('lane '+side+' failed to load',e);
       try{document.dispatchEvent(new CustomEvent('vv:lanefail',{detail:side}));}catch(_){}});   // vv-reader.js tells the reader (offline: not saved)

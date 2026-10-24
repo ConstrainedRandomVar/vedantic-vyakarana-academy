@@ -1541,7 +1541,26 @@ function renderDashboard() {
   app.querySelectorAll('[data-more]').forEach(m => m.onclick = e => { e.stopPropagation(); m.closest('.rcard').classList.toggle('allp'); });   // tap "…" → all layers
   app.querySelectorAll('[data-reflect]').forEach(b => b.onclick = () => { location.href = b.dataset.reflect; });
   app.querySelectorAll('.card').forEach(el => el.onclick = () => onNodeCardClick(el.dataset.code));
+  openSectionFromHash();
 }
+// ☰ menu "Go to" links (2026-10-24) land here as index.html#<sectionId>: unfold that section (remembered, like a heading click)
+// and scroll to it. Also on hashchange (a link clicked while already on the homepage, or from another SPA screen).
+const HOME_SECTIONS = ['textsPanel', 'chantPanel', 'studyPanel', 'toolsPanel', 'vyPanel', 'resPanel'];
+function openSectionFromHash() {
+  const id = (location.hash || '').slice(1);
+  if (!HOME_SECTIONS.includes(id)) return;
+  const sec = document.getElementById(id); if (!sec) return;
+  if (sec.classList.contains('shut')) { const h = sec.querySelector('.sec-head[data-fold]'); if (h) h.click(); }
+  setTimeout(() => { try { sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { sec.scrollIntoView(); } }, 30);
+  // consume the hash, so a later return to the dashboard doesn't jump again (and the same link works when clicked again)
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+}
+window.addEventListener('hashchange', () => {
+  const id = (location.hash || '').slice(1);
+  if (!HOME_SECTIONS.includes(id)) return;
+  if (!view || view.screen !== 'dashboard') { clearTimeout(pendingAdvanceTimer); view = { screen: 'dashboard' }; renderDashboard(); }
+  else openSectionFromHash();
+});
 
 // Groups WALK_MANIFEST entries (one per chapter) by their text `slug` — `title` is the text-level
 // part of the build-time-authored label ("भगवद्गीता (Bhagavad Gītā) · अध्याय 4" -> the part before

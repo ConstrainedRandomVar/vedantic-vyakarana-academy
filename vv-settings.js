@@ -229,30 +229,52 @@
     + '.vvset-menu a:hover,.vvset-menu button:hover,.vvset-menu a:focus-visible,.vvset-menu button:focus-visible{background:var(--line,#f1ece2);outline:none}'
     + '.vvset-menu .ic{width:1.3em;flex:none;text-align:center}.vvset-menu small{display:block;color:var(--muted,#7a6a55);font-size:12px}'
     + '.vvset-menu hr{border:0;border-top:1px solid var(--line,#e5ded0);margin:4px 6px}'
-    + '.vvset-menu button[disabled]{cursor:default;opacity:.8}';
+    + '.vvset-menu button[disabled]{cursor:default;opacity:.8}'
+    + '.vvset-menu{overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box}'
+    + '.vvset-menu .mh{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#7a6a55);padding:6px 9px 2px}'
+    + '.vvset-menu .go a{padding:6px 9px}'
+    + '.vvset-menu .hrow{display:flex;flex-wrap:wrap;gap:2px 10px;padding:6px 9px 4px;font-size:12.5px}'
+    + '.vvset-menu .hrow a{display:inline;width:auto;padding:2px 0;color:var(--muted,#7a6a55);border-radius:0}'
+    + '.vvset-menu .hrow a:hover,.vvset-menu .hrow a:focus-visible{background:none;color:var(--ink,#222);text-decoration:underline}';
   var menuEl = null;
   function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
   function item(ic, label, sub, href) {
     return (href ? '<a href="' + href + '" role="menuitem">' : '<button type="button" role="menuitem">') + '<span class="ic">' + ic + '</span><span>' + label
       + (sub ? '<small>' + sub + '</small>' : '') + '</span>' + (href ? '</a>' : '</button>');
   }
+  // below the ☰ when it fits; otherwise (phones, a button low on the screen) lift it so the whole menu shows; only if even the full
+  // screen is too short does it scroll inside. Re-run when the menu grows (the offline item arrives a moment later).
+  function placeMenu(anchor) {
+    if (!menuEl) return;
+    menuEl.style.maxHeight = 'none';
+    var r = anchor.getBoundingClientRect(), w = menuEl.offsetWidth, h = menuEl.offsetHeight, vh = window.innerHeight;
+    var top = r.bottom + 6;
+    if (top + h > vh - 8) top = Math.max(8, vh - h - 8);
+    menuEl.style.top = top + 'px';
+    menuEl.style.maxHeight = (vh - top - 8) + 'px';
+    menuEl.style.left = Math.max(8, Math.min(r.right - w, document.documentElement.clientWidth - w - 8)) + 'px';
+  }
   function menu(anchor) {
     if (menuEl) { closeMenu(); return; }
     if (!document.getElementById('vvset-mcss')) { var st = document.createElement('style'); st.id = 'vvset-mcss'; st.textContent = MCSS; document.head.appendChild(st); }
-    var sister = sisterSite();
+    var sister = sisterSite(), site = (window.VVStore && VVStore.SITE) || 'local';
+    // "Go to" (Harsha 2026-10-24): the homepage's sections, in homepage order, short English one-liners (the Sanskrit names are the
+    // section headings they land on). index.html#<id> → app.js openSectionFromHash unfolds + scrolls. Only sections this site has:
+    // no Tools on the public site (profile omits it); the sister site has only texts + the gym.
+    var GO = [['📚', 'Read texts', 'textsPanel', true], ['🔊', 'Listen', 'chantPanel', !sister], ['🧰', 'Tools', 'toolsPanel', !sister && site !== 'public'],
+      ['🏋', 'Sanskrit gym', 'vyPanel', true], ['🔗', 'Resources', 'resPanel', !sister]];
     menuEl = document.createElement('div'); menuEl.className = 'vvset-menu'; menuEl.setAttribute('role', 'menu');
     menuEl.innerHTML = '<div data-m="set">' + item('⚙', 'Settings', 'Text size, script, word grammar, markers') + '</div>'
       + item('★', 'My library', 'Bookmarks, highlights, notes · backup', 'library.html')
       + '<div data-m="off" hidden></div>'
-      + (sister ? '' : '<hr>' + item('📱', 'Use it as an app', 'Install on a phone or tablet · offline', 'help-mobile.html')
-        + item('❓', 'What the settings do', '', 'help-settings.html')
-        + item('ℹ', 'Sources &amp; attribution', '', 'about.html') + item('🔒', 'Privacy', '', 'privacy.html'));
+      + '<hr><div class="mh">Go to</div><div class="go">' + GO.filter(function (g) { return g[3]; }).map(function (g) { return item(g[0], g[1], '', 'index.html#' + g[2]); }).join('') + '</div>'
+      + (sister ? '' : '<hr><div class="hrow"><a href="help-mobile.html" role="menuitem">📱 App</a><a href="help-settings.html" role="menuitem">❓ Help</a>'
+        + '<a href="about.html" role="menuitem">ℹ Sources</a><a href="privacy.html" role="menuitem">🔒 Privacy</a></div>');
     document.body.appendChild(menuEl);
-    var r = anchor.getBoundingClientRect(), w = menuEl.offsetWidth;
-    menuEl.style.top = (r.bottom + 6) + 'px';
-    menuEl.style.left = Math.max(8, Math.min(r.right - w, document.documentElement.clientWidth - w - 8)) + 'px';
+    [].forEach.call(menuEl.querySelectorAll('.go a'), function (a) { a.addEventListener('click', closeMenu); });   // same-page hash links: close the menu
+    placeMenu(anchor);
     menuEl.querySelector('[data-m="set"] button').addEventListener('click', function () { closeMenu(); open(); });
-    if (readingPage()) offlineItem(menuEl.querySelector('[data-m="off"]'));
+    if (readingPage()) offlineItem(menuEl.querySelector('[data-m="off"]'), function () { placeMenu(anchor); });
     var first = menuEl.querySelector('button,a'); if (first) first.focus();
     menuEl.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeMenu(); anchor.focus(); } });
     setTimeout(function () { document.addEventListener('mousedown', function off(e) { if (!menuEl) { document.removeEventListener('mousedown', off); return; }
@@ -260,7 +282,7 @@
   }
   // "⤓ Save this text for offline (N MB)" ⇄ "✓ Saved for offline · remove" — only where offline.json lists this page
   function withOffline(cb) { if (window.VVOffline) return cb(); var sc = document.createElement('script'); sc.src = 'vv-offline.js'; sc.onload = function () { if (window.VVOffline) cb(); }; document.head.appendChild(sc); }
-  function offlineItem(slot) {
+  function offlineItem(slot, onGrow) {
     withOffline(function () {
       if (!VVOffline.supported()) return;
       VVOffline.info().then(function (inf) {
@@ -270,6 +292,7 @@
             ? item('✓', 'Saved for offline', esc(inf.title) + ' · tap to remove from this device')
             : item('⤓', 'Save this text for offline', esc(inf.title) + ' · about ' + VVOffline.mb(inf.bytes) + ' on this device'));
           slot.hidden = false;
+          if (onGrow) onGrow();
           var b = slot.querySelector('button');
           b.addEventListener('click', function () {
             if (inf.saved) {

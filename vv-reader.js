@@ -575,3 +575,48 @@
     });
   });
 })();
+
+// ---- keep the reader's verse across the मूलम् ⇄ भाष्यम् switch (Harsha 2026-10-24: "it should stay in the same verse").
+// The switch hides/shows every commentary block, so the old pixel offset lands somewhere else. Before the page's own toggle
+// runs (capture phase), note the verse at the top line; after it has re-laid out, put that verse back there. Going to मूलम्
+// puts the verse's start at the top; coming back to भाष्यम् on the same verse returns to the exact spot in its commentary.
+// Unified views (#viewseg, body.moola-only) and prakaraṇa views (.viewbar, body.view-mula; VC's edition units vb-<ref>).
+(function () {
+  'use strict';
+  if (window.__vvKeepVerse) return; window.__vvKeepVerse = true;
+  var mem = null;   // {id, off}: where the reader was in the commentary view when they left it
+  function line() { var n = document.getElementById('reading-nav'), b = 0; if (n) { var r = n.getBoundingClientRect(); if (r.bottom > 0) b = r.bottom; } return b + 4; }
+  function shown(el) { return el && el.offsetParent !== null && el.getBoundingClientRect().height > 0; }
+  function mulaMode() { var c = document.body.classList; return c.contains('moola-only') || c.contains('view-mula'); }
+  function verses() { return [].slice.call(document.querySelectorAll('section[id^="v-"],section[id^="vb-"]')); }
+  function atLine() { var y = line(), all = verses();
+    for (var i = 0; i < all.length; i++) { if (!shown(all[i])) continue; var r = all[i].getBoundingClientRect(); if (r.bottom > y) return { id: all[i].id, off: r.top - y }; }
+    return null; }
+  function find(id) {   // the same verse in the new view; VC: v-<n> ⇄ vb-<n> / vb-<n-0.5> (half-verse edition units)
+    var el = document.getElementById(id); if (shown(el)) return el;
+    var m = /^(v|vb)-(.+)$/.exec(id); if (!m) return null; var n = parseFloat(m[2]), c = [];
+    if (m[1] === 'v') c = ['vb-' + m[2], 'vb-' + (n - 0.5)]; else c = ['v-' + Math.floor(n), 'v-' + m[2]];
+    for (var i = 0; i < c.length; i++) { el = document.getElementById(c[i]); if (shown(el)) return el; }
+    el = document.getElementById(id);   // hidden in this view (e.g. a commentary-only intro): the next verse that is shown
+    if (el) { var all = verses(), k = all.indexOf(el); for (var j = k + 1; j < all.length; j++) if (shown(all[j])) return all[j]; }
+    return null; }
+  function blockAt() {   // the text block under the top line (a verse word, a ṭīkā / vārttika paragraph…), to keep it exactly in place
+    var y = line() + 2, x = Math.round(document.documentElement.clientWidth / 2), e = document.elementFromPoint(x, y);
+    var b = e && e.closest && e.closest('.w,p,li,.vk-v,.tk-inline,.vc-pre,.side-zone,.mula-zone,.tika');
+    return b && !/^(section|body|html)$/i.test(b.tagName) ? { el: b, off: b.getBoundingClientRect().top - y + 2 } : null; }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#viewseg button,.viewbar button'); if (!b) return;
+    var wasMula = mulaMode(), a = atLine(), k = blockAt(); if (!a) return;
+    requestAnimationFrame(function () {
+      if (mulaMode() === wasMula) return;   // the click did not change the view
+      var back = wasMula && mem && mem.at === a.id, el, off;
+      if (back) { el = find(mem.id); off = mem.off; }                       // back to the commentary: the exact spot the reader left
+      else if (k && shown(k.el)) { el = k.el; off = k.off; }                // what the reader was looking at is in both views: keep it put
+      else { el = find(a.id); off = Math.max(a.off, 0); }                   // otherwise: that verse at the top
+      if (!el) return;
+      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - line() - off, behavior: 'instant' });
+      var v = el.closest ? el.closest('section[id^="v-"],section[id^="vb-"]') : null;
+      mem = wasMula ? null : { id: a.id, off: a.off, at: (v || el).id };   // leaving the commentary: remember the spot and the verse we landed on
+    });
+  }, true);
+})();

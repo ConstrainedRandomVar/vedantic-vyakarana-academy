@@ -1380,7 +1380,8 @@ function renderDashboard() {
     { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vsara'], note: 'वार्त्तिकम् + शास्त्रप्रकाशिका · वार्तिकसारः + लघुसङ्ग्रहा' },
-    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya', 'ratnaprabha', 'purnanandi', 'brahmatattva'] },
+    { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya', 'ratnaprabha', 'brahmatattva'],
+      note: 'रत्नप्रभा + पूर्णानन्दी (उपोद्घातः, १.१.१–३)' },   // Pūrṇānandī opens INSIDE the Ratnaprabhā lane (fold-outs) — named like the Bṛhad card's वार्त्तिकम् + शास्त्रप्रकाशिका, not as a lane of its own (Harsha 2026-10-26)
     { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'vyakhya'], note: 'व्याख्या: श्रीचन्द्रशेखरभारती' },
     { dv: 'पञ्चदशी', lat: 'Pañcadaśī', file: 'reading-pd.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: पददीपिका · अ. १–११' },
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula', 'tika'] },

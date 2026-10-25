@@ -556,16 +556,22 @@
     dictBtn.addEventListener('mousedown', function () { var x = window.getSelection(); dictSel = x ? x.toString() : ''; });
     dictBtn.addEventListener('click', function () { var pre = (dictSel.match(/[\u0900-\u097F]+/) || [''])[0]; withSettings(function () { VVSettings.dict(dictBtn, pre); }); });
     tools.appendChild(dictBtn);
-    if (presentFolds().length) {
-      var fb = el('button', { class: 'vvr-btn', type: 'button', title: 'Expand / collapse the commentary fold-outs on this page' }, 'टीका ⇕');
-      fb.style.fontSize = '13px';
-      fb.addEventListener('click', function () { foldPopover(fb); });
-      tools.appendChild(fb);
-    }
     // ☰ menu (Harsha 2026-10-23): ⚙ Settings · ★ library · ⤓ save this text offline · help · sources — vv-settings.js VVSettings.menu
     var gearBtn = el('button', { class: 'vvr-btn vvr-gear', type: 'button', title: 'Menu — settings, library, save offline, help', 'aria-label': 'Menu', 'aria-haspopup': 'true' }, '☰');
     gearBtn.addEventListener('click', function () { withSettings(function () { VVSettings.menu(gearBtn); }); });
     tools.appendChild(gearBtn);
+    // टीका ⇕ (before ☰) — on load if the page has fold-outs, and again when a lazy lane brings some (Pūrṇānandī arrives with the
+    // Ratnaprabhā lane: the BS pages had no button at all — Harsha 2026-10-26)
+    var foldBtn = null;
+    function ensureFoldBtn() {
+      if (foldBtn || !presentFolds().length) return;
+      foldBtn = el('button', { class: 'vvr-btn', type: 'button', title: 'Expand / collapse the commentary fold-outs on this page' }, 'टीका ⇕');
+      foldBtn.style.fontSize = '13px';
+      foldBtn.addEventListener('click', function () { foldPopover(foldBtn); });
+      tools.insertBefore(foldBtn, gearBtn);
+    }
+    ensureFoldBtn();
+    document.addEventListener('vv:lane', ensureFoldBtn);
     if (bar) bar.appendChild(tools); else { var fl = el('div', { class: 'vvr-float' }); fl.appendChild(tools); document.body.appendChild(fl); }
     brandLogo();
     if (savedScale() !== 1) textScale(savedScale());

@@ -648,3 +648,160 @@
     });
   }, true);
 })();
+
+// ---- ⚑ REPORT AN ISSUE WITH THIS WORD (Harsha 2026-10-25): a row at the foot of every PINNED word card — #tip (mūla) and .gtip
+// (commentary), the two cards peek.js controls, on every reading page and every renderer (all mark a pinned card .pinned). Added here
+// at run time so no builder changes. The report carries what the reader saw: the word (as printed, whatever script is showing), the
+// card's own text (meaning, grammar, peel, any ⚑ editorial note), the verse, the layer, the word's key (data-k) and a link back.
+// Sent through FormSubmit (fetch, no script from them — offline-safe); if that fails, the reader's mail app opens with the same text.
+// Hidden with the other report buttons by ⚙ "report-an-issue buttons" (vv-store.js, html.vv-no-report).
+(function () {
+  'use strict';
+  if (window.__vvWordReport) return; window.__vvWordReport = true;
+  var MAIL = 'narayanamurthysharma@gmail.com';
+  var ENDPOINT = 'https://formsubmit.co/ajax/' + MAIL;
+  var NAME_KEY = 'sandhiQuizReporterName', EMAIL_KEY = 'sandhiQuizReporterEmail';   // the same keys as the gym's reporter (app.js)
+  var KINDS = ['Meaning', 'Grammar (vibhakti, kāraka, dhātu …)', 'Samāsa vigraha', 'The text itself (a misprint, a wrong reading)', 'A link that lands in the wrong place', 'Something else'];
+  var lastWord = null;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ''; localStorage.setItem(k, v); } catch (e) { return ''; } }
+  function orig(n) { return (window.VVTranslit && VVTranslit.orig) ? VVTranslit.orig(n) : n.nodeValue; }
+  // text of an element as printed (Devanāgarī even when another script is showing), one line per block; our own row left out
+  function textOf(root) {
+    var out = '';
+    (function walk(e) {
+      for (var c = e.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType === 3) { out += orig(c); continue; }
+        if (c.nodeType !== 1 || (c.classList && c.classList.contains('vvrep-row'))) continue;
+        var d = getComputedStyle(c).display; if (d === 'none') continue;
+        var blk = c.tagName === 'BR' || !/^inline/.test(d);   // block, flex, grid, list-item, table-row … = its own line
+        if (blk) out += '\n'; else out += ' '; walk(c); if (blk) out += '\n'; else out += ' ';
+      }
+    })(root);
+    return out.replace(/[ \t]+/g, ' ').replace(/ *\n[ \n]*/g, '\n').trim();
+  }
+  function refOf(w) {
+    var v = w && w.closest('[id^="v-"],[id^="vb-"]'); if (v) return v.id.replace(/^vb?-/, '');
+    var k = w && w.getAttribute('data-k'), m = k && /^[^:]+:([^:]+):/.exec(k); return m ? m[1] : '';
+  }
+  function layerOf(w) {
+    if (!w) return '';
+    var lab = w.closest('[data-label]'); if (lab) return lab.getAttribute('data-label');
+    if (w.closest('.mula-zone')) return 'मूलम्';
+    if (w.closest('.bh-zone')) return 'भाष्यम्';
+    var sd = w.closest('[data-side]'); if (sd && sd.tagName !== 'BUTTON') return sd.getAttribute('data-side');
+    // no named layer on this page: report where the word sits (its containers' classes), never a guessed name
+    var chain = [], e = w.parentElement;
+    while (e && e !== document.body && chain.length < 4) { if (e.className && typeof e.className === 'string' && !/^v$/.test(e.className)) chain.unshift(e.className.split(' ')[0]); if (e.id && /^vb?-/.test(e.id)) break; e = e.parentElement; }
+    return chain.length ? 'in ' + chain.join(' > ') : '';
+  }
+  function pageUrl() { return location.href.split('#')[0].split('?')[0]; }
+  function device() {
+    var u = navigator.userAgent || '';
+    var os = /Android/i.test(u) ? 'Android' : /iPhone|iPod/i.test(u) ? 'iOS' : /iPad/i.test(u) ? 'iPadOS' : /Windows/i.test(u) ? 'Windows' : /Mac OS X|Macintosh/i.test(u) ? 'macOS' : /Linux/i.test(u) ? 'Linux' : 'other';
+    var br = /Edg\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /Chrome\//.test(u) ? 'Chrome' : /Firefox\//.test(u) ? 'Firefox' : /Version\/.*Safari/.test(u) ? 'Safari' : 'other';
+    return os + ' · ' + br + ' · ' + (window.innerWidth || 0) + '×' + (window.innerHeight || 0) + ((navigator.serviceWorker && navigator.serviceWorker.controller) ? ' · offline cache' : '');
+  }
+  function context(card) {
+    var w = lastWord, word = w ? textOf(w) : '', ref = refOf(w), layer = layerOf(w);
+    var title = (document.title || '').replace(/\s+/g, ' ').trim();
+    return {
+      word: word, ref: ref, layer: layer, title: title,
+      link: pageUrl() + (word ? '?hl=' + encodeURIComponent(word) : '') + (ref ? '#v-' + ref : ''),
+      key: (w && w.getAttribute('data-k')) || '',
+      card: textOf(card), device: device()
+    };
+  }
+  function details(c) {
+    return ['word: ' + (c.word || '(unknown)'), 'text: ' + c.title, 'verse: ' + (c.ref || '(n/a)'), 'layer: ' + (c.layer || '(n/a)'),
+      'word key: ' + (c.key || '(n/a)'), 'open: ' + c.link, '', 'what the card showed:', c.card || '(empty)', '', 'device: ' + c.device].join('\n');
+  }
+
+  var css = document.createElement('style');
+  css.textContent =
+    '.vvrep-row{margin-top:8px;padding-top:6px;border-top:1px solid var(--tipline,rgba(128,128,128,.35));text-align:right}' +
+    '.vvrep-row button{font:12px/1.3 system-ui,sans-serif;background:none;border:0;padding:2px 0;color:inherit;opacity:.72;cursor:pointer}' +   // the card's own ink: cards invert against the page theme
+    '.vvrep-row button:hover{opacity:1;text-decoration:underline}' +
+    'html.vv-no-report .vvrep-row{display:none!important}' +
+    '#vvrep-ov{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}' +
+    '#vvrep-box{background:var(--card,#fff);color:var(--ink,#111);border:1px solid var(--line,#ddd);border-radius:14px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.35);font:14px/1.45 system-ui,sans-serif;box-sizing:border-box}' +
+    '#vvrep-box h3{margin:0 0 2px;font-size:16px}#vvrep-box .w0{font:600 18px/1.4 "Noto Serif Devanagari",serif;margin:0 0 2px}' +
+    '#vvrep-box .sub{margin:0 0 10px;font-size:12px;color:var(--muted,#6b7280)}' +
+    '#vvrep-box label{display:block;font-size:12px;color:var(--muted,#6b7280);margin:8px 0 3px}' +
+    '#vvrep-box select,#vvrep-box textarea,#vvrep-box input{width:100%;box-sizing:border-box;font:inherit;color:var(--ink,#111);background:var(--bg,#fafafa);border:1px solid var(--line,#ddd);border-radius:8px;padding:7px 9px}' +
+    '#vvrep-box textarea{min-height:84px;resize:vertical}#vvrep-box .two{display:flex;gap:8px}#vvrep-box .two>div{flex:1}' +
+    '#vvrep-box details{margin-top:10px;font-size:12px;color:var(--muted,#6b7280)}#vvrep-box pre{white-space:pre-wrap;font:11px/1.5 ui-monospace,monospace;background:var(--bg,#fafafa);border:1px solid var(--line,#ddd);border-radius:8px;padding:8px;max-height:160px;overflow:auto;margin:6px 0 0}' +
+    '#vvrep-box .row{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:12px}#vvrep-box .st{flex:1;font-size:12px;color:var(--muted,#6b7280)}' +
+    '#vvrep-box button{font:inherit;font-size:13px;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--line,#ddd);background:var(--card,#fff);color:var(--ink,#111)}' +
+    '#vvrep-box button.go{background:var(--ink,#111);color:var(--bg,#fff)}#vvrep-box .hp{position:absolute;left:-9999px}';
+  (document.head || document.documentElement).appendChild(css);
+
+  function openForm(card) {
+    var c = context(card), old = document.getElementById('vvrep-ov'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'vvrep-ov';
+    ov.innerHTML = '<div id="vvrep-box" role="dialog" aria-modal="true" aria-labelledby="vvrep-h"><h3 id="vvrep-h">Report an issue with this word</h3>' +
+      '<p class="w0">' + esc(c.word || '') + '</p><p class="sub">' + esc([c.title, c.ref, c.layer].filter(Boolean).join(' · ')) + '</p>' +
+      '<label for="vvrep-k">What is wrong?</label><select id="vvrep-k">' + KINDS.map(function (k) { return '<option>' + esc(k) + '</option>'; }).join('') + '</select>' +
+      '<label for="vvrep-t">Details</label><textarea id="vvrep-t" placeholder="What should it be? A source or reason helps."></textarea>' +
+      '<div class="two"><div><label for="vvrep-n">Name (optional)</label><input id="vvrep-n" autocomplete="name"></div>' +
+      '<div><label for="vvrep-e">Email, for a reply (optional)</label><input id="vvrep-e" type="email" autocomplete="email"></div></div>' +
+      '<input class="hp" id="vvrep-hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+      '<details><summary>Sent with your report</summary><pre>' + esc(details(c)) + '</pre></details>' +
+      '<div class="row"><span class="st" id="vvrep-st"></span><button type="button" id="vvrep-x">Cancel</button><button type="button" class="go" id="vvrep-go">Send</button></div></div>';
+    document.body.appendChild(ov);
+    var $ = function (id) { return document.getElementById(id); };
+    $('vvrep-n').value = ls(NAME_KEY); $('vvrep-e').value = ls(EMAIL_KEY);
+    function close() { ov.remove(); document.removeEventListener('keydown', onKey, true); }
+    function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
+    document.addEventListener('keydown', onKey, true);
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    $('vvrep-x').addEventListener('click', close);
+    $('vvrep-t').focus();
+    $('vvrep-go').addEventListener('click', function () {
+      var go = $('vvrep-go'), st = $('vvrep-st'), kind = $('vvrep-k').value, note = $('vvrep-t').value.trim();
+      var name = $('vvrep-n').value.trim(), email = $('vvrep-e').value.trim();
+      ls(NAME_KEY, name); ls(EMAIL_KEY, email);
+      var subject = 'Reading report: ' + (c.word || 'word') + ' — ' + c.title + (c.ref ? ' ' + c.ref : '') + ' (' + kind.split(' (')[0] + ')';
+      var message = 'Problem: ' + kind + '\n' + (note ? 'Details: ' + note + '\n' : '') + '\n' + details(c);
+      if ($('vvrep-hp').value) { close(); return; }   // a bot filled the hidden field
+      go.disabled = true; st.textContent = 'Sending…';
+      fetch(ENDPOINT, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ name: name || '(anonymous)', email: email || '', _replyto: email || undefined, _subject: subject, _template: 'box', _captcha: 'false', message: message })
+      }).then(function (r) { return r.ok ? r.json() : { success: 'false' }; }).then(function (j) {
+        if (String(j && j.success) !== 'true') throw new Error('not accepted');
+        st.textContent = 'Sent — thank you.'; go.style.display = 'none'; $('vvrep-x').textContent = 'Close';
+      }).catch(function () {
+        // offline or the form service refused: hand the same report to the reader's mail app
+        st.textContent = 'Could not send from here — opening your mail app instead.';
+        location.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent((name ? 'From: ' + name + (email ? ' <' + email + '>' : '') + '\n\n' : '') + message);
+        go.disabled = false;
+      });
+    });
+  }
+
+  function decorate(card) {
+    if (!card.classList.contains('pinned') || card.querySelector('.vvrep-row')) return;
+    var row = document.createElement('div'); row.className = 'vvrep-row';
+    row.innerHTML = '<button type="button" title="Tell us what looks wrong on this card">⚑ report an issue with this word</button>';
+    row.querySelector('button').addEventListener('click', function (e) { e.stopPropagation(); openForm(card); });
+    card.appendChild(row);
+  }
+  var watched = [];
+  function watch(card) {
+    if (watched.indexOf(card) >= 0) return; watched.push(card);
+    new MutationObserver(function () { decorate(card); }).observe(card, { attributes: true, attributeFilter: ['class'], childList: true });
+    decorate(card);
+  }
+  function scan() { [].forEach.call(document.querySelectorAll('#tip,.gtip'), watch); }
+  // the word whose card is being pinned (cards are filled by the page's own click handler, after this capture listener)
+  document.addEventListener('click', function (e) {
+    var w = e.target.closest && e.target.closest('.w,.gw');
+    if (w && !w.closest('#tip,.gtip,#vvrep-ov')) lastWord = w;
+  }, true);
+  function start() {
+    scan();
+    new MutationObserver(scan).observe(document.body, { childList: true });   // .gtip is created by the page's script at load
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();

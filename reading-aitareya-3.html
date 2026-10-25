@@ -564,7 +564,9 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
   // EXACT targets written at build time by jump_resolve.js (CLAUDE.md #9e) — no click-time matching:
   // data-jmt → the mūla word · data-jbt → the bhāṣya word · data-jtt → the ṭīkā pratīka (absent = ambiguous → no link)
   var jm=src.getAttribute('data-jmt'), jmm=src.getAttribute('data-jmm');
-  if(jm){ if(jmm){ var tw=byKey(jm), mem=tw?memText(tw.textContent,jmm):''; rows.push(jr('mk',ref,jm,'','→ मूलम्'+(mem?' · '+mem:'')).replace('class="jrow"','class="jrow" data-jmm="'+jmm+'"')); } else rows.push(jr('mk',ref,jm,'')); }
+  // a quote of the NEIGHBOURING verse (jump_resolve pass 1h — a joint bhāṣya looking back) names that verse: "→ मूलम् · १।३"
+  var jmr=jm?jm.slice(jm.indexOf(':')+1,jm.lastIndexOf(':')):'', xv=jm&&jmr!==ref?' · '+jmr.split('.').join('।').replace(/[0-9]/g,function(d){return '०१२३४५६७८९'[d];}):'';
+  if(jm){ if(jmm){ var tw=byKey(jm), mem=tw?memText(tw.textContent,jmm):''; rows.push(jr('mk',ref,jm,'','→ मूलम्'+xv+(mem?' · '+mem:'')).replace('class="jrow"','class="jrow" data-jmm="'+jmm+'"')); } else rows.push(jr('mk',ref,jm,'',xv?'→ मूलम्'+xv:'')); }
   else if(!pr&&t.getAttribute('data-jmq')){var sk=SK(surfOf(t)); if(sk&&mqTarget(sk)) rows.push(jr('mq','',sk,''));}   // intro cross-verse quote (unique verse only)
   // a VERSE word: "→ भाष्यम् (1 of N) · next ›" — every quotation of it in a layer, in reading order (quotesOf); one quote → plain row
   var isM=!pr&&!!t.closest('.mula-zone')&&t.getAttribute('data-k');

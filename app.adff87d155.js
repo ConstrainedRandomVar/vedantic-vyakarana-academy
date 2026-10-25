@@ -1369,7 +1369,7 @@ function renderDashboard() {
   // A sister site (साहित्य-व्याकरणम्, build_sahitya_site.js) supplies its own list via window.SITE_CONFIG; the academy
   // has no SITE_CONFIG, so this academy list applies unchanged.
   const READING_TEXTS = (window.SITE_CONFIG && window.SITE_CONFIG.readingTexts) || [
-    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka', 'dhanapati', 'sridhari', 'nilakanthi', 'madhusudani'] },
+    { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka', 'dhanapati', 'sridhari', 'nilakanthi', 'madhusudani', 'shankaranandi'] },
     { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
     { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'], note: 'भाष्यम्: pada + vākya' },
     { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
@@ -1402,7 +1402,8 @@ function renderDashboard() {
     nyayamala: ['न्यायमाला', 'bhasya'], nyayanirnaya: ['न्यायनिर्णयः', 'bhasya'], bharka: ['भाष्यार्कप्रकाशः', 'bhasya'], dhanapati: ['भाष्योत्कर्षदीपिका', 'bhasya'],
     sridhari: ['श्रीधरी', 'bhasya'], madhusudani: ['मधुसूदनी', 'bhasya'], nilakanthi: ['नीलकण्ठी', 'bhasya'],   // Gītā verse-commentary lanes (2026-10-21)
     vanamala: ['वनमाला', 'bhasya'], ratnaprabha: ['रत्नप्रभा', 'bhasya'], purnanandi: ['पूर्णानन्दी', 'bhasya'],   // Taittirīya / BS lanes (2026-10-24)
-    brahmatattva: ['ब्रह्मतत्त्वप्रकाशिका', 'bhasya'] };   // BS vṛtti lane (2026-10-25)
+    brahmatattva: ['ब्रह्मतत्त्वप्रकाशिका', 'bhasya'],   // BS vṛtti lane (2026-10-25)
+    shankaranandi: ['शङ्करानन्दी', 'bhasya'] };   // Gītā verse-commentary lane (2026-10-25)
   const MAXP = 4;   // more than this → the rest behind a "+N …" pill (shown on card hover, or a tap on "…"); the card's note line folds
                     // with them (Harsha 2026-10-25: the Bṛhad card folds like the Gītā's — even a single extra pill, "+1 …")
   const readOffers = t => {

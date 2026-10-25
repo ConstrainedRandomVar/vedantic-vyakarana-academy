@@ -514,7 +514,7 @@ sup.dq{color:var(--purva);font-weight:700;font-family:-apple-system,sans-serif;f
   document.addEventListener('toggle',function(e){ var d=e.target; if(!d.classList||!d.classList.contains('vk-tk')||!d.open) return;
     var b=d.querySelector('.vk-tkb'); if(b&&!b.childNodes.length){ var t=store&&store.querySelector('template[data-id="'+d.getAttribute('data-tk')+'"]'); if(t) b.appendChild(t.content.cloneNode(true)); }
     var v=d.previousElementSibling, x=v&&v.querySelector('.vk-x');
-    if(x&&!x.querySelector('.vkw')){ var k=0; x.innerHTML=x.innerHTML.split(/(<span class="bhsp">[^<]*<[/]span>)/).map(function(seg,i){ return i%2?seg:seg.replace(/[ऀ-ॣ०-९ॱ-ॿ]+/g,function(w){return '<span class="vkw" data-vw="'+(k++)+'">'+w+'</span>';}); }).join(''); } },true);   // skip the hidden पद copies (bhsp) so word numbers match the verse
+    if(x&&!x.querySelector('.vkw')){ var k=0; x.innerHTML=x.innerHTML.split(/(<span class="bhsp">[^<]*<[/]span>)/).map(function(seg,i){ return i%2?seg:seg.replace(/[ऀ-ॣ०-९ॱ-ॿ]+/g,function(w){return /^[०-९]+$/.test(w)?w:'<span class="vkw" data-vw="'+(k++)+'">'+w+'</span>';}); }).join(''); } },true);   // skip the hidden पद copies (bhsp) and verse numbers (२४८) so word numbers match the data's word count
   function hl(p,on){ var d=p.closest('details.vk-tk'); var v=d&&d.previousElementSibling; if(!v) return;
     var w=v.querySelector('.vkw[data-vw="'+p.getAttribute('data-vw')+'"]'); if(w) w.classList.toggle('vk-hl',on); }
   document.addEventListener('mouseover',function(e){ var p=e.target.closest&&e.target.closest('.vk-prat'); if(p) hl(p,true); });
@@ -869,7 +869,7 @@ document.getElementById('tog').onclick=function(){
   var RE=/(<span class="bhsj">[^<]*<[/]span><span class="bhsp">[^<]*<[/]span>)|(<a[ >][^]*?<[/]a>)|(<[^>]+>)|([ऀ-ॣ०-९ॱ-ॿ]+)/g;
   function wrap(x){ if(x.querySelector('.sgw')) return;
     var old=x.querySelectorAll('.vkw'); if(old.length){ for(var i=0;i<old.length;i++){ old[i].classList.add('w','sgw'); old[i].setAttribute('data-g',''); } return; }
-    var k=0; x.innerHTML=x.innerHTML.replace(RE,function(m,pair,anc,tag,run){ return (pair||run)?'<span class="w sgw vkw" data-vw="'+(k++)+'" data-g>'+(pair||run)+'</span>':m; }); }
+    var k=0; x.innerHTML=x.innerHTML.replace(RE,function(m,pair,anc,tag,run){ if(run&&/^[०-९]+$/.test(run)) return m; return (pair||run)?'<span class="w sgw vkw" data-vw="'+(k++)+'" data-g>'+(pair||run)+'</span>':m; }); }   // a verse number (२४८) is not a word: the Śāstraprakāśikā's data-vw counts words only (2026-10-25: 26 pratīkas had landed one word early)
   if(!('IntersectionObserver' in window)) return;
   var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ wrap(e.target); load(); io.unobserve(e.target); } }); },{rootMargin:'300px'});
   // the vārttika / VNM blocks present now, and again when a lazy lane brings them in (vv:lane — they are lazy since 2026-10-25)

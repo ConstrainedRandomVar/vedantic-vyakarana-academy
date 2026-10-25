@@ -854,7 +854,7 @@ document.getElementById('tog').onclick=function(){
   var RE=/(<span class="bhsj">[^<]*<[/]span><span class="bhsp">[^<]*<[/]span>)|(<a[ >][^]*?<[/]a>)|(<[^>]+>)|([ऀ-ॣ०-९ॱ-ॿ]+)/g;
   function wrap(x){ if(x.querySelector('.sgw')) return;
     var old=x.querySelectorAll('.vkw'); if(old.length){ for(var i=0;i<old.length;i++){ old[i].classList.add('w','sgw'); old[i].setAttribute('data-g',''); } return; }
-    var k=0; x.innerHTML=x.innerHTML.replace(RE,function(m,pair,anc,tag,run){ return (pair||run)?'<span class="w sgw vkw" data-vw="'+(k++)+'" data-g>'+(pair||run)+'</span>':m; }); }
+    var k=0; x.innerHTML=x.innerHTML.replace(RE,function(m,pair,anc,tag,run){ if(run&&/^[०-९]+$/.test(run)) return m; return (pair||run)?'<span class="w sgw vkw" data-vw="'+(k++)+'" data-g>'+(pair||run)+'</span>':m; }); }   // a verse number (२४८) is not a word: the Śāstraprakāśikā's data-vw counts words only (2026-10-25: 26 pratīkas had landed one word early)
   if(!('IntersectionObserver' in window)) return;
   var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ wrap(e.target); load(); io.unobserve(e.target); } }); },{rootMargin:'300px'});
   // the vārttika / VNM blocks present now, and again when a lazy lane brings them in (vv:lane — they are lazy since 2026-10-25)

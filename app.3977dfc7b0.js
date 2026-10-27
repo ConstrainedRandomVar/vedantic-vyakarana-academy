@@ -516,9 +516,13 @@ function buildSamasaOptions(item) {
     // general/specific divide, at random, not every subtype down to a single survivor.
     pool = Math.random() < 0.5 ? pool.filter(c => c !== TP_GENERAL) : pool.filter(c => !isTPSubtype(c));
   }
-  const distractors = shuffle(pool).slice(0, 3);
-  const options = shuffle([correct, ...distractors]);
-  return { options, correctIndex: options.indexOf(correct) };
+  // item.also (2026-10-27, adjudicated card/key mismatches; #5e "accept every defensible analysis and show all of them as choices"):
+  // another analysis of this word that is ALSO correct — always among the options, and accepted.
+  const also = (item.also || []).filter(c => c !== correct);
+  const distractors = shuffle(pool.filter(c => !also.includes(c))).slice(0, Math.max(0, 3 - also.length));
+  const options = shuffle([correct, ...also, ...distractors]);
+  const acceptIndices = also.map(c => options.indexOf(c)).filter(i => i >= 0);
+  return { options, correctIndex: options.indexOf(correct), ...(acceptIndices.length ? { acceptIndices } : {}) };
 }
 
 // No-sandhi word-boundary (ABT) options: the correct split is the item's own known before[0]/
@@ -2108,7 +2112,8 @@ function deviceInfoLine() {
 // its members as split in the source, plus the source's meaning gloss (item.m). A "not a samāsa" word shows just its meaning.
 function samasaExplainHtml(item) {
   const m = item.m ? `<div class="muted" style="margin-top:3px">“${esc(item.m)}”</div>` : '';
-  if (item.an && item.an.v) return `<div class="tut-explain"><b>विग्रहः</b> ${esc(item.an.v)} · ${esc(item.an.t || '')}${item.an.s ? ` <span class="muted">(${esc(item.an.s)})</span>` : ''}${m}</div>`;
+  const alsoNote = (item.also || []).length ? `<div class="muted" style="margin-top:3px">Both analyses are accepted: ${esc(item.category)} · ${item.also.map(esc).join(' · ')}</div>` : '';
+  if (item.an && item.an.v) return `<div class="tut-explain"><b>विग्रहः</b> ${esc(item.an.v)} · ${esc(item.an.t || '')}${item.an.s ? ` <span class="muted">(${esc(item.an.s)})</span>` : ''}${alsoNote}${m}</div>`;
   if (item.category === 'N/A') return m ? `<div class="tut-explain">${esc(item.word)} — not a compound.${m}</div>` : '';
   return `<div class="tut-explain"><b>पदानि</b> ${esc(String(item.word).split('-').join(' + '))}${m}</div>`;
 }

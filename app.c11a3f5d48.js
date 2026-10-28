@@ -255,17 +255,20 @@ function ensureAxisLoaded(code) {
   if (!entry) return Promise.resolve();
   if (ensureAxisLoaded._pending && ensureAxisLoaded._pending[code]) return ensureAxisLoaded._pending[code];
   ensureAxisLoaded._pending = ensureAxisLoaded._pending || {};
-  const p = new Promise((resolve, reject) => {
+  // a deployed axis over 15 MB is split into ordered chunks (entry.files, build_deploy step 3): chunk 1 assigns
+  // AXIS_DATA[code], each later chunk concat()s onto it — so they must load one after another, never in parallel
+  const files = entry.files || [entry.file];
+  const loadOne = f => new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = entry.file;
-    s.onload = () => {
-      const items = (window.AXIS_DATA && window.AXIS_DATA[code]) || [];
-      itemsByCode[code] = items;
-      for (const it of items) window.QUIZ_ITEMS.push(it);
-      resolve();
-    };
-    s.onerror = () => reject(new Error('failed to load ' + entry.file));
+    s.src = f;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('failed to load ' + f));
     document.head.appendChild(s);
+  });
+  const p = files.reduce((chain, f) => chain.then(() => loadOne(f)), Promise.resolve()).then(() => {
+    const items = (window.AXIS_DATA && window.AXIS_DATA[code]) || [];
+    itemsByCode[code] = items;
+    for (const it of items) window.QUIZ_ITEMS.push(it);
   });
   ensureAxisLoaded._pending[code] = p;
   return p;

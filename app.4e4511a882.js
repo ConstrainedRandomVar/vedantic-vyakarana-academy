@@ -2198,6 +2198,14 @@ function buildReportIssueUrl(target, name, email, message) {
 // else goes in `message`. Returns true/false rather than throwing — callers decide the fallback
 // (the GitHub issue link) themselves.
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mnpadval';
+// When Formspree can't be reached, the SAME report goes out from the reader's own mail app (2026-10-28, Harsha: the GitHub link
+// alone needs an account, so most failed reports were lost). Same inbox; work/feedback/fetch_reports.py picks these mails up by
+// the marker line. The "file a GitHub issue" link stays, for readers who have an account and prefer it.
+const REPORT_MAIL = 'narayanamurthysharma@gmail.com';
+function openReportMail(subject, name, email, message) {
+  const body = (name ? `From: ${name}${email ? ` <${email}>` : ''}\n\n` : '') + message + '\n\n(report form fallback — sent from the mail app)';
+  location.href = 'mailto:' + REPORT_MAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
 async function submitReportToFormspree(target, name, email, message) {
   const { subject } = buildReportDetails(target);
   try {
@@ -2250,7 +2258,7 @@ function renderReportArea() {
     const targetLabel = view.reportOpen === 'previous' ? 'the previous question' : 'this question';
     const target = reportTargetData(view.reportOpen);
     const status = view.reportSubmitError
-      ? `<div class="report-status error">Couldn't send — check your connection and try again, or use the GitHub issue link below.</div>`
+      ? `<div class="report-status error">Couldn't send from here — your mail app is opening with the same report, ready to send. (Or use the GitHub issue link below if you have an account.)</div>`
       : '';
     return `<div class="report-area">
       <div class="report-target-label">Reporting ${esc(targetLabel)}: <span class="report-autosent-note">(the details below will be auto-sent with your report)</span></div>
@@ -2368,7 +2376,7 @@ function renderQuiz() {
     view = { ...view, reportSubmitting: true, reportSubmitError: false };
     renderQuiz();
     const ok = await submitReportToFormspree(target, name, email, message);
-    if (!ok) { view = { ...view, reportSubmitting: false, reportSubmitError: true }; renderQuiz(); return; }
+    if (!ok) { view = { ...view, reportSubmitting: false, reportSubmitError: true }; renderQuiz(); openReportMail(buildReportDetails(target).subject, name, email, message); return; }
     hiddenReports.add(target.key);
     saveHiddenReports(hiddenReports);
     if (wasCurrentUnanswered) { nextQuestion(); return; } // don't make them answer a question they just flagged as broken
@@ -4439,7 +4447,7 @@ function renderTutorialReportArea(sentence, step, verse) {
   if (view.tutReportOpen) {
     const target = tutorialReportTarget(sentence, step, verse);
     const status = view.tutReportSubmitError
-      ? `<div class="report-status error">Couldn't send — check your connection and try again.</div>` : '';
+      ? `<div class="report-status error">Couldn't send from here — your mail app is opening with the same report, ready to send. (Or use the GitHub issue link below if you have an account.)</div>` : '';
     return `<div class="report-area">
       <div class="report-target-label">Reporting this step: <span class="report-autosent-note">(the details below will be auto-sent with your report)</span></div>
       <label>Report details (auto-sent; select-all &amp; copy to paste elsewhere)
@@ -4476,7 +4484,12 @@ function wireTutorialReportArea(sentence, step, verse, rerender) {
     view = { ...view, tutReportSubmitting: true, tutReportSubmitError: false };
     rerender();
     const ok = await submitTutorialReport(target, name, email, userComment);
-    if (!ok) { view = { ...view, tutReportSubmitting: false, tutReportSubmitError: true }; rerender(); return; }
+    if (!ok) {
+      view = { ...view, tutReportSubmitting: false, tutReportSubmitError: true }; rerender();
+      const { subject, details } = buildTutorialReportDetails(target);   // the same message submitTutorialReport sent
+      openReportMail(subject, name, email, userComment ? `Comments: ${userComment}\n\n${details}` : details);
+      return;
+    }
     view = { ...view, tutReportOpen: false, tutReportSubmitting: false, tutReported: true };
     rerender();
   };

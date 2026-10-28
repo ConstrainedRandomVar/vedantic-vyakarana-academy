@@ -479,17 +479,24 @@ const r=document.documentElement;document.getElementById('tog').onclick=()=>{con
 #rpt-box button{font:inherit;font-size:13px;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--line)}
 #rpt-send{background:var(--ink);color:var(--bg)}
 #rpt-cancel{background:var(--card);color:var(--ink)}
+#rpt-box .rpt-two{display:flex;gap:8px;margin-top:8px}#rpt-box .rpt-two input{flex:1;min-width:0;font:inherit;font-size:13px;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;box-sizing:border-box}
+#rpt-box .rpt-st{flex:1;align-self:center;font-size:12px;color:var(--muted)}#rpt-box .rpt-hp{position:absolute;left:-9999px}
 </style>
 <button id="rpt-btn" title="Report an issue on this page">⚑ report an issue</button>
 <div id="rpt-ov"><div id="rpt-box">
   <h3>Report an issue</h3>
-  <p class="rpt-sub">Noticed a wrong meaning, kāraka role, or bhāṣya marking? Tell us — this opens your mail app.</p>
+  <p class="rpt-sub">Noticed a wrong meaning, kāraka role, or bhāṣya marking? Tell us — it goes straight to the editors.</p>
   <textarea id="rpt-txt" placeholder="What looks wrong? (e.g. the kāraka role on a word, a wrong meaning, a mis-coloured bhāṣya span…)"></textarea>
+  <div class="rpt-two"><input id="rpt-name" placeholder="Name (optional)" autocomplete="name"><input id="rpt-mail" type="email" placeholder="Email, for a reply (optional)" autocomplete="email"></div>
+  <input class="rpt-hp" id="rpt-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
   <div class="rpt-ctx" id="rpt-ctx"></div>
-  <div class="rpt-row"><button id="rpt-cancel">Cancel</button><button id="rpt-send">Send email</button></div>
+  <div class="rpt-row"><span class="rpt-st" id="rpt-st"></span><button id="rpt-cancel">Cancel</button><button id="rpt-send">Send</button></div>
 </div></div>
 <script>(function(){
-  var EMAIL="narayanamurthy.sharma@gmail.com";
+  var EMAIL="narayanamurthysharma@gmail.com",ENDPOINT='https://formsubmit.co/ajax/'+EMAIL;
+  var NAME_KEY='sandhiQuizReporterName',EMAIL_KEY='sandhiQuizReporterEmail';   // shared with the word-card + gym reporters
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v);}catch(e){return '';}}
   function ua(){try{
     var u=navigator.userAgent||'';
     var os=/Android/i.test(u)?'Android':/iPhone|iPod/i.test(u)?'iOS':/iPad/i.test(u)?'iPadOS':/Windows/i.test(u)?'Windows':/Mac OS X|Macintosh/i.test(u)?'macOS':/CrOS/i.test(u)?'ChromeOS':/Linux/i.test(u)?'Linux':'unknown OS';
@@ -518,15 +525,31 @@ const r=document.documentElement;document.getElementById('tog').onclick=()=>{con
   var btn=document.getElementById('rpt-btn'),ov=document.getElementById('rpt-ov'),
       txt=document.getElementById('rpt-txt'),ctx=document.getElementById('rpt-ctx');
   if(!btn||!ov)return;
-  function open(){ctx.textContent=ctxBlock();ov.classList.add('on');txt.focus();}
+  var nm=document.getElementById('rpt-name'),ml=document.getElementById('rpt-mail'),st=document.getElementById('rpt-st'),
+      send=document.getElementById('rpt-send'),cancel=document.getElementById('rpt-cancel');
+  function open(){ctx.textContent=ctxBlock();nm.value=ls(NAME_KEY);ml.value=ls(EMAIL_KEY);st.textContent='';send.style.display='';send.disabled=false;
+    cancel.textContent='Cancel';ov.classList.add('on');txt.focus();}
   function close(){ov.classList.remove('on');}
   btn.addEventListener('click',open);
   document.getElementById('rpt-cancel').addEventListener('click',close);
   ov.addEventListener('click',function(e){if(e.target===ov)close();});
-  document.getElementById('rpt-send').addEventListener('click',function(){
-    var body=(txt.value.trim()||'(no description)')+'\n\n--- context (auto-captured) ---\n'+ctxBlock();
-    var subj='Issue: '+(document.title||'reading')+' — '+curVerse()+' ('+mode()+')';
-    location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
-    close();
+  send.addEventListener('click',function(){
+    var note=txt.value.trim(),name=nm.value.trim(),mail=ml.value.trim();ls(NAME_KEY,name);ls(EMAIL_KEY,mail);
+    if(document.getElementById('rpt-hp').value){close();return;}   // a bot filled the hidden field
+    var subj='Page report: '+(document.title||'reading')+' — '+curVerse()+' ('+mode()+')';
+    // "Details:" = the reader's words (fetch_reports.py reads it as the comment); the context lines below are key: value fields
+    var message='Problem: Page report\n'+(note?'Details: '+note.replace(/\n+/g,' ')+'\n':'')+'\n--- context (auto-captured) ---\n'+ctxBlock();
+    send.disabled=true;st.textContent='Sending…';
+    fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
+      body:JSON.stringify({name:name||'(anonymous)',email:mail||'',_replyto:mail||undefined,_subject:subj,_template:'box',_captcha:'false',message:message})
+    }).then(function(r){return r.ok?r.json():{success:'false'};}).then(function(j){
+      if(String(j&&j.success)!=='true')throw new Error('not accepted');
+      st.textContent='Sent — thank you.';send.style.display='none';cancel.textContent='Close';txt.value='';
+    }).catch(function(){
+      // offline or the form service refused: hand the same report to the reader's mail app
+      st.textContent='Could not send from here — opening your mail app instead.';
+      location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent((name?'From: '+name+(mail?' <'+mail+'>':'')+'\n\n':'')+message);
+      send.disabled=false;
+    });
   });
 })();</script><script>window.VVSYNC={slug:"PD"};</script><script src="sync.js" defer></script><script src="translit.js"></script></body></html>

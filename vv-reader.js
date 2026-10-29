@@ -49,6 +49,14 @@
   applyPills();
   window.__vvApplyPills = applyPills;
 
+  // ---- commentary links (⚙ Settings · "Commentary links", Harsha 2026-10-29): the dashed underline on words a commentary's
+  // pratīka links to (CSS TKMCSS in build_unified_reading_view.js). ON by default; '0' = off → <html class="vv-notkm">. Applied at
+  // once, like the markers above; vv-settings.js re-runs it live (__vvApplyTkm).
+  function applyTkm() { var off = false; try { off = localStorage.getItem('vv_tkmark') === '0'; } catch (e) {}
+    document.documentElement.classList.toggle('vv-notkm', off); }
+  applyTkm();
+  window.__vvApplyTkm = applyTkm;
+
   // ---- reading text size (⚙ Settings · "Text size", Harsha 2026-10-21 #3) — scales ALL page text, not the layout: every px
   // font-size in the page's styles (and inline style attributes) becomes calc(Npx * var(--vvfs)), and rem/em follow the root.
   // NOT CSS zoom: zoom also scales the coordinates the word cards / laser / bookmark button are placed with (measured

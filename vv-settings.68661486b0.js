@@ -6,6 +6,7 @@
 //   vv_script      reading-page script — applied by translit.js (#scriptpick)
 //   vv_quiet_hover word cards + "bookmark passage" prompt on hover: OFF by default = quiet ('0' = always show) — peek.js
 //   vv_pill_*      commentary markers: HIDDEN by default ('1' = shown) — applied by vv-reader.js (__vvApplyPills)
+//   vv_tkmark      commentary links (dashed underline on words a commentary quotes): SHOWN by default ('0' = off) — vv-reader.js (__vvApplyTkm)
 //   fold:<key>     commentary fold-out defaults (VVStore.folds)
 //   vyakarana_auto_advance  grammar practice (app.js), on by default
 //   vv_show_report / vv_show_share  ⚑ report buttons (shown by default) / ⇉ Share reading (hidden by default) — VVStore.applyChrome
@@ -57,6 +58,7 @@
     + '.vvset-maha{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid #db2777;color:#db2777}'
     + '.vvset-conc{vertical-align:super;font-size:.56em;font-weight:700;color:var(--muted,#7a6a55);margin-inline-start:1px}'
     + '@media(prefers-color-scheme:dark){html:not([data-theme=light]) .vvset-prb{border-color:#d977de;color:#d977de}html:not([data-theme=light]) .vvset-maha{border-color:#f472b6;color:#f472b6}}'
+    + '.vvset-tkm{text-decoration:underline dashed color-mix(in srgb,#475569 72%,transparent);text-decoration-thickness:1.5px;text-underline-offset:.38em;text-decoration-skip-ink:none}html[data-theme=dark] .vvset-tkm{text-decoration-color:color-mix(in srgb,#94a3b8 72%,transparent)}#vvset-box .mk.off .vvset-tkm{text-decoration:none}'
     + 'html[data-theme=dark] .vvset-prb{border-color:#d977de;color:#d977de}html[data-theme=dark] .vvset-maha{border-color:#f472b6;color:#f472b6}'
     + '#vvset-box .vvset-btn{font:inherit;border:1px solid var(--brand,#d97706);background:var(--brand,#d97706);color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer}'
     + '#vvset-box .vvset-btn2{font:inherit;font-size:13px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;border-radius:8px;padding:4px 10px;cursor:pointer}'
@@ -88,6 +90,9 @@
     if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary markers</div><div class="hint" style="margin:0 0 8px">Small coloured tags in the bhāṣya that show how an argument works. Off by default, for a clean reading text.</div>'
       + MARKERS.map(function (m) { return '<div class="mk" data-mk="' + m[0] + '"><label class="chk"><input type="checkbox" data-pill="' + m[0] + '"> <span><b>' + m[1] + '</b> — ' + m[2] + '</span></label><div class="sample">' + m[3] + '</div></div>'; }).join('')
       + '</div>';
+    if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary links</div><div class="mk"><label class="chk"><input type="checkbox" id="vvset-tkm"> Underline the words a commentary explains</label>'
+      + '<div class="sample"><span class="vvset-tkm">अशोच्यान्</span> अन्वशोचस्त्वं प्रज्ञावादांश्च भाषसे</div></div>'
+      + '<div class="hint">A light dashed line under each word that the chosen commentary quotes as a pratīka — tap it to jump there. With no commentary chosen, every such word in the bhāṣya, darker the more commentaries quote it. On by default.</div></div>';
     h += '<div class="row"><div class="lab">Page buttons</div>'
       + '<label class="chk"><input type="checkbox" id="vvset-report"> Show the ⚑ report-an-issue buttons</label>'
       + '<div class="hint" style="margin:2px 0 8px 24px">On reading pages and in the Sanskrit gym — tell us about a wrong word, gloss or analysis.</div>'
@@ -115,6 +120,7 @@
     var sc = box.querySelector('#vvset-script'); if (sc) sc.value = get('vv_script') || 'dev';
     var th = box.querySelector('#vvset-theme'); if (th) { var tv = get('vv_theme'); th.value = tv === 'light' || tv === 'dark' ? tv : ''; }
     var hv = box.querySelector('#vvset-hover'); if (hv) hv.checked = !quietOn();
+    var tk = box.querySelector('#vvset-tkm'); if (tk) { tk.checked = get('vv_tkmark') !== '0'; tk.closest('.mk').classList.toggle('off', !tk.checked); }
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.checked = markerOn(c.getAttribute('data-pill')); c.closest('.mk').classList.toggle('off', !c.checked); });
     var S = window.VVStore; if (S && S.folds) [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.value = S.folds.get(s.getAttribute('data-fold')); });
     var au = box.querySelector('#vvset-auto'); if (au) au.checked = get('vyakarana_auto_advance') !== '0';
@@ -140,6 +146,8 @@
       set('vv_quiet_hover', hv.checked ? '0' : '1'); if (window.VVPeek && VVPeek.refresh) VVPeek.refresh(); if (window.__vvHintUsed) window.__vvHintUsed(); });
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.addEventListener('change', function () {
       set(c.getAttribute('data-pill'), c.checked ? '1' : '0'); if (window.__vvApplyPills) window.__vvApplyPills(); reflect(box); }); });
+    var tk = box.querySelector('#vvset-tkm'); if (tk) tk.addEventListener('change', function () {
+      set('vv_tkmark', tk.checked ? '1' : '0'); if (window.__vvApplyTkm) window.__vvApplyTkm(); reflect(box); });
     var S = window.VVStore; [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.addEventListener('change', function () { if (S && S.folds) S.folds.set(s.getAttribute('data-fold'), s.value); }); });
     box.querySelector('#vvset-auto').addEventListener('change', function (e) { set('vyakarana_auto_advance', e.target.checked ? '1' : '0'); });
     var chrome = function () { if (window.VVStore && VVStore.applyChrome) VVStore.applyChrome(); };

@@ -46,6 +46,7 @@ body.view-mula .pre-zone{display:none}
 /* सन्धि layer: the pretty metrical verse (centred pāda-lines) */
 .vjoin{font-size:22px;line-height:1.85;color:var(--moola);font-weight:600;text-align:center}
 .vjoin .jl{margin:1px 0}
+@media(max-width:640px){.vjoin .jl{overflow-wrap:anywhere}}   /* phones: a pāda that is one long samāsa wraps instead of widening the page (2026-10-30) */
 .vjoin .dnd{color:var(--muted);font-weight:400;padding:0 .15em}
 /* पद layer: sandhi-split hover words in matching pāda-lines */
 .vpada{font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
@@ -157,9 +158,10 @@ body.view-mula .rolelegend{display:none}
 .vcb-about>summary{cursor:pointer;padding:.6em .9em;font-weight:600;color:var(--brand,#5a3e00);font-family:system-ui,sans-serif;font-size:14px}
 .vcb-about-body{padding:.4em .9em 1em}
 .vcb-ab-lede{margin:.4em 0 1em;font-size:14.5px;line-height:1.7;color:var(--ink,#3a3a3a)}
-.vcb-ab-row{display:grid;grid-template-columns:120px 1fr;gap:10px;margin:.35em 0;font-size:14px;line-height:1.55}
+.vcb-ab-row{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;margin:.35em 0;font-size:14px;line-height:1.55}
+@media(max-width:520px){.vcb-ab-row{grid-template-columns:minmax(0,1fr);gap:0}}
 .vcb-ab-k{color:var(--muted,#8a7a5c);font-family:system-ui,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
-.vcb-ab-v{color:var(--ink,#3a3a3a)}
+.vcb-ab-v{color:var(--ink,#3a3a3a);overflow-wrap:anywhere}
 .vcb-ab-ded{margin:1em 0 0;padding:.7em .9em;background:rgba(109,40,217,.05);border-left:3px solid var(--sam,#6d28d9);border-radius:4px}
 .vcb-ab-ded-h{font-family:system-ui,sans-serif;font-size:12px;color:var(--sam,#6d28d9);margin-bottom:.7em}
 .vcb-ab-verse-l{text-align:center;margin:.15em 0;color:var(--moola,#2a2a2a);font-size:15px}

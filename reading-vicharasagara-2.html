@@ -6,8 +6,8 @@
   --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#4d7c0f;--phalita:#be123c;--drs:#a16207;--eka:#c2410c;--maha:#db2777;
   --card:#fff;--muted:#8a7d68;--muted2:#a08d6f;--label:#6b5d47;--connector:#9a8f78;--gold:var(--gold);--gold2:#a07f45;--hover:#f0e4c8;--flash:var(--flash);--tipedge:#e6d6b3;--trrule:#d8cbb0;--gloss:#3f4653;--anuvada:#6b6255;--secbase:#6a5f8f;--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.2);--tm:#a7f3d0;--topicbg:#ebe8f4}
 /* dark palette (#9c tokens) — explicit ◐ toggle, or the OS preference when no explicit choice */
-:root[data-theme=dark]{--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#a79a82;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#a79a82;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}}
+:root[data-theme=dark]{--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#c9bda6;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#c9bda6;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}}
 /* महावाक्य · verse-level identity pill, ALWAYS shown (no toggle since 2026-09-22); two shades मुख्य/बाधायाम्, styled hover note (not native title=). Pink --maha is distinct from the fuchsia --lak lakṣaṇa hue (#9c). */
 .maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
 .maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
@@ -101,6 +101,7 @@ main{max-width:860px;margin:0 auto;padding:24px 20px}
 .qrun{color:var(--cite)}                       /* quotation run — colour overlay, text untouched */
 .qrun .w:hover{background:var(--hover)}
 .cite{font-family:system-ui;font-size:.82em;color:var(--cite);white-space:nowrap}
+.qrun.cite{white-space:normal}                 /* a linked quotation run is sentence-long: it must wrap (phone overflow, 2026-10-30) */
 a.cite.lk{text-decoration:underline;cursor:pointer} a.cite.lk:hover{background:color-mix(in srgb,var(--cite) 16%,transparent);border-radius:3px}
 .tr{color:var(--tr);font:italic 15.5px/1.6 Georgia,serif;margin:3px 0 10px;padding-left:12px;border-left:2px solid var(--trrule)}
 body.notr .tr{display:none}
@@ -134,6 +135,7 @@ body.notip .tip-wrap{display:none}
 /* brand: full wordmark; the short form on phones (CLAUDE.md #9a — pinned brand, abbreviated on mobile) */
 .brand .bshort{display:none}
 @media (max-width:640px){.brand .bfull{display:none}.brand .bshort{display:inline}}
+@media (max-width:640px){main{overflow-wrap:anywhere}.tr .cite{white-space:normal}.toc-i .toc-t{min-width:0}}   /* phones: a long samāsa / note / contents title wraps instead of widening the page (2026-10-30) */
 #tog{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:3px 10px;cursor:pointer;margin-left:14px}
 </style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body>
 <header>

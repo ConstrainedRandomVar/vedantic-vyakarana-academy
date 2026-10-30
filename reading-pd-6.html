@@ -46,6 +46,7 @@ body.view-mula .pre-zone{display:none}
 /* सन्धि layer: the pretty metrical verse (centred pāda-lines) */
 .vjoin{font-size:22px;line-height:1.85;color:var(--moola);font-weight:600;text-align:center}
 .vjoin .jl{margin:1px 0}
+@media(max-width:640px){.vjoin .jl{overflow-wrap:anywhere}}   /* phones: a pāda that is one long samāsa wraps instead of widening the page (2026-10-30) */
 .vjoin .dnd{color:var(--muted);font-weight:400;padding:0 .15em}
 /* पद layer: sandhi-split hover words in matching pāda-lines */
 .vpada{font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}

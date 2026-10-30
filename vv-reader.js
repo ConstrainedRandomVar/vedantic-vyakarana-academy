@@ -95,6 +95,22 @@
     return [].slice.call(document.querySelectorAll('[id^="v-"]')).filter(function (a) { return a.offsetParent !== null; });
   }
   function barBottom() { var b = document.getElementById('reading-nav'); if (!b) return 0; var r = b.getBoundingClientRect(); return Math.max(0, r.bottom); }
+
+  // ---- reading mode (phones, Harsha 2026-10-30): the header button hides the sticky bar (and the in-text search row) so the
+  // text fills the screen; the faint corner button (above the page-report pill) or Esc brings it back. Never remembered: a page opens with the header,
+  // since the reader first picks the chapter and verse. The line under the bar stays where it was on screen.
+  var ICON_OUT = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>';
+  var ICON_IN = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>';
+  function readMode(on) {
+    var root = document.documentElement;
+    if (on === root.classList.contains('vv-readmode')) return;
+    var probe = document.elementFromPoint(window.innerWidth / 2, barBottom() + 6);
+    if (probe && probe.closest('#reading-nav,#vvs,.vvr-pop,.vvr-drawer,.vvr-unread')) probe = null;
+    var t0 = probe ? probe.getBoundingClientRect().top : 0;
+    if (on) closePop();
+    root.classList.toggle('vv-readmode', on);
+    if (probe) window.scrollBy(0, probe.getBoundingClientRect().top - t0);
+  }
   function currentRef() {
     var y = barBottom() + 12, list = anchors(), pick = null;
     for (var i = 0; i < list.length; i++) { if (list[i].getBoundingClientRect().top <= y) pick = list[i]; else break; }
@@ -125,6 +141,10 @@
     + '.vv-credit{max-width:860px;margin:28px auto 18px;padding:10px 16px 0;border-top:1px solid var(--line,#e5ded0);font:12px/1.5 system-ui,-apple-system,sans-serif;color:var(--muted,#7a6a55);text-align:center}.vv-credit a{color:inherit;text-decoration:underline}'
     + '.vvr-tools{display:inline-flex;gap:4px;align-items:center;margin-left:auto}'
     + '#reading-nav .rn-picker+.vvr-tools{margin-left:6px}'
+    + '.vvr-read{display:none}@media(max-width:640px){.vvr-read{display:inline-block}}.vvr-read svg{width:15px;height:15px;display:block}'
+    + ':root.vv-readmode #reading-nav,:root.vv-readmode #vvs{display:none!important}'
+    + '.vvr-unread{display:none;position:fixed;right:14px;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:950;width:38px;height:38px;padding:0;border-radius:50%;align-items:center;justify-content:center;border:1px solid var(--line,var(--rule,#ddd));background:var(--card,var(--bg,#fff));color:var(--ink,#222);opacity:.6;box-shadow:0 1px 6px rgba(0,0,0,.15);cursor:pointer}'
+    + ':root.vv-readmode .vvr-unread{display:flex}.vvr-unread svg{width:16px;height:16px}'
     + '.vvr-btn{font:inherit;font-size:15px;line-height:1;border:1px solid var(--line,var(--rule,#ddd));background:var(--card,var(--bg,#fff));color:var(--ink,#222);border-radius:8px;padding:4px 7px;cursor:pointer}'
     + '.vvr-btn:hover{border-color:var(--brand,#d97706)}.vvr-btn.on{color:var(--brand,#d97706)}'
     + '.vvr-float{position:fixed;right:14px;bottom:14px;z-index:900;display:flex;gap:6px;background:var(--card,var(--bg,#fff));border:1px solid var(--line,var(--rule,#ddd));border-radius:12px;padding:6px;box-shadow:0 2px 10px rgba(0,0,0,.12)}'
@@ -186,7 +206,7 @@
     return popEl;
   }
   document.addEventListener('mousedown', function (e) { if (popEl && !popEl.contains(e.target) && !(e.target.closest && e.target.closest('.vvr-btn,.vvr-sel'))) closePop(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePop(); closeDrawer(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePop(); closeDrawer(); readMode(false); } });
 
   // ---- bookmark + "add to collection…" popover (shared by the bar ☆ and the selection ☆) ----
   function collectPopover(bid, anchor, isNew) {
@@ -568,6 +588,14 @@
     var gearBtn = el('button', { class: 'vvr-btn vvr-gear', type: 'button', title: 'Menu — settings, library, save offline, help', 'aria-label': 'Menu', 'aria-haspopup': 'true' }, '☰');
     gearBtn.addEventListener('click', function () { withSettings(function () { VVSettings.menu(gearBtn); }); });
     tools.appendChild(gearBtn);
+    if (bar) {
+      var readBtn = el('button', { class: 'vvr-btn vvr-read', type: 'button', title: 'Reading mode — hide the header', 'aria-label': 'Reading mode' }, ICON_OUT);
+      readBtn.addEventListener('click', function () { readMode(true); });
+      tools.insertBefore(readBtn, gearBtn);
+      var unread = el('button', { class: 'vvr-unread', type: 'button', title: 'Show the header', 'aria-label': 'Show the header' }, ICON_IN);
+      unread.addEventListener('click', function () { readMode(false); });
+      document.body.appendChild(unread);
+    }
     // टीका ⇕ (before ☰) — on load if the page has fold-outs, and again when a lazy lane brings some (Pūrṇānandī arrives with the
     // Ratnaprabhā lane: the BS pages had no button at all — Harsha 2026-10-26)
     var foldBtn = null;

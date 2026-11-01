@@ -7,6 +7,7 @@
 //   vv_quiet_hover word cards + "bookmark passage" prompt on hover: OFF by default = quiet ('0' = always show) — peek.js
 //   vv_pill_*      commentary markers: HIDDEN by default ('1' = shown) — applied by vv-reader.js (__vvApplyPills)
 //   vv_tkmark      commentary links (dashed underline on words a commentary quotes): SHOWN by default ('0' = off) — vv-reader.js (__vvApplyTkm)
+//   vv_vyut        word cards' व्युत्पत्तिः row (dictionary derivations): '' = folded to one line (default) · 'open' · '0' = off — read by the card itself (kvrow)
 //   fold:<key>     commentary fold-out defaults (VVStore.folds)
 //   vyakarana_auto_advance  grammar practice (app.js), on by default
 //   vv_show_report / vv_show_share  ⚑ report buttons (shown by default) / ⇉ Share reading (hidden by default) — VVStore.applyChrome
@@ -93,6 +94,8 @@
     if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary links</div><div class="mk"><label class="chk"><input type="checkbox" id="vvset-tkm"> Underline the words a commentary explains</label>'
       + '<div class="sample"><span class="vvset-tkm">अशोच्यान्</span> अन्वशोचस्त्वं प्रज्ञावादांश्च भाषसे</div></div>'
       + '<div class="hint">A light dashed line under each word that the chosen commentary quotes as a pratīka — tap it to jump there. With no commentary chosen, every such word in the bhāṣya, darker the more commentaries quote it. On by default.</div></div>';
+    if (!sisterSite()) h += '<div class="row"><div class="lab">Word derivations</div><select id="vvset-vyut"><option value="">Folded (one line)</option><option value="open">Open</option><option value="0">Off</option></select>'
+      + '<div class="hint">The व्युत्पत्तिः row on word cards — how a word is derived, quoted from शब्दार्थकौस्तुभः, वाचस्पत्यम् and शब्दकल्पद्रुमः. Folded by default; tap ▸ on a pinned card to open it.</div></div>';
     h += '<div class="row"><div class="lab">Page buttons</div>'
       + '<label class="chk"><input type="checkbox" id="vvset-report"> Show the ⚑ report-an-issue buttons</label>'
       + '<div class="hint" style="margin:2px 0 8px 24px">On reading pages and in the Sanskrit gym — tell us about a wrong word, gloss or analysis.</div>'
@@ -120,6 +123,7 @@
     var sc = box.querySelector('#vvset-script'); if (sc) sc.value = get('vv_script') || 'dev';
     var th = box.querySelector('#vvset-theme'); if (th) { var tv = get('vv_theme'); th.value = tv === 'light' || tv === 'dark' ? tv : ''; }
     var hv = box.querySelector('#vvset-hover'); if (hv) hv.checked = !quietOn();
+    var vy = box.querySelector('#vvset-vyut'); if (vy) { var vv = get('vv_vyut'); vy.value = vv === 'open' || vv === '0' ? vv : ''; }
     var tk = box.querySelector('#vvset-tkm'); if (tk) { tk.checked = get('vv_tkmark') !== '0'; tk.closest('.mk').classList.toggle('off', !tk.checked); }
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.checked = markerOn(c.getAttribute('data-pill')); c.closest('.mk').classList.toggle('off', !c.checked); });
     var S = window.VVStore; if (S && S.folds) [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.value = S.folds.get(s.getAttribute('data-fold')); });
@@ -146,6 +150,7 @@
       set('vv_quiet_hover', hv.checked ? '0' : '1'); if (window.VVPeek && VVPeek.refresh) VVPeek.refresh(); if (window.__vvHintUsed) window.__vvHintUsed(); });
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.addEventListener('change', function () {
       set(c.getAttribute('data-pill'), c.checked ? '1' : '0'); if (window.__vvApplyPills) window.__vvApplyPills(); reflect(box); }); });
+    var vy = box.querySelector('#vvset-vyut'); if (vy) vy.addEventListener('change', function () { if (vy.value) set('vv_vyut', vy.value); else { try { localStorage.removeItem('vv_vyut'); } catch (e) {} } });
     var tk = box.querySelector('#vvset-tkm'); if (tk) tk.addEventListener('change', function () {
       set('vv_tkmark', tk.checked ? '1' : '0'); if (window.__vvApplyTkm) window.__vvApplyTkm(); reflect(box); });
     var S = window.VVStore; [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.addEventListener('change', function () { if (S && S.folds) S.folds.set(s.getAttribute('data-fold'), s.value); }); });

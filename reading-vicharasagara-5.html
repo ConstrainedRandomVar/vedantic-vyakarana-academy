@@ -160,7 +160,7 @@ body.notip .tip-wrap{display:none}
   <span><span class="w ga">पदम्</span> <span class="geq">=</span> <span class="w gb">पर्यायः</span> author's inline gloss (A = B)</span>
 </div><div class="legdiv"></div>
   <div class="leggrp"><div class="leghd">व्युत्पत्तिः · derivation</div>
-    <div class="legnote">The व्युत्पत्तिः row of a word card quotes, word for word, the derivation of each plain nominal stem from three dictionaries: <b>कौस्तु०</b> = शब्दार्थकौस्तुभः (Chakravarti Srinivasa Gopalacharya; its Sanskrit निष्पत्तिः, indic-dict edition), <b>वाच०</b> = वाचस्पत्यम् (Tārānātha Tarkavācaspati) and <b>शब्दक०</b> = शब्दकल्पद्रुमः (Rādhākāntadeva), both from the Cologne Digital Sanskrit Dictionaries (<a href="https://github.com/sanskrit-lexicon/csl-orig" target="_blank" rel="noopener">csl-orig</a>, licensed <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a> — the excerpts shown here are shared under the same licence) — as served by ashtadhyayi.com / sanskritkosha.com. Only the entry of the card's gender is shown. A single word shows its first source (कौस्तु०, else वाच०, else शब्दक०); a compound shows its stems on one line (▸ to open). Click the word to pin its card, then tap ▸ / +N for the other dictionaries (they often differ). ☰ → ⚙ Settings: Off / Folded / Open.</div>
+    <div class="legnote">The व्युत्पत्तिः row of a word card quotes, word for word, the derivation of each plain nominal stem from three dictionaries: <b>कौस्तु०</b> = शब्दार्थकौस्तुभः (Chakravarti Srinivasa Gopalacharya; its Sanskrit निष्पत्तिः, indic-dict edition), <b>वाच०</b> = वाचस्पत्यम् (Tārānātha Tarkavācaspati) and <b>शब्दक०</b> = शब्दकल्पद्रुमः (Rādhākāntadeva), both from the Cologne Digital Sanskrit Dictionaries (<a href="https://github.com/sanskrit-lexicon/csl-orig" target="_blank" rel="noopener">csl-orig</a>, licensed <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a> — the excerpts shown here are shared under the same licence) — as served by ashtadhyayi.com / sanskritkosha.com. Only the entry of the card's gender is shown. A single word shows its first source (कौस्तु०, else वाच०, else शब्दक०) — on a card of several words, after the stem it belongs to; a compound shows its stems on one line (▸ to open). Click the word to pin its card, then tap ▸ / +N for the other dictionaries (they often differ). ☰ → ⚙ Settings: Off / Folded / Open.</div>
   </div></details>
 <details class="vs-about"><summary>About this edition</summary>
 <div class="vs-about-body">
@@ -400,9 +400,9 @@ window.__kvMerge=function(o){KVD=Object.assign(KVD||{},o);};   // snippets also 
 fetch('kv-vicharasagara-5.json').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){window.__kvMerge(j);}).catch(function(){});
 function kvrow(kv){if(!kv||!kv.length||!KVD)return '';var mode='';try{mode=localStorage.getItem('vv_vyut')||'';}catch(e){}
   if(mode==='0')return '';
-  var es=kv.map(function(x){return KVD[x[0]];}).filter(Boolean);if(!es.length)return '';var named=es.length>1||kv[0][1];
+  var fl=kv.filter(function(x){return KVD[x[0]];}),es=fl.map(function(x){return KVD[x[0]];});if(!es.length)return '';var named=es.length>1||fl[0][1]===1,tag=!named&&fl[0][1]===2;   // 1 = a compound member, 2 = one word of a several-word card (shown with its stem)
   var body=es.map(function(e){var L=KVN.filter(function(n){return e[n[0]];}),more=L.length-1,long=e[L[0][0]].length>KVLONG,lab=(more?'+'+more+' ':'')+(long?'…':'');
-    return '<div class="kvb'+(long?' kvlong':'')+((!named&&mode==='open')?' open':'')+'">'+(named?'<span class="kvs">'+e.s+'</span>':'')+
+    return '<div class="kvb'+(long?' kvlong':'')+((!named&&mode==='open')?' open':'')+'">'+(named?'<span class="kvs">'+e.s+'</span>':tag?'<span class="kvs">'+e.s+'</span> ':'')+
       L.map(function(n,i){return '<div class="kvl'+(i?' kvx':'')+'"><span class="kvd" title="'+n[2]+'">'+n[1]+'</span> '+e[n[0]]+'</div>';}).join('')+
       (lab?'<span class="kvm" data-c="'+lab+'">'+((!named&&mode==='open')?'▴':lab)+'</span>':'')+'</div>';}).join('');
   if(!named) return '<div class="row kvrow kv1"><span class="lb">व्युत्पत्तिः</span>'+body+'</div>';
@@ -419,7 +419,7 @@ var tip=document.getElementById('tip'),pinned=false,touch=('ontouchstart'in wind
 function place(el){var r=el.getBoundingClientRect(),tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
   var left=Math.max(m,Math.min(r.left+r.width/2-tw/2,innerWidth-tw-m)),top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
   tip.style.left=left+'px';tip.style.top=top+'px';}
-function show(t){var i=t.getAttribute('data-ti');if(i==null||!TIPS[+i])return;tip.innerHTML=TIPS[+i];var ph=tip.querySelector('.kvph');if(ph){var kv=ph.getAttribute('data-kv').split(';').map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:[x];});ph.outerHTML=(typeof kvrow==='function')?kvrow(kv):'';}tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
+function show(t){var i=t.getAttribute('data-ti');if(i==null||!TIPS[+i])return;tip.innerHTML=TIPS[+i];var ph=tip.querySelector('.kvph');if(ph){var kv=ph.getAttribute('data-kv').split(';').map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:x.charAt(0)==='+'?[x.slice(1),2]:[x];});ph.outerHTML=(typeof kvrow==='function')?kvrow(kv):'';}tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
 function hideTip(force){if(pinned&&!force)return;pinned=false;tip.style.opacity=0;tip.classList.remove('pinned');}
 document.addEventListener('mouseover',function(e){if(touch||pinned)return;var t=e.target.closest('.w[data-ti]');if(t)show(t);});
 document.addEventListener('mouseout',function(e){if(touch||pinned)return;if(e.target.closest('.w[data-ti]'))tip.style.opacity=0;});

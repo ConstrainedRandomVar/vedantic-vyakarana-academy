@@ -96,8 +96,8 @@
   }
   function barBottom() { var b = document.getElementById('reading-nav'); if (!b) return 0; var r = b.getBoundingClientRect(); return Math.max(0, r.bottom); }
 
-  // ---- reading mode (phones, Harsha 2026-10-30): the header button hides the sticky bar (and the in-text search row) so the
-  // text fills the screen; the faint corner button (above the page-report pill) or Esc brings it back. Never remembered: a page opens with the header,
+  // ---- reading mode (Harsha 2026-10-30; every screen size + one corner spot 2026-11-03): the faint round corner button (above the
+  // page-report pill) hides the sticky bar (and the in-text search row) so the text fills the screen; the same spot, icon flipped, or Esc brings it back. Never remembered: a page opens with the header,
   // since the reader first picks the chapter and verse. The line under the bar stays where it was on screen.
   var ICON_OUT = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>';
   var ICON_IN = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>';
@@ -105,7 +105,7 @@
     var root = document.documentElement;
     if (on === root.classList.contains('vv-readmode')) return;
     var probe = document.elementFromPoint(window.innerWidth / 2, barBottom() + 6);
-    if (probe && probe.closest('#reading-nav,#vvs,.vvr-pop,.vvr-drawer,.vvr-unread')) probe = null;
+    if (probe && probe.closest('#reading-nav,#vvs,.vvr-pop,.vvr-drawer,.vvr-read,.vvr-unread')) probe = null;
     var t0 = probe ? probe.getBoundingClientRect().top : 0;
     if (on) closePop();
     root.classList.toggle('vv-readmode', on);
@@ -141,10 +141,10 @@
     + '.vv-credit{max-width:860px;margin:28px auto 18px;padding:10px 16px 0;border-top:1px solid var(--line,#e5ded0);font:12px/1.5 system-ui,-apple-system,sans-serif;color:var(--muted,#7a6a55);text-align:center}.vv-credit a{color:inherit;text-decoration:underline}'
     + '.vvr-tools{display:inline-flex;gap:4px;align-items:center;margin-left:auto}'
     + '#reading-nav .rn-picker+.vvr-tools{margin-left:6px}'
-    + '.vvr-read{display:none}@media(max-width:640px){.vvr-read{display:inline-block}}.vvr-read svg{width:15px;height:15px;display:block}'
     + ':root.vv-readmode #reading-nav,:root.vv-readmode #vvs{display:none!important}'
-    + '.vvr-unread{display:none;position:fixed;right:14px;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:950;width:38px;height:38px;padding:0;border-radius:50%;align-items:center;justify-content:center;border:1px solid var(--line,var(--rule,#ddd));background:var(--card,var(--bg,#fff));color:var(--ink,#222);opacity:.6;box-shadow:0 1px 6px rgba(0,0,0,.15);cursor:pointer}'
-    + ':root.vv-readmode .vvr-unread{display:flex}.vvr-unread svg{width:16px;height:16px}'
+    + '.vvr-read,.vvr-unread{display:none;position:fixed;right:14px;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:950;width:38px;height:38px;padding:0;border-radius:50%;align-items:center;justify-content:center;border:1px solid var(--line,var(--rule,#ddd));background:var(--card,var(--bg,#fff));color:var(--ink,#222);opacity:.6;box-shadow:0 1px 6px rgba(0,0,0,.15);cursor:pointer}'
+    + '.vvr-read{display:flex}:root.vv-readmode .vvr-read{display:none}:root.vv-readmode .vvr-unread{display:flex}.vvr-read svg,.vvr-unread svg{width:16px;height:16px}'
+    + '.vvr-read:hover,.vvr-unread:hover{opacity:1}'
     + '.vvr-btn{font:inherit;font-size:15px;line-height:1;border:1px solid var(--line,var(--rule,#ddd));background:var(--card,var(--bg,#fff));color:var(--ink,#222);border-radius:8px;padding:4px 7px;cursor:pointer}'
     + '.vvr-btn:hover{border-color:var(--brand,#d97706)}.vvr-btn.on{color:var(--brand,#d97706)}'
     + '.vvr-float{position:fixed;right:14px;bottom:14px;z-index:900;display:flex;gap:6px;background:var(--card,var(--bg,#fff));border:1px solid var(--line,var(--rule,#ddd));border-radius:12px;padding:6px;box-shadow:0 2px 10px rgba(0,0,0,.12)}'
@@ -191,7 +191,7 @@
     + '.vvr-hint{font:13px/1.45 system-ui,sans-serif;color:var(--muted,#6b6455);margin:-4px 0 12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}'
     + '.vvr-hint a{color:var(--brand,#b45309)}.vvr-hint-x{border:0;background:transparent;color:inherit;cursor:pointer;font-size:12px;padding:0 4px;margin-left:2px}'
     + '.vvr-lnote{margin-left:6px;font:11px system-ui,sans-serif;color:var(--brand,#b45309);text-decoration:none;border:1px solid var(--line,#ddd);border-radius:6px;padding:0 5px}'
-    + '@media print{.vvr-tools,.vvr-float,.vvr-drawer,.vvr-nb,.vvr-sel,.vvr-pop,.vvr-hint,.vvr-lnote{display:none!important}}';
+    + '@media print{.vvr-tools,.vvr-float,.vvr-read,.vvr-unread,.vvr-drawer,.vvr-nb,.vvr-sel,.vvr-pop,.vvr-hint,.vvr-lnote{display:none!important}}';
 
   var popEl = null;
   function closePop() { if (popEl) { popEl.remove(); popEl = null; } }
@@ -589,9 +589,9 @@
     gearBtn.addEventListener('click', function () { withSettings(function () { VVSettings.menu(gearBtn); }); });
     tools.appendChild(gearBtn);
     if (bar) {
-      var readBtn = el('button', { class: 'vvr-btn vvr-read', type: 'button', title: 'Reading mode — hide the header', 'aria-label': 'Reading mode' }, ICON_OUT);
+      var readBtn = el('button', { class: 'vvr-read', type: 'button', title: 'Reading mode — hide the header', 'aria-label': 'Reading mode' }, ICON_OUT);
       readBtn.addEventListener('click', function () { readMode(true); });
-      tools.insertBefore(readBtn, gearBtn);
+      document.body.appendChild(readBtn);   // enter and exit share one corner spot (only the icon flips), every screen size
       var unread = el('button', { class: 'vvr-unread', type: 'button', title: 'Show the header', 'aria-label': 'Show the header' }, ICON_IN);
       unread.addEventListener('click', function () { readMode(false); });
       document.body.appendChild(unread);

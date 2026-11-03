@@ -663,8 +663,8 @@ function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttr
   if(cat==='tp'){var tpb=document.querySelector('button[data-side="tippani"]');   // the ṭippaṇī lane first; then the note copy on screen (अन्तः id / पार्श्वे data-tpid)
     if(tpb&&document.body.getAttribute('data-side')!=='tippani')tpb.click();
     hideTip(true);(window.__vvLane?Promise.all([window.__vvLane('tippani'),window.__vvLane('tika')]):Promise.resolve()).then(function(){   // lazy lanes: load, then land
-    var na=document.getElementById(sk),nb=document.querySelector('[data-tpid="'+sk+'"]'),e3=(na&&na.offsetParent!==null)?na:((nb&&nb.offsetParent!==null)?nb:na);
-    if(e3){e3.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e3);}});return;}
+    if(window.__tpnGo)return window.__tpnGo(sk);   // tippani.js: opens the note's folded run (flagged auto-opened), lands + flashes
+    var na=document.getElementById(sk),nb=document.querySelector('[data-tpid="'+sk+'"]'),e3=(na&&na.offsetParent!==null)?na:((nb&&nb.offsetParent!==null)?nb:na);if(e3){e3.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e3);}});return;}
   if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
     if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
   if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){openFolds(sk);var e2=byKey(sk);   // lazy lane: load, then land

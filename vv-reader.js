@@ -489,7 +489,7 @@
 
   // ---- fold-out controls (registry in VVStore.folds; ⚙ default per type; per-page buttons don't change the default) ----
   function presentFolds() { return S.folds.list().filter(function (f) { return document.querySelector(f.selector); }); }
-  function setFold(f, open) { [].forEach.call(document.querySelectorAll(f.selector), function (d) { d.open = open; }); }
+  function setFold(f, open) { [].forEach.call(document.querySelectorAll(f.selector), function (d) { if (d.open !== open) { d.__vvFold = 1; d.open = open; } }); }   // __vvFold: the reader's own choice (⚙ / ⇕) — tippani.js keeps such a run open
   function applyFoldDefaults() { presentFolds().forEach(function (f) { if (S.folds.get(f.key) === 'expanded') setFold(f, true); }); }
   document.addEventListener('vv:lane', function () { applyFoldDefaults(); });   // folds that arrive with a lazy lane (Pūrṇānandī in the Ratnaprabhā lane)
   function foldPopover(anchor) {

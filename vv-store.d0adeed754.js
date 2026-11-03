@@ -165,7 +165,7 @@
   }
   var SEARCH_TAB = 'vv-search', KOSHA_TAB = 'vv-kosha';
 
-  // ---- page controls the reader can hide (⚙ Settings, Harsha 2026-10-21 batch 2): the ⚑/🚩 report-an-issue buttons (SHOWN by
+  // ---- page controls the reader can hide (⚙ Settings, Harsha 2026-10-21 batch 2): the floating ⚑/🚩 report buttons — page + gym, NOT the word-card ⚑ row (SHOWN by
   // default; vv_show_report='0' hides) and the ⇉ Share reading starter (HIDDEN by default; vv_show_share='1' shows — a presenter
   // link ?session=…&role=present always shows it, so a class in progress is never cut off). CSS classes on <html>. ----
   function applyChrome() {

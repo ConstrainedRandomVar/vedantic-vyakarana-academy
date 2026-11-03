@@ -10,7 +10,7 @@
 //   vv_vyut        word cards' व्युत्पत्तिः row (dictionary derivations): '' = folded to one line (default) · 'open' · '0' = off — read by the card itself (kvrow)
 //   fold:<key>     commentary fold-out defaults (VVStore.folds)
 //   vyakarana_auto_advance  grammar practice (app.js), on by default
-//   vv_show_report / vv_show_share  ⚑ report buttons (shown by default) / ⇉ Share reading (hidden by default) — VVStore.applyChrome
+//   vv_show_report / vv_show_share  floating ⚑ Report button + gym report buttons (shown by default; never the word-card ⚑ row) / ⇉ Share reading (hidden by default) — VVStore.applyChrome
 // A reader's explicit earlier choice ('0'/'1' already stored) is always kept; only unset keys take the defaults above.
 (function () {
   'use strict';
@@ -97,8 +97,8 @@
     if (!sisterSite()) h += '<div class="row"><div class="lab">Word derivations</div><select id="vvset-vyut"><option value="">Folded (one line)</option><option value="open">Open</option><option value="0">Off</option></select>'
       + '<div class="hint">The व्युत्पत्तिः row on word cards — how a word is derived, quoted from शब्दार्थकौस्तुभः, वाचस्पत्यम् and शब्दकल्पद्रुमः. Folded by default; tap ▸ on a pinned card to open it.</div></div>';
     h += '<div class="row"><div class="lab">Page buttons</div>'
-      + '<label class="chk"><input type="checkbox" id="vvset-report"> Show the ⚑ report-an-issue buttons</label>'
-      + '<div class="hint" style="margin:2px 0 8px 24px">On reading pages and in the Sanskrit gym — tell us about a wrong word, gloss or analysis.</div>'
+      + '<label class="chk"><input type="checkbox" id="vvset-report"> Show the floating ⚑ Report button</label>'
+      + '<div class="hint" style="margin:2px 0 8px 24px">On reading pages and in the Sanskrit gym. The ⚑ row on a word card you have clicked is always there.</div>'
       + '<label class="chk"><input type="checkbox" id="vvset-share"> Show ⇉ Share reading</label>'
       + '<div class="hint" style="margin:2px 0 0 24px">For a teacher leading a class: students follow your scrolling live, each in their own script. Off by default.</div></div>';
     if (folds.length) h += '<div class="row"><div class="lab">Commentary fold-outs</div>'

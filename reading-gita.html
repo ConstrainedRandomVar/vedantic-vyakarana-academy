@@ -743,7 +743,15 @@ document.getElementById('tog').onclick=function(){
   <div class="rpt-row"><span class="rpt-st" id="rpt-st"></span><button id="rpt-cancel">Cancel</button><button id="rpt-send">Send</button></div>
 </div></div>
 <script>(function(){
-  var EMAIL="narayanamurthysharma@gmail.com",ENDPOINT='https://formsubmit.co/ajax/'+EMAIL;
+  var EMAIL="narayanamurthysharma@gmail.com",RELAY="https://script.google.com/macros/s/AKfycbx5m6cln3vbabv_wMq2Rlg6phAzdd1gMJXsf5jmb7OVC_62ULg3wPafuLK6i7593cFwAw/exec";
+  // our Google Apps Script relay (15 s limit) → else the reader's mail app; same as vv-reader.js sendReport
+  function post(url,opt,ms){var c=window.AbortController?new AbortController():null,t;if(c)opt.signal=c.signal;
+    return Promise.race([fetch(url,opt),new Promise(function(_,no){t=setTimeout(function(){if(c)c.abort();no(new Error('timeout'));},ms);})])
+      .then(function(r){clearTimeout(t);return r;},function(e){clearTimeout(t);throw e;});}
+  function sendReport(d){
+    return post(RELAY,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({name:d.name||'',email:d.email||'',subject:d.subject,page:location.href,message:d.message})},15000)
+      .then(function(r){return r.ok?r.json():{};}).then(function(j){if(!(j&&j.ok===true))throw new Error('not accepted');});}
   var NAME_KEY='sandhiQuizReporterName',EMAIL_KEY='sandhiQuizReporterEmail';   // shared with the word-card + gym reporters
   function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v);}catch(e){return '';}}
   function ua(){try{
@@ -789,10 +797,7 @@ document.getElementById('tog').onclick=function(){
     // "Details:" = the reader's words (fetch_reports.py reads it as the comment); the context lines below are key: value fields
     var message='Problem: Page report\n'+(note?'Details: '+note.replace(/\n+/g,' ')+'\n':'')+'\n--- context (auto-captured) ---\n'+ctxBlock();
     send.disabled=true;st.textContent='Sending…';
-    fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
-      body:JSON.stringify({name:name||'(anonymous)',email:mail||'',_replyto:mail||undefined,_subject:subj,_template:'box',_captcha:'false',message:message})
-    }).then(function(r){return r.ok?r.json():{success:'false'};}).then(function(j){
-      if(String(j&&j.success)!=='true')throw new Error('not accepted');
+    sendReport({name:name,email:mail,subject:subj,message:message}).then(function(){
       st.textContent='Sent — thank you.';send.style.display='none';cancel.textContent='Close';txt.value='';
     }).catch(function(){
       // offline or the form service refused: hand the same report to the reader's mail app

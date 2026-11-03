@@ -697,13 +697,32 @@
 // (commentary), the two cards peek.js controls, on every reading page and every renderer (all mark a pinned card .pinned). Added here
 // at run time so no builder changes. The report carries what the reader saw: the word (as printed, whatever script is showing), the
 // card's own text (meaning, grammar, peel, any ⚑ editorial note), the verse, the layer, the word's key (data-k) and a link back.
-// Sent through FormSubmit (fetch, no script from them — offline-safe); if that fails, the reader's mail app opens with the same text.
-// Hidden with the other report buttons by ⚙ "report-an-issue buttons" (vv-store.js, html.vv-no-report).
+// Sent to our Google Apps Script relay (plain fetch, no third-party script — offline-safe); if it does not confirm, the reader's
+// mail app opens with the same text.
+// ALWAYS shown (Harsha 2026-11-03): ⚙ "floating ⚑ Report button" (html.vv-no-report) hides only the page/gym buttons — this row
+// appears only on a card the reader pinned, so it never clutters the page (a reader who hid the floating button lost it unawares).
 (function () {
   'use strict';
   if (window.__vvWordReport) return; window.__vvWordReport = true;
   var MAIL = 'narayanamurthysharma@gmail.com';
-  var ENDPOINT = 'https://formsubmit.co/ajax/' + MAIL;
+  // Report delivery (Harsha 2026-11-03): our Google Apps Script relay (narayanamurthysharma@'s "adhyayana-sahakari reports" script —
+  // emails the full report as "[vv-report] <subject>", keeps a Sheet copy, answers {ok:true}) with a 15 s limit; if it does not
+  // confirm, the reader's mail app opens with the same text. FormSubmit was dropped (outage 2026-11-03 left phones hanging) and
+  // Formspree too (over its free cap it answers success but only holds the report). Same in reporter.js + app.js — keep in step.
+  var RELAY = 'https://script.google.com/macros/s/AKfycbx5m6cln3vbabv_wMq2Rlg6phAzdd1gMJXsf5jmb7OVC_62ULg3wPafuLK6i7593cFwAw/exec';
+  function post(url, opt, ms) {   // fetch with a hard time limit
+    var c = window.AbortController ? new AbortController() : null, t;
+    if (c) opt.signal = c.signal;
+    return Promise.race([fetch(url, opt), new Promise(function (_, no) { t = setTimeout(function () { if (c) c.abort(); no(new Error('timeout')); }, ms); })])
+      .then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; });
+  }
+  function sendReport(d) {   // d = {name, email, subject, message} → resolves once the relay confirmed it; rejects otherwise
+    return post(RELAY, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ name: d.name || '', email: d.email || '', subject: d.subject, page: location.href, message: d.message }) }, 15000)
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (j) { if (!(j && j.ok === true)) throw new Error('not accepted'); });
+  }
+
   var NAME_KEY = 'sandhiQuizReporterName', EMAIL_KEY = 'sandhiQuizReporterEmail';   // the same keys as the gym's reporter (app.js)
   var KINDS = ['Meaning', 'Grammar (vibhakti, kāraka, dhātu …)', 'Samāsa vigraha', 'The text itself (a misprint, a wrong reading)', 'A link that lands in the wrong place', 'Something else'];
   var lastWord = null;
@@ -766,7 +785,6 @@
     '.vvrep-row{margin-top:8px;padding-top:6px;border-top:1px solid var(--tipline,rgba(128,128,128,.35));text-align:right}' +
     '.vvrep-row button{font:12px/1.3 system-ui,sans-serif;background:none;border:0;padding:2px 0;color:inherit;opacity:.72;cursor:pointer}' +   // the card's own ink: cards invert against the page theme
     '.vvrep-row button:hover{opacity:1;text-decoration:underline}' +
-    'html.vv-no-report .vvrep-row{display:none!important}' +
     '#vvrep-ov{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}' +
     '#vvrep-box{background:var(--card,#fff);color:var(--ink,#111);border:1px solid var(--line,#ddd);border-radius:14px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.35);font:14px/1.45 system-ui,sans-serif;box-sizing:border-box}' +
     '#vvrep-box h3{margin:0 0 2px;font-size:16px}#vvrep-box .w0{font:600 18px/1.4 "Noto Serif Devanagari",serif;margin:0 0 2px}' +
@@ -809,11 +827,7 @@
       var message = 'Problem: ' + kind + '\n' + (note ? 'Details: ' + note + '\n' : '') + '\n' + details(c);
       if ($('vvrep-hp').value) { close(); return; }   // a bot filled the hidden field
       go.disabled = true; st.textContent = 'Sending…';
-      fetch(ENDPOINT, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ name: name || '(anonymous)', email: email || '', _replyto: email || undefined, _subject: subject, _template: 'box', _captcha: 'false', message: message })
-      }).then(function (r) { return r.ok ? r.json() : { success: 'false' }; }).then(function (j) {
-        if (String(j && j.success) !== 'true') throw new Error('not accepted');
+      sendReport({ name: name, email: email, subject: subject, message: message }).then(function () {
         st.textContent = 'Sent — thank you.'; go.style.display = 'none'; $('vvrep-x').textContent = 'Close';
       }).catch(function () {
         // offline or the form service refused: hand the same report to the reader's mail app

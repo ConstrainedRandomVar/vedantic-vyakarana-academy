@@ -2191,14 +2191,26 @@ function buildReportIssueUrl(target, name, email, message) {
   url.searchParams.set('body', fullBody);
   return url.toString();
 }
-// Primary, low-friction report path: a plain fetch() POST straight to Formspree, no SDK/CDN
-// script (this app is offline-capable via a service worker and otherwise has zero runtime
-// dependencies — pulling in @formspree/ajax would silently break offline and break that
-// convention for one feature). Formspree treats `name`/`email`/`_subject` specially; everything
-// else goes in `message`. Returns true/false rather than throwing — callers decide the fallback
-// (the GitHub issue link) themselves.
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mnpadval';
-// When Formspree can't be reached, the SAME report goes out from the reader's own mail app (2026-10-28, Harsha: the GitHub link
+// Report delivery (Harsha 2026-11-03): our Google Apps Script relay (Sheet copy + full mail "[vv-report] …", answers {ok:true}),
+// 15 s limit; a caller whose deliverReport() returns false opens the reader's mail app. Plain fetch, no SDK/CDN (offline-capable app,
+// zero runtime deps). Formspree retired (over its free 50/month cap it answers success but only holds the report in its dashboard);
+// FormSubmit dropped (outage 2026-11-03). Same relay as vv-reader.js sendReport + vc-karaka/mulam-eval/reporter.js.
+const REPORT_RELAY = 'https://script.google.com/macros/s/AKfycbx5m6cln3vbabv_wMq2Rlg6phAzdd1gMJXsf5jmb7OVC_62ULg3wPafuLK6i7593cFwAw/exec';
+async function postWithin(url, opt, ms) {
+  const c = new AbortController(); let t;
+  try {
+    return await Promise.race([fetch(url, { ...opt, signal: c.signal }), new Promise((_, no) => { t = setTimeout(() => { c.abort(); no(new Error('timeout')); }, ms); })]);
+  } finally { clearTimeout(t); }
+}
+async function deliverReport(subject, name, email, message) {
+  try {
+    const r = await postWithin(REPORT_RELAY, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ name: name || '', email: email || '', subject, page: location.href, message }) }, 15000);
+    const j = r.ok ? await r.json() : {};
+    return !!(j && j.ok === true);
+  } catch (e) { return false; }   // offline, refused or slow — caller falls back to the reader's mail app
+}
+// When neither service confirms it, the SAME report goes out from the reader's own mail app (2026-10-28, Harsha: the GitHub link
 // alone needs an account, so most failed reports were lost). Same inbox; work/feedback/fetch_reports.py picks these mails up by
 // the marker line. The "file a GitHub issue" link stays, for readers who have an account and prefer it.
 const REPORT_MAIL = 'narayanamurthysharma@gmail.com';
@@ -2206,16 +2218,8 @@ function openReportMail(subject, name, email, message) {
   const body = (name ? `From: ${name}${email ? ` <${email}>` : ''}\n\n` : '') + message + '\n\n(report form fallback — sent from the mail app)';
   location.href = 'mailto:' + REPORT_MAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
-async function submitReportToFormspree(target, name, email, message) {
-  const { subject } = buildReportDetails(target);
-  try {
-    const res = await fetch(FORMSPREE_ENDPOINT, {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message }),
-    });
-    return res.ok;
-  } catch (e) { return false; } // offline, or Formspree unreachable — caller falls back to the GitHub link
+async function submitReport(target, name, email, message) {   // name kept for its callers; delivery = deliverReport()
+  return deliverReport(buildReportDetails(target).subject, name, email, message);
 }
 // Which question a report targets — 'current' (the one on screen right now, answered or not: an
 // expert may spot that the right answer isn't even offered before ever picking one) or 'previous'
@@ -2375,7 +2379,7 @@ function renderQuiz() {
     const message = composeReportMessage(target, userComment);
     view = { ...view, reportSubmitting: true, reportSubmitError: false };
     renderQuiz();
-    const ok = await submitReportToFormspree(target, name, email, message);
+    const ok = await submitReport(target, name, email, message);
     if (!ok) { view = { ...view, reportSubmitting: false, reportSubmitError: true }; renderQuiz(); openReportMail(buildReportDetails(target).subject, name, email, message); return; }
     hiddenReports.add(target.key);
     saveHiddenReports(hiddenReports);
@@ -4369,7 +4373,7 @@ function tutorialOverrideNote(sentence, step, wordIndex) {
 
 // ---- report/feedback (tutorial-specific; the quiz's own report feature (buildReportDetails etc.,
 // above) is shaped around item/options/correctIndex, which doesn't fit a click-based multi-select
-// step or a per-cluster voice question — reuses the generic pieces (Formspree endpoint, reporter
+// step or a per-cluster voice question — reuses the generic pieces (deliverReport relay, reporter
 // name/email persistence, .report-area styling) but builds its own subject/details from the
 // tutorial's own state shape. No hide-from-pool behavior here (unlike the quiz): the tutorial
 // always walks the same fixed verse list in order, there's no pool to filter a flagged item out of.
@@ -4395,8 +4399,8 @@ function buildTutorialReportDetails(target) {
 }
 // GitHub-issue fallback (Harsha, 2026-08-16: "there doesn't appear to be a way to file a ticket
 // through github directly (that we support elsewhere)") — the tutorial's report form only ever
-// posted to Formspree, unlike the quiz's own report area (buildReportIssueUrl above) which also
-// offers a pre-filled GitHub issue link for when Formspree is unreachable or someone just prefers
+// posted to the report service, unlike the quiz's own report area (buildReportIssueUrl above) which also
+// offers a pre-filled GitHub issue link for when the report service is unreachable or someone just prefers
 // filing directly. Same target repo/URL shape, just built from the tutorial's own target fields.
 function buildTutorialReportIssueUrl(target, name, email, message) {
   const { subject } = buildTutorialReportDetails(target);
@@ -4409,14 +4413,7 @@ function buildTutorialReportIssueUrl(target, name, email, message) {
 async function submitTutorialReport(target, name, email, userComment) {
   const { subject, details } = buildTutorialReportDetails(target);
   const message = userComment ? `Comments: ${userComment}\n\n${details}` : details;
-  try {
-    const res = await fetch(FORMSPREE_ENDPOINT, {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-      body: new URLSearchParams({ name: name || '(anonymous)', email: email || '', _subject: subject, message }),
-    });
-    return res.ok;
-  } catch (e) { return false; }
+  return deliverReport(subject, name, email, message);
 }
 function tutorialReportTarget(sentence, step, verse) {
   if (String(step.type || '').startsWith('anv'))   // अन्वय steps: expected = the unit's words

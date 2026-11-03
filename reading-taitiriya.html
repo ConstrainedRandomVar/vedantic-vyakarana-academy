@@ -147,6 +147,8 @@ body.metmode-pada .vjoin{display:none}
 .tk-en{display:none;margin:6px 0 2px;font-family:'Noto Serif',Georgia,serif;font-style:italic;font-size:14.5px;line-height:1.6;color:var(--tken)}
 body.tken .tk-en{display:block}
 .tk-prat{color:var(--tika);font-weight:700}
+/* a joined split word (splitPlan): the fragment outside the printed bold keeps its own part's look */
+.w>.tk-vy,.w>.tk-ava{font-weight:400}.w>.tk-mng{font-weight:600}
 .w[data-flag]::after{content:"⚑";font-size:.62em;vertical-align:super;color:var(--muted);margin-left:1px}
 .tk-vy{color:var(--ink)}
 .tk-mng{color:var(--ink);font-style:italic;font-weight:600}   /* maṅgala = commentator's own benedictory verse: ink + italic (verse presence), NOT the pratīka brown (--role) it used to share, and NOT the muted avataraṇikā (--muted). #9c: no colour reuse. */
@@ -504,6 +506,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
     <div class="legrow"><span class="item"><span class="tkm-sw">शब्दः</span> — a word the chosen commentary quotes as a pratīka, with an exact link: tap it → that commentary. With no commentary chosen (✕), every such bhāṣya word, darker the more commentaries quote it.</span></div>
     <div class="legnote">An unmarked word can still be explained: a pratīka whose target is not certain is left unlinked rather than guessed. ☰ ⚙ Settings → Commentary links turns the underline off.</div>
   </div><div class="legdiv"></div>
+  <div class="leggrp"><div class="leghd">आनन्दगिरि-टीका</div><div class="legrow"><span class="item">⚑ — a misprint of the MRI print (our text where the online source lacks the ṭīkā), shown as printed; tap the word for the correct reading (आनन्दगिरि-टीका)</span></div></div><div class="legdiv"></div>
   <div class="leggrp"><div class="leghd">वनमाला</div><div class="legrow"><span class="item">⚑ — पाठभेदः: the Vanamālā (with the MRI print) quotes a reading our bhāṣya text does not print; its link goes to the words our text has there — tap the pratīka for both readings (वनमाला)</span></div></div>
   <div class="legdiv"></div>
   <div class="leggrp"><div class="leghd">सुरेश्वर-वार्त्तिकम् · vārttika</div>
@@ -593,6 +596,9 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
     var named=document.querySelectorAll('.seg button[data-side]:not([data-side=""]),button[data-side]:not([data-side=""])').length>1;
     for(var x=0;x<tks.length;x++){var qt=isM?quotesOf(ref,t.getAttribute('data-k'),tkSide(tks[x])):[];   // counted PER commentary
       rows.push(qt.length>1?jrN('tk',ref,qt,'',named?tkLabel(tks[x]):''):jr('tk',ref,tks[x],'',named?tkLabel(tks[x]):''));}}
+  // a word carrying a ṭippaṇī mark (tippani.js) → its note: "→ टिप्पणी · भा 3" (one row per mark; the सन्धि copy's marks only)
+  var tps=t.querySelectorAll?t.querySelectorAll('.tpn-m:not(.tpn-p)'):[];
+  for(var y=0;y<tps.length;y++)rows.push(jr('tp',ref,tps[y].getAttribute('data-tpn'),'','→ टिप्पणी · '+tps[y].getAttribute('data-tl')));
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
 // the element carrying data-k = key (the VISIBLE copy when a ṭīkā is shown both inline and in the side column)
 function byKey(k){if(!k)return null;var els=document.querySelectorAll('[data-k="'+k+'"]');
@@ -626,6 +632,11 @@ function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.class
 // a target inside a collapsed sub-ṭīkā fold-out: open that fold in the copy the reader sees (inline or side) before landing
 function openFolds(k){[].forEach.call(document.querySelectorAll('[data-k="'+k+'"]'),function(e){var d=e.closest('details.tk-sub');if(!d||d.open)return;var c=d.closest('.tk-inline,.side-zone');if(!c||c.offsetParent!==null)d.open=true;});}
 function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
+  if(cat==='tp'){var tpb=document.querySelector('button[data-side="tippani"]');   // the ṭippaṇī lane first; then the note copy on screen (अन्तः id / पार्श्वे data-tpid)
+    if(tpb&&document.body.getAttribute('data-side')!=='tippani')tpb.click();
+    hideTip(true);(window.__vvLane?Promise.all([window.__vvLane('tippani'),window.__vvLane('tika')]):Promise.resolve()).then(function(){   // lazy lanes: load, then land
+    var na=document.getElementById(sk),nb=document.querySelector('[data-tpid="'+sk+'"]'),e3=(na&&na.offsetParent!==null)?na:((nb&&nb.offsetParent!==null)?nb:na);
+    if(e3){e3.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e3);}});return;}
   if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
     if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
   if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){openFolds(sk);var e2=byKey(sk);   // lazy lane: load, then land
@@ -798,7 +809,9 @@ document.getElementById('tog').onclick=function(){
     try{localStorage.setItem(KEY,mo?'1':'0');}catch(e){}
   });});
 })();</script><script>(function(){
-  var BASE=(location.pathname.split('/').pop()||'').replace(/^reading-/,'').replace(/.html$/,''),done={},pend={};
+  var BASE=(location.pathname.split('/').pop()||'').replace(/^reading-/,'').replace(/.html$/,''),done={},pend={},H={};
+  function fill(side){[].forEach.call(document.querySelectorAll('.lzl[data-lz^="'+side+':"]'),function(el){
+    var h=H[side][+el.getAttribute('data-lz').split(':')[1]];if(h!=null)el.insertAdjacentHTML('afterend',h);el.parentNode.removeChild(el);});}
   // what the reader is looking at (the element just under the reading bar): a lane arriving ABOVE it — the default ṭīkā loads
   // right after the page, often after a #v-ref landing — must not push it away; restored after the insert (works without
   // browser scroll anchoring, e.g. Safari; the browser's own anchoring is paused meanwhile so the two never both correct)
@@ -812,8 +825,7 @@ document.getElementById('tog').onclick=function(){
       if(j.gt){window.GTL=window.GTL||{};GTL[side]=j.gt;}   // the lane's own cards (data-g="<side>")
       if(j.gtx){window.GTL=window.GTL||{};for(var gk in j.gtx)GTL[gk]=j.gtx[gk];}   // its sub-ṭīkā's own cards (Pūrṇānandī: data-g="purnanandi")
       var a=anchor(),R=document.documentElement;R.style.overflowAnchor='none';
-      [].forEach.call(document.querySelectorAll('.lzl[data-lz^="'+side+':"]'),function(el){
-        var h=j.h[+el.getAttribute('data-lz').split(':')[1]];if(h!=null)el.insertAdjacentHTML('afterend',h);el.parentNode.removeChild(el);});
+      H[side]=j.h;fill(side);for(var s2 in H)if(s2!==side)fill(s2);   // a lane's placeholder inside another lane's fragment (ṭippaṇī पार्श्वे copies in the ṭīkā's side column)
       if(a&&a.e.isConnected){var d=a.e.getBoundingClientRect().top-a.t;if(Math.abs(d)>1)scrollBy(0,d);}
       requestAnimationFrame(function(){R.style.overflowAnchor='';});
       done[side]=1;delete pend[side];try{document.dispatchEvent(new CustomEvent('vv:lane',{detail:side}));}catch(e){}

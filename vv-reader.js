@@ -616,7 +616,9 @@
     // copyright / provenance line at the foot of every reading page (Harsha 2026-10-21, after Tamal Maharaj's disclaimer) —
     // not on the sister site, whose texts are not Sringeri's. Same wording as the homepage (app.js).
     if (S.SITE !== 'sahitya' && !document.querySelector('.vv-credit')) {
-      var cr = el('footer', { class: 'vv-credit' }); cr.innerHTML = 'Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>. Translations and grammatical apparatus are new (partly machine-made).';
+      // a page with the गोविन्दप्रसादिनी ṭippaṇī lane (tippani.js) also names its owner (Harsha 2026-10-30)
+      var tpn = document.querySelector('button[data-side="tippani"]') ? ' The <span class="dv">गोविन्दप्रसादिनी</span> notes (Kailash Ashram editions of the Īśā, Kena, Kaṭha, Praśna, Muṇḍaka, Māṇḍūkya, Taittirīya, Aitareya, Chāndogya and Bṛhadāraṇyaka Upaniṣads) © Shri Kailash Ashram, Rishikesh.' : '';
+      var cr = el('footer', { class: 'vv-credit' }); cr.innerHTML = 'Texts © their respective owners — principally Sri Sharada Peetham, Sringeri — see <a href="about.html">Sources</a>.' + tpn + ' Translations and grammatical apparatus are new (partly machine-made).';
       document.body.appendChild(cr); }
     // in-text search (🔍 next to ☆ 📝, 2026-10-13) — vv-insearch.js shows itself only on texts the search site indexes
     var isrc = document.createElement('script'); isrc.src = 'vv-insearch.js'; isrc.async = true; document.head.appendChild(isrc);

@@ -631,6 +631,9 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
   // … and a mark of the Shastri footnote lane (mrifn.js — S. Subrahmanya Shastri's notes in the MRI edition): "→ शास्त्रि-टिप्पणी · भा 2"
   var mfs=t.querySelectorAll?t.querySelectorAll('.mfn-m:not(.mfn-p)'):[];
   for(var y2=0;y2<mfs.length;y2++)rows.push(jr('mf',ref,mfs[y2].getAttribute('data-mfn'),'','→ शास्त्रि-टिप्पणी · '+mfs[y2].getAttribute('data-tl')));
+  // … and of the Narendrapurī TippaNi (npt.js): "→ नरेन्द्रपुरी-टिप्पणम् · भा 2"
+  var nps=t.querySelectorAll?t.querySelectorAll('.npt-m:not(.npt-p)'):[];
+  for(var y3=0;y3<nps.length;y3++)rows.push(jr('np',ref,nps[y3].getAttribute('data-npt'),'','→ नरेन्द्रपुरी-टिप्पणम् · '+nps[y3].getAttribute('data-tl')));
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
 // the element carrying data-k = key (the VISIBLE copy when a ṭīkā is shown both inline and in the side column)
 function byKey(k){if(!k)return null;var els=document.querySelectorAll('[data-k="'+k+'"]');
@@ -669,6 +672,11 @@ function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttr
     hideTip(true);(window.__vvLane?Promise.all([window.__vvLane('tippani'),window.__vvLane('tika')]):Promise.resolve()).then(function(){   // lazy lanes: load, then land
     if(window.__tpnGo)return window.__tpnGo(sk);   // tippani.js: opens the note's folded run (flagged auto-opened), lands + flashes
     var na=document.getElementById(sk),nb=document.querySelector('[data-tpid="'+sk+'"]'),e3=(na&&na.offsetParent!==null)?na:((nb&&nb.offsetParent!==null)?nb:na);if(e3){e3.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e3);}});return;}
+  if(cat==='np'){var npb=document.querySelector('button[data-side="narendrapuri"]');   // the Narendrapurī TippaNi (npt.js), as 'tp'/'mf'
+    if(npb&&document.body.getAttribute('data-side')!=='narendrapuri')npb.click();
+    hideTip(true);(window.__vvLane?Promise.all([window.__vvLane('narendrapuri'),window.__vvLane('tika')]):Promise.resolve()).then(function(){
+    if(window.__nptGo)return window.__nptGo(sk);
+    var na=document.getElementById(sk),nb=document.querySelector('[data-nptid="'+sk+'"]'),e3=(na&&na.offsetParent!==null)?na:((nb&&nb.offsetParent!==null)?nb:na);if(e3){e3.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e3);}});return;}
   if(cat==='mf'){var mfb=document.querySelector('button[data-side="mrifn"]');   // the Shastri footnote lane (mrifn.js), as 'tp' above
     if(mfb&&document.body.getAttribute('data-side')!=='mrifn')mfb.click();
     hideTip(true);(window.__vvLane?Promise.all([window.__vvLane('mrifn'),window.__vvLane('tika')]):Promise.resolve()).then(function(){

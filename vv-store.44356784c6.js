@@ -194,6 +194,7 @@
     { key: 'brha-laghusangraha', label: 'लघुसङ्ग्रहा टीका', sub: 'वार्तिकसार-टीका · Bṛhad', selector: 'details.vs-tk' },
     { key: 'brha-vartikasara', label: 'वार्तिकसारः', sub: 'block (with its ṭīkā) · Bṛhad', selector: 'details.vs-fold' },
     { key: 'tippani', label: 'गोविन्दप्रसादिनी notes', sub: 'टिप्पणी runs · Upaniṣads (folded = a thin bar)', selector: 'details.tpn-run' },
+    { key: 'narendrapuri', label: 'नरेन्द्रपुरी-टिप्पणम्', sub: 'Narendrapurī’s ṭippaṇa · Chāndogya (folded = a thin bar)', selector: 'details.npt-run' },
     { key: 'mrifn', label: 'शास्त्रि-टिप्पणी (MRI)', sub: 'S. Subrahmanya Shastri’s footnotes · Upaniṣads (folded = a thin bar)', selector: 'details.mfn-run' },
     { key: 'bs-purnanandi', label: 'पूर्णानन्दी', sub: 'रत्नप्रभा-टीका · Brahmasūtra', selector: 'details.tk-sub[data-sub="purnanandi"]' },
   ];

@@ -194,7 +194,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
    paraphrase the annotation marked) gets no data-jmt → it is NOT blue (exact-or-nothing, 9e). data-jmq (cross-verse intro
    quotes, resolved at runtime) keeps its colour. */
 .mula .w[data-jm]:not([data-jmt]),.w:not([data-jmt]) .msub{color:inherit;font-weight:inherit}
-.mula .w[data-mtrim],.mula .w[data-mplain]{color:var(--ink);font-weight:400}.mula .w[data-mtrim] .msub{color:var(--mula);font-weight:650}   /* pratīka colouring rules: only the mūla word blue */   /* sub-word marks too: an unlinked part-quote is plain */
+.gloss .w[data-mhand],.mula .w[data-mtrim],.mula .w[data-mplain]{color:var(--ink);font-weight:400}.mula .w[data-mtrim] .msub{color:var(--mula);font-weight:650}   /* pratīka colouring rules: only the mūla word blue */   /* sub-word marks too: an unlinked part-quote is plain */
 .mula .w[data-jm]:not([data-jmt]){color:var(--ink);font-weight:400}.gloss{color:var(--gloss)}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
 .purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}
@@ -280,7 +280,7 @@ body[data-side="tika"]:not(.parshve) .tk-inline[data-side="tika"]{display:block}
 .v{scroll-margin-top:78px}
 @keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
 .v.navhit{animation:navflash 1.6s ease-out}</style>
-<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika" data-on="bhashya" data-first title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">आनन्दगिरि-टीका</button><button type="button" data-side="tippani" data-on="bhashya" title="गोविन्दप्रसादिनी — footnotes on words of the bhāṣya and the ṭīkā (shown with the ṭīkā)">गोविन्दप्रसादिनी</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
+<div id="reading-nav"><div class="rn-tools"><div class="seg dv" id="viewseg" role="group" aria-label="view"><button type="button" data-v="moola">मूलम्</button><button type="button" data-v="both">मूलम् + भाष्यम्</button></div><div class="seg dv" id="sideseg" role="group" aria-label="commentary"><button type="button" data-side="">व्याख्या ✕</button><button type="button" data-side="tika" data-on="bhashya" data-first title="a commentary on Śaṅkara’s bhāṣya — opens with मूलम् + भाष्यम्">आनन्दगिरि-टीका</button><button type="button" data-side="mrifn" data-on="bhashya" title="शास्त्रि-टिप्पणी — footnotes on words of the bhāṣya and the ṭīkā (shown with the ṭīkā)">शास्त्रि-टिप्पणी</button><button type="button" data-side="tippani" data-on="bhashya" title="गोविन्दप्रसादिनी — footnotes on words of the bhāṣya and the ṭīkā (shown with the ṭīkā)">गोविन्दप्रसादिनी</button></div><div class="seg dv" id="placeseg" role="group" aria-label="placement"><button type="button" data-place="inter">अन्तः</button><button type="button" data-place="side">पार्श्वे</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
 <script>'use strict';
 /*
  * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
@@ -594,6 +594,9 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
   // a word carrying a ṭippaṇī mark (tippani.js) → its note: "→ टिप्पणी · भा 3" (one row per mark; the सन्धि copy's marks only)
   var tps=t.querySelectorAll?t.querySelectorAll('.tpn-m:not(.tpn-p)'):[];
   for(var y=0;y<tps.length;y++)rows.push(jr('tp',ref,tps[y].getAttribute('data-tpn'),'','→ टिप्पणी · '+tps[y].getAttribute('data-tl')));
+  // … and a mark of the Shastri footnote lane (mrifn.js — S. Subrahmanya Shastri's notes in the MRI edition): "→ शास्त्रि-टिप्पणी · भा 2"
+  var mfs=t.querySelectorAll?t.querySelectorAll('.mfn-m:not(.mfn-p)'):[];
+  for(var y2=0;y2<mfs.length;y2++)rows.push(jr('mf',ref,mfs[y2].getAttribute('data-mfn'),'','→ शास्त्रि-टिप्पणी · '+mfs[y2].getAttribute('data-tl')));
   return rows.length?('<div class="jumps">'+rows.join('')+'</div>'):'';}
 // the element carrying data-k = key (the VISIBLE copy when a ṭīkā is shown both inline and in the side column)
 function byKey(k){if(!k)return null;var els=document.querySelectorAll('[data-k="'+k+'"]');
@@ -632,6 +635,11 @@ function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttr
     hideTip(true);(window.__vvLane?Promise.all([window.__vvLane('tippani'),window.__vvLane('tika')]):Promise.resolve()).then(function(){   // lazy lanes: load, then land
     if(window.__tpnGo)return window.__tpnGo(sk);   // tippani.js: opens the note's folded run (flagged auto-opened), lands + flashes
     var na=document.getElementById(sk),nb=document.querySelector('[data-tpid="'+sk+'"]'),e3=(na&&na.offsetParent!==null)?na:((nb&&nb.offsetParent!==null)?nb:na);if(e3){e3.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e3);}});return;}
+  if(cat==='mf'){var mfb=document.querySelector('button[data-side="mrifn"]');   // the Shastri footnote lane (mrifn.js), as 'tp' above
+    if(mfb&&document.body.getAttribute('data-side')!=='mrifn')mfb.click();
+    hideTip(true);(window.__vvLane?Promise.all([window.__vvLane('mrifn'),window.__vvLane('tika')]):Promise.resolve()).then(function(){
+    if(window.__mfnGo)return window.__mfnGo(sk);
+    var na=document.getElementById(sk),nb=document.querySelector('[data-mfnid="'+sk+'"]'),e3=(na&&na.offsetParent!==null)?na:((nb&&nb.offsetParent!==null)?nb:na);if(e3){e3.scrollIntoView({behavior:'smooth',block:'center'});navFlash(e3);}});return;}
   if(cat==='tk'){var sd=tkSide(sk),sb=sd&&document.querySelector('button[data-side="'+sd+'"]');   // open that commentary's lane first
     if(sb&&document.body.getAttribute('data-side')!==sd)sb.click();}
   if(cat==='tk'&&!byKey(sk)&&window.__vvLane){hideTip(true);window.__vvLane(tkSide(sk)).then(function(){openFolds(sk);var e2=byKey(sk);   // lazy lane: load, then land

@@ -196,6 +196,7 @@
     { key: 'tippani', label: 'गोविन्दप्रसादिनी notes', sub: 'टिप्पणी runs · Upaniṣads (folded = a thin bar)', selector: 'details.tpn-run' },
     { key: 'narendrapuri', label: 'नरेन्द्रपुरी-टिप्पणम्', sub: 'Narendrapurī’s ṭippaṇa · Chāndogya (folded = a thin bar)', selector: 'details.npt-run' },
     { key: 'mrifn', label: 'शास्त्रि-टिप्पणी (MRI)', sub: 'S. Subrahmanya Shastri’s footnotes · Upaniṣads (folded = a thin bar)', selector: 'details.mfn-run' },
+    { key: 'anubhuti-mitaprakasha', label: 'मितप्रकाशविवृतिः', sub: 'अनुभूतिप्रकाश-टीका · Upaniṣads', selector: 'details.ap-tk' },
     { key: 'bs-purnanandi', label: 'पूर्णानन्दी', sub: 'रत्नप्रभा-टीका · Brahmasūtra', selector: 'details.tk-sub[data-sub="purnanandi"]' },
   ];
   var folds = {

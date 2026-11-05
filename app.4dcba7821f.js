@@ -1394,6 +1394,7 @@ function renderDashboard() {
     { dv: 'आत्मबोधः', lat: 'Ātmabodha', file: 'reading-ab.html', group: 'prakarana', offers: ['mula', 'tika'] },
     { dv: 'उपदेशसारम्', lat: 'Upadeśa Sāram', file: 'reading-ups.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीगणपतिमुनिः' },
     { dv: 'सद्दर्शनम्', lat: 'Sad-darśanam', file: 'reading-sad.html', group: 'prakarana', offers: ['mula', 'tika'], note: 'टीका: श्रीकपालिशास्त्री', tikaHide: 'sad-tika' },
+    { dv: 'सर्ववेदान्तसिद्धान्तसारसङ्ग्रहः', lat: 'Sarvavedānta-siddhānta-sāra-saṅgraha', file: 'reading-svs.html', group: 'prakarana', offers: ['mula'], note: '१००६ श्लोकाः' },   // 2026-11-05 (word analysis: Tamal Maharaj)
     { dv: 'विचारसागरः', lat: 'Vicārasāgara', file: 'reading-vicharasagara-1.html', group: 'prakarana', offers: ['mula'], note: '७ तरङ्गाः · गद्यम्' },
     // निबन्धाः · In-depth studies (renamed from "Monographs" 2026-10-21; academy only, not on prod) — modern studies (not prakaraṇa): prose (Tamil / English) with Sanskrit quotations; reading-only (no
     // quiz / node / tutorial fan-out for non-Sanskrit texts — Harsha 2026-10-01). Built outside this repo: Tamil-Texts;

@@ -1,0 +1,456 @@
+<!doctype html><html lang="sa"><head><script data-vv-theme>(function(){var d=document.documentElement,K="vv_theme",m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)"),last=null;function pref(){try{var t=localStorage.getItem(K);return t==="light"||t==="dark"?t:""}catch(e){return ""}}function apply(){last=pref()||(m&&m.matches?"dark":"light");d.setAttribute("data-theme",last)}apply();if(m&&m.addEventListener)m.addEventListener("change",function(){if(!pref())apply()});window.addEventListener("storage",function(e){if(e.key===K)apply()});try{new MutationObserver(function(){var v=d.getAttribute("data-theme");if(v!==last&&(v==="light"||v==="dark")){last=v;try{localStorage.setItem(K,v)}catch(e){}}}).observe(d,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}window.__vvTheme={get:pref,set:function(v){try{v?localStorage.setItem(K,v):localStorage.removeItem(K)}catch(e){}apply()}}})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>सर्ववेदान्तसिद्धान्तसारसङ्ग्रहः (Sarvavedāntasiddhāntasārasaṅgraha)</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;--brand:#d97706;--tm:#a7f3d0;--topicbg:#edf1f8}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}}
+:root[data-theme=dark]{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}
+/* महावाक्य hue (#9c named token) + verse-level identity pill, ALWAYS shown (no toggle since 2026-09-22); two shades by sub-type, styled hover note (not native title=) */
+:root{--maha:#db2777}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--maha:#f472b6}}:root[data-theme=dark]{--maha:#f472b6}
+:root{--tarka:#5b6472;--drs:#a16207}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tarka:#9aa7b8;--drs:#fcd34d}}:root[data-theme=dark]{--tarka:#9aa7b8;--drs:#fcd34d}
+/* प्रमाण reserved hue (#9c named token, 298°) — reserved in every renderer palette; graded refs only (VC, SD so far) */
+:root{--praman:#ad24b2;--prb-shruti:#5c0f60;--prb-yukti:#7a1a7e;--prb-anubhava:#9d1fa2}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--praman:#e67bea;--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5}}:root[data-theme=dark]{--praman:#e67bea;--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5}
+/* gloss-card accent + separator — the card is INVERTED (bg=--ink), so these flip with the theme (#9c; a literal light accent vanished on the light dark-mode card) */
+:root{--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.2)}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tipacc:#065f46;--tipline:rgba(0,0,0,.18)}}:root[data-theme=dark]{--tipacc:#065f46;--tipline:rgba(0,0,0,.18)}
+/* प्रमाण श्रुति/युक्ति/अनुभव pills — ONE reserved hue --praman (298°), 3 explicit lightness steps (AA ≥4.5:1 on the tinted pill, both themes); always-on; COPY-SAFE (empty span + ::after + user-select:none) */
+.prb{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid;font-family:"Noto Serif Devanagari",serif;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.prb-shruti{color:var(--prb-shruti);border-color:var(--prb-shruti);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-yukti{color:var(--prb-yukti);border-color:var(--prb-yukti);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-anubhava{color:var(--prb-anubhava);border-color:var(--prb-anubhava);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-shruti::after{content:"श्रुतिः"}.prb-yukti::after{content:"युक्तिः"}.prb-anubhava::after{content:"अनुभवः"}
+.maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
+.maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}
+.maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
+/* concession (अभ्युपगमः) superscript on the bhāṣya/ṭīkā — citation श्रु/स्मृ/न्या + तर्क हे॰/निग॰ RETIRED 2026-09-23 (CLAUDE.md #9c) */
+.dm-conc::after{vertical-align:super;font-size:.56em;font-weight:700;color:var(--muted);margin-inline-start:1px;font-family:"Noto Serif Devanagari",serif;content:"अभ्यु॰"}
+.maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:26px 22px 90px}h1{font-size:22px;margin:0 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.legend{padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
+.legend.vleg>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600}.legend.vleg>summary::-webkit-details-marker{display:none}
+.legend.vleg>summary .tw{margin-left:auto;font-weight:400;font-size:11.5px}.legend.vleg>summary .tw::before{content:"▸ "}.legend.vleg[open]>summary .tw::before{content:"▾ "}
+.legend.vleg .legtxt{margin-top:6px;line-height:1.55}   /* legend folded by default (Harsha 2026-10-17) */
+.v{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
+.rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
+/* topic band (SAD per-verse viṣaya · AB section · VC two-tier) — its own card ABOVE the verse, tinted --topicbg so a
+   topic reads apart from the prelude (--introbg-style dashed zone), mūla and commentary; role colours = left border (#9c) */
+.secband{margin:22px 0 8px;padding:6px 16px;background:var(--topicbg);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.secband .st{font-weight:600;color:var(--ink)} .secband .srange{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.secband.r-purvapaksha{border-left-color:var(--purva)} .secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-lakshana{border-left-color:var(--lakshana)} .secband.r-phalita{border-left-color:var(--phalita,var(--import))}
+/* avatārikā (prelude) — dashed pre-zone ABOVE the mūla; bhāṣya content, hidden in मूलम्-only mode.
+   Small-caps ::before label matches the prasthānatrayī pre-zone (CLAUDE.md consistency). */
+.pre-zone{margin:0 0 12px;padding:10px 14px 6px;border-left:3px dashed var(--muted);border-radius:0 10px 10px 0}
+.pre-zone::before{content:"अवतारिका";display:block;font-family:-apple-system,sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:4px}
+/* the ONLY rule is the pre-zone's dashed gray border — strip inner .avat/.gs solid borders (no double line) */
+.pre-zone .avat,.pre-zone .gs{border:0;padding:0;margin:0 0 4px}
+body.view-mula .pre-zone{display:none}
+.moola,.vjoin,.vpada{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif}
+.moola{font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
+/* सन्धि layer: the pretty metrical verse (centred pāda-lines) */
+.vjoin{font-size:22px;line-height:1.85;color:var(--moola);font-weight:600;text-align:center}
+.vjoin .jl{margin:1px 0}
+@media(max-width:640px){.vjoin .jl{overflow-wrap:anywhere}}   /* phones: a pāda that is one long samāsa wraps instead of widening the page (2026-10-30) */
+.vjoin .dnd{color:var(--muted);font-weight:400;padding:0 .15em}
+/* पद layer: sandhi-split hover words in matching pāda-lines */
+.vpada{font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
+.vpada .pl{margin:2px 0}
+.vpada .dnd{color:var(--muted);font-weight:400;padding:0 .15em}
+/* सन्धि MODE (default): joined verse is the star; पद becomes a muted word-help line under it */
+body.mode-sandhi .vpada:not(.single){font-size:14.5px;line-height:1.85;color:var(--muted);font-weight:500;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+body.mode-sandhi .vpada:not(.single) .pl{margin:1px 0}
+/* पद MODE: hide the joined verse; the split words become primary */
+body.mode-pada .vjoin{display:none}
+.modebar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 0 18px}
+.modebar button{float:none;border:none;border-radius:0;background:var(--card);color:var(--muted);padding:6px 15px;font-size:12.5px;border-right:1px solid var(--line)}
+.modebar button:last-child{border-right:none}
+.modebar button.on{background:var(--morph);color:#fff}
+.en{color:var(--muted);font-size:14px;font-style:italic;margin-top:8px}
+.trans{color:var(--muted);font-size:14px;line-height:1.55;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
+.w{cursor:help}.w:hover{background:rgba(120,120,120,.14);border-radius:3px}
+#tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
+#tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px var(--tipacc)}
+#tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
+#tip .tm{color:var(--tm);font-style:italic;margin:2px 0 5px}#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
+#tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid var(--tipline);font-family:"Noto Serif Devanagari",serif}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
+.chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}
+/* अनुवादः knob — ALL English translation hidden by default: the mūla clause-gloss line (.trans-layer) AND
+   the bhāṣya gloss sentence translations (.gtr, incl. the edition-unit .moolatr). (Harsha 2026-09-04) */
+body:not(.trans-on) .trans-layer,body:not(.trans-on) .gtr{display:none}
+/* भाष्यम् toggle — मूलम् (default) hides the commentary; मूलम्+भाष्यम् shows it. The 3 ardha stretches
+   swap whole blocks: spine integers (.ardha-int) in मूलम् mode ↔ edition .5 units (.ardha-half) in भाष्यम्. */
+body.view-mula .bhashya-layer{display:none}
+body.view-mula .ardha-half{display:none}
+body.view-both .ardha-int{display:none}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:0 8px}
+.viewbar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 8px 18px 0}
+.viewbar button{float:none;border:none;border-radius:0;background:var(--card);color:var(--muted);padding:6px 15px;font-size:12.5px;border-right:1px solid var(--line);cursor:pointer}
+.viewbar button:last-child{border-right:none}
+.viewbar button.on{background:var(--role);color:#fff}
+.tglbtn{float:none;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:6px 14px;font-size:12.5px;margin:0 0 18px 0;cursor:pointer}
+.tglbtn.on{background:var(--mng);color:#fff;border-color:var(--mng)}
+
+
+.sad-about{margin:1em 0;border:1px solid var(--line,#d8cfc0);border-radius:8px;background:var(--card,#fbf9f5)}
+.sad-about>summary{cursor:pointer;padding:.6em .9em;font-weight:600;color:var(--brand,#5a3e00);font-family:system-ui,sans-serif;font-size:14px}
+.sad-about-body{padding:.4em .9em 1em}
+.sad-ab-lede{margin:.4em 0 1em;font-size:14.5px;line-height:1.7;color:var(--ink,#3a3a3a)}
+.sad-ab-row{display:grid;grid-template-columns:120px 1fr;gap:10px;margin:.35em 0;font-size:14px;line-height:1.55}
+.sad-ab-k{color:var(--muted,#8a7a5c);font-family:system-ui,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
+.sad-ab-ded{margin:1em 0 0;padding:.7em .9em;background:rgba(109,40,217,.05);border-left:3px solid var(--sam,#6d28d9);border-radius:4px}
+.sad-ab-ded-h{font-family:system-ui,sans-serif;font-size:12px;color:var(--sam,#6d28d9);margin-bottom:.7em}
+.sad-ab-v-block{margin:.2em 0 1em;padding-bottom:.8em;border-bottom:1px dotted var(--line,#cdbfa0)}
+.sad-ab-v-block:last-child{border-bottom:0;margin-bottom:0}
+.sad-ab-v-to{font-family:system-ui,sans-serif;font-size:11.5px;color:var(--muted,#8a7a5c);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.3em}
+.sad-ab-verse-l{text-align:center;margin:.15em 0;color:var(--moola,#2a2a2a);font-size:15px}
+.sad-ab-verse-tr{font-family:system-ui,sans-serif;font-size:13px;font-style:italic;color:var(--muted,#5a5245);line-height:1.6;margin:.5em 0 0}
+
+.secband .st-en{color:var(--muted);font-size:12.5px;font-weight:400}
+.spk{font-family:"Noto Serif Devanagari",serif;font-size:13px;font-weight:600;color:var(--muted);text-align:left;margin:4px 0 0;letter-spacing:.02em}
+.spk::after{content:" —"}
+body.mode-sandhi .vpada .spk{display:none}</style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body class="mode-sandhi view-mula"><div class="wrap">
+<a href="index.html" style="color:var(--brand);font-weight:800;font-size:14px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home">अध्ययन-सहकारी</a><a href="index.html" style="float:right;margin:6px 0 0 10px;color:var(--muted);font-size:13px;text-decoration:none">← back</a><button id="tog">◐ theme</button>
+<h1>सर्ववेदान्तसिद्धान्तसारसङ्ग्रहः (Sarvavedāntasiddhāntasārasaṅgraha) — reading (मनन)</h1><p class="sub">hover-to-read · word analysis from Sri Tamal Maharaj’s Śaṅkara reader (RKMVERI)</p>
+<details class="sad-about"><summary>About the book</summary>
+<div class="sad-about-body">
+<div class="sad-ab-lede">A compendium of Advaita Vedānta in 1006 verses: the four qualifications of the seeker, superimposition and the creation of the world, the sheaths, the Self as existence, consciousness and bliss, the meaning of <em>tat tvam asi</em>, samādhi, and liberation while living and after death. Much of it is a dialogue between a teacher and his disciple.</div>
+<div class="sad-ab-row"><span class="sad-ab-k">Text</span><span class="sad-ab-v">सर्ववेदान्तसिद्धान्तसारसङ्ग्रहः (Sarvavedāntasiddhāntasārasaṅgraha)</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Author</span><span class="sad-ab-v">Śrī Śaṅkara Bhagavatpāda, disciple of Śrī Govinda Bhagavatpāda (so the colophon)</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Edition</span><span class="sad-ab-v">The Śṛṅgerī digital edition (advaitasharada, Dakṣiṇāmnāya Śrī Śāradā Pīṭham), as served in Sri Tamal Maharaj’s Śaṅkara reader (RKMVERI). Speaker labels (शिष्यः / श्रीगुरुः) as in the Śṛṅgerī edition.</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Source</span><span class="sad-ab-v">Word analysis (padaccheda, grammar, English meaning of each word): Sri Tamal Maharaj’s Śaṅkara reader, <a href="https://cs.rkmvu.ac.in/~tamal/shankara/read.html?w=sarvavedantasiddhantasarasangraha">cs.rkmvu.ac.in/~tamal/shankara</a>. Section headings adapted from the contents of <em>The Quintessence of Vedanta of Sri Sankaracharya</em> (translated by Swami Tattwananda, revised by Swami Jagadananda; Sri Ramakrishna Advaita Ashrama, Kalady) — reworded, with a few sections divided where the text itself turns to a new subject.</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Verse numbers</span><span class="sad-ab-v">Numbered 1–1006 in order. Four of the printed numbers were wrong and are corrected here: 176 (printed “॥ । १७६ ॥”) · 468 (printed “॥ ५६८ ॥”) · 639 (printed “॥ ५३९ ॥”) · 730 (printed “७३० ॥”).</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Suspected misprints</span><span class="sad-ab-v">Kept as printed; Sri Tamal Maharaj’s notes (⚑ on the word card):<br>253 <span lang="sa">जिझासोः</span> — <span lang="sa">मुद्रणदोषः; मुद्रिते 'जिझासोः' इति पठितम्</span><br>373 <span lang="sa">बन्धं</span> — <span lang="sa">सम्भाव्यम् 'बद्धः'</span><br>504 <span lang="sa">तद्रजस्तम</span> — <span lang="sa">पाठः त्रुटितः; 'तमसी' इत्यपेक्षितम्, 'तमस्' इति दृश्यते</span><br>519 <span lang="sa">युक्त्यात्मानात्मनोऽस्तस्मात्करणीयं</span> — <span lang="sa">मुद्रितपाठे 'ऽस्तस्मात्' दृश्यते; एकः 'त्'-वर्णः लुप्तः, शुद्धपाठः 'ऽतस्तस्मात्'; तुल. ५७९ 'यतस्तस्मात्तु'</span><br>523 <span lang="sa">नष्टेऽहमित्यतः</span> — <span lang="sa">मुद्रितपाठः; अपेक्षितः, 'पुष्टोऽहम्' इति साम्येन</span></span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Colophon</span><span class="sad-ab-v">इति श्रीमत्परमहंसपरिव्राजकाचार्यस्य श्रीगोविन्दभगवत्पूज्यपादशिष्यस्य श्रीमच्छङ्करभगवतः कृतौ सर्ववेदान्तसिद्धान्तसारसङ्ग्रहः सम्पूर्णः ॥<br>ओं ओं ओं ॥<br>ओं शम् ॥</span></div>
+</div></details>
+<style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+#reading-nav .rn-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+#reading-nav .rn-tools>*{margin:0 !important}
+#reading-nav .rn-picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+#reading-nav .rn-tools+.rn-picker{margin-left:auto}
+#reading-nav .rn-brand{color:var(--brand,#d97706);font-weight:800;font-size:15px;text-decoration:none;font-family:"Noto Serif Devanagari",serif;white-space:nowrap;margin:0 2px 0 0 !important}
+#reading-nav .rn-brand .rn-bs{display:none}
+@media (max-width:640px){#reading-nav .rn-brand .rn-bf{display:none}#reading-nav .rn-brand .rn-bs{display:inline}}
+
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
+.v{scroll-margin-top:78px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.v.navhit{animation:navflash 1.6s ease-out}</style>
+<div id="reading-nav"><div class="rn-tools"><div class="modebar" role="radiogroup" aria-label="verse rendering"><button data-mode="sandhi" role="radio">सन्धि · verse</button><button data-mode="pada" role="radio">पद · split</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
+<script>'use strict';
+/*
+ * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
+ * ============================================================================
+ * A single source of truth (LEVELS + cascade logic + rendering) used by BOTH:
+ *   1. the static svādhyāya reading pages (मनन bhāṣya + पदार्थ mūla) — via nav.js's buildNav,
+ *      which now emits a container + calls ReadingNav.mount(...) at runtime; and
+ *   2. the in-app "read-a-verse" picker (app.js renderReadingPicker).
+ * Fix the chapter/verse scheme HERE and it percolates to every page — no per-surface drift/creep.
+ *
+ * UMD: works as a browser global (window.ReadingNav) AND a Node require() (nav.js / build tooling).
+ *
+ * API
+ *   ReadingNav.LEVELS                       // { slug: [level-label, ...] }  (per-text native divisions)
+ *   ReadingNav.levelsFor(slug, refs)        // -> [labels]; falls back by ref-depth for an unlisted text
+ *   ReadingNav.comps(ref, nlev)             // -> ref split into nlev comps (extra trailing comps folded into last)
+ *   ReadingNav.optionsFor(refs, nlev, L, prefix)  // -> distinct options at level L under `prefix`
+ *   ReadingNav.STYLE                        // the navbar <style> text (injected once per page)
+ *   ReadingNav.mount(container, opts)       // render cascading <select>s + wire cascade & selection
+ *
+ * mount(container, {
+ *   slug,                 // text slug (LEVELS key)
+ *   refs,                 // ORDERED array of every ref in the text, e.g. ["1.1.1","1.1.2", ...]
+ *   curRef,               // optional: pre-select this ref
+ *   mode,                 // 'jump' (reading pages) | 'callback' (picker)
+ *   pageByRef, curFile,   // 'jump' mode only: {ref:file} + this page's file → same-page scroll or cross-page #v-<ref>
+ *   onSelect,             // called with (ref) whenever the selection changes (both modes)
+ * })  ->  { getRef(), setRef(ref), refresh() }
+ */
+(function (root, factory) {
+  const mod = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = mod;   // Node (nav.js, tooling)
+  if (typeof window !== 'undefined') window.ReadingNav = mod;                   // browser global
+})(this, function () {
+
+  // Level labels per text — MUST span the full ref depth (uniform depth per text). Single source; keep this
+  // the only copy. (Was duplicated in nav.js; nav.js now imports it from here.)
+  const LEVELS = {
+    Gita: ['अध्याय', 'श्लोक'], Isha: ['अध्याय', 'मन्त्र'], Kena: ['खण्ड', 'मन्त्र'], Kena_pada: ['खण्ड', 'मन्त्र'], Kena_vakya: ['खण्ड', 'मन्त्र'],
+    Kathaka: ['अध्याय', 'वल्ली', 'मन्त्र'], Prashna: ['प्रश्न', 'मन्त्र'], Mundaka: ['मुण्डक', 'खण्ड', 'मन्त्र'],
+    Mandukya: ['प्रकरण', 'मन्त्र'], Aitareya: ['अध्याय', 'खण्ड', 'मन्त्र'], Chandogya: ['अध्याय', 'खण्ड', 'मन्त्र'],
+    Taitiriya: ['वल्ली', 'अनुवाक', 'मन्त्र'], Brha: ['अध्याय', 'ब्राह्मण', 'मन्त्र'], BS: ['अध्याय', 'पाद', 'सूत्र'],
+    VC: ['श्लोक'], PD: ['अध्याय', 'श्लोक'], AB: ['श्लोक'], UPS: ['श्लोक'], SAD: ['श्लोक'], Vicharasagara: ['तरङ्ग', 'आवर्त'],
+  };
+  const FALLBACK = ['भाग', 'उप', 'क्रम', 'मन्त्र'];
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function levelsFor(slug, refs) {
+    let lv = LEVELS[slug];
+    if (!lv) { const depth = Math.max(1, ...(refs || []).map(r => String(r).split('.').length)); lv = FALLBACK.slice(Math.max(0, FALLBACK.length - depth)); }
+    return lv;
+  }
+
+  // Split a ref into exactly nlev components; a ref DEEPER than nlev folds its extra trailing comps into the
+  // last level (e.g. brihad "3.9.28.1" under a 3-level scheme → ["3","9","28.1"]). Mirrors nav.js's old comps().
+  function comps(ref, nlev) {
+    let p = String(ref).split('.');
+    if (p.length > nlev) p = p.slice(0, nlev - 1).concat(p.slice(nlev - 1).join('.'));
+    return p;
+  }
+
+  // Distinct options at level L, given the chosen values for levels 0..L-1 (`prefix`), in first-seen order.
+  function optionsFor(refs, nlev, level, prefix) {
+    const out = [], seen = {};
+    for (const r of refs) {
+      const p = comps(r, nlev);
+      if (p.length <= level) continue;
+      let ok = true;
+      for (let i = 0; i < level; i++) if (p[i] !== prefix[i]) { ok = false; break; }
+      if (ok && !seen[p[level]]) { seen[p[level]] = 1; out.push(p[level]); }
+    }
+    return out;
+  }
+
+  // Inner styling, keyed on the `.reading-nav` CLASS that mount() adds to its container — so it applies in
+  // BOTH surfaces regardless of the container's id (reading pages ALSO get the sticky card bar via nav.js's
+  // own #reading-nav rule; the picker gets just this inner row).
+  const STYLE = `
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
+.v{scroll-margin-top:78px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.v.navhit{animation:navflash 1.6s ease-out}`;
+
+  // Render cascading <select>s into `container` and wire them. Returns a small controller.
+  function mount(container, opts) {
+    opts = opts || {};
+    const refs = (opts.refs || []).filter(r => r != null).map(String);
+    const slug = opts.slug;
+    const levels = levelsFor(slug, refs);
+    const nlev = levels.length;
+    if (refs.length < 2 && opts.mode !== 'callback') { container.innerHTML = ''; return { getRef: () => refs[0] || null, setRef: () => {}, setRefs: () => {}, refresh: () => {} }; }
+
+    container.classList.add('reading-nav');   // so ReadingNav.STYLE applies regardless of the container's id
+    container.innerHTML = levels.map((lb, i) => `<label class="navlvl"><span>${esc(lb)}</span><select data-lvl="${i}"></select></label>`).join('');
+    const sels = [].slice.call(container.querySelectorAll('select'));
+
+    function chosen(uptoLevel) { const a = []; for (let i = 0; i <= uptoLevel; i++) a.push(sels[i].value); return a; }
+    function fill(sel, options, val) { sel.innerHTML = options.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join(''); }
+    // (Re)build levels from `from` downward, each defaulting to its first valid option under the ones above.
+    function rebuild(from) { for (let L = from; L < sels.length; L++) { const o = optionsFor(refs, nlev, L, chosen(L - 1)); fill(sels[L], o, o[0]); } }
+    function currentRef() { return sels.map(s => s.value).join('.'); }
+    function setRef(ref) {
+      const p = comps(ref, nlev);
+      rebuild(0);
+      for (let L = 0; L < sels.length && L < p.length; L++) { const o = optionsFor(refs, nlev, L, p.slice(0, L)); fill(sels[L], o, p[L]); }
+    }
+    // Swap the ref list in place (same level structure) and repopulate the selects — used by VC's भाष्यम् toggle,
+    // where the picker options differ per mode (मूलम् integers ↔ edition units incl .5). Keeps the current
+    // selection if it survives the swap, else the caller's `keep`, else the first ref.
+    function setRefs(newRefs, keep) {
+      const nr = (newRefs || []).filter(r => r != null).map(String);
+      if (nr.length < 1) return;
+      const prev = currentRef();
+      refs.length = 0; Array.prototype.push.apply(refs, nr);   // mutate in place so the scrollspy closure sees it
+      setRef(nr.indexOf(prev) >= 0 ? prev : (keep != null && nr.indexOf(String(keep)) >= 0 ? String(keep) : nr[0]));
+    }
+
+    let spyUntil = 0;   // scrollspy suppression window: quiet the spy while a programmatic jump smooth-scrolls
+    // Pick the VISIBLE anchor for a ref. VC's ardha-region swap renders each affected verse under BOTH a spine
+    // `v-<ref>` (.ardha-int) and an edition-unit `vb-<ref>` (.ardha-half), and hides one via display:none per
+    // mode (मूलम् hides .ardha-half; भाष्यम् hides .ardha-int). Targeting the always-`v-` anchor scrolled to the
+    // hidden copy in भाष्यम् mode (picker "did nothing", gloss looked empty). display:none ⇒ offsetParent null.
+    function anchorFor(ref) {
+      const spine = document.getElementById('v-' + ref), unit = document.getElementById('vb-' + ref);
+      if (spine && spine.offsetParent !== null) return spine;
+      if (unit && unit.offsetParent !== null) return unit;
+      return spine || unit;   // neither visible (or non-VC text: no vb-) → the spine anchor / null
+    }
+    function jump(ref) {
+      if (opts.mode !== 'jump') return;
+      const file = opts.pageByRef ? opts.pageByRef[ref] : null;
+      if (file == null) return;
+      if (opts.curFile != null && file === opts.curFile) {
+        spyUntil = (typeof Date !== 'undefined' ? Date.now() : 0) + 700;   // don't flicker the picker through intermediate verses
+        const el = anchorFor(ref);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('navhit'); void el.offsetWidth; el.classList.add('navhit'); }
+      } else location.href = file + '#v-' + ref;
+    }
+    function onChange() { const ref = currentRef(); if (typeof opts.onSelect === 'function') opts.onSelect(ref); jump(ref); }
+    sels.forEach((s, L) => s.addEventListener('change', function () { rebuild(L + 1); onChange(); }));
+
+    // initial selection: explicit curRef → #v-<ref> hash → (jump mode) first ref ON THIS PAGE → first ref
+    // overall. The "first on this page" step matters for split texts (chandogya/brihad/gita spread across
+    // files): landing on page N with no hash must show page N's first verse, not the global first (nav.js parity).
+    let init = opts.curRef, fromHash = false;
+    if (!init && typeof location !== 'undefined') { const h = (location.hash || '').replace(/^#v-/, ''); if (h && refs.indexOf(h) >= 0) { init = h; fromHash = true; } }
+    if (!init && opts.mode === 'jump' && opts.pageByRef && opts.curFile != null) init = refs.find(r => opts.pageByRef[r] === opts.curFile) || null;
+    setRef(init || refs[0]);
+    // arriving via #v-<ref>: mirror nav.js's flash cue on the target verse.
+    if (fromHash && opts.mode === 'jump' && typeof document !== 'undefined') { const el = anchorFor(init); if (el) el.classList.add('navhit'); }
+
+    // scrollspy (jump mode only): keep the picker in sync with the verse at the top of the viewport as the
+    // reader scrolls. setRef only repaints the selects (no jump / no onSelect), so there is NO scroll↔jump
+    // feedback loop. The read-a-verse picker (mode 'callback') is untouched.
+    if (opts.mode === 'jump' && typeof document !== 'undefined' && typeof addEventListener !== 'undefined') {
+      // the "you are here" line = bottom of the nearest sticky/fixed ancestor of the nav (else top of viewport)
+      const stickyBottom = function () {
+        let e = container, best = 0;
+        while (e && e !== document.body && e.nodeType === 1) {
+          const cs = getComputedStyle(e);
+          if (cs.position === 'sticky' || cs.position === 'fixed') { const b = e.getBoundingClientRect().bottom; if (b > best) best = b; }
+          e = e.parentElement;
+        }
+        return best;
+      };
+      const spy = function () {
+        if (Date.now() < spyUntil) return;
+        const y = stickyBottom() + 8; let pick = null;
+        for (let i = 0; i < refs.length; i++) {
+          const el = anchorFor(refs[i]);
+          if (!el) continue;                                   // ref not on THIS page (split texts) → skip
+          if (el.getBoundingClientRect().top <= y) pick = refs[i];
+          else if (pick !== null) break;                       // first on-page verse below the line → done (verses are in order)
+        }
+        if (pick && pick !== currentRef()) setRef(pick);
+      };
+      let ticking = false;
+      addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; spy(); }); } }, { passive: true });
+    }
+
+    return { getRef: currentRef, setRef, setRefs, refresh: () => setRef(currentRef()) };
+  }
+
+  return { LEVELS, FALLBACK, levelsFor, comps, optionsFor, esc, STYLE, mount };
+});
+
+;(function(){if(window.ReadingNav)Object.assign(window.ReadingNav.LEVELS,{"SVS":["श्लोक"]});var el=document.getElementById('reading-nav-picker');if(el&&window.ReadingNav)window.__readingNav=window.ReadingNav.mount(el, {"slug":"SVS","refs":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132","133","134","135","136","137","138","139","140","141","142","143","144","145","146","147","148","149","150","151","152","153","154","155","156","157","158","159","160","161","162","163","164","165","166","167","168","169","170","171","172","173","174","175","176","177","178","179","180","181","182","183","184","185","186","187","188","189","190","191","192","193","194","195","196","197","198","199","200","201","202","203","204","205","206","207","208","209","210","211","212","213","214","215","216","217","218","219","220","221","222","223","224","225","226","227","228","229","230","231","232","233","234","235","236","237","238","239","240","241","242","243","244","245","246","247","248","249","250","251","252","253","254","255","256","257","258","259","260","261","262","263","264","265","266","267","268","269","270","271","272","273","274","275","276","277","278","279","280","281","282","283","284","285","286","287","288","289","290","291","292","293","294","295","296","297","298","299","300","301","302","303","304","305","306","307","308","309","310","311","312","313","314","315","316","317","318","319","320","321","322","323","324","325","326","327","328","329","330","331","332","333","334","335","336","337","338","339","340","341","342","343","344","345","346","347","348","349","350","351","352","353","354","355","356","357","358","359","360","361","362","363","364","365","366","367","368","369","370","371","372","373","374","375","376","377","378","379","380","381","382","383","384","385","386","387","388","389","390","391","392","393","394","395","396","397","398","399","400","401","402","403","404","405","406","407","408","409","410","411","412","413","414","415","416","417","418","419","420","421","422","423","424","425","426","427","428","429","430","431","432","433","434","435","436","437","438","439","440","441","442","443","444","445","446","447","448","449","450","451","452","453","454","455","456","457","458","459","460","461","462","463","464","465","466","467","468","469","470","471","472","473","474","475","476","477","478","479","480","481","482","483","484","485","486","487","488","489","490","491","492","493","494","495","496","497","498","499","500","501","502","503","504","505","506","507","508","509","510","511","512","513","514","515","516","517","518","519","520","521","522","523","524","525","526","527","528","529","530","531","532","533","534","535","536","537","538","539","540","541","542","543","544","545","546","547","548","549","550","551","552","553","554","555","556","557","558","559","560","561","562","563","564","565","566","567","568","569","570","571","572","573","574","575","576","577","578","579","580","581","582","583","584","585","586","587","588","589","590","591","592","593","594","595","596","597","598","599","600","601","602","603","604","605","606","607","608","609","610","611","612","613","614","615","616","617","618","619","620","621","622","623","624","625","626","627","628","629","630","631","632","633","634","635","636","637","638","639","640","641","642","643","644","645","646","647","648","649","650","651","652","653","654","655","656","657","658","659","660","661","662","663","664","665","666","667","668","669","670","671","672","673","674","675","676","677","678","679","680","681","682","683","684","685","686","687","688","689","690","691","692","693","694","695","696","697","698","699","700","701","702","703","704","705","706","707","708","709","710","711","712","713","714","715","716","717","718","719","720","721","722","723","724","725","726","727","728","729","730","731","732","733","734","735","736","737","738","739","740","741","742","743","744","745","746","747","748","749","750","751","752","753","754","755","756","757","758","759","760","761","762","763","764","765","766","767","768","769","770","771","772","773","774","775","776","777","778","779","780","781","782","783","784","785","786","787","788","789","790","791","792","793","794","795","796","797","798","799","800","801","802","803","804","805","806","807","808","809","810","811","812","813","814","815","816","817","818","819","820","821","822","823","824","825","826","827","828","829","830","831","832","833","834","835","836","837","838","839","840","841","842","843","844","845","846","847","848","849","850","851","852","853","854","855","856","857","858","859","860","861","862","863","864","865","866","867","868","869","870","871","872","873","874","875","876","877","878","879","880","881","882","883","884","885","886","887","888","889","890","891","892","893","894","895","896","897","898","899","900","901","902","903","904","905","906","907","908","909","910","911","912","913","914","915","916","917","918","919","920","921","922","923","924","925","926","927","928","929","930","931","932","933","934","935","936","937","938","939","940","941","942","943","944","945","946","947","948","949","950","951","952","953","954","955","956","957","958","959","960","961","962","963","964","965","966","967","968","969","970","971","972","973","974","975","976","977","978","979","980","981","982","983","984","985","986","987","988","989","990","991","992","993","994","995","996","997","998","999","1000","1001","1002","1003","1004","1005","1006"],"pageByRef":{"1":"reading-svs-1.html","2":"reading-svs-1.html","3":"reading-svs-1.html","4":"reading-svs-1.html","5":"reading-svs-1.html","6":"reading-svs-1.html","7":"reading-svs-1.html","8":"reading-svs-1.html","9":"reading-svs-1.html","10":"reading-svs-1.html","11":"reading-svs-1.html","12":"reading-svs-1.html","13":"reading-svs-1.html","14":"reading-svs-1.html","15":"reading-svs-1.html","16":"reading-svs-1.html","17":"reading-svs-1.html","18":"reading-svs-1.html","19":"reading-svs-1.html","20":"reading-svs-1.html","21":"reading-svs-1.html","22":"reading-svs-1.html","23":"reading-svs-1.html","24":"reading-svs-1.html","25":"reading-svs-1.html","26":"reading-svs-1.html","27":"reading-svs-1.html","28":"reading-svs-1.html","29":"reading-svs-1.html","30":"reading-svs-1.html","31":"reading-svs-1.html","32":"reading-svs-1.html","33":"reading-svs-1.html","34":"reading-svs-1.html","35":"reading-svs-1.html","36":"reading-svs-1.html","37":"reading-svs-1.html","38":"reading-svs-1.html","39":"reading-svs-1.html","40":"reading-svs-1.html","41":"reading-svs-1.html","42":"reading-svs-1.html","43":"reading-svs-1.html","44":"reading-svs-1.html","45":"reading-svs-1.html","46":"reading-svs-1.html","47":"reading-svs-1.html","48":"reading-svs-1.html","49":"reading-svs-1.html","50":"reading-svs-1.html","51":"reading-svs-1.html","52":"reading-svs-1.html","53":"reading-svs-1.html","54":"reading-svs-1.html","55":"reading-svs-1.html","56":"reading-svs-1.html","57":"reading-svs-1.html","58":"reading-svs-1.html","59":"reading-svs-1.html","60":"reading-svs-1.html","61":"reading-svs-1.html","62":"reading-svs-1.html","63":"reading-svs-1.html","64":"reading-svs-1.html","65":"reading-svs-1.html","66":"reading-svs-1.html","67":"reading-svs-1.html","68":"reading-svs-1.html","69":"reading-svs-1.html","70":"reading-svs-1.html","71":"reading-svs-1.html","72":"reading-svs-1.html","73":"reading-svs-1.html","74":"reading-svs-1.html","75":"reading-svs-1.html","76":"reading-svs-1.html","77":"reading-svs-1.html","78":"reading-svs-1.html","79":"reading-svs-1.html","80":"reading-svs-1.html","81":"reading-svs-1.html","82":"reading-svs-1.html","83":"reading-svs-1.html","84":"reading-svs-1.html","85":"reading-svs-1.html","86":"reading-svs-1.html","87":"reading-svs-1.html","88":"reading-svs-1.html","89":"reading-svs-1.html","90":"reading-svs-1.html","91":"reading-svs-1.html","92":"reading-svs-1.html","93":"reading-svs-1.html","94":"reading-svs-1.html","95":"reading-svs-1.html","96":"reading-svs-1.html","97":"reading-svs-1.html","98":"reading-svs-1.html","99":"reading-svs-1.html","100":"reading-svs-1.html","101":"reading-svs-1.html","102":"reading-svs-1.html","103":"reading-svs-1.html","104":"reading-svs-1.html","105":"reading-svs-1.html","106":"reading-svs-1.html","107":"reading-svs-1.html","108":"reading-svs-1.html","109":"reading-svs-1.html","110":"reading-svs-1.html","111":"reading-svs-1.html","112":"reading-svs-1.html","113":"reading-svs-1.html","114":"reading-svs-1.html","115":"reading-svs-1.html","116":"reading-svs-1.html","117":"reading-svs-1.html","118":"reading-svs-1.html","119":"reading-svs-1.html","120":"reading-svs-1.html","121":"reading-svs-1.html","122":"reading-svs-1.html","123":"reading-svs-1.html","124":"reading-svs-1.html","125":"reading-svs-1.html","126":"reading-svs-1.html","127":"reading-svs-1.html","128":"reading-svs-1.html","129":"reading-svs-1.html","130":"reading-svs-1.html","131":"reading-svs-1.html","132":"reading-svs-1.html","133":"reading-svs-1.html","134":"reading-svs-1.html","135":"reading-svs-1.html","136":"reading-svs-1.html","137":"reading-svs-1.html","138":"reading-svs-1.html","139":"reading-svs-1.html","140":"reading-svs-1.html","141":"reading-svs-1.html","142":"reading-svs-1.html","143":"reading-svs-1.html","144":"reading-svs-1.html","145":"reading-svs-1.html","146":"reading-svs-1.html","147":"reading-svs-1.html","148":"reading-svs-1.html","149":"reading-svs-1.html","150":"reading-svs-1.html","151":"reading-svs-1.html","152":"reading-svs-1.html","153":"reading-svs-1.html","154":"reading-svs-1.html","155":"reading-svs-1.html","156":"reading-svs-1.html","157":"reading-svs-1.html","158":"reading-svs-1.html","159":"reading-svs-1.html","160":"reading-svs-1.html","161":"reading-svs-1.html","162":"reading-svs-1.html","163":"reading-svs-1.html","164":"reading-svs-1.html","165":"reading-svs-1.html","166":"reading-svs-1.html","167":"reading-svs-1.html","168":"reading-svs-1.html","169":"reading-svs-1.html","170":"reading-svs-1.html","171":"reading-svs-1.html","172":"reading-svs-1.html","173":"reading-svs-1.html","174":"reading-svs-1.html","175":"reading-svs-1.html","176":"reading-svs-1.html","177":"reading-svs-1.html","178":"reading-svs-1.html","179":"reading-svs-1.html","180":"reading-svs-1.html","181":"reading-svs-1.html","182":"reading-svs-1.html","183":"reading-svs-1.html","184":"reading-svs-1.html","185":"reading-svs-1.html","186":"reading-svs-1.html","187":"reading-svs-1.html","188":"reading-svs-1.html","189":"reading-svs-1.html","190":"reading-svs-1.html","191":"reading-svs-1.html","192":"reading-svs-1.html","193":"reading-svs-1.html","194":"reading-svs-1.html","195":"reading-svs-1.html","196":"reading-svs-1.html","197":"reading-svs-1.html","198":"reading-svs-1.html","199":"reading-svs-1.html","200":"reading-svs-1.html","201":"reading-svs-1.html","202":"reading-svs-1.html","203":"reading-svs-1.html","204":"reading-svs-1.html","205":"reading-svs-1.html","206":"reading-svs-1.html","207":"reading-svs-1.html","208":"reading-svs-1.html","209":"reading-svs-1.html","210":"reading-svs-1.html","211":"reading-svs-1.html","212":"reading-svs-1.html","213":"reading-svs-1.html","214":"reading-svs-1.html","215":"reading-svs-1.html","216":"reading-svs-1.html","217":"reading-svs-1.html","218":"reading-svs-1.html","219":"reading-svs-1.html","220":"reading-svs-1.html","221":"reading-svs-1.html","222":"reading-svs-1.html","223":"reading-svs-1.html","224":"reading-svs-1.html","225":"reading-svs-1.html","226":"reading-svs-1.html","227":"reading-svs-1.html","228":"reading-svs-1.html","229":"reading-svs-1.html","230":"reading-svs-1.html","231":"reading-svs-1.html","232":"reading-svs-1.html","233":"reading-svs-1.html","234":"reading-svs-1.html","235":"reading-svs-1.html","236":"reading-svs-1.html","237":"reading-svs-1.html","238":"reading-svs-1.html","239":"reading-svs-1.html","240":"reading-svs-1.html","241":"reading-svs-1.html","242":"reading-svs-1.html","243":"reading-svs-1.html","244":"reading-svs-1.html","245":"reading-svs-1.html","246":"reading-svs-1.html","247":"reading-svs-1.html","248":"reading-svs-1.html","249":"reading-svs-1.html","250":"reading-svs-1.html","251":"reading-svs-1.html","252":"reading-svs-1.html","253":"reading-svs-1.html","254":"reading-svs-1.html","255":"reading-svs-1.html","256":"reading-svs-1.html","257":"reading-svs-1.html","258":"reading-svs-1.html","259":"reading-svs-1.html","260":"reading-svs-1.html","261":"reading-svs-1.html","262":"reading-svs-1.html","263":"reading-svs-1.html","264":"reading-svs-1.html","265":"reading-svs-1.html","266":"reading-svs-1.html","267":"reading-svs-1.html","268":"reading-svs-1.html","269":"reading-svs-1.html","270":"reading-svs-1.html","271":"reading-svs-1.html","272":"reading-svs-1.html","273":"reading-svs-1.html","274":"reading-svs-1.html","275":"reading-svs-1.html","276":"reading-svs-1.html","277":"reading-svs-1.html","278":"reading-svs-1.html","279":"reading-svs-1.html","280":"reading-svs-1.html","281":"reading-svs-1.html","282":"reading-svs-1.html","283":"reading-svs-1.html","284":"reading-svs-1.html","285":"reading-svs-1.html","286":"reading-svs-1.html","287":"reading-svs-1.html","288":"reading-svs-1.html","289":"reading-svs-1.html","290":"reading-svs-1.html","291":"reading-svs-1.html","292":"reading-svs-1.html","293":"reading-svs-1.html","294":"reading-svs-1.html","295":"reading-svs-1.html","296":"reading-svs-1.html","297":"reading-svs-2.html","298":"reading-svs-2.html","299":"reading-svs-2.html","300":"reading-svs-2.html","301":"reading-svs-2.html","302":"reading-svs-2.html","303":"reading-svs-2.html","304":"reading-svs-2.html","305":"reading-svs-2.html","306":"reading-svs-2.html","307":"reading-svs-2.html","308":"reading-svs-2.html","309":"reading-svs-2.html","310":"reading-svs-2.html","311":"reading-svs-2.html","312":"reading-svs-2.html","313":"reading-svs-2.html","314":"reading-svs-2.html","315":"reading-svs-2.html","316":"reading-svs-2.html","317":"reading-svs-2.html","318":"reading-svs-2.html","319":"reading-svs-2.html","320":"reading-svs-2.html","321":"reading-svs-2.html","322":"reading-svs-2.html","323":"reading-svs-2.html","324":"reading-svs-2.html","325":"reading-svs-2.html","326":"reading-svs-2.html","327":"reading-svs-2.html","328":"reading-svs-2.html","329":"reading-svs-2.html","330":"reading-svs-2.html","331":"reading-svs-2.html","332":"reading-svs-2.html","333":"reading-svs-2.html","334":"reading-svs-2.html","335":"reading-svs-2.html","336":"reading-svs-2.html","337":"reading-svs-2.html","338":"reading-svs-2.html","339":"reading-svs-2.html","340":"reading-svs-2.html","341":"reading-svs-2.html","342":"reading-svs-2.html","343":"reading-svs-2.html","344":"reading-svs-2.html","345":"reading-svs-2.html","346":"reading-svs-2.html","347":"reading-svs-2.html","348":"reading-svs-2.html","349":"reading-svs-2.html","350":"reading-svs-2.html","351":"reading-svs-2.html","352":"reading-svs-2.html","353":"reading-svs-2.html","354":"reading-svs-2.html","355":"reading-svs-2.html","356":"reading-svs-2.html","357":"reading-svs-2.html","358":"reading-svs-2.html","359":"reading-svs-2.html","360":"reading-svs-2.html","361":"reading-svs-2.html","362":"reading-svs-2.html","363":"reading-svs-2.html","364":"reading-svs-2.html","365":"reading-svs-2.html","366":"reading-svs-2.html","367":"reading-svs-2.html","368":"reading-svs-2.html","369":"reading-svs-2.html","370":"reading-svs-2.html","371":"reading-svs-2.html","372":"reading-svs-2.html","373":"reading-svs-2.html","374":"reading-svs-2.html","375":"reading-svs-2.html","376":"reading-svs-2.html","377":"reading-svs-2.html","378":"reading-svs-2.html","379":"reading-svs-2.html","380":"reading-svs-2.html","381":"reading-svs-2.html","382":"reading-svs-2.html","383":"reading-svs-2.html","384":"reading-svs-2.html","385":"reading-svs-2.html","386":"reading-svs-2.html","387":"reading-svs-2.html","388":"reading-svs-2.html","389":"reading-svs-2.html","390":"reading-svs-2.html","391":"reading-svs-2.html","392":"reading-svs-2.html","393":"reading-svs-2.html","394":"reading-svs-2.html","395":"reading-svs-2.html","396":"reading-svs-2.html","397":"reading-svs-2.html","398":"reading-svs-2.html","399":"reading-svs-2.html","400":"reading-svs-2.html","401":"reading-svs-2.html","402":"reading-svs-2.html","403":"reading-svs-2.html","404":"reading-svs-2.html","405":"reading-svs-2.html","406":"reading-svs-2.html","407":"reading-svs-2.html","408":"reading-svs-2.html","409":"reading-svs-2.html","410":"reading-svs-2.html","411":"reading-svs-2.html","412":"reading-svs-2.html","413":"reading-svs-2.html","414":"reading-svs-2.html","415":"reading-svs-2.html","416":"reading-svs-2.html","417":"reading-svs-2.html","418":"reading-svs-2.html","419":"reading-svs-2.html","420":"reading-svs-2.html","421":"reading-svs-2.html","422":"reading-svs-2.html","423":"reading-svs-2.html","424":"reading-svs-2.html","425":"reading-svs-2.html","426":"reading-svs-2.html","427":"reading-svs-2.html","428":"reading-svs-2.html","429":"reading-svs-2.html","430":"reading-svs-2.html","431":"reading-svs-2.html","432":"reading-svs-2.html","433":"reading-svs-2.html","434":"reading-svs-2.html","435":"reading-svs-2.html","436":"reading-svs-2.html","437":"reading-svs-2.html","438":"reading-svs-2.html","439":"reading-svs-2.html","440":"reading-svs-2.html","441":"reading-svs-2.html","442":"reading-svs-2.html","443":"reading-svs-2.html","444":"reading-svs-2.html","445":"reading-svs-2.html","446":"reading-svs-2.html","447":"reading-svs-2.html","448":"reading-svs-2.html","449":"reading-svs-2.html","450":"reading-svs-2.html","451":"reading-svs-2.html","452":"reading-svs-2.html","453":"reading-svs-2.html","454":"reading-svs-2.html","455":"reading-svs-2.html","456":"reading-svs-2.html","457":"reading-svs-2.html","458":"reading-svs-2.html","459":"reading-svs-2.html","460":"reading-svs-2.html","461":"reading-svs-2.html","462":"reading-svs-2.html","463":"reading-svs-2.html","464":"reading-svs-2.html","465":"reading-svs-2.html","466":"reading-svs-2.html","467":"reading-svs-2.html","468":"reading-svs-2.html","469":"reading-svs-2.html","470":"reading-svs-2.html","471":"reading-svs-2.html","472":"reading-svs-2.html","473":"reading-svs-2.html","474":"reading-svs-2.html","475":"reading-svs-2.html","476":"reading-svs-2.html","477":"reading-svs-2.html","478":"reading-svs-2.html","479":"reading-svs-2.html","480":"reading-svs-2.html","481":"reading-svs-2.html","482":"reading-svs-2.html","483":"reading-svs-2.html","484":"reading-svs-2.html","485":"reading-svs-2.html","486":"reading-svs-2.html","487":"reading-svs-2.html","488":"reading-svs-2.html","489":"reading-svs-2.html","490":"reading-svs-2.html","491":"reading-svs-2.html","492":"reading-svs-2.html","493":"reading-svs-2.html","494":"reading-svs-2.html","495":"reading-svs-2.html","496":"reading-svs-2.html","497":"reading-svs-2.html","498":"reading-svs-2.html","499":"reading-svs-2.html","500":"reading-svs-2.html","501":"reading-svs-2.html","502":"reading-svs-2.html","503":"reading-svs-2.html","504":"reading-svs-2.html","505":"reading-svs-2.html","506":"reading-svs-2.html","507":"reading-svs-2.html","508":"reading-svs-2.html","509":"reading-svs-2.html","510":"reading-svs-2.html","511":"reading-svs-2.html","512":"reading-svs-2.html","513":"reading-svs-2.html","514":"reading-svs-2.html","515":"reading-svs-2.html","516":"reading-svs-2.html","517":"reading-svs-2.html","518":"reading-svs-2.html","519":"reading-svs-2.html","520":"reading-svs-2.html","521":"reading-svs-2.html","522":"reading-svs-2.html","523":"reading-svs-2.html","524":"reading-svs-2.html","525":"reading-svs-2.html","526":"reading-svs-2.html","527":"reading-svs-2.html","528":"reading-svs-2.html","529":"reading-svs-2.html","530":"reading-svs-2.html","531":"reading-svs-2.html","532":"reading-svs-2.html","533":"reading-svs-2.html","534":"reading-svs-2.html","535":"reading-svs-2.html","536":"reading-svs-2.html","537":"reading-svs-2.html","538":"reading-svs-2.html","539":"reading-svs-2.html","540":"reading-svs-2.html","541":"reading-svs-2.html","542":"reading-svs-2.html","543":"reading-svs-2.html","544":"reading-svs-2.html","545":"reading-svs-2.html","546":"reading-svs-2.html","547":"reading-svs-2.html","548":"reading-svs-2.html","549":"reading-svs-2.html","550":"reading-svs-2.html","551":"reading-svs-2.html","552":"reading-svs-2.html","553":"reading-svs-2.html","554":"reading-svs-2.html","555":"reading-svs-2.html","556":"reading-svs-2.html","557":"reading-svs-2.html","558":"reading-svs-2.html","559":"reading-svs-2.html","560":"reading-svs-2.html","561":"reading-svs-2.html","562":"reading-svs-2.html","563":"reading-svs-2.html","564":"reading-svs-2.html","565":"reading-svs-2.html","566":"reading-svs-2.html","567":"reading-svs-2.html","568":"reading-svs-2.html","569":"reading-svs-2.html","570":"reading-svs-2.html","571":"reading-svs-2.html","572":"reading-svs-2.html","573":"reading-svs-2.html","574":"reading-svs-2.html","575":"reading-svs-2.html","576":"reading-svs-2.html","577":"reading-svs-2.html","578":"reading-svs-2.html","579":"reading-svs-2.html","580":"reading-svs-2.html","581":"reading-svs-2.html","582":"reading-svs-2.html","583":"reading-svs-2.html","584":"reading-svs-2.html","585":"reading-svs-2.html","586":"reading-svs-2.html","587":"reading-svs-2.html","588":"reading-svs-2.html","589":"reading-svs-2.html","590":"reading-svs-2.html","591":"reading-svs-2.html","592":"reading-svs-2.html","593":"reading-svs-2.html","594":"reading-svs-2.html","595":"reading-svs-2.html","596":"reading-svs-2.html","597":"reading-svs-2.html","598":"reading-svs-2.html","599":"reading-svs-2.html","600":"reading-svs-2.html","601":"reading-svs-2.html","602":"reading-svs-2.html","603":"reading-svs-2.html","604":"reading-svs-2.html","605":"reading-svs-2.html","606":"reading-svs-2.html","607":"reading-svs-2.html","608":"reading-svs-2.html","609":"reading-svs-2.html","610":"reading-svs-2.html","611":"reading-svs-2.html","612":"reading-svs-2.html","613":"reading-svs-2.html","614":"reading-svs-2.html","615":"reading-svs-2.html","616":"reading-svs-2.html","617":"reading-svs-2.html","618":"reading-svs-2.html","619":"reading-svs-2.html","620":"reading-svs-2.html","621":"reading-svs-2.html","622":"reading-svs-2.html","623":"reading-svs-2.html","624":"reading-svs-2.html","625":"reading-svs-2.html","626":"reading-svs-2.html","627":"reading-svs-2.html","628":"reading-svs-2.html","629":"reading-svs-2.html","630":"reading-svs-2.html","631":"reading-svs-2.html","632":"reading-svs-2.html","633":"reading-svs-2.html","634":"reading-svs-2.html","635":"reading-svs-2.html","636":"reading-svs-2.html","637":"reading-svs-2.html","638":"reading-svs-2.html","639":"reading-svs-2.html","640":"reading-svs-2.html","641":"reading-svs-2.html","642":"reading-svs-2.html","643":"reading-svs-2.html","644":"reading-svs-2.html","645":"reading-svs-2.html","646":"reading-svs-2.html","647":"reading-svs-2.html","648":"reading-svs-2.html","649":"reading-svs-2.html","650":"reading-svs-2.html","651":"reading-svs-2.html","652":"reading-svs-2.html","653":"reading-svs-2.html","654":"reading-svs-2.html","655":"reading-svs-2.html","656":"reading-svs-2.html","657":"reading-svs-2.html","658":"reading-svs-2.html","659":"reading-svs-2.html","660":"reading-svs-2.html","661":"reading-svs-2.html","662":"reading-svs-2.html","663":"reading-svs-2.html","664":"reading-svs-2.html","665":"reading-svs-2.html","666":"reading-svs-2.html","667":"reading-svs-2.html","668":"reading-svs-2.html","669":"reading-svs-2.html","670":"reading-svs-2.html","671":"reading-svs-2.html","672":"reading-svs-2.html","673":"reading-svs-2.html","674":"reading-svs-2.html","675":"reading-svs-2.html","676":"reading-svs-2.html","677":"reading-svs-2.html","678":"reading-svs-2.html","679":"reading-svs-2.html","680":"reading-svs-2.html","681":"reading-svs-2.html","682":"reading-svs-2.html","683":"reading-svs-2.html","684":"reading-svs-2.html","685":"reading-svs-2.html","686":"reading-svs-2.html","687":"reading-svs-2.html","688":"reading-svs-2.html","689":"reading-svs-2.html","690":"reading-svs-2.html","691":"reading-svs-2.html","692":"reading-svs-2.html","693":"reading-svs-2.html","694":"reading-svs-2.html","695":"reading-svs-2.html","696":"reading-svs-2.html","697":"reading-svs-2.html","698":"reading-svs-2.html","699":"reading-svs-2.html","700":"reading-svs-2.html","701":"reading-svs-2.html","702":"reading-svs-2.html","703":"reading-svs-3.html","704":"reading-svs-3.html","705":"reading-svs-3.html","706":"reading-svs-3.html","707":"reading-svs-3.html","708":"reading-svs-3.html","709":"reading-svs-3.html","710":"reading-svs-3.html","711":"reading-svs-3.html","712":"reading-svs-3.html","713":"reading-svs-3.html","714":"reading-svs-3.html","715":"reading-svs-3.html","716":"reading-svs-3.html","717":"reading-svs-3.html","718":"reading-svs-3.html","719":"reading-svs-3.html","720":"reading-svs-3.html","721":"reading-svs-3.html","722":"reading-svs-3.html","723":"reading-svs-3.html","724":"reading-svs-3.html","725":"reading-svs-3.html","726":"reading-svs-3.html","727":"reading-svs-3.html","728":"reading-svs-3.html","729":"reading-svs-3.html","730":"reading-svs-3.html","731":"reading-svs-3.html","732":"reading-svs-3.html","733":"reading-svs-3.html","734":"reading-svs-3.html","735":"reading-svs-3.html","736":"reading-svs-3.html","737":"reading-svs-3.html","738":"reading-svs-3.html","739":"reading-svs-3.html","740":"reading-svs-3.html","741":"reading-svs-3.html","742":"reading-svs-3.html","743":"reading-svs-3.html","744":"reading-svs-3.html","745":"reading-svs-3.html","746":"reading-svs-3.html","747":"reading-svs-3.html","748":"reading-svs-3.html","749":"reading-svs-3.html","750":"reading-svs-3.html","751":"reading-svs-3.html","752":"reading-svs-3.html","753":"reading-svs-3.html","754":"reading-svs-3.html","755":"reading-svs-3.html","756":"reading-svs-3.html","757":"reading-svs-3.html","758":"reading-svs-3.html","759":"reading-svs-3.html","760":"reading-svs-3.html","761":"reading-svs-3.html","762":"reading-svs-3.html","763":"reading-svs-3.html","764":"reading-svs-3.html","765":"reading-svs-3.html","766":"reading-svs-3.html","767":"reading-svs-3.html","768":"reading-svs-3.html","769":"reading-svs-3.html","770":"reading-svs-3.html","771":"reading-svs-3.html","772":"reading-svs-3.html","773":"reading-svs-3.html","774":"reading-svs-3.html","775":"reading-svs-3.html","776":"reading-svs-3.html","777":"reading-svs-3.html","778":"reading-svs-3.html","779":"reading-svs-3.html","780":"reading-svs-3.html","781":"reading-svs-3.html","782":"reading-svs-3.html","783":"reading-svs-3.html","784":"reading-svs-3.html","785":"reading-svs-3.html","786":"reading-svs-3.html","787":"reading-svs-3.html","788":"reading-svs-3.html","789":"reading-svs-3.html","790":"reading-svs-3.html","791":"reading-svs-3.html","792":"reading-svs-3.html","793":"reading-svs-3.html","794":"reading-svs-3.html","795":"reading-svs-3.html","796":"reading-svs-3.html","797":"reading-svs-3.html","798":"reading-svs-3.html","799":"reading-svs-3.html","800":"reading-svs-3.html","801":"reading-svs-3.html","802":"reading-svs-3.html","803":"reading-svs-3.html","804":"reading-svs-3.html","805":"reading-svs-3.html","806":"reading-svs-3.html","807":"reading-svs-3.html","808":"reading-svs-3.html","809":"reading-svs-3.html","810":"reading-svs-3.html","811":"reading-svs-3.html","812":"reading-svs-3.html","813":"reading-svs-3.html","814":"reading-svs-3.html","815":"reading-svs-3.html","816":"reading-svs-3.html","817":"reading-svs-3.html","818":"reading-svs-3.html","819":"reading-svs-3.html","820":"reading-svs-3.html","821":"reading-svs-3.html","822":"reading-svs-3.html","823":"reading-svs-3.html","824":"reading-svs-3.html","825":"reading-svs-3.html","826":"reading-svs-3.html","827":"reading-svs-3.html","828":"reading-svs-3.html","829":"reading-svs-3.html","830":"reading-svs-3.html","831":"reading-svs-3.html","832":"reading-svs-3.html","833":"reading-svs-3.html","834":"reading-svs-3.html","835":"reading-svs-3.html","836":"reading-svs-3.html","837":"reading-svs-3.html","838":"reading-svs-3.html","839":"reading-svs-3.html","840":"reading-svs-3.html","841":"reading-svs-3.html","842":"reading-svs-3.html","843":"reading-svs-3.html","844":"reading-svs-3.html","845":"reading-svs-3.html","846":"reading-svs-3.html","847":"reading-svs-3.html","848":"reading-svs-3.html","849":"reading-svs-3.html","850":"reading-svs-3.html","851":"reading-svs-3.html","852":"reading-svs-3.html","853":"reading-svs-3.html","854":"reading-svs-3.html","855":"reading-svs-3.html","856":"reading-svs-3.html","857":"reading-svs-3.html","858":"reading-svs-3.html","859":"reading-svs-3.html","860":"reading-svs-3.html","861":"reading-svs-3.html","862":"reading-svs-3.html","863":"reading-svs-3.html","864":"reading-svs-3.html","865":"reading-svs-3.html","866":"reading-svs-3.html","867":"reading-svs-3.html","868":"reading-svs-3.html","869":"reading-svs-3.html","870":"reading-svs-3.html","871":"reading-svs-3.html","872":"reading-svs-3.html","873":"reading-svs-3.html","874":"reading-svs-3.html","875":"reading-svs-3.html","876":"reading-svs-3.html","877":"reading-svs-3.html","878":"reading-svs-3.html","879":"reading-svs-3.html","880":"reading-svs-3.html","881":"reading-svs-3.html","882":"reading-svs-3.html","883":"reading-svs-3.html","884":"reading-svs-3.html","885":"reading-svs-3.html","886":"reading-svs-3.html","887":"reading-svs-3.html","888":"reading-svs-3.html","889":"reading-svs-3.html","890":"reading-svs-3.html","891":"reading-svs-3.html","892":"reading-svs-3.html","893":"reading-svs-3.html","894":"reading-svs-3.html","895":"reading-svs-3.html","896":"reading-svs-3.html","897":"reading-svs-3.html","898":"reading-svs-3.html","899":"reading-svs-3.html","900":"reading-svs-3.html","901":"reading-svs-3.html","902":"reading-svs-3.html","903":"reading-svs-3.html","904":"reading-svs-3.html","905":"reading-svs-3.html","906":"reading-svs-3.html","907":"reading-svs-3.html","908":"reading-svs-3.html","909":"reading-svs-3.html","910":"reading-svs-3.html","911":"reading-svs-3.html","912":"reading-svs-3.html","913":"reading-svs-3.html","914":"reading-svs-3.html","915":"reading-svs-3.html","916":"reading-svs-3.html","917":"reading-svs-3.html","918":"reading-svs-3.html","919":"reading-svs-3.html","920":"reading-svs-3.html","921":"reading-svs-3.html","922":"reading-svs-3.html","923":"reading-svs-3.html","924":"reading-svs-3.html","925":"reading-svs-3.html","926":"reading-svs-3.html","927":"reading-svs-3.html","928":"reading-svs-3.html","929":"reading-svs-3.html","930":"reading-svs-3.html","931":"reading-svs-3.html","932":"reading-svs-3.html","933":"reading-svs-3.html","934":"reading-svs-3.html","935":"reading-svs-3.html","936":"reading-svs-3.html","937":"reading-svs-3.html","938":"reading-svs-3.html","939":"reading-svs-3.html","940":"reading-svs-3.html","941":"reading-svs-3.html","942":"reading-svs-3.html","943":"reading-svs-3.html","944":"reading-svs-3.html","945":"reading-svs-3.html","946":"reading-svs-3.html","947":"reading-svs-3.html","948":"reading-svs-3.html","949":"reading-svs-3.html","950":"reading-svs-3.html","951":"reading-svs-3.html","952":"reading-svs-3.html","953":"reading-svs-3.html","954":"reading-svs-3.html","955":"reading-svs-3.html","956":"reading-svs-3.html","957":"reading-svs-3.html","958":"reading-svs-3.html","959":"reading-svs-3.html","960":"reading-svs-3.html","961":"reading-svs-3.html","962":"reading-svs-3.html","963":"reading-svs-3.html","964":"reading-svs-3.html","965":"reading-svs-3.html","966":"reading-svs-3.html","967":"reading-svs-3.html","968":"reading-svs-3.html","969":"reading-svs-3.html","970":"reading-svs-3.html","971":"reading-svs-3.html","972":"reading-svs-3.html","973":"reading-svs-3.html","974":"reading-svs-3.html","975":"reading-svs-3.html","976":"reading-svs-3.html","977":"reading-svs-3.html","978":"reading-svs-3.html","979":"reading-svs-3.html","980":"reading-svs-3.html","981":"reading-svs-3.html","982":"reading-svs-3.html","983":"reading-svs-3.html","984":"reading-svs-3.html","985":"reading-svs-3.html","986":"reading-svs-3.html","987":"reading-svs-3.html","988":"reading-svs-3.html","989":"reading-svs-3.html","990":"reading-svs-3.html","991":"reading-svs-3.html","992":"reading-svs-3.html","993":"reading-svs-3.html","994":"reading-svs-3.html","995":"reading-svs-3.html","996":"reading-svs-3.html","997":"reading-svs-3.html","998":"reading-svs-3.html","999":"reading-svs-3.html","1000":"reading-svs-3.html","1001":"reading-svs-3.html","1002":"reading-svs-3.html","1003":"reading-svs-3.html","1004":"reading-svs-3.html","1005":"reading-svs-3.html","1006":"reading-svs-3.html"},"curFile":"reading-svs.html","mode":"jump"});})();(function(){var bar=document.getElementById('reading-nav');if(!bar)return;var b=document.querySelector('a[data-vv-brand]')||document.querySelector('a[href="index.html"][title*="Home"]');if(!b||bar.contains(b)||b.closest('[data-vv-brand-pinned]'))return;var full=(b.textContent||'').trim(),SH={'अध्ययन-सहकारी':'अध्य·सहकारी','साहित्य-व्याकरणम्':'सा·व्या','वैदान्तिक-व्याकरणम्':'वै·व्या'};var sh=b.getAttribute('data-short')||SH[full]||full;b.removeAttribute('style');b.className='rn-brand';b.innerHTML='<span class="rn-bf"></span><span class="rn-bs"></span>';b.firstChild.textContent=full;b.lastChild.textContent=sh;bar.insertBefore(b,bar.firstChild);})();</script><script src="vv-store.js"></script><script src="vv-reader.js"></script><details class="legend vleg"><summary>॥ सङ्केत-सूची · legend <span class="tw">toggle to fold / unfold</span></summary><div class="legtxt">Hover on any word for its <span style="color:var(--mng)">meaning</span> and grammar (व्याकरणम् — stem or root, case·number·gender, and the samāsa type). The word analysis is Sri Tamal Maharaj’s (Śaṅkara reader, RKMVERI); there is no kāraka analysis for this text yet. ⚑ on a card marks his note on a suspected misprint — the text itself is kept as printed. शिष्यः / श्रीगुरुः mark who speaks, as in the Śṛṅgerī edition.</div></details><div class="chapgrid"><a href="reading-svs-1.html">श्लोकाः १–२९६ · साधनचतुष्टयम्</a><a href="reading-svs-2.html">श्लोकाः २९७–७०२ · अध्यारोपः आत्मस्वरूपं च</a><a href="reading-svs-3.html">श्लोकाः ७०३–१००६ · वाक्यार्थः समाधिर्मुक्तिश्च</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
+(function(){var K='vvMetMode';function set(m){document.body.classList.remove('mode-sandhi','mode-pada');document.body.classList.add('mode-'+m);document.querySelectorAll('.modebar button').forEach(function(b){b.classList.toggle('on',b.dataset.mode===m);});try{localStorage.setItem(K,m);}catch(e){}}
+document.querySelectorAll('.modebar button').forEach(function(b){b.addEventListener('click',function(){set(b.dataset.mode);});});
+var init='sandhi';try{init=localStorage.getItem(K)||'sandhi';}catch(e){}set(init);})();
+(function(){var K='vvTransMode';var btn=document.getElementById('transtog');if(!btn)return;function set(on){document.body.classList.toggle('trans-on',on);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');try{localStorage.setItem(K,on?'1':'0');}catch(e){}}btn.addEventListener('click',function(){set(!document.body.classList.contains('trans-on'));});var it=false;try{it=localStorage.getItem(K)==='1';}catch(e){}set(it);})();
+function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
+if(d.g)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+d.g+'</div>';
+if(d.role||d.sutra)h+='<div class="row"><span class="lb">kāraka</span> '+(d.role||'—')+(d.sutra?' <span class="lb">सूत्र</span> '+d.sutra:'')+'</div>';
+if(d.sam)h+='<div class="row"><span class="lb">samāsa</span> '+d.sam+'</div>';
+if(d.note)h+='<div class="row"><span class="lb">⚑</span> '+d.note+'</div>';
+if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';return h;}
+// anchor the tip to the tapped word: centred below it, flipped above when near the viewport bottom,
+// clamped to the screen width — so it never lands off-screen / needs scrolling (esp. mobile, right column).
+function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
+  let left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
+  let top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
+  tip.style.left=left+'px';tip.style.top=top+'px';}
+function show(t){const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d)+(window.__vcMulaJump?window.__vcMulaJump(t):'');tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
+const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
+// PIN: click a word to pin the tooltip (selectable/copyable); hover stays preview-only. Additive & sync-safe
+// (no preventDefault/stopImmediatePropagation → sync.js onWordTap + Esc/click-empty clears still fire).
+let pinned=false;
+function hideTip(force){if(pinned&&!force)return;pinned=false;tip.style.opacity=0;tip.classList.remove('pinned');}
+document.addEventListener('mouseover',e=>{if(touch||pinned)return;const t=e.target.closest('.w');if(t)show(t);});
+document.addEventListener('mouseout',e=>{if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',e=>{if(tip.contains(e.target))return;const t=e.target.closest('.w');if(t){pinned=true;show(t);tip.classList.add('pinned');return;}hideTip(true);});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Esc')hideTip(true);});
+tip.addEventListener('click',e=>{
+  const nx=e.target.closest('.jnext'),L=window.__vcJumpList;   // "next ›": the next pratīka on this word; the card stays pinned and follows it
+  if(nx&&L&&L.length>1&&window.__vcNav){e.stopPropagation();const i=((window.__vcJumpIdx||0)+1)%L.length;window.__vcJumpIdx=i;window.__vcJumpTo=L[i];
+    const of=nx.parentNode.querySelector('.jof');if(of)of.textContent='('+(i+1)+' of '+L.length+')';window.__vcNav(L[i]);setTimeout(()=>place(L[i]),450);return;}
+  const jr=e.target.closest('.jrow');if(jr&&window.__vcJumpTo&&window.__vcNav){e.stopPropagation();hideTip(true);window.__vcNav(window.__vcJumpTo);}});   // mūla → commentary (cross-layer link)
+const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script><style>
+#rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;
+  padding:8px 14px;box-shadow:0 3px 12px rgba(0,0,0,.18);cursor:pointer}
+#rpt-btn:hover{background:var(--bg)}
+#rpt-ov{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
+#rpt-ov.on{display:flex}
+#rpt-box{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;
+  max-width:440px;width:100%;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+#rpt-box h3{margin:0 0 4px;font-size:16px}
+#rpt-box .rpt-sub{margin:0 0 12px;font-size:12px;color:var(--muted)}
+#rpt-box textarea{width:100%;min-height:90px;font:inherit;font-size:14px;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px;resize:vertical;box-sizing:border-box}
+#rpt-box .rpt-ctx{margin:10px 0 0;font-size:11px;color:var(--muted);line-height:1.5;
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;white-space:pre-wrap;max-height:120px;overflow:auto}
+#rpt-box .rpt-row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+#rpt-box button{font:inherit;font-size:13px;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--line)}
+#rpt-send{background:var(--ink);color:var(--bg)}
+#rpt-cancel{background:var(--card);color:var(--ink)}
+#rpt-box .rpt-two{display:flex;gap:8px;margin-top:8px}#rpt-box .rpt-two input{flex:1;min-width:0;font:inherit;font-size:13px;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;box-sizing:border-box}
+#rpt-box .rpt-st{flex:1;align-self:center;font-size:12px;color:var(--muted)}#rpt-box .rpt-hp{position:absolute;left:-9999px}
+</style>
+<button id="rpt-btn" title="Report an issue on this page">⚑ report an issue</button>
+<div id="rpt-ov"><div id="rpt-box">
+  <h3>Report an issue</h3>
+  <p class="rpt-sub">Noticed a wrong meaning, kāraka role, or bhāṣya marking? Tell us — it goes straight to the editors.</p>
+  <textarea id="rpt-txt" placeholder="What looks wrong? (e.g. the kāraka role on a word, a wrong meaning, a mis-coloured bhāṣya span…)"></textarea>
+  <div class="rpt-two"><input id="rpt-name" placeholder="Name (optional)" autocomplete="name"><input id="rpt-mail" type="email" placeholder="Email, for a reply (optional)" autocomplete="email"></div>
+  <input class="rpt-hp" id="rpt-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+  <div class="rpt-ctx" id="rpt-ctx"></div>
+  <div class="rpt-row"><span class="rpt-st" id="rpt-st"></span><button id="rpt-cancel">Cancel</button><button id="rpt-send">Send</button></div>
+</div></div>
+<script>(function(){
+  var EMAIL="narayanamurthysharma@gmail.com",RELAY="https://script.google.com/macros/s/AKfycbx5m6cln3vbabv_wMq2Rlg6phAzdd1gMJXsf5jmb7OVC_62ULg3wPafuLK6i7593cFwAw/exec";
+  // our Google Apps Script relay (15 s limit) → else the reader's mail app; same as vv-reader.js sendReport
+  function post(url,opt,ms){var c=window.AbortController?new AbortController():null,t;if(c)opt.signal=c.signal;
+    return Promise.race([fetch(url,opt),new Promise(function(_,no){t=setTimeout(function(){if(c)c.abort();no(new Error('timeout'));},ms);})])
+      .then(function(r){clearTimeout(t);return r;},function(e){clearTimeout(t);throw e;});}
+  function sendReport(d){
+    return post(RELAY,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({name:d.name||'',email:d.email||'',subject:d.subject,page:location.href,message:d.message})},15000)
+      .then(function(r){return r.ok?r.json():{};}).then(function(j){if(!(j&&j.ok===true))throw new Error('not accepted');});}
+  var NAME_KEY='sandhiQuizReporterName',EMAIL_KEY='sandhiQuizReporterEmail';   // shared with the word-card + gym reporters
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v);}catch(e){return '';}}
+  function ua(){try{
+    var u=navigator.userAgent||'';
+    var os=/Android/i.test(u)?'Android':/iPhone|iPod/i.test(u)?'iOS':/iPad/i.test(u)?'iPadOS':/Windows/i.test(u)?'Windows':/Mac OS X|Macintosh/i.test(u)?'macOS':/CrOS/i.test(u)?'ChromeOS':/Linux/i.test(u)?'Linux':'unknown OS';
+    var dev=/iPad|Tablet/i.test(u)?'tablet':/Mobi|Android|iPhone|iPod/i.test(u)?'phone':'desktop/laptop';
+    var br=/Edg\//.test(u)?'Edge':/OPR\//.test(u)?'Opera':/Chrome\//.test(u)?'Chrome':/Firefox\//.test(u)?'Firefox':/Version\/.*Safari/.test(u)?'Safari':'unknown browser';
+    return {line:dev+' · '+os+' · '+br+' · viewport '+(window.innerWidth||0)+'×'+(window.innerHeight||0),raw:u};
+  }catch(e){return {line:'(device unavailable)',raw:''};}}
+  function mode(){var p=(location.pathname||'').toLowerCase();
+    return (/-mula|reading-(vc|pd|ab)([.-]|$)/.test(p))?'mūla (padārtha)':'bhāṣya (manana)';}
+  function curVerse(){try{
+    var els=document.querySelectorAll('[id^="v-"]');var best=null,bestTop=-1e9;
+    for(var i=0;i<els.length;i++){var t=els[i].getBoundingClientRect().top;
+      if(t<=120&&t>bestTop){bestTop=t;best=els[i];}}
+    if(!best&&els.length)best=els[0];
+    return best?best.id.replace(/^v-/,''):'(n/a)';
+  }catch(e){return '(n/a)';}}
+  function ctxBlock(){var d=ua();var ctrl=(navigator.serviceWorker&&navigator.serviceWorker.controller)?'sw-controlled':'no-controller';
+    return 'page: '+(location.pathname.split('/').pop()||location.pathname)+'\n'
+      +'text: '+(document.title||'')+'\n'
+      +'mode: '+mode()+'\n'
+      +'verse in view: '+curVerse()+'\n'
+      +'url: '+location.href+'\n'
+      +'device: '+d.line+'\n'
+      +'sw: '+ctrl+'\n'
+      +'user-agent: '+d.raw;}
+  var btn=document.getElementById('rpt-btn'),ov=document.getElementById('rpt-ov'),
+      txt=document.getElementById('rpt-txt'),ctx=document.getElementById('rpt-ctx');
+  if(!btn||!ov)return;
+  var nm=document.getElementById('rpt-name'),ml=document.getElementById('rpt-mail'),st=document.getElementById('rpt-st'),
+      send=document.getElementById('rpt-send'),cancel=document.getElementById('rpt-cancel');
+  function open(){ctx.textContent=ctxBlock();nm.value=ls(NAME_KEY);ml.value=ls(EMAIL_KEY);st.textContent='';send.style.display='';send.disabled=false;
+    cancel.textContent='Cancel';ov.classList.add('on');txt.focus();}
+  function close(){ov.classList.remove('on');}
+  btn.addEventListener('click',open);
+  document.getElementById('rpt-cancel').addEventListener('click',close);
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  send.addEventListener('click',function(){
+    var note=txt.value.trim(),name=nm.value.trim(),mail=ml.value.trim();ls(NAME_KEY,name);ls(EMAIL_KEY,mail);
+    if(document.getElementById('rpt-hp').value){close();return;}   // a bot filled the hidden field
+    var subj='Page report: '+(document.title||'reading')+' — '+curVerse()+' ('+mode()+')';
+    // "Details:" = the reader's words (fetch_reports.py reads it as the comment); the context lines below are key: value fields
+    var message='Problem: Page report\n'+(note?'Details: '+note.replace(/\n+/g,' ')+'\n':'')+'\n--- context (auto-captured) ---\n'+ctxBlock();
+    send.disabled=true;st.textContent='Sending…';
+    sendReport({name:name,email:mail,subject:subj,message:message}).then(function(){
+      st.textContent='Sent — thank you.';send.style.display='none';cancel.textContent='Close';txt.value='';
+    }).catch(function(){
+      // offline or the form service refused: hand the same report to the reader's mail app
+      st.textContent='Could not send from here — opening your mail app instead.';
+      location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent((name?'From: '+name+(mail?' <'+mail+'>':'')+'\n\n':'')+message);
+      send.disabled=false;
+    });
+  });
+})();</script><script>window.VVSYNC={slug:"SVS"};</script><script src="sync.js" defer></script><script src="translit.js"></script></body></html>

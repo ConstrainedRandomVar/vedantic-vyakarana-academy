@@ -1470,6 +1470,7 @@ function renderDashboard() {
         <div class="readgroup-head"><span class="gtitle">प्रस्थानत्रयी <span class="lat">· Prasthāna-trayī with commentaries</span></span><span class="gcount">मूलम् + भाष्यम् + टीका / वार्त्तिकम्</span></div>
         <div class="gnote">ṭīkā = Ānandagiri's ṭīkā unless stated otherwise</div>
         <div class="readgrid">${readGroup('prasthana')}</div>
+        <div class="gnote"><a href="vichara-index.html">🔎 विचारानुक्रमणी</a> — an index of the argued discussions (vicāras) in the Upaniṣad and Gītā bhāṣyas, by topic and by text</div>
       </div>
       <div class="readgroup">
         <div class="readgroup-head"><span class="gtitle">प्रकरण-ग्रन्थाः <span class="lat">· Prakaraṇa</span></span><span class="gcount">मूलम् + टीका / व्याख्या</span></div>

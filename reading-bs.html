@@ -201,7 +201,8 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 /* blue = LINKED (CLAUDE.md 9c; Harsha 2026-10-21): a quote word jump_resolve could not pin to ONE verse word (repeated च, a
    paraphrase the annotation marked) gets no data-jmt → it is NOT blue (exact-or-nothing, 9e). data-jmq (cross-verse intro
    quotes, resolved at runtime) keeps its colour. */
-.mula .w[data-jm]:not([data-jmt]),.w:not([data-jmt]) .msub{color:inherit;font-weight:inherit}   /* sub-word marks too: an unlinked part-quote is plain */
+.mula .w[data-jm]:not([data-jmt]),.w:not([data-jmt]) .msub{color:inherit;font-weight:inherit}
+.mula .w[data-mtrim],.mula .w[data-mplain]{color:var(--ink);font-weight:400}.mula .w[data-mtrim] .msub{color:var(--mula);font-weight:650}   /* pratīka colouring rules: only the mūla word blue */   /* sub-word marks too: an unlinked part-quote is plain */
 .mula .w[data-jm]:not([data-jmt]){color:var(--ink);font-weight:400}.gloss{color:var(--gloss)}
 .import{color:var(--import);font-style:italic}.vyakarana{color:var(--vyak);font-style:italic}
 .purvapaksha{color:var(--purva)}.ekadeshi{color:var(--eka)}.siddhanta{color:var(--sid)}

@@ -683,6 +683,7 @@ function show(t){
       if(gb&&gb.m)hh+='<div class="tm">'+gb.m+'</div>';
       if(gb&&gb.p)hh+='<div class="row"><span class="lb">पदच्छेद</span> '+gb.p+'</div>';
       if(gb&&gb.g)hh+='<div class="row"><span class="lb">व्याकरणम्</span> '+gb.g+'</div>';
+      if(t.dataset.pbh)hh+='<div class="row"><span class="lb">⚑ पाठः</span> '+t.dataset.pbh+'</div>';   // पाठभेद note (bhasya-pathabheda.json)
       if(gb)hh+=kvrow(gb.kv);
       if(pl&&pl.length)hh+='<div class="peel">'+pl.join('<br>')+'</div>';
       base=hh;}}

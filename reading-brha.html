@@ -149,6 +149,7 @@ body.tken .tk-en{display:block}
 .tk-prat{color:var(--tika);font-weight:700}
 /* a joined split word (splitPlan): the fragment outside the printed bold keeps its own part's look */
 .w>.tk-vy,.w>.tk-ava{font-weight:400}.w>.tk-mng{font-weight:600}
+.w[data-flag]::after{content:"⚑";font-size:.62em;vertical-align:super;color:var(--muted);margin-left:1px}
 .tk-vy{color:var(--ink)}
 .tk-mng{color:var(--ink);font-style:italic;font-weight:600}   /* maṅgala = commentator's own benedictory verse: ink + italic (verse presence), NOT the pratīka brown (--role) it used to share, and NOT the muted avataraṇikā (--muted). #9c: no colour reuse. */
 /* interleaved inline note — a tinted, indented aside inside the bhāṣya flow */
@@ -510,7 +511,8 @@ sup.dq{color:var(--purva);font-weight:700;font-family:-apple-system,sans-serif;f
   <div class="leggrp"><div class="leghd">प्रतीक-सम्बन्धः · commentary links</div>
     <div class="legrow"><span class="item"><span class="tkm-sw">शब्दः</span> — a word the chosen commentary quotes as a pratīka, with an exact link: tap it → that commentary. With no commentary chosen (✕), every such bhāṣya word, darker the more commentaries quote it.</span></div>
     <div class="legnote">An unmarked word can still be explained: a pratīka whose target is not certain is left unlinked rather than guessed. ☰ ⚙ Settings → Commentary links turns the underline off.</div>
-  </div>
+  </div><div class="legdiv"></div>
+  <div class="leggrp"><div class="leghd">शाङ्करभाष्यम् · पाठभेदः</div><div class="legrow"><span class="item">⚑ — a reading that differs from the MRI print (the base edition), shown as in our text; tap the word for the note</span></div></div>
   <div class="legdiv"></div>
   <div class="leggrp"><div class="leghd">सुरेश्वर-वार्त्तिकम् · vārttika</div>
     <div class="legnote">Sureśvara's verse-vārttika, placed inside Śaṅkara's bhāṣya at the passage each run of verses explains (from the MRI print's mūla positions, Ānandagiri's Śāstraprakāśikā pointers and the sambandha edition's index; unclear runs stay with the mantra the print sets them under). Choose it from the top bar — अन्तः (inline) or पार्श्वे (beside each mantra, every block headed → by its bhāṣya words). Numbers are Sureśvara's own verse-count.</div>
@@ -669,6 +671,7 @@ function show(t){
       if(gb&&gb.m)hh+='<div class="tm">'+gb.m+'</div>';
       if(gb&&gb.p)hh+='<div class="row"><span class="lb">पदच्छेद</span> '+gb.p+'</div>';
       if(gb&&gb.g)hh+='<div class="row"><span class="lb">व्याकरणम्</span> '+gb.g+'</div>';
+      if(t.dataset.pbh)hh+='<div class="row"><span class="lb">⚑ पाठः</span> '+t.dataset.pbh+'</div>';   // पाठभेद note (bhasya-pathabheda.json)
       if(pl&&pl.length)hh+='<div class="peel">'+pl.join('<br>')+'</div>';
       base=hh;}}
   else if(t.hasAttribute('data-g')&&(t.getAttribute('data-g')?(window.GTL&&GTL[t.getAttribute('data-g')]||{}):GT)[(t.querySelector('.bhsj')||t).textContent]){var tw=(t.querySelector('.bhsj')||t).textContent,gt=(t.getAttribute('data-g')?GTL[t.getAttribute('data-g')]:GT)[tw];   // ṭīkā word (Tamal Maharaj's gloss) — same card shell, no kāraka (#9b)

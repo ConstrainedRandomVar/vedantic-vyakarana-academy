@@ -917,7 +917,19 @@ document.getElementById('tog').onclick=function(){
     btns.forEach(function(b){b.classList.toggle('on',b.dataset.m===m);});}
   var saved='sandhi';try{saved=localStorage.getItem(KEY)||'sandhi';}catch(e){}
   apply(saved);
-  btns.forEach(function(b){b.addEventListener('click',function(){var m=b.dataset.m;apply(m);try{localStorage.setItem(KEY,m);}catch(e){}});});
+  // keep the reader's place: the toggle hides/shows the metrical verse and swaps every split word, so everything above the
+  // viewport changes height (and Safari has no CSS scroll anchoring). Pin the word at the top of the screen and put it back.
+  function topY(){var y=0;['navbar','reading-nav'].forEach(function(id){var e=document.getElementById(id);if(e&&e.offsetParent!==null){var r=e.getBoundingClientRect();if(r.bottom>y&&r.top<=1)y=r.bottom;}});return y+6;}
+  function pin(){var y=topY(),xs=[.5,.35,.65,.2,.8];
+    for(var d=0;d<200;d+=16)for(var i=0;i<xs.length;i++){var el=document.elementFromPoint(window.innerWidth*xs[i],y+d);if(!el)continue;
+      var a=el.closest('.bhsj,.bhsp')?el.closest('.w'):null;                         // a split word: its .w stays displayed in both modes
+      if(!a&&el.closest('.vjoin'))a=el.closest('.mula-zone');                          // the metrical verse is hidden in पद mode
+      if(!a)a=el.closest('.w,.moola,.mula-zone,.mantra,section,p,div');
+      if(a&&a!==document.body)return {el:a,top:a.getBoundingClientRect().top};}
+    return null;}
+  btns.forEach(function(b){b.addEventListener('click',function(){var m=b.dataset.m;var P=pin();apply(m);
+    if(P&&P.el.isConnected){var dy=P.el.getBoundingClientRect().top-P.top;if(Math.abs(dy)>1)window.scrollBy(0,dy);}
+    try{localStorage.setItem(KEY,m);}catch(e){}});});
 })();</script><script>(function(){
   var KEY='vv_reading_tken';var seg=document.getElementById('enseg');if(!seg)return;var b=seg.querySelector('button');
   function apply(on){document.body.classList.toggle('tken',on);b.classList.toggle('on',on);}

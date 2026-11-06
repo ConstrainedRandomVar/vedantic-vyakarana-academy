@@ -1377,16 +1377,16 @@ function renderDashboard() {
   // has no SITE_CONFIG, so this academy list applies unchanged.
   const READING_TEXTS = (window.SITE_CONFIG && window.SITE_CONFIG.readingTexts) || [
     { dv: 'भगवद्गीता', lat: 'Bhagavad-gītā', file: 'reading-gita.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'bharka', 'dhanapati', 'sridhari', 'nilakanthi', 'madhusudani', 'shankaranandi'] },
-    { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
-    { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'], note: 'भाष्यम्: pada + vākya' },
-    { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
-    { dv: 'प्रश्न', lat: 'Praśna', file: 'reading-prashna.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
-    { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
-    { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'karika', 'bhasya', 'tika'] },
-    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vanamala'] },
-    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
-    { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika'] },
-    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vsara'], note: 'वार्त्तिकम् + शास्त्रप्रकाशिका · वार्तिकसारः + लघुसङ्ग्रहा' },
+    { dv: 'ईशा', lat: 'Īśā', file: 'reading-isha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'tippani', 'mrifn'] },
+    { dv: 'केन', lat: 'Kena', file: 'reading-kena.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'tippani', 'mrifn', 'anubhuti'], note: 'भाष्यम्: pada + vākya · अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
+    { dv: 'कठ', lat: 'Kaṭha', file: 'reading-kathaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'tippani', 'mrifn', 'anubhuti'], note: 'अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
+    { dv: 'प्रश्न', lat: 'Praśna', file: 'reading-prashna.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'tippani', 'mrifn', 'anubhuti'], note: 'अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
+    { dv: 'मुण्डक', lat: 'Muṇḍaka', file: 'reading-mundaka.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'tippani', 'mrifn', 'anubhuti'], note: 'अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
+    { dv: 'माण्डूक्य', lat: 'Māṇḍūkya', file: 'reading-mandukya.html', group: 'prasthana', offers: ['mula', 'karika', 'bhasya', 'tika', 'tippani', 'mrifn'] },
+    { dv: 'तैत्तिरीय', lat: 'Taittirīya', file: 'reading-taitiriya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vanamala', 'tippani', 'mrifn', 'anubhuti'], note: 'अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
+    { dv: 'ऐतरेय', lat: 'Aitareya', file: 'reading-aitareya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'tippani', 'mrifn', 'anubhuti'], note: 'अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
+    { dv: 'छान्दोग्य', lat: 'Chāndogya', file: 'reading-chandogya.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'tippani', 'mrifn', 'narendrapuri', 'abhinava', 'anubhuti'], note: 'अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
+    { dv: 'बृहदारण्यक', lat: 'Bṛhadāraṇyaka', file: 'reading-brha.html', group: 'prasthana', offers: ['mula', 'bhasya', 'tika', 'vartika', 'vsara', 'tippani', 'mrifn', 'anubhuti'], note: 'वार्त्तिकम् + शास्त्रप्रकाशिका · वार्तिकसारः + लघुसङ्ग्रहा · अनुभूतिप्रकाशः + मितप्रकाशविवृतिः' },
     { dv: 'ब्रह्मसूत्र', lat: 'Brahma-sūtra', file: 'reading-bs.html', group: 'prasthana', offers: ['mula', 'bhasya', 'nyayamala', 'nyayanirnaya', 'ratnaprabha', 'brahmatattva'],
       note: 'रत्नप्रभा + पूर्णानन्दी (उपोद्घातः, १.१.१–३)' },   // Pūrṇānandī opens INSIDE the Ratnaprabhā lane (fold-outs) — named like the Bṛhad card's वार्त्तिकम् + शास्त्रप्रकाशिका, not as a lane of its own (Harsha 2026-10-26)
     { dv: 'विवेकचूडामणि', lat: 'Vivekacūḍāmaṇi', file: 'reading-vc.html', group: 'prakarana', offers: ['mula', 'vyakhya'], note: 'व्याख्या: श्रीचन्द्रशेखरभारती' },
@@ -1412,7 +1412,9 @@ function renderDashboard() {
     sridhari: ['श्रीधरी', 'bhasya'], madhusudani: ['मधुसूदनी', 'bhasya'], nilakanthi: ['नीलकण्ठी', 'bhasya'],   // Gītā verse-commentary lanes (2026-10-21)
     vanamala: ['वनमाला', 'bhasya'], ratnaprabha: ['रत्नप्रभा', 'bhasya'], purnanandi: ['पूर्णानन्दी', 'bhasya'],   // Taittirīya / BS lanes (2026-10-24)
     brahmatattva: ['ब्रह्मतत्त्वप्रकाशिका', 'bhasya'],   // BS vṛtti lane (2026-10-25)
-    shankaranandi: ['शङ्करानन्दी', 'bhasya'] };   // Gītā verse-commentary lane (2026-10-25)
+    shankaranandi: ['शङ्करानन्दी', 'bhasya'],   // Gītā verse-commentary lane (2026-10-25)
+    tippani: ['गोविन्दप्रसादिनी', 'bhasya'], mrifn: ['शास्त्रि-टिप्पणी', 'bhasya'], narendrapuri: ['नरेन्द्रपुरी-टिप्पणम्', 'bhasya'],   // upaniṣad ṭippaṇī lanes (2026-10-30 / 11-05)
+    abhinava: ['अभिनवनारायणीया', 'bhasya'], anubhuti: ['अनुभूतिप्रकाशः', 'bhasya'] };   // Chāndogya ṭīkā · Vidyāraṇya's verse digest (+ मितप्रकाशविवृतिः, in the note) (2026-11-05/06)
   const MAXP = 4;   // more than this → the rest behind a "+N …" pill (shown on card hover, or a tap on "…"); the card's note line folds
                     // with them (Harsha 2026-10-25: the Bṛhad card folds like the Gītā's — even a single extra pill, "+1 …")
   const readOffers = t => {

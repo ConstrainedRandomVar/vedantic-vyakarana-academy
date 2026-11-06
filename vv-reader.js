@@ -752,7 +752,12 @@
     var lab = w.closest('[data-label]'); if (lab) return lab.getAttribute('data-label');
     if (w.closest('.mula-zone')) return 'मूलम्';
     if (w.closest('.bh-zone')) return 'भाष्यम्';
-    var sd = w.closest('[data-side]'); if (sd && sd.tagName !== 'BUTTON') return sd.getAttribute('data-side');
+    // a lane container (ṭīkā / TippaNi block) — NOT <body>/<html>, whose data-side is the page's current VIEW, not the word's layer
+    // (a bhāṣya word tapped in the TippaNi view was reported as "tippani", 2026-11-06)
+    var sd = w.parentElement && w.parentElement.closest('[data-side]:not(body):not(html):not(button)'); if (sd) return sd.getAttribute('data-side');
+    // else the word's key says it: Slug:ref:bN / ibN = bhāṣya (ib = intro), Slug:ref:N = mūla, Slug:ref:t<lane>_… = that lane
+    var k = w.getAttribute('data-k') || '', km = /:(i?b\d|\d+$|t([a-z]+)_)/.exec(k);
+    if (km) return km[2] || (/^i?b/.test(km[1]) ? 'भाष्यम्' : 'मूलम्');
     // no named layer on this page: report where the word sits (its containers' classes), never a guessed name
     var chain = [], e = w.parentElement;
     while (e && e !== document.body && chain.length < 4) { if (e.className && typeof e.className === 'string' && !/^v$/.test(e.className)) chain.unshift(e.className.split(' ')[0]); if (e.id && /^vb?-/.test(e.id)) break; e = e.parentElement; }

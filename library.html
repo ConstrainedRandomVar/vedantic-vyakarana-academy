@@ -62,11 +62,28 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
   <button id="tog" title="light / dark">◐</button>
 </header>
 <main>
-  <p class="note-top">Stored in this browser (shared by all our sites on this address) — nothing is sent to any server (<a href="privacy.html">privacy</a>). Clearing browser data deletes it: use <a href="#backup">Backup → Export</a> to keep a copy or move it to another device.</p>
+  <p class="note-top" id="note-top">Stored in this browser (shared by all our sites on this address) — nothing is sent to any server of ours (<a href="privacy.html">privacy</a>). Clearing browser data deletes it: use <a href="#backup">Backup → Export</a> to keep a copy, or <a href="#" data-sync-open>☁ sync with your Google Drive</a> to have it on all your devices.</p>
   <div id="view"></div>
 </main>
 <script src="vv-store.js"></script>
 <script src="vv-offline.js"></script>
+<script>
+// ☁ sync status line (2026-11-06): when sync is on, the top note says so (live); the link opens the ⚙ panel's sync controls
+(function () {
+  var el = document.getElementById('note-top');
+  function openPanel(e) { e.preventDefault(); var go = function () { window.VVSettings && VVSettings.open(); };
+    if (window.VVSettings) return go(); var sc = document.createElement('script'); sc.src = 'vv-settings.js'; sc.onload = go; document.head.appendChild(sc); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function draw(st) {
+    if (!st || !st.on) return;
+    var l = st.busy ? 'syncing…' : st.reauth ? '<b>paused — sign in again</b>' : st.last && !st.last.ok ? '⚠ ' + esc(st.last.msg) + ' — will retry' : st.last ? 'synced ' + new Date(st.last.ts).toLocaleTimeString() : '';
+    el.innerHTML = '☁ Kept in this browser and synced with your Google Drive' + (st.who ? ' (' + esc(st.who) + ')' : '') + (l ? ' · ' + l : '')
+      + ' · <a href="#" data-sync-open>sync settings</a> · <a href="privacy.html">privacy</a>';
+  }
+  el.addEventListener('click', function (e) { if (e.target.closest('[data-sync-open]')) openPanel(e); });
+  var tries = 0, t = setInterval(function () { if (window.VVSync) { clearInterval(t); draw(VVSync.status()); VVSync.onStatus(draw); } else if (++tries > 40) clearInterval(t); }, 250);
+})();
+</script>
 <script>
 (function () {
   'use strict';

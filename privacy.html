@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Privacy — अध्ययन-सहकारी</title>
-<!-- privacy.html — privacy policy (2026-10-21). The Google-Drive sync section was removed when sync was SHELVED; restore it (git history) if sync returns. Static page; shipped by build_deploy.js (PERSONAL list). Keep it TRUE: re-check whenever the site starts contacting anything new. -->
+<!-- privacy.html — privacy policy (2026-10-21; the Google-Drive sync section restored 2026-11-06 with the token broker — the OAuth consent screen links here). Static page; shipped by build_deploy.js (PERSONAL list). Keep it TRUE: re-check whenever the site starts contacting anything new. -->
 <style>
 :root{--bg:#fbfaf7;--card:#fff;--ink:#22201b;--muted:#6b6455;--line:#e6e0d4;--brand:#d97706;--acc:#b45309}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--brand:#f5b544;--acc:#f5b544}}
@@ -31,10 +31,16 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
 <body>
 <header><a class="brand" href="index.html" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home"><span class="bf">अध्ययन-सहकारी</span><span class="bs">अध्य·सहकारी</span><img class="vv-logo" src="diya-40.png" alt="" aria-hidden="true" style="height:1.3em;width:auto;vertical-align:-.28em;margin-left:5px"></a><h1>Privacy</h1><button id="tog" title="light / dark">◐</button></header>
 <main>
-<p class="lead">अध्ययन-सहकारी is a free reading aid for Vedānta texts. It has no accounts, no advertising and no analytics, and it does not run a server that receives your data. Nothing you save leaves your browser.</p>
+<p class="lead">अध्ययन-सहकारी is a free reading aid for Vedānta texts. It has no accounts, no advertising and no analytics, and it does not run a server that receives your data. Nothing you save leaves your browser, unless you turn on sync with your own Google Drive (below).</p>
 
 <div class="card"><h2>What stays in your browser</h2>
 <p>Your bookmarks, collections, highlights (with their notes and tags), study notes, recent searches and settings are saved in your own browser's storage on this device. They are not sent to us. Clearing your browser's data for this site deletes them, so use <a href="library.html#backup">My library → Backup → Export</a> to keep a copy.</p></div>
+
+<div class="card"><h2>Optional: sync with your Google Drive</h2>
+<p>If you turn on <b>⚙ Settings → Sync with Google Drive</b> and sign in with Google, the site stores one file, <code>adhyayana-sahakari-sync.json</code>, in the hidden <b>app data folder</b> of <b>your own</b> Google Drive. It holds the same bookmarks, collections, notes and highlights listed above, so they appear on every computer, phone or tablet where you sign in, and changes made on one show up on the others.</p>
+<p>The site asks Google only for the <code>drive.appdata</code> permission: it can read and write that one app folder and <b>cannot see any of your other Drive files</b>. Your browser sends and fetches the file from Google directly; your data never passes through a server of ours, and we cannot read it. To show which account is syncing, the site asks Google for your Drive account's email address; it is kept only in your browser.</p>
+<p>So that sync keeps working without signing in every hour, a small sign-in helper of ours (a Cloudflare Worker) swaps Google's one-time sign-in code for a long-lived “refresh” key, locks that key with a password only the helper knows, and hands the locked key back to your browser, which keeps it. About once an hour your browser shows the locked key to the helper and gets a fresh one-hour pass for Google Drive. The helper stores nothing, keeps no logs and never receives your bookmarks or notes.</p>
+<p>You can stop syncing in a browser at any time in ⚙ Settings (<b>Turn off here</b>; your other devices carry on), delete the Drive copy with <b>Delete Drive copy</b>, or remove the site's access for all devices in your Google Account under <i>Security → Third-party apps &amp; services</i>. Google's handling of your account is covered by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</p></div>
 
 <div class="card"><h2>When you send a report</h2>
 <p>A ⚑ report (on a word card, on a practice question, or the “report an issue” button on a reading page) is sent only when you press Send. It carries what you write, the name and email you choose to give (both optional; your browser remembers them for next time), the word or question with what the page showed for it, the page link, and your device type, browser and screen size (a reading-page report also includes the verse in view and your browser’s user-agent string, all shown to you before you send). Reports go through a small Google Apps Script of ours, which emails the report to us and keeps a copy in a Google Sheet in our own Google account. If it cannot be reached, the report opens in your mail app with the same text, ready for you to send. A practice-question or tutorial report also offers a pre-filled GitHub issue, if you have a GitHub account and prefer that.</p></div>

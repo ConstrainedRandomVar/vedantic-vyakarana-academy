@@ -1,7 +1,8 @@
 // vv-store.js — the ONE personal-data store shared by every site on constrainedrandomvar.github.io (the academy
 // अध्ययन-सहकारी, its public twin, साहित्य-व्याकरणम्, and the prasthanatrayi-search page). localStorage is per-ORIGIN,
 // so all of them read and write the same keys: a passage bookmarked from search shows up in the academy's library.
-// Everything stays in the reader's browser; nothing is sent anywhere. Export/Import (and share links) are the backup.
+// Everything stays in the reader's browser — unless the reader turns on sync with THEIR OWN Google Drive (vv-sync.js).
+// Export/Import (and share links) are the backup.
 //
 // Rules that keep sister sites from tripping over each other (Harsha 2026-10-11):
 //   • every key is namespaced `vvd1:` and every record carries `site` + an ABSOLUTE `url`;
@@ -10,7 +11,7 @@
 //   • unknown fields / unknown record kinds are preserved untouched (forward compatibility), never dropped.
 //
 // API: window.VVStore — bookmarks · collections · notes · highlights · history · prefs · folds · exportAll/importAll · share ·
-//      tombstones + merge (for the optional Google-Drive sync, vv-sync.js — the reader's OWN Drive; 2026-10-21).
+//      tombstones + merge (for the optional Google-Drive sync, vv-sync.js — the reader's OWN Drive; 2026-10-21, revived 2026-11-06).
 (function (root) {
   'use strict';
   var NS = 'vvd1:';
@@ -46,8 +47,10 @@
     fire(key);
   }
   var subs = [];
-  function fire(key) { for (var i = 0; i < subs.length; i++) try { subs[i](key); } catch (e) {} }
-  if (root.addEventListener) root.addEventListener('storage', function (e) { if (e.key && e.key.indexOf(NS) === 0) fire(e.key); });
+  // subscribers get (key, external): external = the write happened in ANOTHER tab of this browser (storage event) — vv-sync.js
+  // uploads only this tab's own edits (the other tab syncs its own)
+  function fire(key, external) { for (var i = 0; i < subs.length; i++) try { subs[i](key, !!external); } catch (e) {} }
+  if (root.addEventListener) root.addEventListener('storage', function (e) { if (e.key && e.key.indexOf(NS) === 0) fire(e.key, true); });
   function onChange(cb) { subs.push(cb); return function () { subs = subs.filter(function (f) { return f !== cb; }); }; }
 
   function uid(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -290,9 +293,10 @@
     exportAll: exportAll, importAll: importAll, encodeShare: encodeShare, decodeShare: decodeShare, importShared: importShared, snapshot: snapshot,
     onChange: onChange,
   };
-  // OPTIONAL Google-Drive sync (vv-sync.js, the reader's OWN Drive): loaded only on browsers where the reader switched it on
-  // (⚙ Settings → Sync). Not on the shared search site (it has no vv-sync.js), never in Node.
-  if (root.VV_SYNC_ENABLED && root.document && SITE !== 'search') { try { if (root.localStorage.getItem('vvsync:on') === '1') { var sc = root.document.createElement('script'); sc.src = 'vv-sync.js'; sc.async = true; (root.document.head || root.document.documentElement).appendChild(sc); } } catch (e) {} }
+  // OPTIONAL Google-Drive sync (vv-sync.js, the reader's OWN Drive; revived 2026-11-06): loaded on every page of a browser where
+  // the reader switched it on (⚙ Settings → Sync), or where a Google sign-in is coming back (vvsync:code). Not on the shared
+  // search site (it has no vv-sync.js), never in Node.
+  if (root.document && SITE !== 'search') { try { var ls = root.localStorage; if (ls.getItem('vvsync:on') === '1' || ls.getItem('vvsync:code')) { var sc = root.document.createElement('script'); sc.src = 'vv-sync.js'; sc.async = true; (root.document.head || root.document.documentElement).appendChild(sc); } } catch (e) {} }
   // ask the browser to keep this origin's storage (the library) under storage pressure instead of evicting it — Safari 17+ /
   // Chrome; a no-op where unsupported or already granted. Matters most for an iOS home-screen app, whose storage is its own.
   try { var ns = root.navigator && root.navigator.storage; if (ns && ns.persist && ns.persisted) ns.persisted().then(function (p) { if (!p) ns.persist(); }).catch(function () {}); } catch (e) {}

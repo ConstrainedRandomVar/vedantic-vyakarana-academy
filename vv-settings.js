@@ -104,9 +104,9 @@
     if (folds.length) h += '<div class="row"><div class="lab">Commentary fold-outs</div>'
       + folds.map(function (f) { return '<label class="chk" style="justify-content:space-between;gap:10px;margin-bottom:4px"><span>' + esc(f.label) + ' <span class="hint" style="display:inline">· ' + esc(f.sub || '') + '</span></span><select data-fold="' + esc(f.key) + '"><option value="collapsed">Collapsed</option><option value="expanded">Expanded</option></select></label>'; }).join('')
       + '<div class="hint">How collapsed commentary layers open when a page loads. Each page’s <b>टीका ⇕</b> button expands or collapses them on that page only.</div></div>';
-    // ☁ Google-Drive sync is SHELVED (Harsha 2026-10-21: it must upload always, not stop after the ~1 h browser token) — the
-    // section and vv-sync.js stay in the repo, switched off here; set SYNC_ON = true to revive.
-    var SYNC_ON = false;
+    // ☁ Google-Drive sync — revived 2026-11-06 (shelved 2026-10-21 because the browser-only token stopped after ~1 h; it now renews
+    // silently through the token broker, corpus/sync-token-broker/). SYNC_ON = false hides the section again.
+    var SYNC_ON = true;
     if (SYNC_ON && window.VVStore && VVStore.SITE !== 'search') h += '<div class="sep">☁ Your data</div>'
       + '<div class="row" id="vvset-sync"><div class="lab">Sync with Google Drive</div>'
       + '<div class="hint" style="margin:0 0 6px">Keep your bookmarks, highlights and notes in <b>your own</b> Google Drive, so they follow you to your other devices. They go into a hidden app folder only this site can use; we never receive them. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></div>'
@@ -164,23 +164,29 @@
   function syncUI(box) {
     var host = box.querySelector('.vvset-syncst'); if (!host) return;
     withSync(function () {
+      var ago = function (ts) { var s = Math.round((Date.now() - new Date(ts)) / 1000); return s < 60 ? 'just now' : s < 3600 ? Math.round(s / 60) + ' min ago' : new Date(ts).toLocaleString(); };
       var draw = function (st) {
-        var last = st.last ? (st.last.ok ? 'last synced ' + new Date(st.last.ts).toLocaleString() : '⚠ ' + esc(st.last.msg || 'sync failed')) : '';
+        var line = st.busy ? 'syncing…' : st.last ? (st.last.ok ? (st.last.msg ? esc(st.last.msg) : 'synced ' + ago(st.last.ts)) : '⚠ ' + esc(st.last.msg || 'sync failed') + ' — will retry') : '';
         host.innerHTML = !st.on
           ? '<button type="button" class="vvset-btn" data-sync="on">Sign in with Google &amp; sync</button>'
-          : '<div class="hint" style="margin:0 0 6px">On' + (st.who ? ' · ' + esc(st.who) : '') + (last ? ' · ' + last : '') + (st.signedIn ? '' : ' · <b>sign in again to sync on this visit</b>') + '</div>'
-            + '<button type="button" class="vvset-btn" data-sync="' + (st.signedIn ? 'now' : 'signin') + '">' + (st.signedIn ? '⟳ Sync now' : 'Sign in again') + '</button> '
-            + '<button type="button" class="vvset-btn2" data-sync="off">Turn off</button> <button type="button" class="vvset-btn2" data-sync="del" title="Delete the copy in your Google Drive (this browser keeps its data)">Delete Drive copy</button>';
+            + '<div class="hint" style="margin:6px 0 0">Sign in once on each computer, phone or tablet; after that it keeps syncing by itself.</div>'
+          : st.reauth
+          ? '<div class="hint" style="margin:0 0 6px"><b>Sync paused</b> — Google needs you to sign in again' + (st.who ? ' (' + esc(st.who) + ')' : '') + '. Nothing is lost: your data is in this browser and in your Drive.</div>'
+            + '<button type="button" class="vvset-btn" data-sync="signin">Sign in again</button> <button type="button" class="vvset-btn2" data-sync="off">Turn off</button>'
+          : '<div class="hint" style="margin:0 0 6px">☁ On' + (st.who ? ' · ' + esc(st.who) : '') + (line ? ' · ' + line : '') + '</div>'
+            + '<button type="button" class="vvset-btn" data-sync="now">⟳ Sync now</button> '
+            + '<button type="button" class="vvset-btn2" data-sync="off" title="Stop syncing in this browser. Your other devices keep syncing.">Turn off here</button> '
+            + '<button type="button" class="vvset-btn2" data-sync="del" title="Delete the copy in your Google Drive (this browser keeps its data)">Delete Drive copy</button>';
       };
       draw(VVSync.status()); if (!host.__vvWired) { host.__vvWired = true; VVSync.onStatus(draw); }
       host.onclick = function (e) {
         var a = e.target.getAttribute && e.target.getAttribute('data-sync'); if (!a) return;
         var busy = function (p) { e.target.disabled = true; e.target.textContent = '…'; p.catch(function (x) { alert(x.message); }).then(function () { draw(VVSync.status()); }); };
         if (a === 'on') busy(VVSync.enable());
-        else if (a === 'signin') busy(VVSync.signIn().then(VVSync.syncNow));
+        else if (a === 'signin') busy(VVSync.signIn());
         else if (a === 'now') busy(VVSync.syncNow());
-        else if (a === 'off' && confirm('Turn off sync? Your data stays in this browser and in your Drive copy.')) VVSync.disable();
-        else if (a === 'del' && confirm('Delete the copy in your Google Drive? This browser keeps its data.')) busy(VVSync.deleteRemote());
+        else if (a === 'off' && confirm('Stop syncing in this browser? Your data stays here and in your Drive copy; your other devices keep syncing.')) VVSync.disable();
+        else if (a === 'del' && confirm('Delete the copy in your Google Drive? This browser keeps its data. (Any other device that is still syncing will upload its copy again.)')) busy(VVSync.deleteRemote());
       };
     });
   }

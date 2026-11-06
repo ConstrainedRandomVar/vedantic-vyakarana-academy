@@ -436,6 +436,7 @@ document.addEventListener('mouseout',function(e){if(pinned)return;if(e.target.cl
 document.addEventListener('click',function(e){if(tip.contains(e.target)){var jr=e.target.closest('.jrow');if(jr){e.stopPropagation();var tg=document.getElementById(jr.getAttribute('data-jt'));if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');}hide();if(tg)window.__vcNav(tg);}return;}var el=e.target.closest('.gw');if(!el){if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();}return;}if(!card(el))return;e.stopPropagation();if(pinned===el){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();return;}if(pinned)pinned.classList.remove('pinned');pinned=el;el.classList.add('pinned');tip.classList.add('pinned');var r=el.getBoundingClientRect();show(el,r.left,r.top+r.height-18);},true);
 })();
 function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
+if(d.lemLabel==='धातुः'&&d.lem)h+='<div class="row"><span class="lb">धातुः</span> '+d.lem+'</div>';
 if(d.g)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+d.g+'</div>';
 if(d.role||d.sutra)h+='<div class="row"><span class="lb">kāraka</span> '+(d.role||'—')+(d.sutra?' <span class="lb">सूत्र</span> '+d.sutra:'')+'</div>';
 if(d.sam)h+='<div class="row"><span class="lb">samāsa</span> '+d.sam+'</div>';

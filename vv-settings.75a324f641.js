@@ -168,10 +168,11 @@
       var draw = function (st) {
         var line = st.busy ? 'syncing…' : st.last ? (st.last.ok ? (st.last.msg ? esc(st.last.msg) : 'synced ' + ago(st.last.ts)) : '⚠ ' + esc(st.last.msg || 'sync failed') + ' — will retry') : '';
         host.innerHTML = !st.on
-          ? '<button type="button" class="vvset-btn" data-sync="on">Sign in with Google &amp; sync</button>'
+          ? (st.noDrive ? '<div class="hint" style="margin:0 0 6px;color:#b45309">⚠ ' + esc(st.noDriveMsg) + '</div>' : '')
+            + '<button type="button" class="vvset-btn" data-sync="on">Sign in with Google &amp; sync</button>'
             + '<div class="hint" style="margin:6px 0 0">Sign in once on each computer, phone or tablet; after that it keeps syncing by itself.</div>'
           : st.reauth
-          ? '<div class="hint" style="margin:0 0 6px"><b>Sync paused</b> — Google needs you to sign in again' + (st.who ? ' (' + esc(st.who) + ')' : '') + '. Nothing is lost: your data is in this browser and in your Drive.</div>'
+          ? '<div class="hint" style="margin:0 0 6px"><b>Sync paused</b> — ' + (st.noDrive ? esc(st.noDriveMsg) : 'Google needs you to sign in again' + (st.who ? ' (' + esc(st.who) + ')' : '') + '.') + ' Nothing is lost: your data is in this browser and in your Drive.</div>'
             + '<button type="button" class="vvset-btn" data-sync="signin">Sign in again</button> <button type="button" class="vvset-btn2" data-sync="off">Turn off</button>'
           : '<div class="hint" style="margin:0 0 6px">☁ On' + (st.who ? ' · ' + esc(st.who) : '') + (line ? ' · ' + line : '') + '</div>'
             + '<button type="button" class="vvset-btn" data-sync="now">⟳ Sync now</button> '

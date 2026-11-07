@@ -26,7 +26,7 @@
   var PULL_MS = window.VV_SYNC_PULL_MS || 30000, PUSH_DELAY = 3000;   // override only for the two-browser test
   // localStorage keys (shared by every site on this origin, like the data itself)
   var K = { on: 'vvsync:on', rt: 'vvsync:rt', at: 'vvsync:at', last: 'vvsync:last', who: 'vvsync:who', ver: 'vvsync:ver', fid: 'vvsync:fid',
-    dirty: 'vvsync:dirty', reauth: 'vvsync:reauth', pulled: 'vvsync:pulled', auth: 'vvsync:auth', code: 'vvsync:code' };
+    dirty: 'vvsync:dirty', reauth: 'vvsync:reauth', pulled: 'vvsync:pulled', auth: 'vvsync:auth', code: 'vvsync:code', nodrive: 'vvsync:nodrive' };
   var DATA_KEYS = ['bookmarks', 'collections', 'notes', 'highlights', 'tombstones'].map(function (k) { return S.NS + k; });
 
   function lget(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -37,12 +37,16 @@
     return Promise.resolve().then(fn);
   }
   function Reauth(msg) { var e = new Error(msg || 'sign in again to resume sync'); e.reauth = true; return e; }
+  // Google's consent page can show Drive access as a checkbox; left unticked, the token can't touch Drive (reader report 2026-11-07).
+  // Caught at sign-in (the granted `scope` lacks drive.appdata → sync is NOT turned on) and, as a backstop, on a Drive 403
+  // "insufficient scope" (→ paused). Either way the reader is told exactly what to do, never a bare "Drive 403".
+  var NO_DRIVE = 'Google Drive access was not given. Sign in again and, on Google’s page, tick the box that lets this site use its own folder in your Drive.';
 
   // ---- status ----
   var listeners = [], busyNow = false;
   function status() {
     var on = lget(K.on) === '1', re = lget(K.reauth) === '1';
-    return { on: on, signedIn: on && !!lget(K.rt) && !re, reauth: on && (re || !lget(K.rt)), busy: busyNow, last: jget(K.last), who: lget(K.who) || '', dirty: lget(K.dirty) === '1' };
+    return { on: on, signedIn: on && !!lget(K.rt) && !re, reauth: on && (re || !lget(K.rt)), busy: busyNow, last: jget(K.last), who: lget(K.who) || '', dirty: lget(K.dirty) === '1', noDrive: lget(K.nodrive) === '1', noDriveMsg: NO_DRIVE };
   }
   function emit() { var st = status(); listeners.forEach(function (f) { try { f(st); } catch (e) {} }); }
   function setLast(ok, msg) { lset(K.last, JSON.stringify({ ts: new Date().toISOString(), ok: ok, msg: msg || '' })); emit(); }
@@ -113,6 +117,8 @@
       if (rec.error || !rec.code) return done(new Error(rec.error === 'access_denied' ? 'sign-in cancelled' : 'sign-in failed: ' + (rec.error || 'no code')));
       return broker('/exchange', { code: rec.code, redirect_uri: callbackUrl() }).then(function (j) {
         if (j.__status !== 200 || !j.access_token || !j.rt) throw new Error('sign-in failed (' + (j.error || j.__status) + ')');
+        if (j.scope && String(j.scope).split(/\s+/).indexOf(SCOPE) < 0) { lset(K.nodrive, '1'); emit(); throw new Error(NO_DRIVE); }   // Drive box left unticked: keep nothing, stay off
+        lset(K.nodrive, null);
         keepToken(j); lset(K.on, '1'); lset(K.reauth, null); lset(K.dirty, '1'); emit();
         whoAmI(); return syncNow().then(function () { return done(null, true); });
       }).catch(function (e) { return done(e); });
@@ -126,6 +132,10 @@
       return fetch(url, o).then(function (r) {
         if (r.status === 401 && !retried) { lset(K.at, null); return api(url, opt, true); }
         if (r.status === 401) throw Reauth();
+        if (r.status === 403) return r.text().then(function (x) {
+          if (/insufficient|SCOPE_INSUFFICIENT/i.test(x)) { lset(K.nodrive, '1'); lset(K.reauth, '1'); lset(K.at, null); emit(); throw Reauth(NO_DRIVE); }
+          var e = new Error('Drive 403: ' + x.slice(0, 160)); e.status = 403; throw e;
+        });
         if (!r.ok) return r.text().then(function (x) { var e = new Error('Drive ' + r.status + ': ' + x.slice(0, 160)); e.status = r.status; throw e; });
         return r;
       });
@@ -188,7 +198,7 @@
 
   // ---- turn off (THIS device only: forget the tokens; the Drive copy and other devices carry on) · delete the Drive copy ----
   function disable() {
-    [K.on, K.rt, K.at, K.last, K.who, K.ver, K.fid, K.dirty, K.reauth, K.pulled].forEach(function (k) { lset(k, null); });
+    [K.on, K.rt, K.at, K.last, K.who, K.ver, K.fid, K.dirty, K.reauth, K.pulled, K.nodrive].forEach(function (k) { lset(k, null); });
     emit();
   }
   function deleteRemote() {
@@ -220,7 +230,7 @@
     var st = status(); if (!st.on || !st.reauth || !document.body) return;
     try { if (sessionStorage.getItem('vvsync:nudged')) return; sessionStorage.setItem('vvsync:nudged', '1'); } catch (e) {}
     var b = document.createElement('button'); b.type = 'button'; b.id = 'vvsync-nudge';
-    b.textContent = '☁ Sync paused — sign in again'; b.title = 'Your bookmarks, highlights and notes are safe here and in your Google Drive. Sign in to resume syncing.';
+    b.textContent = st.noDrive ? '☁ Sync paused — sign in again and tick the Drive box' : '☁ Sync paused — sign in again'; b.title = (st.noDrive ? NO_DRIVE + ' ' : '') + 'Your bookmarks, highlights and notes are safe here and in your Google Drive. Sign in to resume syncing.';
     b.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:9999;padding:8px 14px;border-radius:18px;border:1px solid #d97706;background:#fff7ed;color:#9a3412;font:14px system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)';
     b.onclick = function () { b.remove(); signIn().catch(function (e) { alert(e.message); }); };
     var x = setTimeout(function () { b.remove(); }, 20000); b.addEventListener('mouseenter', function () { clearTimeout(x); });

@@ -76,7 +76,7 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function draw(st) {
     if (!st || !st.on) return;
-    var l = st.busy ? 'syncing…' : st.reauth ? '<b>paused — sign in again</b>' : st.last && !st.last.ok ? '⚠ ' + esc(st.last.msg) + ' — will retry' : st.last ? 'synced ' + new Date(st.last.ts).toLocaleTimeString() : '';
+    var l = st.busy ? 'syncing…' : st.reauth ? (st.noDrive ? '<b>paused — Google Drive access was not given; sign in again and tick the Drive box</b>' : '<b>paused — sign in again</b>') : st.last && !st.last.ok ? '⚠ ' + esc(st.last.msg) + ' — will retry' : st.last ? 'synced ' + new Date(st.last.ts).toLocaleTimeString() : '';
     el.innerHTML = '☁ Kept in this browser and synced with your Google Drive' + (st.who ? ' (' + esc(st.who) + ')' : '') + (l ? ' · ' + l : '')
       + ' · <a href="#" data-sync-open>sync settings</a> · <a href="privacy.html">privacy</a>';
   }

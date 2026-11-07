@@ -233,7 +233,7 @@
         var act = e.target.getAttribute && e.target.getAttribute('data-act');
         if (act === 'new') addNew();
         else if (act === 'rm') { S.bookmarks.remove(bid); closePop(); refreshStar(); }
-        else if (act === 'ok') { S.bookmarks.update(bid, { note: note.value.trim() }); closePop(); }
+        else if (act === 'ok') { S.bookmarks.update(bid, { note: note.value.trim() }); if (nm.value.trim()) { var c2 = S.collections.create(nm.value.trim()); S.collections.addItem(c2, bid); } closePop(); }   // a name typed but not ＋'d is still filed (reader report 2026-11-07: done used to drop it)
       });
       if (!cols.length) nm.focus();
     });

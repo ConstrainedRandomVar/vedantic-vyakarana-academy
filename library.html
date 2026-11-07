@@ -22,6 +22,11 @@ header h1{margin:0;font-size:17px;flex:1}
 nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
 nav.tabs a{padding:5px 11px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--ink);font-size:14px}
 nav.tabs a.on{background:var(--brand);border-color:var(--brand);color:#fff}
+nav.kinds{flex-basis:100%;order:5;gap:6px}nav.kinds a{font-size:15px;padding:6px 13px;font-weight:600}
+nav.tabs .n{font-weight:400;opacity:.75;font-size:.88em}nav.tabs .n:empty{display:none}
+nav.manage{margin:0 0 12px;align-items:center}nav.manage a{font-size:13px;padding:3px 10px}nav.manage .lab{color:var(--muted);font-size:13px;margin-right:2px}
+.kind{font-size:14px;width:1.3em;text-align:center;flex:none}
+#hint .hint{background:var(--chip);border:1px solid var(--brand);border-radius:12px;padding:10px 36px 10px 14px;margin:0 0 14px;position:relative;font-size:14px}#hint .x{position:absolute;right:8px;top:6px;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}
 #tog{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:3px 8px;cursor:pointer}
 main{max-width:920px;margin:0 auto;padding:16px 18px 60px}
 .note-top{color:var(--muted);font-size:13px;margin:0 0 14px}
@@ -50,7 +55,7 @@ h2 .cnt{color:var(--muted);font-weight:400;font-size:13px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
 .banner{background:var(--chip);border:1px solid var(--brand);border-radius:12px;padding:12px 14px;margin:0 0 14px}
 .search{flex:1;min-width:180px}
-@media print{header,nav.tabs,.toolbar,.mini,#tog{display:none!important}.card{break-inside:avoid}}
+@media print{header,nav.tabs,#hint,.toolbar,.mini,#tog{display:none!important}.card{break-inside:avoid}}
 main a:not([class]){color:var(--acc)}   /* body links: site accent in both themes (was the browser default blue — near-invisible in dark, 2026-10-24) */
 </style>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head>
@@ -58,11 +63,13 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
 <header>
   <a class="brand" href="index.html" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home"><span class="bf">अध्ययन-सहकारी</span><span class="bs">अध्य·सहकारी</span><img class="vv-logo" src="diya-40.png" alt="" aria-hidden="true" style="height:1.3em;width:auto;vertical-align:-.28em;margin-left:5px"></a>
   <h1>★ My library</h1>
-  <nav class="tabs"><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks</a><a href="#collections" data-tab="collections">🗂 Collections</a><a href="#notes" data-tab="notes">📝 Notes</a><a href="#highlights" data-tab="highlights">🖍 Highlights</a><a href="#offline" data-tab="offline">📶 Offline</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
+  <nav class="tabs kinds" aria-label="show"><a href="#all" data-tab="all">All <span class="n"></span></a><a href="#bookmarks" data-tab="bookmarks">★ Bookmarks <span class="n"></span></a><a href="#highlights" data-tab="highlights">🖍 Highlights <span class="n"></span></a><a href="#notes" data-tab="notes">📝 Notes <span class="n"></span></a></nav>
   <button id="tog" title="light / dark">◐</button>
 </header>
 <main>
   <p class="note-top" id="note-top">Stored in this browser (shared by all our sites on this address) — nothing is sent to any server of ours (<a href="privacy.html">privacy</a>). Clearing browser data deletes it (and Safari clears it by itself after 7 days without a visit). To keep it safe, <a href="#" data-sync-open>☁ sync with your Google Drive</a> — a safe copy even if you use only this device, and on all your devices if you use more — or use <a href="#backup">Backup → Export</a>.</p>
+  <nav class="tabs manage" aria-label="manage"><span class="lab">Manage:</span><a href="#collections" data-tab="collections">🗂 Collections <span class="n"></span></a><a href="#offline" data-tab="offline">📶 Offline</a><a href="#backup" data-tab="backup">⤓ Backup</a></nav>
+  <div id="hint"></div>
   <div id="view"></div>
 </main>
 <script src="vv-store.js"></script>
@@ -100,9 +107,9 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
   function link(rec) { return '<a href="' + esc(rec.url) + '"' + (rec.site && rec.site !== S.SITE ? ' target="_blank" rel="noopener"' : '') + '>' + esc(rec.title || rec.url) + '</a>'; }
 
   // ---- one bookmark card (inCol = the collection being shown, for reorder/remove-from) ----
-  function bmCard(b, inCol, idx, n) {
+  function bmCard(b, inCol, idx, n, badge) {
     var cols = S.collections.of(b.id).map(function (c) { return '<span class="chip">' + esc(c.name) + '</span>'; }).join(' ');
-    return '<div class="card" data-b="' + esc(b.id) + '"><div class="t">' + link(b) + siteTag(b.site)
+    return '<div class="card" data-b="' + esc(b.id) + '"><div class="t">' + (badge ? '<span class="kind" title="bookmark">★</span>' : '') + link(b) + siteTag(b.site)
       + (b.src === 'search' && b.query ? '<span class="chip" title="found by this search">🔎 ' + esc(b.query) + '</span>' : '') + '</div>'
       + (b.excerpt ? '<div class="ex dv">' + esc(b.excerpt) + '</div>' : '')
       + (b.note ? '<div class="ex" style="font-size:14px">✎ ' + esc(b.note) + '</div>' : '')
@@ -127,12 +134,39 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
     var cols = S.collections.list();
     V.innerHTML = '<div class="toolbar"><input type="text" id="newcol" placeholder="new collection name, e.g. Ananda-vichAra-in-bhAShyam" style="min-width:300px"><button class="mini pri" data-act="newcol">＋ create</button></div>'
       + (cols.length ? cols.map(function (c) {
-          var items = (c.items || []).map(S.bookmarks.get).filter(Boolean);
+          var items = (c.items || []).map(S.bookmarks.get).filter(S.visible);   // a mixed (pre-2026-11-07) collection lists only this copy's items here
           return '<section class="col" data-c="' + esc(c.id) + '"><h2 class="colhead"><input type="text" value="' + esc(c.name) + '" data-act="rename" size="' + Math.max(12, Math.min(48, c.name.length + 2)) + '"><span class="cnt">' + items.length + ' item' + (items.length === 1 ? '' : 's') + '</span>'
             + '<button class="mini" data-act="share">🔗 share link</button><button class="mini" data-act="print">🖨 print</button><button class="mini" data-act="delcol">delete collection</button></h2>'
             + (items.length ? items.map(function (b, i) { return bmCard(b, c.id, i, items.length); }).join('') : '<div class="empty">Empty — add bookmarks from the Bookmarks tab (or from the ☆ popover while reading/searching).</div>')
             + '</section>';
         }).join('') : '<div class="empty">No collections yet. Create one above, then add bookmarks to it.</div>');
+  }
+
+  function noteCard(n, badge) {
+    return '<div class="card" data-n="' + esc(n.key) + '"><div class="t">' + (badge ? '<span class="kind" title="note">📝</span>' : '') + link(n) + siteTag(n.site) + '</div><div class="ex" style="white-space:pre-wrap">' + esc(n.text) + '</div>'
+      + '<div class="meta">' + day(n.updated) + ' <button class="mini" data-act="nedit">edit</button><button class="mini" data-act="ndel">delete</button></div></div>';
+  }
+  function hlCard(h, badge) {
+    return '<div class="card" data-h="' + esc(h.id) + '"><div class="t">' + (badge ? '<span class="kind" title="highlight">🖍</span>' : '') + '<a href="' + esc(hlUrl(h)) + '"' + (h.site && h.site !== S.SITE ? ' target="_blank" rel="noopener"' : '') + '>' + esc(h.title || h.ref) + '</a>' + siteTag(h.site)
+      + (h.placed === false ? ' <span class="warn" title="On your last visit the marked words were not found on that verse (the text was edited). The highlight is kept here; it is not painted on a guess.">⚠ not found on your last visit</span>' : '') + '</div>'
+      + '<div class="ex dv hlq">' + esc(h.text || '') + '</div>'
+      + (h.note ? '<div class="ex" style="white-space:pre-wrap;font-size:14px">✎ ' + esc(h.note) + '</div>' : '')
+      + '<div class="meta">' + day(h.created) + ' ' + (h.tags || []).map(function (t) { return '<span class="chip">#' + esc(t) + '</span>'; }).join(' ')
+      + ' <button class="mini" data-act="hnote">' + (h.note ? 'edit note' : 'add note') + '</button><button class="mini" data-act="htags">tags…</button><button class="mini" data-act="hdel">delete</button></div></div>';
+  }
+
+  // ---- All (the library's default view, 2026-11-07 — a beta reader missed the tab buttons): everything saved on THIS copy, newest
+  // first, each marked ★ / 🖍 / 📝, with the same buttons as in its own view. The buttons above filter to one kind. ----
+  function renderAll() {
+    var es = S.bookmarks.list().map(function (b) { return { b: b, t: b.created || '' }; })
+      .concat(S.highlights.list().map(function (h) { return { h: h, t: h.created || '' }; }))
+      .concat(S.notes.list().map(function (n) { return { n: n, t: n.updated || '' }; }))
+      .sort(function (x, y) { return y.t.localeCompare(x.t); });
+    V.innerHTML = '<div class="toolbar"><input type="text" class="search" placeholder="search everything…" id="flt"></div>'
+      + (es.length ? es.map(function (e) { return e.b ? bmCard(e.b, null, 0, 0, true) : e.h ? hlCard(e.h, true) : noteCard(e.n, true); }).join('')
+        : '<div class="empty">Nothing saved on this site yet. On any reading page: ☆ bookmarks the verse you are at; select words to 🖍 highlight them (with a note and tags) or bookmark the passage; 📝 keeps a note for the verse. Everything collects here.</div>');
+    var f = document.getElementById('flt');
+    f.oninput = function () { var q = f.value.trim(); [].forEach.call(V.querySelectorAll('.card'), function (c) { c.style.display = !q || c.textContent.indexOf(q) >= 0 ? '' : 'none'; }); };
   }
 
   // 📝 Notes = page notes AND the notes written on 🖍 highlights (reader report 2026-11-07: a highlight's note was looked for here).
@@ -151,8 +185,7 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
               + '<div class="ex" style="white-space:pre-wrap">' + esc(h.note) + '</div>'
               + '<div class="meta">' + day(e.t) + ' ' + (h.tags || []).map(function (t) { return '<span class="chip">#' + esc(t) + '</span>'; }).join(' ')
               + ' <a href="#highlights" title="note on a highlight — edit, tag or delete it in the 🖍 Highlights tab">edit in 🖍 Highlights</a></div></div>';
-            return '<div class="card" data-n="' + esc(n.key) + '"><div class="t">' + link(n) + siteTag(n.site) + '</div><div class="ex" style="white-space:pre-wrap">' + esc(n.text) + '</div>'
-              + '<div class="meta">' + day(n.updated) + ' <button class="mini" data-act="nedit">edit</button><button class="mini" data-act="ndel">delete</button></div></div>';
+            return noteCard(n);
           }).join('');
         }).join('') : '<div class="empty">No notes yet — open a reading page and use 📝 in the top bar, or add a note to a passage you mark with 🖍 highlight.</div>');
     var f = document.getElementById('flt');
@@ -172,22 +205,15 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
     V.innerHTML = '<div class="toolbar"><input type="text" class="search" placeholder="search highlights, notes, tags…" id="flt"></div>'
       + (tags.length ? '<div class="tagf"><button data-act="tag" data-tag=""' + (tagOn ? '' : ' class="on"') + '>all</button>' + tags.map(function (t) { return '<button data-act="tag" data-tag="' + esc(t.tag) + '"' + (tagOn === t.tag ? ' class="on"' : '') + '>#' + esc(t.tag) + ' <span class="cnt">' + t.n + '</span></button>'; }).join('') + '</div>' : '')
       + (hs.length ? Object.keys(by).map(function (k) {
-          return '<h2 class="dv">' + esc(k) + ' <span class="cnt">' + by[k].length + '</span></h2>' + by[k].map(function (h) {
-            return '<div class="card" data-h="' + esc(h.id) + '"><div class="t"><a href="' + esc(hlUrl(h)) + '"' + (h.site && h.site !== S.SITE ? ' target="_blank" rel="noopener"' : '') + '>' + esc(h.title || h.ref) + '</a>' + siteTag(h.site)
-              + (h.placed === false ? ' <span class="warn" title="On your last visit the marked words were not found on that verse (the text was edited). The highlight is kept here; it is not painted on a guess.">⚠ not found on your last visit</span>' : '') + '</div>'
-              + '<div class="ex dv hlq">' + esc(h.text || '') + '</div>'
-              + (h.note ? '<div class="ex" style="white-space:pre-wrap;font-size:14px">✎ ' + esc(h.note) + '</div>' : '')
-              + '<div class="meta">' + day(h.created) + ' ' + (h.tags || []).map(function (t) { return '<span class="chip">#' + esc(t) + '</span>'; }).join(' ')
-              + ' <button class="mini" data-act="hnote">' + (h.note ? 'edit note' : 'add note') + '</button><button class="mini" data-act="htags">tags…</button><button class="mini" data-act="hdel">delete</button></div></div>';
-          }).join('');
+          return '<h2 class="dv">' + esc(k) + ' <span class="cnt">' + by[k].length + '</span></h2>' + by[k].map(function (h) { return hlCard(h); }).join('');
         }).join('') : '<div class="empty">' + (tagOn ? 'No highlights tagged #' + esc(tagOn) + '.' : 'No highlights yet — select words on a reading page and choose 🖍 highlight.') + '</div>');
     var f = document.getElementById('flt');
     f.oninput = function () { var q = f.value.trim(); [].forEach.call(V.querySelectorAll('.card'), function (c) { c.style.display = !q || c.textContent.indexOf(q) >= 0 ? '' : 'none'; }); };
   }
 
   function renderBackup() {
-    var nb = S.bookmarks.list().length, nc = S.collections.list().length, nn = S.notes.list().length, nh = S.history.list().length, nhl = S.highlights.list().length;
-    V.innerHTML = '<div class="card"><b>Export</b> — download everything (' + nb + ' bookmarks, ' + nc + ' collections, ' + nn + ' notes, ' + nhl + ' highlights, ' + nh + ' recent searches) as one file. Keep it safe, or import it on another device.<div class="meta"><button class="mini pri" data-act="export">⤓ export file</button></div></div>'
+    var nb = S.bookmarks.all().length, nc = S.collections.all().length, nn = S.notes.all().length, nh = S.history.list().length, nhl = S.highlights.all().length;   // export = everything in this browser, incl. our other sites' records
+    V.innerHTML = '<div class="card"><b>Export</b> — download everything (' + nb + ' bookmarks, ' + nc + ' collections, ' + nn + ' notes, ' + nhl + ' highlights, ' + nh + ' recent searches) as one file — everything in this browser, including what you saved on our other sites. Keep it safe, or import it on another device.<div class="meta"><button class="mini pri" data-act="export">⤓ export file</button></div></div>'
       + '<div class="card"><b>Import</b> — merge an exported file into this browser. Nothing here is deleted; where the same item exists in both, the more recently edited copy wins.' + (S.SITE === 'sahitya' ? '' : ' On a phone or tablet app, see <a href="help-mobile.html#library">📱 keeping your library safe</a>.') + '<div class="meta"><input type="file" id="imp" accept=".json,application/json"></div><div id="impmsg" class="meta"></div></div>';
     document.getElementById('imp').onchange = function (e) {
       var f = e.target.files[0]; if (!f) return;
@@ -290,16 +316,30 @@ main a:not([class]){color:var(--acc)}   /* body links: site accent in both theme
       if (navigator.onLine) O.refresh();
     }, function () { V.innerHTML = '<div class="empty">Offline reading isn’t available on this site.</div>'; });
   }
-  var tab = 'bookmarks';
-  function render() { V.onclick = null; ({ bookmarks: renderBookmarks, collections: renderCollections, notes: renderNotes, highlights: renderHighlights, offline: renderOffline, backup: renderBackup })[tab](); }
+  var tab = 'all';
+  function render() { V.onclick = null; paintCounts(); ({ all: renderAll, bookmarks: renderBookmarks, collections: renderCollections, notes: renderNotes, highlights: renderHighlights, offline: renderOffline, backup: renderBackup })[tab](); }
   function route() {
     var h = location.hash.slice(1);
     [].forEach.call(document.querySelectorAll('nav.tabs a'), function (a) { a.classList.remove('on'); });
     if (h.indexOf('c=') === 0) { renderShared(h.slice(2)); return; }
-    tab = { bookmarks: 1, collections: 1, notes: 1, highlights: 1, offline: 1, backup: 1 }[h] ? h : 'bookmarks';
+    tab = { all: 1, bookmarks: 1, collections: 1, notes: 1, highlights: 1, offline: 1, backup: 1 }[h] ? h : 'all';
     document.querySelector('nav.tabs a[data-tab="' + tab + '"]').classList.add('on');
     render();
   }
+  // counts on the filter buttons (this copy's records)
+  function paintCounts() {
+    var n = { bookmarks: S.bookmarks.list().length, highlights: S.highlights.list().length, notes: S.notes.list().length, collections: S.collections.list().length };
+    n.all = n.bookmarks + n.highlights + n.notes;
+    [].forEach.call(document.querySelectorAll('nav.tabs a[data-tab]'), function (a) { var s = a.querySelector('.n'); if (s) s.textContent = n[a.getAttribute('data-tab')] != null ? n[a.getAttribute('data-tab')] : ''; });
+  }
+  // first-visit hint (closes with ✕; retires by itself after 5 visits)
+  (function () {
+    var H = document.getElementById('hint'), seen = +(S.prefs.get('hint:library-visits', 0)) || 0;
+    if (S.prefs.get('hint:library-done', false) || seen >= 5) return;
+    S.prefs.set('hint:library-visits', seen + 1);
+    H.innerHTML = '<div class="hint">Everything you save on this site is here, newest first. Use the buttons at the top to show only <b>★ bookmarks</b>, <b>🖍 highlights</b> or <b>📝 notes</b>; <b>🗂 Collections</b>, <b>📶 Offline</b> and <b>⤓ Backup</b> are just above this note.<button class="x" title="close" aria-label="close">✕</button></div>';
+    H.querySelector('.x').onclick = function () { S.prefs.set('hint:library-done', true); H.innerHTML = ''; };
+  })();
   window.addEventListener('hashchange', route);
   S.onChange(function () { if (location.hash.indexOf('#c=') !== 0 && !document.activeElement.matches('input,textarea')) render(); });
   route();

@@ -92,7 +92,7 @@
     var state = Math.random().toString(36).slice(2) + Date.now().toString(36);
     var standalone = navigator.standalone === true;
     var url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: callbackUrl(), response_type: 'code',
-      scope: SCOPE, access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true', state: state }).toString();
+      scope: SCOPE, access_type: 'offline', prompt: 'select_account consent', include_granted_scopes: 'true', state: state }).toString();   // select_account: always let the reader pick the account (2026-11-07 — Google could silently use whichever account the browser was signed into)
     lset(K.code, null);
     var w = null;
     if (!standalone) { lset(K.auth, JSON.stringify({ state: state, ret: location.href, mode: 'popup', ts: Date.now() })); w = window.open(url, 'vvsync-auth', 'width=520,height=680'); }
@@ -238,8 +238,18 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(nudge, 1500); }); else setTimeout(nudge, 1500);
 
+  // ---- switch to another Google account (2026-11-07, beta report: signed in with the wrong one, no way to undo it here). Called from a
+  // click: sign-in opens FIRST (a pop-up must come straight from the click), the old account's grant is revoked in parallel if asked.
+  // This browser keeps everything; the merge then copies it into the new account's Drive. The old Drive copy stays until deleted. ----
+  function switchAccount(revoke) {
+    var rt = lget(K.rt);
+    disable();
+    var p = signIn();
+    if (revoke && rt) broker('/revoke', { rt: rt }).catch(function () {});
+    return p;
+  }
   function enable() { return signIn(); }
-  window.VVSync = { status: status, enable: enable, signIn: signIn, syncNow: function () { return syncNow(false); }, disable: disable, deleteRemote: deleteRemote,
+  window.VVSync = { status: status, enable: enable, signIn: signIn, switchAccount: switchAccount, syncNow: function () { return syncNow(false); }, disable: disable, deleteRemote: deleteRemote,
     onStatus: function (f) { listeners.push(f); return function () { listeners = listeners.filter(function (x) { return x !== f; }); }; },
     _test: { getToken: getToken, finishPending: finishPending, K: K } };
 })();

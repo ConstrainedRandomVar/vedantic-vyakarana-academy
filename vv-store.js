@@ -105,10 +105,17 @@
   function db(key) { var d = load(key, null); if (!d || typeof d !== 'object') d = { v: 1, items: {} }; if (!d.items) d.items = {}; return d; }
   // deletions leave a TOMBSTONE (kind:id → time) so a sync can tell "deleted here" from "never seen here" (vv-sync.js merge)
   function tomb(kind, id) { var d = db(K.tomb); d.items[kind + ':' + id] = now(); save(K.tomb, d); }
+  // ---- which records THIS copy shows (Harsha 2026-11-07, beta report): the academy and the public site share one browser library
+  // (same origin) but each shows only what was saved on it — plus records from the shared search site (it has no library of its own)
+  // and untagged ones. The search site shows everything. `list()` = visible here; `all()` = every record (export and sync read the raw
+  // store, so nothing is ever dropped — the other copy's records reappear there). ----
+  function visible(r) { if (!r) return false; if (SITE === 'search') return true; var s = r.site; return !s || s === SITE || s === 'search'; }
+  function vis(a) { return a.filter(visible); }
 
   // ---- bookmarks: { id, site, url, title, ref, excerpt, note, src:'reading'|'search', query, created, updated } ----
   var bookmarks = {
-    list: function () { var d = db(K.bm), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.created || '').localeCompare(x.created || ''); }); },
+    all: function () { var d = db(K.bm), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.created || '').localeCompare(x.created || ''); }); },
+    list: function () { return vis(bookmarks.all()); },
     get: function (id) { return db(K.bm).items[id] || null; },
     find: function (url, excerpt) {   // same place + same excerpt = same bookmark (re-☆ doesn't duplicate)
       url = absUrl(url); var d = db(K.bm);
@@ -132,10 +139,11 @@
 
   // ---- collections: { id, name, items:[bookmarkId…] (ordered), created, updated } — a bookmark may sit in several ----
   var collections = {
-    list: function () { var d = db(K.col), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (x.name || '').localeCompare(y.name || ''); }); },
+    all: function () { var d = db(K.col), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (x.name || '').localeCompare(y.name || ''); }); },
+    list: function () { return vis(collections.all()); },   // a collection made on one copy shows only there; untagged (pre-2026-11-07) ones show on both
     get: function (id) { return db(K.col).items[id] || null; },
-    byName: function (name) { var d = db(K.col); for (var k in d.items) if (d.items[k].name === name) return d.items[k]; return null; },
-    create: function (name) { var ex = collections.byName(name); if (ex) return ex.id; var d = db(K.col), id = uid('c'); d.items[id] = { id: id, name: name, items: [], created: now(), updated: now() }; save(K.col, d); return id; },
+    byName: function (name) { var l = collections.list(); for (var i = 0; i < l.length; i++) if (l[i].name === name) return l[i]; return null; },
+    create: function (name) { var ex = collections.byName(name); if (ex) return ex.id; var d = db(K.col), id = uid('c'); d.items[id] = { id: id, name: name, site: SITE, items: [], created: now(), updated: now() }; save(K.col, d); return id; },
     rename: function (id, name) { var d = db(K.col); if (!d.items[id]) return; d.items[id].name = name; d.items[id].updated = now(); save(K.col, d); },
     remove: function (id) { var d = db(K.col); delete d.items[id]; save(K.col, d); tomb('collections', id); },   // bookmarks themselves stay
     addItem: function (id, bid) { var d = db(K.col), c = d.items[id]; if (!c) return; c.items = c.items || []; if (c.items.indexOf(bid) < 0) { c.items.push(bid); c.updated = now(); save(K.col, d); } },
@@ -157,7 +165,8 @@
       save(K.notes, d);
     },
     remove: function (key) { var d = db(K.notes); delete d.items[key]; save(K.notes, d); tomb('notes', key); },
-    list: function () { var d = db(K.notes), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.updated || '').localeCompare(x.updated || ''); }); },
+    all: function () { var d = db(K.notes), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.updated || '').localeCompare(x.updated || ''); }); },
+    list: function () { return vis(notes.all()); },
     onPage: function (page) { return notes.list().filter(function (n) { return n.site === SITE && n.page === page; }); },
   };
 
@@ -166,7 +175,8 @@
   // quote/prefix/suffix = the ORIGINAL (Devanāgarī) text with whitespace/ZWJ removed, snapped to whole text nodes (vv-reader.js);
   // placed = did the last page visit find the words (false → listed as "unplaced", never painted on a guess). ----
   var highlights = {
-    list: function () { var d = db(K.hl), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.created || '').localeCompare(x.created || ''); }); },
+    all: function () { var d = db(K.hl), a = []; for (var k in d.items) a.push(d.items[k]); return a.sort(function (x, y) { return (y.created || '').localeCompare(x.created || ''); }); },
+    list: function () { return vis(highlights.all()); },
     get: function (id) { return db(K.hl).items[id] || null; },
     onPage: function (page) { return highlights.list().filter(function (h) { return h.site === SITE && h.page === page; }); },
     add: function (h) {
@@ -307,7 +317,7 @@
   function pipe(bytes, Stream, mode) { return new Response(new Blob([bytes]).stream().pipeThrough(new Stream(mode))).arrayBuffer().then(function (b) { return new Uint8Array(b); }); }
   function snapshot(id) {
     var c = collections.get(id); if (!c) return null;
-    return { kind: 'vvd-collection', v: 1, name: c.name, items: (c.items || []).map(bookmarks.get).filter(Boolean).map(function (b) {
+    return { kind: 'vvd-collection', v: 1, name: c.name, items: (c.items || []).map(bookmarks.get).filter(visible).map(function (b) {
       return { url: b.url, site: b.site, title: b.title, ref: b.ref, excerpt: b.excerpt, note: b.note, src: b.src, query: b.query };
     }) };
   }
@@ -333,7 +343,7 @@
   }
 
   root.VVStore = {
-    NS: NS, SITE: SITE, SITE_NAMES: SITE_NAMES, siteOf: siteOf, siteBase: siteBase, rememberSite: rememberSite, lastSite: lastSite,
+    NS: NS, SITE: SITE, SITE_NAMES: SITE_NAMES, visible: visible, siteOf: siteOf, siteBase: siteBase, rememberSite: rememberSite, lastSite: lastSite,
     bookmarks: bookmarks, collections: collections, notes: notes, highlights: highlights, history: history, prefs: prefs, folds: folds, openTab: openTab, applyChrome: applyChrome, SEARCH_TAB: SEARCH_TAB, KOSHA_TAB: KOSHA_TAB,
     syncSnapshot: syncSnapshot, mergeData: mergeData, applySnapshot: applySnapshot,
     exportAll: exportAll, importAll: importAll, encodeShare: encodeShare, decodeShare: decodeShare, importShared: importShared, snapshot: snapshot,

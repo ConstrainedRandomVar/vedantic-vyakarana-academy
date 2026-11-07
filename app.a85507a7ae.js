@@ -1339,10 +1339,25 @@ function renderCategorySection(kind, codes) {
 // मट्टिप्पणीसञ्चयः · My bookmarks, highlights & notes (Harsha 2026-10-21 #11; renamed from «मम स्वाध्यायः · My study» the same day): bookmarks + notes promoted out of Tools into their own section — a live
 // summary (counts, 3 latest bookmarks, 3 latest notes, each linking to its verse) + "Open my library". This site's own records
 // (they carry `site`; a local/dev copy shows all). Data stays in this browser (vv-store.js, CLAUDE.md 9i).
+function studyCountText() {   // the मट्टिप्पणीसञ्चयः section header count (this copy's records — VVStore.visible)
+  const S = window.VVStore; if (!S) return '';
+  try { const b = S.bookmarks.list().length, h = (S.highlights ? S.highlights.list() : []).length, n = S.notes.list().length;
+    return b + h + n ? `★ ${b} · 🖍 ${h} · 📝 ${n}` : 'none yet'; } catch (e) { return ''; }
+}
+// Keep the summary current (2026-11-07, beta report): Back restores the homepage from the browser's page cache, and a sync can bring
+// in records from another device while it is open — both left the counts stale until a reload. Repaint on either.
+function refreshMyStudy() {
+  const box = document.getElementById('myStudy'); if (!box) return;
+  box.innerHTML = myStudyHtml();
+  const c = document.querySelector('#studyPanel .sec-prog'); if (c) c.textContent = studyCountText();
+}
+window.addEventListener('pageshow', e => { if (e.persisted) refreshMyStudy(); });
+{ let t = null; const keys = ['bookmarks', 'collections', 'notes', 'highlights'];
+  if (window.VVStore && VVStore.onChange) VVStore.onChange(k => { if (keys.some(x => k === VVStore.NS + x)) { clearTimeout(t); t = setTimeout(refreshMyStudy, 150); } }); }
 function myStudyHtml() {
   const S = window.VVStore; if (!S) return '';
   const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const mine = r => !S.SITE || S.SITE === 'local' || !r.site || r.site === S.SITE;
+  const mine = r => true;   // list() already returns only what THIS copy shows (VVStore.visible, 2026-11-07)
   let bms = [], notes = [], hls = [], cols = 0;
   try { bms = S.bookmarks.list().filter(mine).sort((a, b) => (b.created || '').localeCompare(a.created || '')); notes = S.notes.list().filter(mine); cols = S.collections.list().length; hls = (S.highlights ? S.highlights.list() : []).filter(mine); } catch (e) {}
   if (!bms.length && !notes.length && !hls.length) return '<div class="study-empty">☆ on any reading page bookmarks the verse you are at; select text to 🖍 highlight or bookmark a passage; 📝 keeps a note for the verse. They collect here.</div>';
@@ -1353,7 +1368,9 @@ function myStudyHtml() {
   const hlUrl = h => h.url.split('#')[0].split('?')[0] + '?hl=' + encodeURIComponent((h.text || '').split(/\s+/).slice(0, 8).join(' ')) + '&hv=1' + (h.ref ? '#v-' + h.ref : '');
   const row = (url, title, sub) => `<a class="study-row" href="${esc(url)}"><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</a>`;
   const cut = (x, n) => { x = String(x || '').replace(/\s+/g, ' ').trim(); return x.length > n ? x.slice(0, n) + '…' : x; };
-  return `<div class="study-counts">★ ${bms.length} bookmark${bms.length === 1 ? '' : 's'} · ${cols} collection${cols === 1 ? '' : 's'} · 🖍 ${hls.length} highlight${hls.length === 1 ? '' : 's'} · 📝 ${notes.length} note${notes.length === 1 ? '' : 's'} · <a href="library.html">Open my library →</a>${syncNote}</div>
+  // each count opens the library on that kind (2026-11-07: a reader saw the counts but not the library's filter buttons)
+  const cnt = (h, n, w) => `<a class="study-cnt" href="library.html#${h}">${n} ${w}${n === 1 ? '' : 's'}</a>`;
+  return `<div class="study-counts">★ ${cnt('bookmarks', bms.length, 'bookmark')} · 🗂 ${cnt('collections', cols, 'collection')} · 🖍 ${cnt('highlights', hls.length, 'highlight')} · 📝 ${cnt('notes', notes.length, 'note')} · <a href="library.html">Open my library →</a>${syncNote}</div>
     <div class="study-cols">
       <div class="study-col"><div class="study-h">Latest bookmarks</div>${bms.slice(0, 3).map(b => row(b.url, b.title || 'bookmark', cut(b.excerpt, 70))).join('') || '<div class="study-none">none yet</div>'}</div>
       <div class="study-col"><div class="study-h">Latest highlights</div>${hls.slice(0, 3).map(h => row(hlUrl(h), h.title || h.ref, cut(h.text, 60) + ((h.tags || []).length ? '  #' + h.tags.join(' #') : ''))).join('') || '<div class="study-none">none yet</div>'}</div>
@@ -1443,9 +1460,7 @@ function renderDashboard() {
   const isShut = id => { const [k, shutVal, dflt] = FOLD_SECS[id]; let v; try { v = VVStore.prefs.get(k, undefined); } catch (e) {} return v === undefined ? dflt : v === shutVal; };
   const foldHead = (id, inner, count) => `<h2 class="sec-head" data-fold="${id}"><button class="sec-fold" aria-expanded="${!isShut(id)}" title="show / hide this section">${isShut(id) ? '▸' : '▾'}</button>${inner}${count ? `<span class="sec-prog">${count}</span>` : ''}</h2>`;
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  const studyCount = (() => { const S = window.VVStore; if (!S) return ''; try { const mine = r => !S.SITE || S.SITE === 'local' || !r.site || r.site === S.SITE;
-    const b = S.bookmarks.list().filter(mine).length, h = (S.highlights ? S.highlights.list() : []).filter(mine).length, n = S.notes.list().filter(mine).length;
-    return b + h + n ? `★ ${b} · 🖍 ${h} · 📝 ${n}` : 'none yet'; } catch (e) { return ''; } })();
+  const studyCount = studyCountText();
   // निबन्धाः · In-depth studies — collapsed by default, remembered (Harsha 2026-10-21 #9)
   const nibOpen = !!(window.VVStore && VVStore.prefs && VVStore.prefs.get('home:nibandha-open', false));
   const sister = !!(window.SITE_CONFIG && window.SITE_CONFIG.readGroups);

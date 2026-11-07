@@ -165,6 +165,14 @@
     var host = box.querySelector('.vvset-syncst'); if (!host) return;
     withSync(function () {
       var ago = function (ts) { var s = Math.round((Date.now() - new Date(ts)) / 1000); return s < 60 ? 'just now' : s < 3600 ? Math.round(s / 60) + ' min ago' : new Date(ts).toLocaleString(); };
+      // "Switch account" opens this small choice first, so the sign-in pop-up comes straight from a click (2026-11-07)
+      var switching = false;
+      var switchBox = function (st) {
+        if (!switching) return '';
+        return '<div class="hint vvset-switch" style="margin:8px 0 0;padding:8px 10px;border:1px solid currentColor;border-radius:8px">Sign in with a different Google account. Everything saved in this browser stays here and is copied to the new account’s Drive.'
+          + (st.who ? '<br><label><input type="checkbox" data-sync-revoke checked> Also remove this site’s access from <b>' + esc(st.who) + '</b> (untick if you use that account on another device)</label>' : '')
+          + '<br><button type="button" class="vvset-btn" data-sync="switchgo" style="margin-top:6px">Choose account…</button> <button type="button" class="vvset-btn2" data-sync="switchno">Cancel</button></div>';
+      };
       var draw = function (st) {
         var line = st.busy ? 'syncing…' : st.last ? (st.last.ok ? (st.last.msg ? esc(st.last.msg) : 'synced ' + ago(st.last.ts)) : '⚠ ' + esc(st.last.msg || 'sync failed') + ' — will retry') : '';
         host.innerHTML = !st.on
@@ -173,11 +181,12 @@
             + '<div class="hint" style="margin:6px 0 0">Sign in once on each computer, phone or tablet; after that it keeps syncing by itself.</div>'
           : st.reauth
           ? '<div class="hint" style="margin:0 0 6px"><b>Sync paused</b> — ' + (st.noDrive ? esc(st.noDriveMsg) : 'Google needs you to sign in again' + (st.who ? ' (' + esc(st.who) + ')' : '') + '.') + ' Nothing is lost: your data is in this browser and in your Drive.</div>'
-            + '<button type="button" class="vvset-btn" data-sync="signin">Sign in again</button> <button type="button" class="vvset-btn2" data-sync="off">Turn off</button>'
+            + '<button type="button" class="vvset-btn" data-sync="signin">Sign in again</button> <button type="button" class="vvset-btn2" data-sync="switch">Use another account</button> <button type="button" class="vvset-btn2" data-sync="off">Turn off</button>' + switchBox(st)
           : '<div class="hint" style="margin:0 0 6px">☁ On' + (st.who ? ' · ' + esc(st.who) : '') + (line ? ' · ' + line : '') + '</div>'
             + '<button type="button" class="vvset-btn" data-sync="now">⟳ Sync now</button> '
             + '<button type="button" class="vvset-btn2" data-sync="off" title="Stop syncing in this browser. Your other devices keep syncing.">Turn off here</button> '
-            + '<button type="button" class="vvset-btn2" data-sync="del" title="Delete the copy in your Google Drive (this browser keeps its data)">Delete Drive copy</button>';
+            + '<button type="button" class="vvset-btn2" data-sync="del" title="Delete the copy in your Google Drive (this browser keeps its data)">Delete Drive copy</button> '
+            + '<button type="button" class="vvset-btn2" data-sync="switch" title="Signed in with the wrong Google account? Switch here.">Switch account</button>' + switchBox(st);
       };
       draw(VVSync.status()); if (!host.__vvWired) { host.__vvWired = true; VVSync.onStatus(draw); }
       host.onclick = function (e) {
@@ -186,6 +195,8 @@
         if (a === 'on') busy(VVSync.enable());
         else if (a === 'signin') busy(VVSync.signIn());
         else if (a === 'now') busy(VVSync.syncNow());
+        else if (a === 'switch' || a === 'switchno') { switching = a === 'switch'; draw(VVSync.status()); }
+        else if (a === 'switchgo') { var rv = host.querySelector('[data-sync-revoke]'); switching = false; busy(VVSync.switchAccount(!!(rv && rv.checked))); }
         else if (a === 'off' && confirm('Stop syncing in this browser? Your data stays here and in your Drive copy; your other devices keep syncing.')) VVSync.disable();
         else if (a === 'del' && confirm('Delete the copy in your Google Drive? This browser keeps its data. (Any other device that is still syncing will upload its copy again.)')) busy(VVSync.deleteRemote());
       };

@@ -17,6 +17,7 @@
   var NS = 'vvd1:';
   var K = { bm: NS + 'bookmarks', col: NS + 'collections', notes: NS + 'notes', hl: NS + 'highlights', tomb: NS + 'tombstones', hist: NS + 'searchHistory', prefs: NS + 'prefs', site: NS + 'lastSite' };
   var HIST_MAX = 30;
+  var PERSONAL = {}; [K.bm, K.col, K.notes, K.hl].forEach(function (k) { PERSONAL[k] = 1; });   // the reader's own records (a refused write warns)
 
   // ---- site identity (first path segment on github.io; anything else = local dev) ----
   var SITES = { 'vedantic-vyakarana-academy': 'academy', 'adhyayana-sahakari': 'public', 'sahitya-vyakaranam': 'sahitya', 'prasthanatrayi-search': 'search' };
@@ -35,16 +36,61 @@
     return root.location.origin + (SITES[seg] ? '/' + seg + '/' : p.replace(/[^/]*$/, ''));
   }
 
-  // ---- raw JSON storage (never throws: private mode / quota just degrade to in-memory) ----
+  // ---- raw JSON storage (never throws). A write the browser REFUSES (storage full, or site storage blocked) is kept in memory for
+  // this page — and read back from there, so the page keeps showing it — and the reader is WARNED (storageWarn) that it will be
+  // lost when the page closes. Never a silent loss (2026-11-07). ----
   var mem = {};
   function load(key, dflt) {
-    try { var s = root.localStorage.getItem(key); if (s) return JSON.parse(s); } catch (e) { if (mem[key]) return JSON.parse(mem[key]); }
+    if (Object.prototype.hasOwnProperty.call(mem, key)) return JSON.parse(mem[key]);
+    try { var s = root.localStorage.getItem(key); if (s) return JSON.parse(s); } catch (e) {}
     return dflt;
   }
   function save(key, val) {
     var s = JSON.stringify(val);
-    try { root.localStorage.setItem(key, s); } catch (e) { mem[key] = s; }
+    try { root.localStorage.setItem(key, s); delete mem[key]; } catch (e) { mem[key] = s; if (PERSONAL[key]) storageWarn(e); }
     fire(key);
+  }
+  // ---- warn when a save didn't stick: one banner per page, bottom-left (the bottom-right corner holds the page's own buttons) ----
+  var storageFailed = null;
+  function noticeCss() {
+    var d = root.document; if (!d || d.getElementById('vvn-css')) return;
+    var st = d.createElement('style'); st.id = 'vvn-css';
+    st.textContent = '.vvn{position:fixed;left:14px;bottom:14px;z-index:1500;max-width:440px;box-sizing:border-box;font:13.5px/1.5 system-ui,sans-serif;'
+      + 'background:#fffbeb;color:#3f3a2e;border:1px solid #e7c873;border-left:4px solid #d97706;border-radius:10px;padding:10px 32px 10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.15)}'
+      + '.vvn.err{background:#fef2f2;border-color:#f0b4b4;border-left-color:#b91c1c}'
+      + '.vvn a{color:#b45309;font-weight:600}.vvn.err a{color:#b91c1c}'
+      + '.vvn .x{position:absolute;top:4px;right:6px;border:0;background:transparent;color:inherit;font-size:15px;cursor:pointer;padding:2px 6px}'
+      + '.vvn .acts{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}.vvn .acts button{font:inherit;font-size:13px;border-radius:7px;padding:3px 10px;cursor:pointer;'
+      + 'border:1px solid #d97706;background:#d97706;color:#fff}.vvn .acts button.lt{background:transparent;color:inherit;border-color:#cbbf9f}'
+      + '@media(max-width:640px){.vvn{left:8px;right:8px;bottom:70px;max-width:none}}'
+      + '@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .vvn{background:#2a2414;color:#ece6d6;border-color:#6b5a2a}'
+      + ':root:not([data-theme=light]) .vvn.err{background:#2c1616;border-color:#6b2a2a}:root:not([data-theme=light]) .vvn a{color:#fbbf5a}'
+      + ':root:not([data-theme=light]) .vvn.err a{color:#fca5a5}:root:not([data-theme=light]) .vvn .acts button.lt{border-color:#6b5a2a}}'
+      + ':root[data-theme=dark] .vvn{background:#2a2414;color:#ece6d6;border-color:#6b5a2a}:root[data-theme=dark] .vvn.err{background:#2c1616;border-color:#6b2a2a}'
+      + ':root[data-theme=dark] .vvn a{color:#fbbf5a}:root[data-theme=dark] .vvn.err a{color:#fca5a5}:root[data-theme=dark] .vvn .acts button.lt{border-color:#6b5a2a}'
+      + '@media print{.vvn{display:none!important}}';
+    (d.head || d.documentElement).appendChild(st);
+  }
+  function notice(cls, html) {
+    var d = root.document; if (!d || !d.body) return null;
+    noticeCss();
+    var n = d.createElement('div'); n.className = 'vvn ' + cls; n.setAttribute('role', cls === 'err' ? 'alert' : 'status');
+    n.innerHTML = html + '<button type="button" class="x" aria-label="Dismiss">✕</button>';
+    n.querySelector('.x').addEventListener('click', function () { n.remove(); });
+    d.body.appendChild(n); return n;
+  }
+  function libraryHref() { if (SITE !== 'search') return 'library.html'; var l = lastSite(); return l && l.base ? l.base + 'library.html' : ''; }
+  function storageWarn(e) {
+    if (storageFailed) return;
+    var full = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014);
+    storageFailed = full ? 'full' : 'blocked';
+    var lib = libraryHref();
+    var html = '<b>⚠ Not saved.</b> ' + (full
+      ? 'This browser’s storage for our sites is full, so what you just saved is kept only until you close this page.'
+        + (lib ? ' Export a backup from <a href="' + lib + '#backup"' + (/library\.html$/.test((root.location && root.location.pathname) || '') ? '' : ' target="_blank" rel="noopener"') + '>★ Library → Backup</a>, then delete items you no longer need.' : '')
+      : 'This browser is blocking storage for this site (site data or cookies switched off, or a restricted private window), so what you save here lasts only until you close this page.');
+    var show = function () { notice('err', html); };
+    if (root.document && root.document.body) show(); else if (root.addEventListener) root.addEventListener('DOMContentLoaded', show);
   }
   var subs = [];
   // subscribers get (key, external): external = the write happened in ANOTHER tab of this browser (storage event) — vv-sync.js
@@ -300,5 +346,42 @@
   // ask the browser to keep this origin's storage (the library) under storage pressure instead of evicting it — Safari 17+ /
   // Chrome; a no-op where unsupported or already granted. Matters most for an iOS home-screen app, whose storage is its own.
   try { var ns = root.navigator && root.navigator.storage; if (ns && ns.persist && ns.persisted) ns.persisted().then(function (p) { if (!p) ns.persist(); }).catch(function () {}); } catch (e) {}
+  // ---- Safari's 7-day rule (2026-11-07): Safari (and every iPhone/iPad browser — all WebKit) deletes a site's stored data after 7 days
+  // of browsing without a visit. A reader there who has saved something and has NOT turned on Drive sync gets one small card
+  // suggesting sync (it keeps their data safe, even on a single device) or an export. "Not now" hides it for 30 days. Not shown in
+  // a home-screen app (exempt — its storage is its own), on the shared search site (no sync there), or in a live class session. ----
+  function itpNudge() {
+    var d = root.document, nav = root.navigator; if (!d || !d.body || !nav || SITE === 'search' || storageFailed) return;
+    var ua = nav.userAgent || '';
+    var ios = /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1);
+    var macSafari = /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS/.test(ua);
+    if (!ios && !macSafari) return;
+    if (nav.standalone === true || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches)) return;
+    if (/[?&]session=/.test((root.location && root.location.search) || '')) return;
+    try { if (root.localStorage.getItem('vvsync:on') === '1') return; } catch (e) { return; }
+    var until = prefs.get('nudge:itp-until', ''); if (until && until > now()) return;
+    var n = bookmarks.list().length + notes.list().length + highlights.list().length; if (!n) return;
+    var who = ios && /CriOS|FxiOS|EdgiOS/.test(ua) ? 'On iPhone and iPad, this browser' : 'Safari';
+    var lib = libraryHref();
+    var box = notice('', '<b>Keep your ' + n + ' saved item' + (n > 1 ? 's' : '') + ' safe.</b> ' + who + ' may delete what you’ve saved here (bookmarks, highlights, notes) '
+      + 'if 7 days of browsing go by without a visit to this site. Syncing with your own Google Drive keeps a safe copy, even if you only ever use this device'
+      + (lib ? '; or <a href="' + lib + '#backup">export a backup</a>.' : '.')
+      + '<div class="acts"><button type="button" data-a="sync">☁ Turn on sync</button><button type="button" class="lt" data-a="later">Not now</button></div>');
+    if (!box) return;
+    var snooze = function () { prefs.set('nudge:itp-until', new Date(Date.now() + 30 * 864e5).toISOString()); box.remove(); };
+    box.querySelector('.x').addEventListener('click', snooze);
+    box.querySelector('[data-a=later]').addEventListener('click', snooze);
+    box.querySelector('[data-a=sync]').addEventListener('click', function () {
+      box.remove();
+      var go = function () { if (!root.VVSettings) return; root.VVSettings.open(); var s = d.getElementById('vvset-sync'); if (s && s.scrollIntoView) s.scrollIntoView({ block: 'center' }); };
+      if (root.VVSettings) go(); else { var sc = d.createElement('script'); sc.src = 'vv-settings.js'; sc.onload = go; d.head.appendChild(sc); }
+    });
+  }
+  if (root.document && root.setTimeout) {
+    var later = function () { root.setTimeout(function () { try { itpNudge(); } catch (e) {} }, 4000); };
+    if (root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', later); else later();
+  }
+  root.VVStore.storageStatus = function () { return storageFailed || 'ok'; };
+  root.VVStore._itpNudge = itpNudge;   // for testing
   if (typeof module !== 'undefined' && module.exports) module.exports = root.VVStore;
 })(typeof window !== 'undefined' ? window : globalThis);

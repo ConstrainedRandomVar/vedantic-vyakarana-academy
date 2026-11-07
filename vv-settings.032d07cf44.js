@@ -109,7 +109,7 @@
     var SYNC_ON = true;
     if (SYNC_ON && window.VVStore && VVStore.SITE !== 'search') h += '<div class="sep">☁ Your data</div>'
       + '<div class="row" id="vvset-sync"><div class="lab">Sync with Google Drive</div>'
-      + '<div class="hint" style="margin:0 0 6px">Keep your bookmarks, highlights and notes in <b>your own</b> Google Drive, so they follow you to your other devices. They go into a hidden app folder only this site can use; we never receive them. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></div>'
+      + '<div class="hint" style="margin:0 0 6px">Keep a safe copy of your bookmarks, highlights and notes in <b>your own</b> Google Drive. Worth it even on one device: browsers can clear a site’s stored data (clearing history, Safari after 7 days without a visit), and sync brings it all back. They also follow you to your other devices. They go into a hidden app folder only this site can use; we never receive them. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></div>'
       + '<div class="vvset-syncst"></div></div>';
     h += '<div class="sep"><span class="dv">संस्कृत-भाषा-व्यायाम-शाला</span> · Sanskrit gym</div>'
       + '<div class="row"><label class="chk"><input type="checkbox" id="vvset-auto"> Auto-advance to the next question after answering</label></div>'

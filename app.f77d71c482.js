@@ -1346,10 +1346,14 @@ function myStudyHtml() {
   let bms = [], notes = [], hls = [], cols = 0;
   try { bms = S.bookmarks.list().filter(mine).sort((a, b) => (b.created || '').localeCompare(a.created || '')); notes = S.notes.list().filter(mine); cols = S.collections.list().length; hls = (S.highlights ? S.highlights.list() : []).filter(mine); } catch (e) {}
   if (!bms.length && !notes.length && !hls.length) return '<div class="study-empty">☆ on any reading page bookmarks the verse you are at; select text to 🖍 highlight or bookmark a passage; 📝 keeps a note for the verse. They collect here.</div>';
+  // ☁ (2026-11-07): sync is a SAFE COPY even on one device (browsers clear site data; Safari after 7 days unvisited) — say so here
+  let syncOn = false; try { syncOn = localStorage.getItem('vvsync:on') === '1'; } catch (e) {}
+  const syncNote = S.SITE === 'search' ? '' : syncOn ? ' · <span class="study-sync">☁ kept safe in your Google Drive</span>'
+    : ' · <a href="#" class="study-sync" onclick="event.preventDefault();openSettings();var s=document.getElementById(\'vvset-sync\');if(s)s.scrollIntoView({block:\'center\'})" title="Browsers can clear what a site stores (clearing history; Safari after 7 days without a visit). Sync keeps a copy in your own Google Drive — even if you use only this device.">☁ not backed up — keep them safe with Google Drive sync</a>';
   const hlUrl = h => h.url.split('#')[0].split('?')[0] + '?hl=' + encodeURIComponent((h.text || '').split(/\s+/).slice(0, 8).join(' ')) + '&hv=1' + (h.ref ? '#v-' + h.ref : '');
   const row = (url, title, sub) => `<a class="study-row" href="${esc(url)}"><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</a>`;
   const cut = (x, n) => { x = String(x || '').replace(/\s+/g, ' ').trim(); return x.length > n ? x.slice(0, n) + '…' : x; };
-  return `<div class="study-counts">★ ${bms.length} bookmark${bms.length === 1 ? '' : 's'} · ${cols} collection${cols === 1 ? '' : 's'} · 🖍 ${hls.length} highlight${hls.length === 1 ? '' : 's'} · 📝 ${notes.length} note${notes.length === 1 ? '' : 's'} · <a href="library.html">Open my library →</a></div>
+  return `<div class="study-counts">★ ${bms.length} bookmark${bms.length === 1 ? '' : 's'} · ${cols} collection${cols === 1 ? '' : 's'} · 🖍 ${hls.length} highlight${hls.length === 1 ? '' : 's'} · 📝 ${notes.length} note${notes.length === 1 ? '' : 's'} · <a href="library.html">Open my library →</a>${syncNote}</div>
     <div class="study-cols">
       <div class="study-col"><div class="study-h">Latest bookmarks</div>${bms.slice(0, 3).map(b => row(b.url, b.title || 'bookmark', cut(b.excerpt, 70))).join('') || '<div class="study-none">none yet</div>'}</div>
       <div class="study-col"><div class="study-h">Latest highlights</div>${hls.slice(0, 3).map(h => row(hlUrl(h), h.title || h.ref, cut(h.text, 60) + ((h.tags || []).length ? '  #' + h.tags.join(' #') : ''))).join('') || '<div class="study-none">none yet</div>'}</div>

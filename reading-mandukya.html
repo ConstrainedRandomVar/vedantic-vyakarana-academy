@@ -532,7 +532,7 @@ function krow(role,sutra){return (role||sutra)?'<div class="row"><span class="lb
 function mulaHtml(d){var h='<div class="tw">'+d.w+'</div>';
   if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
   // #9b fixed row order — पदच्छेद as a LABELLED row before व्याकरणम् (as the bhāṣya card), never an unlabelled line after the peel
-  h+=mrow('पदच्छेद',d.p);if(d.lemLabel==='धातुः'&&d.lem)h+='<div class="row"><span class="lb">धातुः</span> '+d.lem+'</div>';
+  h+=mrow('पदच्छेद',d.p);if(d.lemLabel==='धातुः'&&d.lem)h+='<div class="row"><span class="lb">धातुः</span> '+d.lem+'</div>';if(d.dnote)h+='<div class="row"><span class="lb">टिप्पणी</span> '+d.dnote+'</div>';
   h+=mrow('व्याकरणम्',d.g)+krow(d.role,d.sutra)+mrow('samāsa',d.sam);
   if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';return h;}
 function place(el){var r=el.getBoundingClientRect();var tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;

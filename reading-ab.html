@@ -445,7 +445,7 @@ function kvrow(kv){if(!kv||!kv.length||!KVD)return '';var mode='';try{mode=local
   window.__kvCurw=function(){return CURW;};})();
 
 function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
-if(d.lemLabel==='धातुः'&&d.lem)h+='<div class="row"><span class="lb">धातुः</span> '+d.lem+'</div>';
+if(d.lemLabel==='धातुः'&&d.lem)h+='<div class="row"><span class="lb">धातुः</span> '+d.lem+'</div>';if(d.dnote)h+='<div class="row"><span class="lb">टिप्पणी</span> '+d.dnote+'</div>';
 if(d.g)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+d.g+'</div>';if(typeof kvrow==='function')h+=kvrow(d.kv);
 if(d.role||d.sutra)h+='<div class="row"><span class="lb">kāraka</span> '+(d.role||'—')+(d.sutra?' <span class="lb">सूत्र</span> '+d.sutra:'')+'</div>';
 if(d.sam)h+='<div class="row"><span class="lb">samāsa</span> '+d.sam+'</div>';

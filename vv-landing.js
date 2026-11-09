@@ -26,11 +26,21 @@
   function nrmOf(raw) { var map = [], s = ''; for (var i = 0; i < raw.length; i++) { var c = raw[i]; if (c === '‌' || c === '‍' || AID[c] || /\s/.test(c)) continue; map.push(i); s += canon(c); } return { s: s, map: map }; }
   var nterm = '', rawTerm = '', fold = false;   // fold: relaxedIn's spelling-tolerant pass (nasal+्→ं, avagraha dropped)
   function foldStr(x) { return x.replace(/ऽ/g, '').replace(/[ङञणनम]्/g, 'ं'); }
-  function highlightIn(root) { return highlightAcross(root); }
+  // ?hb=&ha= (search.html / vv-insearch.js via SVLinks.hlCtx): the letters just before/after the hit in the search snippet.
+  // With them the page marks THE occurrence the reader clicked, not the first one in the verse (#9e — 2026-11-10: ‘shve.’ on
+  // Māṇḍūkya 1.3 marked श्वेत… while the hit was विश्वेन…). Compared on letters only (no spaces/punctuation/avagraha),
+  // independent vowels → mātrā, like the term. Without them: the first occurrence, as before.
+  var ctxB = '', ctxA = '', CTX_MIN = 4;
+  var LET = /[\u0900-\u0963\u0966-\u097F]/;
+  function isLet(c) { return LET.test(c) && c !== 'ऽ'; }
+  function ctxNorm(x) { var o = ''; x = String(x || ''); for (var i = 0; i < x.length; i++) if (isLet(x[i])) o += canon(x[i]); return o; }
+  function setCtx(b, a) { ctxB = ctxNorm(b); ctxA = ctxNorm(a); }
+  function hasCtx() { return !!(ctxB || ctxA); }
+  function highlightIn(root) { return landIn([root]); }
   // Match over the concatenated VISIBLE text of root and mark each piece. In the bhāṣya every word is its own
   // span (+ a hidden पद copy .bhsp), so a per-text-node match never found a multi-word phrase ("आत्मैवेदमग्र
   // आसीत्", BS 3.3.16) and could land on the invisible पद copy instead (2026-10-10).
-  function highlightAcross(root) {
+  function scan(root) {
     var vis = new Map();
     function shown(el) {
       if (!el || el === root.parentNode) return true;
@@ -45,7 +55,41 @@
         if (fold) { if (c === 'ऽ') continue; if ('ङञणनम'.indexOf(c) >= 0 && raw[i + 1] === '्') { map.push([node, i, i + 2]); s += 'ं'; i++; continue; } }
         map.push([node, i, i + 1]); s += canon(c); }
     }
-    var pos = s.indexOf(nterm); if (pos < 0) return null;
+    return { s: s, map: map };
+  }
+  // one occurrence's agreement with the snippet context: common suffix (before) + common prefix (after), letters only
+  function ctxScore(sc, pos) {
+    var s = sc.s, b = '', a = '', i, nb = 0, na = 0;
+    for (i = pos - 1; i >= 0 && b.length < ctxB.length; i--) if (isLet(s[i])) b = s[i] + b;
+    for (i = pos + nterm.length; i < s.length && a.length < ctxA.length; i++) if (isLet(s[i])) a += s[i];
+    while (nb < b.length && nb < ctxB.length && b[b.length - 1 - nb] === ctxB[ctxB.length - 1 - nb]) nb++;
+    while (na < a.length && na < ctxA.length && a[na] === ctxA[na]) na++;
+    return { score: nb + na, full: nb === ctxB.length && na === ctxA.length };
+  }
+  // every occurrence of the term in these roots, in reading order
+  function occsIn(roots) {
+    var out = [];
+    for (var r = 0; r < roots.length; r++) { if (!roots[r]) continue; var sc = scan(roots[r]), pos = -1;
+      while ((pos = sc.s.indexOf(nterm, pos + 1)) >= 0) { var q = hasCtx() ? ctxScore(sc, pos) : { score: 0, full: false }; out.push({ sc: sc, pos: pos, score: q.score, full: q.full }); } }
+    return out;
+  }
+  // strict: only an occurrence whose context agrees in full. lenient: the single best (≥ CTX_MIN letters, no tie), or the
+  // only occurrence there is. Several and none clearly right → null (no mark beats a wrong occurrence, #9e).
+  function pick(occs, strict) {
+    var i; for (i = 0; i < occs.length; i++) if (occs[i].full) return occs[i];
+    if (strict || !occs.length) return null;
+    if (occs.length === 1) return occs[0];
+    var best = null, tie = false;
+    for (i = 0; i < occs.length; i++) { if (!best || occs[i].score > best.score) { best = occs[i]; tie = false; } else if (occs[i].score === best.score) tie = true; }
+    return best && !tie && best.score >= CTX_MIN ? best : null;
+  }
+  // mark one occurrence in these roots: no context → the first (the old behaviour); context → pick()
+  function landIn(roots, strict) {
+    if (!hasCtx()) { for (var r = 0; r < roots.length; r++) { if (!roots[r]) continue; var sc = scan(roots[r]), p = sc.s.indexOf(nterm); if (p >= 0) return markAt(sc, p); } return null; }
+    var o = pick(occsIn(roots), strict); return o ? markAt(o.sc, o.pos) : null;
+  }
+  function markAt(sc, pos) {
+    var map = sc.map;
     var first = map[pos];
     if (first[1] > 0 && COMBINING.test(first[0].nodeValue[first[1]])) first = [first[0], first[1] - 1];
     // one [node, start, end] segment per text node touched, wrapped back-to-front so offsets stay valid
@@ -64,12 +108,12 @@
     }
     return mark;
   }
-  function forwardFrom(el) {
+  function forwardFrom(el, strict) {
     if (!el || !el.id || el.id.indexOf('v-') !== 0) return null;
-    var all = document.querySelectorAll('[id^="v-"]'), seen = false;
-    for (var i = 0; i < all.length; i++) {
+    var all = document.querySelectorAll('[id^="v-"]'), seen = false, left = strict ? 6 : 1e9;   // strict (context) pass: a span block's next few verses only
+    for (var i = 0; i < all.length && left > 0; i++) {
       if (all[i] === el) { seen = true; continue; }
-      if (seen && !el.contains(all[i])) { var m = highlightIn(all[i]); if (m) return m; }
+      if (seen && !el.contains(all[i])) { left--; var m = landIn([all[i]], strict); if (m) return m; }
     }
     return null;
   }
@@ -99,6 +143,7 @@
   // opts: {side, vk, id} — id = the verse element id to search first (else the URL hash); scrollTo(el) overrides scrolling
   function land(t, opts) {
     opts = opts || {}; rawTerm = trimTerm(t); nterm = nrmOf(rawTerm).s; if (!nterm) return;
+    setCtx(opts.hb, opts.ha);
     clearMarks(); run(opts);
   }
   window.__vvLand = land;
@@ -149,20 +194,26 @@
         return;
       }
       var root = scope || document.body, lanes = root.querySelectorAll('.tk-inline[data-side="' + side + '"]');
-      var tryLanes = function () {
+      var laneRoots = function () {
+        var out = [];
         for (var i = 0; i < lanes.length; i++) {
           var sc = lanes[i];
           if (vk) { var d = lanes[i].querySelector('details.vk-tk[data-tk="' + vk + '"]'); if (!d) continue; sc = d; }
-          var m = highlightIn(sc); if (m) return m;
+          out.push(sc);
         }
-        return null;
+        return out;
       };
+      // context known: an exact-context occurrence in the lanes, then anywhere in the verse, before any lenient pick
+      var tryLanes = function (strict) { return landIn(laneRoots(), strict); };
       if (vk) { var ds = root.querySelectorAll('.tk-inline[data-side="' + side + '"] details.vk-tk[data-tk="' + vk + '"]');
         for (var j = 0; j < ds.length; j++) ds[j].open = true; }   // fires 'toggle' → the fold-out clones its text in
       setTimeout(function () {
         // the hit's verse is known → search ONLY there (CLAUDE.md #9e: no mark beats a wrong occurrence); else the page
-        var hit2 = tryLanes() || (scope ? highlightIn(scope) : highlightIn(document.body));
-        if (!hit2 && vn) { root = vn; lanes = vn.querySelectorAll('.tk-inline[data-side="' + side + '"]'); hit2 = tryLanes() || highlightIn(vn); }
+        var hit2 = hasCtx()
+          ? (tryLanes(true) || landIn([scope || document.body], true) || tryLanes(false) || landIn([scope || document.body], false))
+          : (tryLanes() || (scope ? highlightIn(scope) : highlightIn(document.body)));
+        if (!hit2 && vn) { root = vn; lanes = vn.querySelectorAll('.tk-inline[data-side="' + side + '"]');
+          hit2 = hasCtx() ? (tryLanes(true) || landIn([vn], true) || tryLanes(false) || landIn([vn], false)) : (tryLanes() || highlightIn(vn)); }
         if (hit2) { for (var dd = hit2.closest && hit2.closest('details'); dd; dd = dd.parentElement && dd.parentElement.closest('details')) dd.open = true;   // a hit in a collapsed fold-out (Pūrṇānandī) — open it first
           setTimeout(function () { scrollEl(hit2); }, 60); }
         else if (scope) setTimeout(function () { scrollEl(scope); }, 60);
@@ -174,12 +225,19 @@
     // whole-page search would stop at the chapter's FIRST occurrence, possibly an earlier verse (2026-10-10).
     // verse known → that verse, then the verses AFTER it (a span block), never the whole page (#9e); no verse → the page
     var verseOnly = 'hv' in opts ? opts.hv : qs.get('hv') === '1';
-    var hit = scope ? (highlightIn(scope) || (verseOnly ? relaxedIn(scope) : ((vn && highlightIn(vn)) || (chapLevel ? null : forwardFrom(scope))))) : highlightIn(document.body);
+    var hit;
+    if (!hasCtx()) hit = scope ? (highlightIn(scope) || (verseOnly ? relaxedIn(scope) : ((vn && highlightIn(vn)) || (chapLevel ? null : forwardFrom(scope))))) : highlightIn(document.body);
+    // context known: an exact-context occurrence in the verse (then vn, then the verses after it, for a span block) before
+    // settling for a lenient pick in the verse itself
+    else if (!scope) hit = landIn([document.body], false);
+    else hit = landIn([scope], true) || (vn && landIn([vn], true)) || (!verseOnly && !chapLevel && forwardFrom(scope, true)) ||
+      landIn([scope], false) || (vn && landIn([vn], false)) || (verseOnly ? relaxedIn(scope) : null);
     if (hit) setTimeout(function () { scrollEl(hit); }, 60);
     else if (scope) setTimeout(function () { scrollEl(scope); }, 60);
   }
   if (term) {
     rawTerm = term; nterm = nrmOf(term).s;
+    try { var cq0 = new URLSearchParams(location.search); setCtx(cq0.get('hb'), cq0.get('ha')); } catch (e) {}
     if (nterm) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(run, 150); }); else setTimeout(run, 150); }
   }
 })();

@@ -143,6 +143,7 @@
     res.innerHTML = HITS.slice(0, 400).map(function (h, i) {
       var raw2 = SS.snippet(h.b, h.ex), sn = esc(raw2).split(SS.M1).join('<mark>').split(SS.M2).join('</mark>');
       var i1 = raw2.indexOf(SS.M1), i2 = raw2.indexOf(SS.M2); h.mt = (i1 >= 0 && i2 > i1) ? raw2.slice(i1 + 1, i2) : raw.trim();
+      h.ctx = (i1 >= 0 && i2 > i1 && L.hlCtx) ? L.hlCtx(raw2, SS.M1, SS.M2) : '';   // ?hb=&ha= → the page marks THIS occurrence (#9e)
       return '<div class="h" data-i="' + i + '"><span class="r">' + esc(h.b._ref) + (h.b._file === HERE ? '' : ' ↗') + '</span><span class="l">' + h.b._layer +
         (h.p ? ' <span class="o">possible</span>' : '') + '</span><span class="s">' + sn + '</span></div>'; }).join('') +
       (HITS.length > 400 ? '<div class="st">… first 400 shown</div>' : '');
@@ -160,18 +161,19 @@
     box.querySelector('.pos').textContent = (i + 1) + '/' + HITS.length;
     var b = h.b, side = b._side;
     if (b._file !== HERE) {   // another chapter page: let sync.js's ?hl= highlighter land it; vvsq reopens this panel there
-      location.href = b._file + '?hl=' + encodeURIComponent(h.mt) + (side ? '&side=' + side + (b.c.tk ? '&vk=' + encodeURIComponent(b.c.tk) : '') : '') +
+      location.href = b._file + '?hl=' + encodeURIComponent(h.mt) + h.ctx + (side ? '&side=' + side + (b.c.tk ? '&vk=' + encodeURIComponent(b.c.tk) : '') : '') +
         (b._layer !== 'मूलम्' ? '&vw=1' : '') +
         '&vvsq=' + encodeURIComponent(inp.value.trim()) + '&vvsi=' + i + (b._exact ? '#v-' + encodeURIComponent(b._ref) : b._near ? '&vn=' + encodeURIComponent(b._near) + '#v-intro' : '');
       return;
     }
     REVEAL = b._layer !== 'मूलम्';   // a commentary hit: show the commentary if the reader is in mūla-only mode
-    highlightHere(h.mt, side, b.c.tk, b._exact ? 'v-' + b._ref : b._near ? 'v-intro' : null, b._near && !b._exact ? 'v-' + b._near : '');
+    highlightHere(h.mt, h.ctx, side, b.c.tk, b._exact ? 'v-' + b._ref : b._near ? 'v-intro' : null, b._near && !b._exact ? 'v-' + b._near : '');
   }
   // ---- in-place landing: sync.js's own ?hl= highlighter (window.__vvLand), scrolled to land BELOW the nav + this bar ----
-  function highlightHere(term, side, vk, vid, vn) {
+  function highlightHere(term, ctx, side, vk, vid, vn) {
     if (!window.__vvLand) return;
-    window.__vvLand(term, {side: side || null, vk: vk || null, id: vid || '', vn: vn || '', reveal: REVEAL, scrollTo: function (hit) {
+    var cq = new URLSearchParams(ctx || '');
+    window.__vvLand(term, {side: side || null, vk: vk || null, id: vid || '', vn: vn || '', hb: cq.get('hb') || '', ha: cq.get('ha') || '', reveal: REVEAL, scrollTo: function (hit) {
       var y = hit.getBoundingClientRect().top + scrollY - box.getBoundingClientRect().bottom - 70; scrollTo({top: Math.max(0, y), behavior: 'smooth'}); }});
   }
   function boot() {

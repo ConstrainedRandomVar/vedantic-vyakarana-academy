@@ -716,6 +716,8 @@ function show(t){
     if(gt[3])ht+='<div class="row"><span class="lb">⚑ पाठः</span> '+gt[3]+'</div>';   // vārttika पाठदोष note (vartika-<out>-gloss-flags.json)
     base=ht;}
   var jumps=buildJumps(t,refOfEl(t));
+  if(t.dataset.pbh&&base.indexOf('⚑ पाठः')<0){var pbr='<div class="row"><span class="lb">⚑ पाठः</span> '+t.dataset.pbh+'</div>';   // पाठभेद on a mūla word / an unglossed bhāṣya word (bhasya-pathabheda.json, by data-k)
+    if(!base)base='<div class="tw">'+surfOf(t)+'</div>'+pbr; else{var ppi=base.indexOf('<div class="row kvrow');if(ppi<0)ppi=base.indexOf('<div class="peel">');base=ppi<0?base+pbr:base.slice(0,ppi)+pbr+base.slice(ppi);}}   // before व्युत्पत्तिः / the peel (#9b order)
   if(!base&&jumps)base='<div class="tw">'+surfOf(t)+'</div>';   // ungloss quote / pratīka → headword only
   if(!base&&!jumps)return;
   tip.className='';tip.innerHTML=base+jumps;

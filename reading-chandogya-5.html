@@ -996,7 +996,16 @@ document.getElementById('tog').onclick=function(){
     var b=e.target.closest&&e.target.closest('.tpn-num');
     if(b){e.preventDefault();var r=runOf(b);if(r&&r.hasAttribute('data-tpa')){r.removeAttribute('data-tpa');r.open=false;}go(byK(b.getAttribute('data-tpb')));return;}
     var c=e.target.closest&&e.target.closest('.tpn-vc');
-    if(c&&!c.getAttribute('data-vpg')){e.preventDefault();vk(c.getAttribute('data-vside'),c.getAttribute('data-vk'));}
+    // a vārttika citation whose words carry cards (Harsha 2026-11-10): on a touch screen the FIRST tap only shows the tapped word's card
+    // (the page's word-pin handler runs; the link is "armed"), a SECOND tap on the same citation follows it; with a mouse, hover shows the
+    // card and a click follows the link at once (no card left pinned behind)
+    var touchUI=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+    document.querySelectorAll('.tpn-vc[data-tpnarm]').forEach(function(a){if(a!==c)a.removeAttribute('data-tpnarm');});
+    if(c){
+      if(touchUI&&e.target.closest('.w')&&!c.hasAttribute('data-tpnarm')){e.preventDefault();c.setAttribute('data-tpnarm','');return;}
+      c.removeAttribute('data-tpnarm');e.stopPropagation();window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));   /* unpin + hide the card (the page's Esc handler) */
+      if(!c.getAttribute('data-vpg')){e.preventDefault();vk(c.getAttribute('data-vside'),c.getAttribute('data-vk'));}
+    }
   },true);
   document.addEventListener('keydown',function(e){var m=e.target.closest&&e.target.closest('.tpn-m');if(m&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toNote(m.getAttribute('data-tpn'));}});
   /* arriving from another page's citation: #tpvk=<side>|<verse key>; a link to a note: #tpn-<…> (the note's id) */
@@ -1032,7 +1041,16 @@ document.getElementById('tog').onclick=function(){
     var b=e.target.closest&&e.target.closest('.npt-num');
     if(b){e.preventDefault();var r=runOf(b);if(r&&r.hasAttribute('data-npa')){r.removeAttribute('data-npa');r.open=false;}go(byK(b.getAttribute('data-npb')));return;}
     var c=e.target.closest&&e.target.closest('.npt-vc');
-    if(c&&!c.getAttribute('data-vpg')){e.preventDefault();vk(c.getAttribute('data-vside'),c.getAttribute('data-vk'));}
+    // a vārttika citation whose words carry cards (Harsha 2026-11-10): on a touch screen the FIRST tap only shows the tapped word's card
+    // (the page's word-pin handler runs; the link is "armed"), a SECOND tap on the same citation follows it; with a mouse, hover shows the
+    // card and a click follows the link at once (no card left pinned behind)
+    var touchUI=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+    document.querySelectorAll('.npt-vc[data-nptarm]').forEach(function(a){if(a!==c)a.removeAttribute('data-nptarm');});
+    if(c){
+      if(touchUI&&e.target.closest('.w')&&!c.hasAttribute('data-nptarm')){e.preventDefault();c.setAttribute('data-nptarm','');return;}
+      c.removeAttribute('data-nptarm');e.stopPropagation();window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));   /* unpin + hide the card (the page's Esc handler) */
+      if(!c.getAttribute('data-vpg')){e.preventDefault();vk(c.getAttribute('data-vside'),c.getAttribute('data-vk'));}
+    }
   },true);
   document.addEventListener('keydown',function(e){var m=e.target.closest&&e.target.closest('.npt-m');if(m&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toNote(m.getAttribute('data-npt'));}});
   /* arriving from another page's citation: #nptvk=<side>|<verse key>; a link to a note: #npt-<…> (the note's id) */
@@ -1068,7 +1086,16 @@ document.getElementById('tog').onclick=function(){
     var b=e.target.closest&&e.target.closest('.mfn-num');
     if(b){e.preventDefault();var r=runOf(b);if(r&&r.hasAttribute('data-mfa')){r.removeAttribute('data-mfa');r.open=false;}go(byK(b.getAttribute('data-mfb')));return;}
     var c=e.target.closest&&e.target.closest('.mfn-vc');
-    if(c&&!c.getAttribute('data-vpg')){e.preventDefault();vk(c.getAttribute('data-vside'),c.getAttribute('data-vk'));}
+    // a vārttika citation whose words carry cards (Harsha 2026-11-10): on a touch screen the FIRST tap only shows the tapped word's card
+    // (the page's word-pin handler runs; the link is "armed"), a SECOND tap on the same citation follows it; with a mouse, hover shows the
+    // card and a click follows the link at once (no card left pinned behind)
+    var touchUI=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+    document.querySelectorAll('.mfn-vc[data-mfnarm]').forEach(function(a){if(a!==c)a.removeAttribute('data-mfnarm');});
+    if(c){
+      if(touchUI&&e.target.closest('.w')&&!c.hasAttribute('data-mfnarm')){e.preventDefault();c.setAttribute('data-mfnarm','');return;}
+      c.removeAttribute('data-mfnarm');e.stopPropagation();window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));   /* unpin + hide the card (the page's Esc handler) */
+      if(!c.getAttribute('data-vpg')){e.preventDefault();vk(c.getAttribute('data-vside'),c.getAttribute('data-vk'));}
+    }
   },true);
   document.addEventListener('keydown',function(e){var m=e.target.closest&&e.target.closest('.mfn-m');if(m&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toNote(m.getAttribute('data-mfn'));}});
   /* arriving from another page's citation: #mfvk=<side>|<verse key>; a link to a note: #mfn-<…> (the note's id) */

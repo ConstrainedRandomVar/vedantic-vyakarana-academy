@@ -735,6 +735,7 @@ function show(t){
     if(gt[0])ht+='<div class="row"><span class="lb">व्याकरणम्</span> '+gt[0]+'</div>';
     if(gt[3])ht+='<div class="row"><span class="lb">⚑ पाठः</span> '+gt[3]+'</div>';   // vārttika पाठदोष note (vartika-<out>-gloss-flags.json)
     if(gt[4])ht+=kvrow(gt[4]);   // व्युत्पत्तिः (Ānandagiri cards)
+    if(gt[5]&&gt[5].length)ht+='<div class="peel">'+gt[5].join('<br>')+'</div>';   // samāsa peel of a lane word (lane_peel.js) — below the separator, as on bhāṣya cards
     base=ht;}
   var jumps=buildJumps(t,refOfEl(t));
   if(t.dataset.pbh&&base.indexOf('⚑ पाठः')<0){var pbr='<div class="row"><span class="lb">⚑ पाठः</span> '+t.dataset.pbh+'</div>';   // पाठभेद on a mūla word / an unglossed bhāṣya word (bhasya-pathabheda.json, by data-k)

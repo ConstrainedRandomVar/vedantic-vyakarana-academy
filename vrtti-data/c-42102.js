@@ -1,0 +1,1 @@
+(window.VC=window.VC||{})["42102"]={"kashika":"कन्थाशब्दाट् ठक् प्रत्ययो भवति शैषिक ः। कान्थिकः॥","nyaas":"अणपवादोऽयं योगः॥","kaumudi":"कान्थिकः ॥","balamanorama":"\u003c\u003cकन्थायाष्ठक्>> - कन्थायाष्ठक् । तिर्यक्स्यूतबहुवस्त्रखण्डसमूहः कन्था । देशविशेष इत्यन्ये ।","vasu_english":"After the word कन्था the affix is ठक् is added in the remaining senses.\nAs कान्थिकः ॥"};

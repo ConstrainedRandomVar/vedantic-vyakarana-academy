@@ -206,7 +206,7 @@ function sutraCard(r, hi) {
   }
   if (r.notes.length) h += `<div class="note">${r.notes.map(esc).join('<br>')}</div>`;
   if (r.utsarga.length) h += `<details><summary>utsarga / apavāda statements in the commentaries (${r.utsarga.length})</summary>${r.utsarga.map(u => `<div class="quote"><b>${esc(D.CNAME[u.c])}:</b> ${esc(u.q)}</div>`).join('')}</details>`;
-  h += `<details class="comm" data-id="${r.id}" data-p="${padaOf(r.n)}"${$('#fc').checked ? ' open' : ''}><summary>commentaries</summary><div class="ctx note">loading…</div></details>`;
+  h += `<details class="comm" data-id="${r.id}" data-n="${r.n}" data-p="${padaOf(r.n)}"${$('#fc').checked ? ' open' : ''}><summary>commentaries</summary><div class="ctx note">loading…</div></details>`;
   return h + `</div>`;
 }
 function pbCard(id) {
@@ -244,7 +244,10 @@ function render() {
 let RT = 0, LIM = 300;
 async function fillComm() {
   for (const d of document.querySelectorAll('details.comm')) {
-    const go = async () => { if (d.dataset.done) return; d.dataset.done = 1; try { await loadJS(`vrtti-data/c-${d.dataset.p}.js`); const ct = (window.VC[d.dataset.p] || {})[d.dataset.id] || {}; d.querySelector('summary').textContent = `commentaries (${Object.keys(ct).length})`; d.querySelector('.ctx').outerHTML = Object.entries(ct).map(([c, t]) => `<div class="ct"><b>${esc(D.CNAME[c] || c)}</b> — ${esc(t)}</div>`).join('') || '<div class="note">none</div>'; } catch (e) { d.querySelector('.ctx').textContent = e.message; } };
+    const go = async () => { if (d.dataset.done) return; d.dataset.done = 1; try { await loadJS(`vrtti-data/c-${d.dataset.id}.js`); const ct = (window.VC || {})[d.dataset.id] || {}; const r0 = recOf(d.dataset.n), pv = r0 && r0.pv;
+      // the prathamāvṛtti first (its text is already in the record): समासः, अर्थः and the longer explanation
+      const pvH = pv && (pv.artha || pv.samasa) ? `<div class="ct"><b>प्रथमावृत्तिः</b> — ${pv.samasa ? `<i>समासः</i>: ${esc(pv.samasa)} · ` : ''}<i>अर्थः</i>: ${esc(pv.artha || '')}${pv.arthaFull ? ` ${esc(pv.arthaFull.slice((pv.artha || '').length).trim())}` : ''}</div>` : '';
+      d.querySelector('summary').textContent = `commentaries (${Object.keys(ct).length + (pvH ? 1 : 0)})`; d.querySelector('.ctx').outerHTML = pvH + Object.entries(ct).map(([c, t]) => `<div class="ct"><b>${esc(D.CNAME[c] || c)}</b> — ${esc(t)}</div>`).join('') || '<div class="note">none</div>'; } catch (e) { d.querySelector('.ctx').textContent = e.message; } };
     if (d.open) go(); else d.addEventListener('toggle', go, { once: true });
   }
 }

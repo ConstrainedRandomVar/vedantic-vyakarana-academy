@@ -1,0 +1,1 @@
+(window.VC=window.VC||{})["33091"]={"kashika":"स्वपेर्धातोर्नन् प्रत्ययो भवति। नकारः स्वरार्थः। स्वप्नः॑॥","kaumudi":"स्वप्नः ॥","laghukaumudi":"स्वप्नः॥","prakriyasarvasvam":"स्वप्नः ॥","vasu_english":"The affix नन् comes under similar circumstances after the verb स्वप् 'to sleep'.\nThe final न् is indicatory and regulates the accent [[6.1.197]]; as स्वप्नः 'a dream'."};

@@ -1,0 +1,1 @@
+(window.VC=window.VC||{})["54028"]={"kashika":"अविशब्दात् स्वार्थे कः प्रत्ययो भवति। अविरेव अविकः॥","kaumudi":"अविरेवाविकः ॥","balamanorama":"\u003c\u003cअवेः कः>> - अवेः कः । अयमपि केवलस्वार्थिकः ।अवयः शैलमेषाऽर्काः॑ इत्यमरः ।","prakriyasarvasvam":"अविरेवाविकः ॥","vasu_english":"The affix क comes after अवि without change of sense.\nThus अविकः = अविः ॥"};

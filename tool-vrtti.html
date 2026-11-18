@@ -182,31 +182,35 @@ function whyHtml(r) {
   if (W.left.length) h += `<div class="card2"><div class="qq"><b>Also at work</b></div><ul>${W.left.map(l => `<li>${pbLink(l.pid)}${l.pt ? ` <span class="ptx">${esc(l.pt)}</span>` : ''} — ${esc(l.txt)}</li>`).join('')}</ul></div>`;
   return h + `<div class="fin2">${esc(W.fin)}</div></div>`;
 }
-// MERGED LAYOUT (peer review 2026-11-18; sample pages only until Harsha decides): the steps are the spine — the sūtra turning into the
+// MERGED LAYOUT (peer review 2026-11-18; on every page since Harsha approved the samples): the steps are the spine — the sūtra turning into the
 // vṛtti — and each step carries the student view's question, the rule that answers it (its own text + gloss), the reference quote and
 // the "why not" fold. A note comes once, before step 1; the Kāśikā / Kaumudī styles and the extra lists fold away below.
-const MERGED_SAMPLE = new Set(['1.1.1', '6.1.77', '3.1.104']);
 function mergedHtml(r) {
   const W = r.why, nk = t => String(t || '').replace(/[-\s]/g, '');
   const tagOf = w => ({ anu: 'carried in', pb: 'paribhāṣā', vy: 'commentary', sup: 'supplied', case: 'from its case' }[w.t] || '');
   const ruleLine = w => `<li><span class="tag">${tagOf(w)}</span>${w.pid ? pbLink(w.pid) + (w.pt ? ` <span class="ptx">${esc(w.pt)}</span>` : '') + ' — ' : ''}${mbLink(esc(w.txt))}${w.q ? ` <span class="ev">“${esc(w.q)}”</span>` : ''}</li>`;
   const used = new Set(), subShown = new Set();
   // a nipātana's half-built text is not prose (3.1.104) — hidden there; the sūtra and the finished vṛtti stay (Harsha 2026-11-18, mockup)
-  const hideRun = /निपातन/.test(W.kind || '');
-  let h = `<h3>How the vṛtti is built — step by step <small class="note">(new layout, sample page)</small></h3><div class="wy mg"><div class="kind">${esc(W.kind)}</div>`;
+  // …and on hand-fixed pages: the step text is built from the one-clause roles and can read as the opposite of the sūtra (2.4.83 “न भवति … अम्-आदेशः”)
+  const hideRun = /निपातन/.test(W.kind || '') || !!r.handFix;
+  let h = `<h3>How the vṛtti is built — step by step</h3><div class="wy mg"><div class="kind">${esc(W.kind)}</div>`;
   // पदच्छेदः with case numbers (Harsha 2026-11-18: “इकः 61 etc.”) — vibhakti digit + vacana digit, as at the top of the page
   const VIBN = { 'प्रथमा': 1, 'द्वितीया': 2, 'तृतीया': 3, 'चतुर्थी': 4, 'पञ्चमी': 5, 'षष्ठी': 6, 'सप्तमी': 7 }, VACN = { 'एकवचनम्': 1, 'द्विवचनम्': 2, 'बहुवचनम्': 3 };
   const num = v => { const [a, b] = String(v).split(' '); return VIBN[a] ? `${VIBN[a]}${VACN[b] || ''}` : v; };
   h += `<div class="pc"><b>पदच्छेदः</b> ${W.pc.map(p => `<span>${esc(p.f)} <small>(${esc(num(p.v))})</small></span>`).join(' ')}</div>`;
   if (W.note) h += `<div class="card2 mnote"><div class="qq"><b>First</b></div>${esc(W.note)}</div>`;
+  // how the clauses go (hand-fixed two-clause sūtras): the map comes before the steps (peer review: “open with the clause map”)
+  const clauseCards = W.cards.filter(c => c.role === 'step'); clauseCards.forEach(c => used.add(c));
+  if (clauseCards.length) h += `<div class="card2 mnote"><div class="qq"><b>How the clauses go</b></div><ul>${clauseCards.map(c => `<li><b>${esc(c.ans)}</b> — ${c.why.map(w => (w.pid ? pbLink(w.pid) + ' ' : '') + mbLink(esc(w.txt))).join('; ')}</li>`).join('')}</ul></div>`;
   h += `<ol class="steps msteps" start="0">`;
   const body = r.steps.filter(s => !s.fin), fins = r.steps.filter(s => s.fin);
   body.forEach((s, i) => {
     if (i === 0) { h += `<li><div class="qq"><b>सूत्रम्</b> the sūtra's own words</div><div class="sn">${esc(s.now)}</div></li>`; return; }
     if (s.sub) { const B = D.PB[s.sub.pid] || {}; subShown.add(s.sub.pid);
       h += `<li><div class="qq"><b>${esc(s.sub.q)}</b> <span class="ans">${esc(s.sub.ans)}</span></div><ul>${ruleLine({ t: 'pb', pid: s.sub.pid, pt: B.text || '', txt: B.gloss || s.what })}</ul>${hideRun ? '' : `<div class="sn">${esc(s.now)}</div>`}</li>`; return; }
-    const cs = (s.w || []).length ? W.cards.filter(c => !used.has(c) && c.word && s.w.some(w => nk(w) === nk(c.word))) : [];
+    const cs = (s.w || []).length ? W.cards.filter(c => !used.has(c) && c.word && s.w.some(w => nk(w) === nk(c.word))) : W.cards.filter(c => !used.has(c) && c.role === 'step' && c.ans === s.now);   // a hand-fix step (“how the clauses go”) carries its own card
     cs.forEach(c => used.add(c));
+    if (!cs.length && clauseCards.some(c => c.ans === s.now)) return;   // shown above as the clause map
     if (!cs.length) { h += `<li><div class="qq">${esc(s.what.replace(/\s*\(read from its case\)/, ''))}${s.pids.length ? ' ' + s.pids.map(pbLink).join(' ') : ''}</div>${hideRun ? '' : `<div class="sn">${esc(s.now)}</div>`}</li>`; return; }
     h += `<li>`;
     for (const c of cs) {
@@ -312,7 +316,8 @@ function sutraCard(r, hi) {
   h += openingHtml(r);
   if (r.pbNeed && r.pbNeed.length) { const gap = new Set((r.pbGap || []).map(x => x.pid)); h += `<h3>Paribhāṣās the reference vṛttis rely on (${r.pbNeed.length - gap.size} of ${r.pbNeed.length} covered by our steps)</h3><table class="cmp">${r.pbNeed.map(x => `<tr><td>${gap.has(x.pid) ? '<span class="pill v-gap">✗ missing</span>' : '<span class="pill v-exact">✔ covered</span>'}</td><td>${pbLink(x.pid)}</td><td class="note">${esc(x.why.join('; '))}</td><td class="note">${esc(x.from.join(', '))}</td></tr>`).join('')}</table>`; }
   if (r.pbReviewed && r.pbReviewed.length) h += `<div class="legend">Flagged by the wording check but read and found <b>not</b> to be a use here: ${r.pbReviewed.map(x => `${pbLink(x.pid)} — ${esc(x.why)}`).join('; ')}</div>`;
-  if (MERGED_SAMPLE.has(r.n) && r.why && r.steps) h += mergedHtml(r) + `<details class="stepsfold"><summary>The current two views, for comparison</summary>${whyHtml(r)}${stepsHtml(r)}</details>`;
+  // the merged step-by-step layout on every page (Harsha 2026-11-18: “roll it out”); the 31 fully hand-written sūtras keep their own step view
+  if (r.why && r.steps && !r.why.hand) h += mergedHtml(r) + `<details class="stepsfold"><summary>Detailed steps (every paribhāṣā the engine applied, in the sūtra’s word order)</summary>${stepsHtml(r)}</details>`;
   else {
   if (r.why) h += whyHtml(r);
   if (r.steps && r.steps.length) h += r.why ? `<details class="stepsfold"><summary>Detailed steps (the sūtra’s word order, every paribhāṣā the engine checked)</summary>${stepsHtml(r)}</details>` : stepsHtml(r);

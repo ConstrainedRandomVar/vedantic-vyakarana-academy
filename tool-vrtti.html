@@ -107,6 +107,11 @@ let TAB = 's';
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => { TAB = b.dataset.tab; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b)); render(); });
 ['#q', '#fp', '#fc', '#fs', '#fg'].forEach(s => $(s).addEventListener('input', render));
 $('#q').addEventListener('input', () => suggest());
+// the address follows a typed sūtra number (Harsha 2026-11-18: "when I subsequently enter a sūtra number, the URL doesn't change — hard to share");
+// replaceState so typing does not fill the history or re-trigger hashchange; a query that is no sūtra number clears the old hash
+$('#q').addEventListener('input', () => { const v = $('#q').value.trim(), cur = decodeURIComponent(location.hash.slice(1)).split('~')[0];
+  if (/^\d+\.\d+\.\d+$/.test(v) && D.LIST.some(x => x.n === v)) { if (cur !== v) history.replaceState(null, '', '#' + v); }
+  else if (cur && cur !== v) history.replaceState(null, '', location.pathname + location.search); });
 $('#q').addEventListener('keydown', e => { const box = $('#qs'); if (box.style.display !== 'block') return; const it = [...box.children], i = it.findIndex(x => x.classList.contains('sel'));
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const j = Math.max(0, Math.min(it.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1))); it.forEach((x, k) => x.classList.toggle('sel', k === j)); }
   else if (e.key === 'Enter' && it[i]) { e.preventDefault(); box.style.display = 'none'; $('#q').value = it[i].dataset.n; location.hash = it[i].dataset.n; render(); }
@@ -162,7 +167,7 @@ const SHOW_OLD_LINK = false, SHOW_EARLIER_GLOSS = false;
 function whyHtml(r) {
   const W = r.why; if (!W) return '';
   const wl = w => { const tg = { anu: 'anuvṛtti', pb: 'paribhāṣā', vy: 'commentary', sup: 'supplied', case: 'case' }[w.t] || '';
-    return `<li><span class="tag">${tg}</span>${w.pid ? pbLink(w.pid) + (w.pt ? ` <span class="ptx">${esc(w.pt)}</span>` : '') + ' — ' : ''}${esc(w.txt)}${w.q ? ` <span class="ev">“${esc(w.q)}”</span>` : ''}</li>`; };
+    return `<li><span class="tag">${tg}</span>${w.pid ? pbLink(w.pid) + (w.pt ? ` <span class="ptx">${esc(w.pt)}</span>` : '') + ' — ' : ''}${mbLink(esc(w.txt))}${w.q ? ` <span class="ev">“${esc(w.q)}”</span>` : ''}</li>`; };
   let h = `<h3>How the vṛtti is built — and why</h3><div class="wy"><div class="kind">${esc(W.kind)}</div>`;
   h += `<div class="pc"><b>पदच्छेदः</b> ${W.pc.map(p => `<span>${esc(p.f)} <small>${esc(p.v)}</small></span>`).join('')}</div>`;
   if (W.note) h += `<div class="card2"><div class="qq"><b>Note</b></div>${esc(W.note)}</div>`;
@@ -184,26 +189,33 @@ const MERGED_SAMPLE = new Set(['1.1.1', '6.1.77', '3.1.104']);
 function mergedHtml(r) {
   const W = r.why, nk = t => String(t || '').replace(/[-\s]/g, '');
   const tagOf = w => ({ anu: 'carried in', pb: 'paribhāṣā', vy: 'commentary', sup: 'supplied', case: 'from its case' }[w.t] || '');
-  const ruleLine = w => `<li><span class="tag">${tagOf(w)}</span>${w.pid ? pbLink(w.pid) + (w.pt ? ` <span class="ptx">${esc(w.pt)}</span>` : '') + ' — ' : ''}${esc(w.txt)}${w.q ? ` <span class="ev">“${esc(w.q)}”</span>` : ''}</li>`;
-  const used = new Set();
+  const ruleLine = w => `<li><span class="tag">${tagOf(w)}</span>${w.pid ? pbLink(w.pid) + (w.pt ? ` <span class="ptx">${esc(w.pt)}</span>` : '') + ' — ' : ''}${mbLink(esc(w.txt))}${w.q ? ` <span class="ev">“${esc(w.q)}”</span>` : ''}</li>`;
+  const used = new Set(), subShown = new Set();
+  // a nipātana's half-built text is not prose (3.1.104) — hidden there; the sūtra and the finished vṛtti stay (Harsha 2026-11-18, mockup)
+  const hideRun = /निपातन/.test(W.kind || '');
   let h = `<h3>How the vṛtti is built — step by step <small class="note">(new layout, sample page)</small></h3><div class="wy mg"><div class="kind">${esc(W.kind)}</div>`;
-  h += `<div class="pc"><b>पदच्छेदः</b> ${W.pc.map(p => `<span>${esc(p.f)} <small>${esc(p.v)}</small></span>`).join('')}</div>`;
+  // पदच्छेदः with case numbers (Harsha 2026-11-18: “इकः 61 etc.”) — vibhakti digit + vacana digit, as at the top of the page
+  const VIBN = { 'प्रथमा': 1, 'द्वितीया': 2, 'तृतीया': 3, 'चतुर्थी': 4, 'पञ्चमी': 5, 'षष्ठी': 6, 'सप्तमी': 7 }, VACN = { 'एकवचनम्': 1, 'द्विवचनम्': 2, 'बहुवचनम्': 3 };
+  const num = v => { const [a, b] = String(v).split(' '); return VIBN[a] ? `${VIBN[a]}${VACN[b] || ''}` : v; };
+  h += `<div class="pc"><b>पदच्छेदः</b> ${W.pc.map(p => `<span>${esc(p.f)} <small>(${esc(num(p.v))})</small></span>`).join(' ')}</div>`;
   if (W.note) h += `<div class="card2 mnote"><div class="qq"><b>First</b></div>${esc(W.note)}</div>`;
   h += `<ol class="steps msteps" start="0">`;
   const body = r.steps.filter(s => !s.fin), fins = r.steps.filter(s => s.fin);
   body.forEach((s, i) => {
     if (i === 0) { h += `<li><div class="qq"><b>सूत्रम्</b> the sūtra's own words</div><div class="sn">${esc(s.now)}</div></li>`; return; }
+    if (s.sub) { const B = D.PB[s.sub.pid] || {}; subShown.add(s.sub.pid);
+      h += `<li><div class="qq"><b>${esc(s.sub.q)}</b> <span class="ans">${esc(s.sub.ans)}</span></div><ul>${ruleLine({ t: 'pb', pid: s.sub.pid, pt: B.text || '', txt: B.gloss || s.what })}</ul>${hideRun ? '' : `<div class="sn">${esc(s.now)}</div>`}</li>`; return; }
     const cs = (s.w || []).length ? W.cards.filter(c => !used.has(c) && c.word && s.w.some(w => nk(w) === nk(c.word))) : [];
     cs.forEach(c => used.add(c));
-    if (!cs.length) { h += `<li><div class="qq">${esc(s.what.replace(/\s*\(read from its case\)/, ''))}${s.pids.length ? ' ' + s.pids.map(pbLink).join(' ') : ''}</div><div class="sn">${esc(s.now)}</div></li>`; return; }
+    if (!cs.length) { h += `<li><div class="qq">${esc(s.what.replace(/\s*\(read from its case\)/, ''))}${s.pids.length ? ' ' + s.pids.map(pbLink).join(' ') : ''}</div>${hideRun ? '' : `<div class="sn">${esc(s.now)}</div>`}</li>`; return; }
     h += `<li>`;
     for (const c of cs) {
-      h += `<div class="qq">${c.q[0] ? `<b>${esc(c.q[0])}</b> ` : ''}${esc(c.q[1])} <span class="ans">${esc(c.ans)}</span> <span class="wd">← ${esc(c.word)}${c.vib ? ' · ' + esc(c.vib) : ''}${c.own ? '' : ' · not in the sūtra'}</span></div>`;
-      if (c.why.length) h += `<ul>${c.why.map(ruleLine).join('')}</ul>`;
+      h += `<div class="qq">${c.q[0] ? `<b>${esc(c.q[0])}</b> ` : ''}${esc(c.q[1])} <span class="ans">${esc(c.ans)}</span> <span class="wd">← ${esc(c.word)}${c.vib ? ` (${esc(num(c.vib))})` : ''}${c.own ? '' : ' · not in the sūtra'}</span></div>`;
+      { const wy = c.why.filter(w => !(w.pid && subShown.has(w.pid))); if (wy.length) h += `<ul>${wy.map(ruleLine).join('')}</ul>`; }
       const src = c.ev && c.ev.ok && !c.why.some(w => w.q) ? `${esc(c.ev.ref)}: “${esc(c.ev.q)}”` : '';
       if (src || c.no.length) h += `<details class="no"><summary>${[src ? 'source' : '', c.no.length ? 'why not …?' : ''].filter(Boolean).join(' · ')}</summary>${src ? `<div class="ev">${src}</div>` : ''}${c.no.length ? `<ul>${c.no.map(n => `<li>${n.pid ? pbLink(n.pid) + ' ' : ''}${esc(n.txt)}</li>`).join('')}</ul>` : ''}</details>`;
     }
-    h += `<div class="sn">${esc(s.now)}</div></li>`;
+    h += `${hideRun ? '' : `<div class="sn">${esc(s.now)}</div>`}</li>`;
   });
   // cards no step reached (carried words added at the end are steps too, so this is rare): still shown, as their own steps
   for (const c of W.cards.filter(c => !used.has(c))) h += `<li><div class="qq">${c.q[0] ? `<b>${esc(c.q[0])}</b> ` : ''}${esc(c.q[1])} <span class="ans">${esc(c.ans)}</span></div>${c.why.length ? `<ul>${c.why.map(ruleLine).join('')}</ul>` : ''}</li>`;
@@ -372,13 +384,20 @@ async function fillComm() {
 }
 function fromHash() { const h0 = decodeURIComponent(location.hash.slice(1)); if (!h0) return render(); const [h, vt] = h0.split('~'); TAB = 's'; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.tab === 's')); $('#q').value = h; $('#fp').value = ''; FPNO = false; render(); window.scrollTo(0, 0); if (vt) markVt(vt); }
 // a vārttika link (#1.1.72~1.1.72 vt.2): open the sūtra's commentaries and mark the vārttika in the Kāśikā
-function markVt(id) { const B = D.PB[id]; if (!B) return;
+function markVt(id) { if (/^q:/.test(id)) return markQuote(id.slice(2)); const B = D.PB[id]; if (!B) return;
   let n = 0; const t = setInterval(() => { if (++n > 80) return clearInterval(t); const d = document.querySelector('details.comm[data-id]'); if (!d) return; if (!d.open) d.open = true; const cts = [...d.querySelectorAll('.ct')]; if (!cts.length) return; clearInterval(t);
     const full = B.text.replace(/[।॥\s]+$/, '').replace(/्$/, ''), keys = [full, full.split(/\s+/)[0]];   // “…वर्जम्” is printed “…वर्जमिति”; vt.1 is paraphrased (“समासप्रत्ययविधौ तदन्तविधेः प्रतिषेधो”)
     const isK = x => /काशिका|Kāśikā/.test(x.querySelector('b') ? x.querySelector('b').textContent : '');
     const reOf = k => new RegExp([...k].map(c => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('ऽ?'));   // the text may write an avagraha the citation leaves out (कृत्रिमाऽकृत्रिमयोः)
     let ct, key; for (const k of keys) { const re = reOf(k); ct = cts.find(x => isK(x) && re.test(x.textContent)) || cts.find(x => re.test(x.textContent)); if (ct) { key = re; break; } }
     if (!ct) return; ct.open = true; const cx = ct.querySelector('.cx') || ct; cx.innerHTML = cx.innerHTML.replace(key, m => `<mark id="vtmark">${m}</mark>`); const m = document.getElementById('vtmark'); if (m) m.scrollIntoView({ block: 'center' }); }, 100); }
+// a quotation link (#1.1.57~q:आदेशः प्रथमानिर्दिष्टः, 2026-11-18): open the sūtra's commentaries, mark the words in the Mahābhāṣya (else any commentary)
+function markQuote(q) { let n = 0; const t = setInterval(() => { if (++n > 80) return clearInterval(t); const d = document.querySelector('details.comm[data-id]'); if (!d) return; if (!d.open) d.open = true; const cts = [...d.querySelectorAll('.ct')]; if (!cts.length) return; clearInterval(t);
+    const re = new RegExp([...q].map(c => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('ऽ?')), isB = x => /महाभाष्य/.test(x.querySelector('b') ? x.querySelector('b').textContent : '');
+    const ct = cts.find(x => isB(x) && re.test(x.textContent)) || cts.find(x => re.test(x.textContent)); if (!ct) return; ct.open = true;
+    const cx = ct.querySelector('.cx') || ct; cx.innerHTML = cx.innerHTML.replace(re, m => `<mark id="vtmark">${m}</mark>`); const m = document.getElementById('vtmark'); if (m) m.scrollIntoView({ block: 'center' }); }, 100); }
+// “Mahābhāṣya on 1.1.57: “…”” in a card becomes a link to that passage (Harsha 2026-11-18: “will this include a link to the mahābhāṣya?”)
+const mbLink = html => html.replace(/Mahābhāṣya on (\d+\.\d+\.\d+): “([^”]+)”/g, (m, n, q) => `<a href="#${n}~q:${encodeURIComponent(q)}" title="open ${n} with this passage marked in the Mahābhāṣya">Mahābhāṣya on ${n}</a>: “${q}”`);
 window.addEventListener('hashchange', fromHash);
 document.addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test((e.target || {}).tagName || '') || e.altKey || e.ctrlKey || e.metaKey) return; const cards = document.querySelectorAll('.card[id^="s-"]'); if (cards.length !== 1) return; const a = cards[0].querySelectorAll('.snav'); const t = e.key === 'ArrowLeft' ? a[0] : e.key === 'ArrowRight' ? a[1] : null; if (t && t.href) { location.hash = t.getAttribute('href'); e.preventDefault(); } });
 document.addEventListener('click', e => { const t = e.target.closest('[data-pb]'); if (t) { $('#fp').value = t.dataset.pb; $('#q').value = ''; location.hash = ''; render(); } });

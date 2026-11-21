@@ -868,3 +868,132 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
+
+// ---- keep an open page up to date (Harsha 2026-11-21): a reading page left open across classes kept showing what it had when it
+// was opened (Bṛhad 2.5.19 pratīka colouring, fixed 11-05, still old on a screen on 11-12). Nothing reloads a reading page by itself
+// — the service worker only updates in the background. So: on load, note this page's fingerprint in offline.json (build_deploy.js
+// §7 "pages": the page + its kv snippets + its lanes + its text's gloss); check again when the tab comes back into view, when the
+// browser comes back online and every 15 minutes; when it has changed, reload — but only
+//   · once the server really serves the new files (each changed file is fetched afresh and its hash checked: GitHub's CDN can lag),
+//   · when nothing would be lost: not while typing (a focused box, or a key in the last 30 s), with a selection, an open popover /
+//     notes drawer / ⚙ / dictionary / pinned word card, a share-reading session, a Drive sign-in or sync, or an offline save running,
+//   · at most once per hour per page (localStorage vv_autoreload:<url>).
+// Before reloading it notes the verse at the top line (and reading mode) in sessionStorage and puts the reader back there after.
+// window.__vvUpdate = { state: 'checking' | 'current' | 'waiting' | 'off', src } — ⚙ shows it with the site version.
+(function () {
+  'use strict';
+  if (window.__vvUpdate) return;
+  var PAGE = location.pathname.split('/').pop() || '';
+  if (!/^reading-.*\.html$/.test(PAGE)) return;
+  var BASE = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, '');
+  var HOUR = 3600000, EVERY = 15 * 60000, RETRY = 15000, TYPING = 30000;
+  var LS = 'vv_autoreload:' + BASE + PAGE, POS = 'vv_autoreload_pos';
+  var U = window.__vvUpdate = { state: 'checking', src: null };
+  var m0 = null, lastKey = 0, retryT = null, checking = false;
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function manifest() {
+    return fetch(BASE + 'offline.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('offline.json ' + r.status); return r.json(); });
+  }
+  // this page's files in a manifest: { name: hash }
+  function filesOf(m) {
+    var out = {}, base = PAGE.replace(/^reading-/, '').replace(/\.html$/, ''), key = base.replace(/-\d+$/, ''), t = m.texts && m.texts[key];
+    if (!t) return out;
+    t.files.forEach(function (r) { if (r[0] === PAGE || r[0] === 'kv-' + base + '.json' || r[0] === 'gloss-' + key + '.json') out[r[0]] = r[2]; });
+    (t.parts || []).forEach(function (p) { p.files.forEach(function (r) { if (r[0] === 'lane-' + base + '-' + p.id + '.json') out[r[0]] = r[2]; }); });
+    return out;
+  }
+  function fp(m) { return m && m.pages && m.pages[PAGE] ? m.pages[PAGE][0] : null; }
+  function hex10(buf) { return crypto.subtle.digest('SHA-256', buf).then(function (d) { return [].map.call(new Uint8Array(d).slice(0, 5), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }); }
+  // fetch each changed file afresh (also refreshes the browser's HTTP cache, so the reload gets these bytes) and check its hash
+  function serverReady(m1) {
+    var a = filesOf(m0), b = filesOf(m1), changed = Object.keys(b).filter(function (f) { return a[f] !== b[f]; });
+    if (!window.crypto || !crypto.subtle) return Promise.resolve(true);
+    return Promise.all(changed.map(function (f) {
+      return fetch(BASE + f, { cache: 'reload' }).then(function (r) { if (!r.ok) throw new Error(f + ' ' + r.status); return r.arrayBuffer(); })
+        .then(hex10).then(function (h) { return h === b[f]; });
+    })).then(function (ok) { return ok.every(Boolean); }, function () { return false; });
+  }
+  function onScreen(e) {   // laid out AND inside the window (the closed notes drawer is only slid off-screen)
+    var r = e.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && r.right > 0 && r.bottom > 0 && r.left < window.innerWidth && r.top < window.innerHeight && getComputedStyle(e).visibility !== 'hidden';
+  }
+  function shown(sel) { return [].some.call(document.querySelectorAll(sel), onScreen); }
+  function busy() {
+    var a = document.activeElement;
+    if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return 'typing';
+    if (Date.now() - lastKey < TYPING) return 'typing';
+    var s = window.getSelection && window.getSelection(); if (s && !s.isCollapsed && String(s).trim()) return 'selection';
+    if ([].some.call(document.querySelectorAll('textarea'), function (t) { return t.value.trim() && onScreen(t); })) return 'unsent text';
+    if (shown('.vvr-pop,.vvr-drawer.open,.vvr-sel,#vvset-ov.on,.vvset-dict,#tip.pinned,.gtip.pinned,dialog[open],#vvsync')) return 'open panel';
+    if (window.__vvPresenting) return 'share reading';
+    if (lsGet('vvsync:auth') || lsGet('vvsync:code')) return 'sign-in';
+    if (window.VVSync && VVSync.status && VVSync.status().busy) return 'syncing';
+    if (window.VVOffline && VVOffline.busy && VVOffline.busy()) return 'offline save';
+    return '';
+  }
+  function line() { var n = document.getElementById('reading-nav'), b = 0; if (n) { var r = n.getBoundingClientRect(); if (r.bottom > 0) b = r.bottom; } return b + 12; }
+  function topAnchor() {
+    var y = line(), pick = null, list = [].slice.call(document.querySelectorAll('[id^="v-"]')).filter(function (a) { return a.getClientRects().length > 0; });
+    for (var i = 0; i < list.length; i++) { if (list[i].getBoundingClientRect().top <= y) pick = list[i]; else break; }
+    pick = pick || list[0];
+    return pick ? { id: pick.id, off: Math.round(pick.getBoundingClientRect().top - y) } : null;
+  }
+  function reloadNow() {
+    var at = topAnchor();
+    try { sessionStorage.setItem(POS, JSON.stringify({ page: PAGE, id: at && at.id, off: at ? at.off : 0, y: window.scrollY, read: document.documentElement.classList.contains('vv-readmode'), t: Date.now() })); } catch (e) {}
+    try { localStorage.setItem(LS, String(Date.now())); } catch (e) {}
+    try { history.scrollRestoration = 'manual'; } catch (e) {}
+    location.reload();
+  }
+  function tryReload() {
+    clearTimeout(retryT);
+    var since = Date.now() - (parseInt(lsGet(LS), 10) || 0);
+    if (since < HOUR) { retryT = setTimeout(tryReload, HOUR - since + 1000); return; }
+    if (busy()) { retryT = setTimeout(tryReload, RETRY); return; }
+    reloadNow();
+  }
+  function check() {
+    if (checking || U.state === 'waiting' || !navigator.onLine) return;
+    checking = true;
+    manifest().then(function (m1) {
+      U.src = m1.src || null;
+      if (!m0 || !fp(m0)) { m0 = m1; U.state = fp(m1) ? 'current' : 'off'; return; }
+      if (!fp(m1) || fp(m1) === fp(m0)) { U.state = 'current'; return; }
+      return serverReady(m1).then(function (ok) {
+        if (!ok) return;                       // the CDN still serves the old files — try again at the next check
+        U.state = 'waiting'; tryReload();
+      });
+    }).catch(function () {}).then(function () { checking = false; });
+  }
+
+  // after an auto-reload: back to the verse at the top line (lanes and fonts settle after load, so put it back a few times,
+  // unless the reader has started moving)
+  function restore() {
+    var p = null;
+    try { p = JSON.parse(sessionStorage.getItem(POS) || 'null'); sessionStorage.removeItem(POS); } catch (e) {}
+    try { history.scrollRestoration = 'auto'; } catch (e) {}
+    if (!p || p.page !== PAGE || Date.now() - p.t > 120000) return;
+    if (p.read) document.documentElement.classList.add('vv-readmode');
+    var moved = false, stop = function () { moved = true; };
+    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) { window.addEventListener(ev, stop, { once: true, passive: true }); });
+    function put() {
+      if (moved) return;
+      var a = p.id && document.getElementById(p.id);
+      if (a && a.getClientRects().length) window.scrollBy(0, a.getBoundingClientRect().top - line() - p.off);
+      else window.scrollTo(0, p.y || 0);
+    }
+    put(); [300, 1000, 2500].forEach(function (ms) { setTimeout(put, ms); });
+  }
+
+  function start() {
+    restore();
+    document.addEventListener('keydown', function () { lastKey = Date.now(); }, true);
+    document.addEventListener('input', function () { lastKey = Date.now(); }, true);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { check(); if (U.state === 'waiting') tryReload(); } });
+    window.addEventListener('online', check);
+    setInterval(function () { if (!document.hidden) check(); }, EVERY);
+    check();
+  }
+  if (document.readyState === 'complete') start(); else window.addEventListener('load', start);
+})();

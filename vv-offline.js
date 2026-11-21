@@ -92,8 +92,10 @@
   }
 
   // fetch straight from the network (the x-vv-save header makes the service worker step aside) and store in the saved cache
+  var active = 0;   // fetchInto runs in flight — a save or a refresh; vv-reader.js's auto-reload waits for them (busy())
   function fetchInto(cache, files, onStep) {
     var i = 0, failed = null;
+    active++;
     function worker() {
       if (failed || i >= files.length) return Promise.resolve();
       var r = files[i++];
@@ -102,7 +104,7 @@
         return cache.put(abs(r[0]), res);
       }).then(function () { if (onStep) onStep(r); return worker(); }, function (e) { failed = e; });
     }
-    return Promise.all([worker(), worker(), worker()]).then(function () { if (failed) throw failed; });
+    return Promise.all([worker(), worker(), worker()]).then(function () { active--; if (failed) throw failed; });
   }
   // files of the saved entries other than `except` (a file shared by two texts — the shell — must outlive either)
   function usedElsewhere(idx, except) {
@@ -281,5 +283,5 @@
     if (!supported()) return;
     try { navigator.serviceWorker.register(BASE + 'sw.js', { updateViaCache: 'none' }).catch(function () {}); } catch (e) {}   // (storage.persist: vv-store.js)
   }
-  window.VVOffline = { supported: supported, manifest: manifest, info: info, save: save, remove: remove, list: list, refresh: refresh, register: register, chooser: chooser, mb: mb };
+  window.VVOffline = { busy: function () { return active > 0; }, supported: supported, manifest: manifest, info: info, save: save, remove: remove, list: list, refresh: refresh, register: register, chooser: chooser, mb: mb };
 })();

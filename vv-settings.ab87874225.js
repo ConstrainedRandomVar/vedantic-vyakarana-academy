@@ -113,6 +113,7 @@
       + '<div class="vvset-syncst"></div></div>';
     h += '<div class="sep"><span class="dv">संस्कृत-भाषा-व्यायाम-शाला</span> · Sanskrit gym</div>'
       + '<div class="row"><label class="chk"><input type="checkbox" id="vvset-auto"> Auto-advance to the next question after answering</label></div>'
+      + '<div class="hint vvset-ver" style="margin:10px 0 6px"></div>'
       + '<div class="done"><button type="button" id="vvset-done">Done</button></div>';
     return h;
   }
@@ -202,6 +203,20 @@
       };
     });
   }
+  // site version + whether THIS page is current (2026-11-21, with vv-reader.js's auto-reload): from offline.json's src (build_deploy
+  // §7) and window.__vvUpdate. Shown only where offline.json exists (academy, public site); nothing on the search/sister sites.
+  function showVersion(el) {
+    if (!el) return;
+    var u = window.__vvUpdate;
+    var draw = function (src) {
+      if (!src || !src.commit) { el.style.display = 'none'; return; }
+      var d = new Date(src.at), when = isNaN(d) ? '' : d.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      var pg = !u ? '' : u.state === 'current' ? ' · this page is up to date' : u.state === 'waiting' ? ' · this page has been updated — it reloads by itself when you are not typing (at most once an hour)' : '';
+      el.style.display = ''; el.textContent = 'Site version ' + src.commit + (when ? ' · ' + when : '') + pg;
+    };
+    if (u && u.src) return draw(u.src);
+    fetch('offline.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) { draw(m && m.src); }, function () { draw(null); });
+  }
   var ovEl = null;
   function open() {
     if (!ovEl) {
@@ -212,6 +227,7 @@
     }
     reflect(ovEl.querySelector('#vvset-box'));
     if (ovEl.querySelector('.vvset-syncst')) syncUI(ovEl.querySelector('#vvset-box'));
+    showVersion(ovEl.querySelector('.vvset-ver'));
     ovEl.classList.add('on');
     if (window.__vvHintUsed) window.__vvHintUsed();   // opening ⚙ retires the reading-page hint (feedback #4)
   }

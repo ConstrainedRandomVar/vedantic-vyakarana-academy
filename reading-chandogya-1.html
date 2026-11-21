@@ -263,6 +263,7 @@ body.parshve .side-zone{flex:1 1 0;min-width:0}
 .w.navhit,.tk-prat.navhit{animation:navflashw 1.7s ease-out;border-radius:4px}
 /* cross-layer jump rows inside the gloss card (→ मूलम् / → भाष्यम् / → टीका) */
 #tip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline);display:flex;flex-wrap:wrap;gap:5px 8px}
+#tip .jumps .jdiv{flex:0 0 100%;font-size:11px;color:var(--muted);border-top:1px dashed var(--tipline);padding-top:3px;margin-top:1px}
 #tip .jrow{cursor:pointer;color:var(--tipacc);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap}
 #tip .jrow:hover{background:color-mix(in srgb,var(--tipacc) 16%,transparent)}
 .navmem{background:color-mix(in srgb,var(--tipacc,#f59e0b) 45%,transparent);border-radius:3px}
@@ -634,7 +635,13 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
   var jt=!pr&&t.getAttribute('data-jtt'); if(jt){ var tks=[jt].concat((t.getAttribute('data-jtx')||'').split(' ').filter(Boolean));
     // one row PER commentary that quotes this word; named by commentary when the page carries more than one
     var named=document.querySelectorAll('.seg button[data-side]:not([data-side=""]),button[data-side]:not([data-side=""])').length>1;
-    for(var x=0;x<tks.length;x++){var qt=isM?quotesOf(ref,t.getAttribute('data-k'),tkSide(tks[x])):[];   // counted PER commentary
+    // the lane the reader has OPEN comes first; the other commentaries follow under a thin «अन्यव्याख्याः» divider (Harsha 2026-11-21:
+    // the open lane must be obvious, the cross-lane rows stay — a jump to another lane switches to it). No lane open → plain list.
+    var open=document.body.getAttribute('data-side')||'';
+    if(open&&named){var mine=tks.filter(function(k){return tkSide(k)===open;}),oth=tks.filter(function(k){return tkSide(k)!==open;});
+      if(oth.length){tks=mine.concat(['|']).concat(oth);}}
+    for(var x=0;x<tks.length;x++){if(tks[x]==='|'){rows.push('<span class="jdiv">अन्यव्याख्याः</span>');continue;}
+      var qt=isM?quotesOf(ref,t.getAttribute('data-k'),tkSide(tks[x])):[];   // counted PER commentary
       rows.push(qt.length>1?jrN('tk',ref,qt,'',named?tkLabel(tks[x]):''):jr('tk',ref,tks[x],'',named?tkLabel(tks[x]):''));}}
   // a word carrying a ṭippaṇī mark (tippani.js) → its note: "→ टिप्पणी · भा 3" (one row per mark; the सन्धि copy's marks only)
   var tps=t.querySelectorAll?t.querySelectorAll('.tpn-m:not(.tpn-p)'):[];

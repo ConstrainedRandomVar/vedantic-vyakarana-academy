@@ -226,7 +226,7 @@
   // as `rAvyaya` (spelled here in its bare-र् form instead of its विसर्ग form) — a blanket
   // "any word ending in र्" redirect was tried and rejected (regressed 50 corpus cases,
   // e.g. अहर्+एव must keep its र् — day/अहन्-अहर् retains र् before a vowel, not this rule).
-  var RAVYAYA_BARE_R = { 'पुनर्': 1, 'अन्तर्': 1, 'प्रातर्': 1, 'बहिर्': 1, 'आविर्': 1, 'तिरर्': 1 };
+  var RAVYAYA_BARE_R = { 'पुनर्': 1, 'अन्तर्': 1, 'प्रातर्': 1, 'बहिर्': 1, 'आविर्': 1, 'तिरर्': 1, 'सुवर्': 1, 'अहर्': 1 };
   function sandhiJoin(a, b, elideAv) {
     if (!a) return b; if (!b) return a;
     if (a.slice(-2) === 'स्') return sandhiJoin(a.slice(0, -2) + 'ः', b, elideAv);
@@ -270,7 +270,7 @@
     if (a.endsWith('ः')) {                                                    // visarga sandhi
       var base = a.slice(0, -1);
       if (a === 'सः' || a === 'एषः') return b[0] === 'अ' ? base + 'ो' + b.slice(1) : base + b; // su-lopa (6.1.132): saḥ/eṣaḥ → sa/eṣa before all but 'a' (so'); only when saḥ/eṣaḥ leads
-      var rAvyaya = { 'पुनः': 1, 'अन्तः': 1, 'प्रातः': 1, 'बहिः': 1, 'आविः': 1, 'तिरः': 1 }[a]; // closed exception list: r-derived visarga (punar/antar/prātar/bahir/āvir/tiras), NOT the general as-stem → o pattern (BG 18.75-adjacent corpus regression: पुनर्विस्तरेण, not पुनोविस्तरेण)
+      var rAvyaya = { 'पुनः': 1, 'अन्तः': 1, 'प्रातः': 1, 'बहिः': 1, 'आविः': 1, 'तिरः': 1, 'सुवः': 1, 'अहः': 1 }[a];   // + सुवर् (vyāhṛti) and अहन् → अहर् (8.2.68 अहन्, 8.2.69 रोऽसुपि): सुवरिति, अहरिति (2026-11-22). NOT स्वः — usually the pronoun sva (स्वः = his own); the vyāhṛti स्वर् is a sandhiJoinVariants form // closed exception list: r-derived visarga (punar/antar/prātar/bahir/āvir/tiras), NOT the general as-stem → o pattern (BG 18.75-adjacent corpus regression: पुनर्विस्तरेण, not पुनोविस्तरेण)
       if (vs) {                                                              // + vowel
         if (base.endsWith('ा')) return base + b;                            //  āḥ + V → ā + V (hiatus)
         if ('िीुूृॄॢॣेैोौ'.indexOf(base[base.length - 1]) >= 0 || rAvyaya) return base + sandhiJoin('र्', b); //  (i/u/ṛ/e/o…)ḥ + V → r, r fuses with the vowel as mātrā (ज्ञानैः इति → ज्ञानैरिति)
@@ -281,10 +281,36 @@
       if (sib) return base + sib + b;                                        //  ḥ → sibilant (ततः+च → ततश्च)
       if ('कखपफशषस'.indexOf(b[0]) >= 0) return a + b;                        //  ḥ retained (before k/kh/p/ph, ś/ṣ/s)
       if (base.endsWith('ा')) return base + b;                              //  āḥ + voiced cons → ā
+      if (b[0] === 'र' && ('िीुूृॄॢॣेैोौ'.indexOf(base[base.length - 1]) >= 0 || rAvyaya)) {   // र् before र्: dropped, the vowel before it lengthened (8.3.14 रो रि + 6.3.111 ढ्रलोपे पूर्वस्य दीर्घोऽणः): पुनः+रमते → पुना रमते, हरिः+रम्यः → हरी रम्यः
+        if (a === 'अहः') return 'अहो' + b;                                     //  but अहन् before रात्रि/रूप/रथन्तर → अहो (vārttika रूपरात्रिरथन्तरेषु रुत्वं वाच्यम् on 8.2.68): अहोरात्र
+        var lv = base[base.length - 1], L = { 'ि': 'ी', 'ु': 'ू', 'ृ': 'ॄ' }[lv];
+        return (L ? base.slice(0, -1) + L : isCons(lv) ? base + 'ा' : base) + b; }
       if ('िीुूृॄॢॣेैोौ'.indexOf(base[base.length - 1]) >= 0 || rAvyaya) return base + 'र्' + b; //  (i/u/ṛ/e/o…)ḥ + voiced cons → r
       return base + 'ो' + b;                                                //  aḥ + voiced cons → o
     }
+    if (/^ओ[मं]/.test(b) && (a.endsWith('ा') || isCons(a[a.length - 1])))   // पररूप (6.1.95 ओमाङोश्च): a/ā + ओम् → ओम् absorbs the vowel — सविता+ओम् → सवितोम्, तदा+ओम् → तदोम् (not vṛddhi सवितौम्)
+      return (a.endsWith('ा') ? a.slice(0, -1) : a) + 'ो' + b.slice(1);
     return vowelSandhi(a, b, elideAv);                                       // vowel-final
+  }
+
+  // every legitimate surface form of a + b, the primary (sandhiJoin) first. sandhiJoin returns ONE form per junction — for e/o + a
+  // dissimilar vowel the corpus's elided ayādi (ते इति → त इति), for ai/au the āvādi semivowel; texts also print the other form
+  // (गो+आदयः → गवादयः, 6.1.78 एचोऽयवायावः without the optional lopa 8.3.19). For callers that must ALIGN a known split with a printed word
+  // (lib/sandhi-align.js: exact pratīka cuts) rather than find text.
+  function sandhiJoinVariants(a, b) {
+    var out = [sandhiJoin(a, b)], add = function (x) { if (x && out.indexOf(x) < 0) out.push(x); };
+    var lc = a && a[a.length - 1];
+    if (b && b[0] in IM && b[0] !== 'अ' && (lc === 'े' || lc === 'ो')) add(a.slice(0, -1) + (lc === 'ो' ? 'व' : 'य') + IM[b[0]] + b.slice(1));   // ayādi, y/v kept
+    if (b && b[0] in IM && (lc === 'ै' || lc === 'ौ')) { add(sandhiJoin(a, b, true)); add(sandhiJoin(a, b, false)); }   // āvādi, both forms
+    // visarga before a sibilant: kept (the primary) or → that sibilant (8.3.34 विसर्जनीयस्य सः, optional by 8.3.36 वा शरि; श/ष by
+    // 8.4.40/41) — prints write मनस्स्वलक्ष्ये, अर्थवन्तश्शमादयः, ह्यमनाश्शुभ्रः
+    var a2 = a && a.slice(-2) === 'स्' ? a.slice(0, -2) + 'ः' : a;
+    if (a2 && a2.endsWith('ः') && b && 'शषस'.indexOf(b[0]) >= 0) add(a2.slice(0, -1) + b[0] + '्' + b);
+    // इस्/उस् (not a suffix) + क/ख/प/फ → ष् (8.3.41 इदुदुपधस्य चाप्रत्ययस्य): आविस्+कृणोमि → आविष्कृणोमि, निस्+काम → निष्काम
+    if (a2 && /[िु]ः$/.test(a2) && b && 'कखपफ'.indexOf(b[0]) >= 0) add(a2.slice(0, -1) + 'ष्' + b);
+    // the vyāhṛti स्वर् (r-final) beside the pronoun स्वः (sva): स्वरिति, स्वर्लोकः — a variant only, never the primary
+    if (a2 === 'स्वः' && b) { if (b[0] in IM) add('स्वर' + IM[b[0]] + b.slice(1)); else if ('गघङजझञडढणदधनबभमयरलवह'.indexOf(b[0]) >= 0) add('स्वर्' + b); }
+    return out;
   }
 
   // ---- ITRANS → Devanāgarī (user convention: c=च, ch/C=छ, .a=ऽ, ~N=ङ, ~n=ञ, Sh/S=ष, RRi=ृ, M=ं, H=ः) ----
@@ -788,7 +814,7 @@
 
   return {
     normalize: normalize, normMap: normMap, stripSandhi: stripSandhi, matraLead: matraLead, extendEnd: extendEnd, extendStart: extendStart, isCons: isCons,
-    vowelSandhi: vowelSandhi, sandhiJoin: sandhiJoin, toDeva: toDeva, stemMatch: stemMatch, coMatch: coMatch, rightEdgeVariants: rightEdgeVariants,
+    vowelSandhi: vowelSandhi, sandhiJoin: sandhiJoin, sandhiJoinVariants: sandhiJoinVariants, toDeva: toDeva, stemMatch: stemMatch, coMatch: coMatch, rightEdgeVariants: rightEdgeVariants,
     expandQuery: expandQuery, prepBlock: prepBlock, matches: matches, snippet: snippet,
     M1: M1, M2: M2
   };

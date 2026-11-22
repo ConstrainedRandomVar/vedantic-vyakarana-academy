@@ -61,7 +61,14 @@
   // ekadeśī colouring is machine-marked and NOT checked by hand — it can be wrong (BS bhāṣya, Bṛ 3.9.28.8), and a reader may rely on
   // it. ON by default but called out as beta (legend tag + ⚙ row); '0' = off → <html class="vv-noroles">: the words take the plain
   // text colour, the role pills and role section borders go. The legend keeps its swatches (tagged beta).
-  function applyRoles() { var off = false; try { off = localStorage.getItem('vv_roles') === '0'; } catch (e) {}
+  // Brahmasūtra pages: argument roles DISABLED, no switch (Harsha 2026-11-23, after the role RCA — BS pūrvapakṣa-sūtras / long
+  // pūrvapakṣas are the worst-marked text: commentator check ~half the pūrvapakṣa/siddhānta starts plain or inverted). Markup unchanged;
+  // re-enable here once BS roles are rebuilt from the adhikaraṇa structure + the commentators (PLANS, role RCA item 2).
+  var ROLES_BS = /(^|\/)reading-bs(-\d+)?\.html$/.test(location.pathname);
+  function rolesKey() { return 'vv_roles'; }
+  function rolesOn() { if (ROLES_BS) return false; var v = null; try { v = localStorage.getItem('vv_roles'); } catch (e) {} return v !== '0'; }
+  window.__vvRoles = { key: rolesKey, on: rolesOn, bs: ROLES_BS };
+  function applyRoles() { var off = !rolesOn();
     document.documentElement.classList.toggle('vv-noroles', off);
     if (!document.getElementById('vvr-roles')) { var st = document.createElement('style'); st.id = 'vvr-roles';
       var R = ['.purvapaksha', '.siddhanta', '.ekadeshi', '.gw.r-purvapaksha', '.gw.r-siddhanta', '.gw.r-ekadeshi', '.gw.a-purvapaksha', '.gw.a-siddhanta', '.gw.a-ekadeshi'];
@@ -575,10 +582,11 @@
         note.addEventListener('click', function (e) { e.preventDefault(); withSettings(function () { VVSettings.open(); }); }); it.appendChild(note); }
     });
     // argument-role swatches (पूर्वपक्षः / सिद्धान्तः / एकदेशी): a BETA tag on each; while the colours are off, "⚙ off" after it
-    var rolesOff = false; try { rolesOff = localStorage.getItem('vv_roles') === '0'; } catch (e) {}
+    var rolesOff = window.__vvRoles ? !window.__vvRoles.on() : false;
     [].forEach.call(L.querySelectorAll('.item'), function (it) {
       var sw = it.querySelector('.sw'), st = sw ? (sw.getAttribute('style') || '') : '';
       if (!/--(purva|sid|eka)\)/.test(st) && !it.querySelector('.rolepill,.purvapaksha,.siddhanta,.ekadeshi')) return;
+      if (window.__vvRoles && window.__vvRoles.bs) { it.style.display = 'none'; return; }
       if (!it.querySelector('.vvr-beta')) it.appendChild(el('span', { class: 'vvr-beta', title: 'Beta: these argument-role colours are marked by machine and not checked by hand — they can be wrong. Turn them off in ☰ → ⚙ Settings.' }, 'beta'));
       var note = it.querySelector('.vvr-lnote');
       if (!rolesOff) { if (note) note.remove(); return; }

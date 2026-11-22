@@ -6,6 +6,7 @@
 //   vv_script      reading-page script — applied by translit.js (#scriptpick)
 //   vv_quiet_hover word cards + "bookmark passage" prompt on hover: OFF by default = quiet ('0' = always show) — peek.js
 //   vv_pill_*      commentary markers: HIDDEN by default ('1' = shown) — applied by vv-reader.js (__vvApplyPills)
+//   vv_roles       argument-role colours (pūrvapakṣa/siddhānta/ekadeśī), BETA: SHOWN by default ('0' = off) — vv-reader.js (__vvApplyRoles)
 //   vv_tkmark      commentary links (dashed underline on words a commentary quotes): SHOWN by default ('0' = off) — vv-reader.js (__vvApplyTkm)
 //   vv_vyut        word cards' व्युत्पत्तिः row (dictionary derivations): '' = folded to one line (default) · 'open' · '0' = off — read by the card itself (kvrow)
 //   fold:<key>     commentary fold-out defaults (VVStore.folds)
@@ -61,6 +62,9 @@
     + '@media(prefers-color-scheme:dark){html:not([data-theme=light]) .vvset-prb{border-color:#d977de;color:#d977de}html:not([data-theme=light]) .vvset-maha{border-color:#f472b6;color:#f472b6}}'
     + '.vvset-tkm{text-decoration:underline dashed color-mix(in srgb,#475569 72%,transparent);text-decoration-thickness:1.5px;text-underline-offset:.38em;text-decoration-skip-ink:none}html[data-theme=dark] .vvset-tkm{text-decoration-color:color-mix(in srgb,#94a3b8 72%,transparent)}#vvset-box .mk.off .vvset-tkm{text-decoration:none}'
     + 'html[data-theme=dark] .vvset-prb{border-color:#d977de;color:#d977de}html[data-theme=dark] .vvset-maha{border-color:#f472b6;color:#f472b6}'
+    + '.vvset-beta{display:inline-block;font:700 9.5px/1.5 -apple-system,system-ui,sans-serif;letter-spacing:.03em;text-transform:uppercase;padding:0 5px;margin-inline-start:4px;border:1px solid currentColor;border-radius:8px;color:var(--muted,#7a6a55);vertical-align:1px}'
+    + '.vvset-pp{color:#b91c1c}.vvset-sid{color:#15803d}#vvset-box .mk.off .sample .vvset-pp,#vvset-box .mk.off .sample .vvset-sid{color:inherit}'
+    + 'html[data-theme=dark] .vvset-pp{color:#f79a9a}html[data-theme=dark] .vvset-sid{color:#83e0a0}@media(prefers-color-scheme:dark){html:not([data-theme=light]) .vvset-pp{color:#f79a9a}html:not([data-theme=light]) .vvset-sid{color:#83e0a0}}'
     + '#vvset-box .vvset-btn{font:inherit;border:1px solid var(--brand,#d97706);background:var(--brand,#d97706);color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer}'
     + '#vvset-box .vvset-btn2{font:inherit;font-size:13px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;border-radius:8px;padding:4px 10px;cursor:pointer}'
     + '#vvset-box .done{text-align:right}#vvset-box .done button{font:inherit;border:1px solid var(--line,#ccc);background:var(--bg,#fff);color:inherit;border-radius:8px;padding:6px 14px;cursor:pointer}'
@@ -94,6 +98,10 @@
     if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary links</div><div class="mk"><label class="chk"><input type="checkbox" id="vvset-tkm"> Underline the words a commentary explains</label>'
       + '<div class="sample"><span class="vvset-tkm">अशोच्यान्</span> अन्वशोचस्त्वं प्रज्ञावादांश्च भाषसे</div></div>'
       + '<div class="hint">A light dashed line under each word that the chosen commentary quotes as a pratīka — tap it to jump there. With no commentary chosen, every such word in the bhāṣya, darker the more commentaries quote it. On by default.</div></div>';
+    // argument-role colours — BETA (Swamiji via Harsha 2026-11-22): on by default, called out as beta, can be turned off
+    if (!sisterSite()) h += '<div class="row"><div class="lab">Argument roles <span class="vvset-beta">beta</span></div><div class="mk"><label class="chk"><input type="checkbox" id="vvset-roles"> Colour the bhāṣya’s pūrvapakṣa / siddhānta / ekadeśī passages</label>'
+      + '<div class="sample"><span class="vvset-pp">ननु च … इति चेत् —</span> <span class="vvset-sid">न, …</span></div></div>'
+      + '<div class="hint"><b>Beta.</b> These colours are marked by machine and have not been checked by hand, so some passages are coloured wrongly — especially in the Brahmasūtra bhāṣya. Use them as a rough guide only, never as the final word on who is speaking. On by default.</div></div>';
     if (!sisterSite()) h += '<div class="row"><div class="lab">Word derivations</div><select id="vvset-vyut"><option value="">Folded (one line)</option><option value="open">Open</option><option value="0">Off</option></select>'
       + '<div class="hint">The व्युत्पत्तिः row on word cards — how a word is derived, quoted from शब्दार्थकौस्तुभः, वाचस्पत्यम् and शब्दकल्पद्रुमः. Folded by default; tap ▸ on a pinned card to open it.</div></div>';
     h += '<div class="row"><div class="lab">Page buttons</div>'
@@ -125,6 +133,7 @@
     var th = box.querySelector('#vvset-theme'); if (th) { var tv = get('vv_theme'); th.value = tv === 'light' || tv === 'dark' ? tv : ''; }
     var hv = box.querySelector('#vvset-hover'); if (hv) hv.checked = !quietOn();
     var vy = box.querySelector('#vvset-vyut'); if (vy) { var vv = get('vv_vyut'); vy.value = vv === 'open' || vv === '0' ? vv : ''; }
+    var ro = box.querySelector('#vvset-roles'); if (ro) { ro.checked = get('vv_roles') !== '0'; ro.closest('.mk').classList.toggle('off', !ro.checked); }
     var tk = box.querySelector('#vvset-tkm'); if (tk) { tk.checked = get('vv_tkmark') !== '0'; tk.closest('.mk').classList.toggle('off', !tk.checked); }
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.checked = markerOn(c.getAttribute('data-pill')); c.closest('.mk').classList.toggle('off', !c.checked); });
     var S = window.VVStore; if (S && S.folds) [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.value = S.folds.get(s.getAttribute('data-fold')); });
@@ -152,6 +161,8 @@
     [].forEach.call(box.querySelectorAll('[data-pill]'), function (c) { c.addEventListener('change', function () {
       set(c.getAttribute('data-pill'), c.checked ? '1' : '0'); if (window.__vvApplyPills) window.__vvApplyPills(); reflect(box); }); });
     var vy = box.querySelector('#vvset-vyut'); if (vy) vy.addEventListener('change', function () { if (vy.value) set('vv_vyut', vy.value); else { try { localStorage.removeItem('vv_vyut'); } catch (e) {} } });
+    var ro = box.querySelector('#vvset-roles'); if (ro) ro.addEventListener('change', function () {
+      set('vv_roles', ro.checked ? '1' : '0'); if (window.__vvApplyRoles) window.__vvApplyRoles(); reflect(box); });
     var tk = box.querySelector('#vvset-tkm'); if (tk) tk.addEventListener('change', function () {
       set('vv_tkmark', tk.checked ? '1' : '0'); if (window.__vvApplyTkm) window.__vvApplyTkm(); reflect(box); });
     var S = window.VVStore; [].forEach.call(box.querySelectorAll('select[data-fold]'), function (s) { s.addEventListener('change', function () { if (S && S.folds) S.folds.set(s.getAttribute('data-fold'), s.value); }); });

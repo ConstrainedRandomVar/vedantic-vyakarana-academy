@@ -413,7 +413,7 @@ window.__vcNav=function(el){el.scrollIntoView({behavior:'smooth',block:'center'}
 window.__vcMulaJump=function(t){if(!t||!t.__prat||!document.body.classList.contains('view-both'))return '';var P=[];
   for(var i=0;i<t.__prat.length;i++){var q=t.__prat[i],p=null;if(q.offsetParent!==null)p=q;
     else{// a pratīka inside a sandhi-fused unit sits in the hidden पद copy (.fumembers) in सन्धि mode → land on the visible fused word
-      var fu=q.closest('.fu'),host=fu?fu.querySelector('.bhfuse'):null;if(host&&host.offsetParent!==null)p=host;}
+      var fu=q.closest('.fu'),host=fu?(fu.querySelector('.bhfuse .fup[data-t="'+q.dataset.t+'"]')||fu.querySelector('.bhfuse')):null;if(host&&host.offsetParent!==null)p=host;}
     if(p&&P.indexOf(p)<0)P.push(p);}
   if(!P.length)return '';window.__vcJumpList=P;window.__vcJumpIdx=0;window.__vcJumpTo=P[0];
   var lb='→ '+(window.__vcJL||'भाष्यम्');

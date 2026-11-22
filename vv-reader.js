@@ -57,6 +57,24 @@
   applyTkm();
   window.__vvApplyTkm = applyTkm;
 
+  // ---- argument-role colours, BETA (⚙ Settings · "Argument roles", Swamiji via Harsha 2026-11-22): pūrvapakṣa / siddhānta /
+  // ekadeśī colouring is machine-marked and NOT checked by hand — it can be wrong (BS bhāṣya, Bṛ 3.9.28.8), and a reader may rely on
+  // it. ON by default but called out as beta (legend tag + ⚙ row); '0' = off → <html class="vv-noroles">: the words take the plain
+  // text colour, the role pills and role section borders go. The legend keeps its swatches (tagged beta).
+  function applyRoles() { var off = false; try { off = localStorage.getItem('vv_roles') === '0'; } catch (e) {}
+    document.documentElement.classList.toggle('vv-noroles', off);
+    if (!document.getElementById('vvr-roles')) { var st = document.createElement('style'); st.id = 'vvr-roles';
+      var R = ['.purvapaksha', '.siddhanta', '.ekadeshi', '.gw.r-purvapaksha', '.gw.r-siddhanta', '.gw.r-ekadeshi', '.gw.a-purvapaksha', '.gw.a-siddhanta', '.gw.a-ekadeshi'];
+      st.textContent = R.map(function (s) { return 'html.vv-noroles ' + s + ':not(.legend *)'; }).join(',') + '{color:inherit!important}'
+        + 'html.vv-noroles .rolepill:not(.legend *){display:none!important}'
+        + 'html.vv-noroles .secband.r-purvapaksha,html.vv-noroles .secband.r-siddhanta{border-left-color:var(--line,#ddd)!important}'
+        + '.vvr-beta{display:inline-block;font:700 9.5px/1.5 -apple-system,system-ui,sans-serif;letter-spacing:.03em;text-transform:uppercase;padding:0 5px;margin-inline-start:4px;border:1px solid currentColor;border-radius:8px;color:var(--muted,#7a6a55);vertical-align:1px;cursor:help}';
+      (document.head || document.documentElement).appendChild(st); }
+    if (window.__vvLegendNotes) window.__vvLegendNotes();
+  }
+  applyRoles();
+  window.__vvApplyRoles = applyRoles;
+
   // ---- reading text size (⚙ Settings · "Text size", Harsha 2026-10-21 #3) — scales ALL page text, not the layout: every px
   // font-size in the page's styles (and inline style attributes) becomes calc(Npx * var(--vvfs)), and rem/em follow the root.
   // NOT CSS zoom: zoom also scales the coordinates the word cards / laser / bookmark button are placed with (measured
@@ -554,6 +572,17 @@
       var note = it.querySelector('.vvr-lnote');
       if (on) { if (note) note.remove(); return; }
       if (!note) { note = el('a', { class: 'vvr-lnote', href: '#', title: 'Commentary markers are off by default — turn this one on in ☰ → ⚙ Settings' }, '⚙ to show');
+        note.addEventListener('click', function (e) { e.preventDefault(); withSettings(function () { VVSettings.open(); }); }); it.appendChild(note); }
+    });
+    // argument-role swatches (पूर्वपक्षः / सिद्धान्तः / एकदेशी): a BETA tag on each; while the colours are off, "⚙ off" after it
+    var rolesOff = false; try { rolesOff = localStorage.getItem('vv_roles') === '0'; } catch (e) {}
+    [].forEach.call(L.querySelectorAll('.item'), function (it) {
+      var sw = it.querySelector('.sw'), st = sw ? (sw.getAttribute('style') || '') : '';
+      if (!/--(purva|sid|eka)\)/.test(st) && !it.querySelector('.rolepill,.purvapaksha,.siddhanta,.ekadeshi')) return;
+      if (!it.querySelector('.vvr-beta')) it.appendChild(el('span', { class: 'vvr-beta', title: 'Beta: these argument-role colours are marked by machine and not checked by hand — they can be wrong. Turn them off in ☰ → ⚙ Settings.' }, 'beta'));
+      var note = it.querySelector('.vvr-lnote');
+      if (!rolesOff) { if (note) note.remove(); return; }
+      if (!note) { note = el('a', { class: 'vvr-lnote', href: '#', title: 'Argument-role colours are turned off — turn them back on in ☰ → ⚙ Settings' }, '⚙ off');
         note.addEventListener('click', function (e) { e.preventDefault(); withSettings(function () { VVSettings.open(); }); }); it.appendChild(note); }
     });
   }

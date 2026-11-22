@@ -108,7 +108,7 @@ const PROFILE_OMIT = new Set((window.VV_PROFILE && window.VV_PROFILE.omit) || []
 const ACADEMY_TOOLS = [
     { href: "https://vyakarana-corpus-chat.onrender.com/", title: "💬 जिज्ञासा · Ask the corpus", tag: "query all 15 texts", desc: "Ask in plain language — get counts &amp; cited examples of any vibhakti, kāraka role, samāsa (with recursive vigraha), sandhi, or bhāṣya feature across the whole corpus. Answers are exact, not guessed." },
     { href: "https://constrainedrandomvar.github.io/prasthanatrayi-search/", title: "🔍 अन्वेषण · Full-text search", tag: "find any phrase", desc: "Search the source texts &amp; commentaries for any word or phrase, with page-linked results." },
-    { href: "tool-vrtti.html", title: "📜 अन्वाख्यातवृत्तिः · Sūtra vṛttis, step by step", tag: "how each vṛtti is built", desc: "Every Aṣṭādhyāyī sūtra’s vṛtti, built from its words, anuvṛtti and paribhāṣās, one step at a time, with the prathamāvṛtti, the नैलेश-वृत्तिः, the Kāśikā and the Kaumudīs beside it. Draft: machine-built and still under review." },
+    { href: "tool-vrtti.html", title: "📜 अन्वाख्यातवृत्तिः · Sūtra vṛttis, step by step", tag: "how each vṛtti is built", desc: "Every Aṣṭādhyāyī sūtra’s vṛtti, built from its words, anuvṛtti and paribhāṣās, one step at a time, with the prathamāvṛtti, the नैलेश-वृत्तिः, the Kāśikā and the Kaumudīs beside it. Beta: machine-built with AI help and still under review, so mistakes are possible — ⚑ report on any sūtra tells us.", badge: "beta" },
     { href: "scratchpad.html", title: "📋 शेमुषी · Shared-reading scratchpad", tag: "present a Word / Doc", desc: "Load an instructor's Word / Google-Docs document — colour-coded pūrvapakṣa · siddhānta · pratīka come across verbatim — and share a live, script-independent read-along: students follow your scroll, highlight &amp; laser, each in their own lipi." },
   ];
 function libraryCounts() {
@@ -155,7 +155,9 @@ function dashboardTools() {
   // reading; any other (site-specific) card keeps its place after these
   const rank = t => { const i = TOOL_ORDER.findIndex(re => re.test(t.href)); return i < 0 ? TOOL_ORDER.length : i; };
   const omit = t => (PROFILE_OMIT.has('corpus-chat') && /corpus-chat/.test(t.href)) || (PROFILE_OMIT.has('vedic-search') && /tool-vedic-search/.test(t.href)) || (PROFILE_OMIT.has('scratchpad') && /scratchpad/.test(t.href));
-  return all.filter(t => !omit(t)).map((t, i) => [t, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
+  // a profile may list the only Tools cards it shows (prod: just the vṛtti tool — Harsha 2026-11-22; site-profiles.json toolsOnly)
+  const only = window.VV_PROFILE && window.VV_PROFILE.toolsOnly;
+  return all.filter(t => !omit(t) && (!only || only.includes(String(t.href).split('#')[0]))).map((t, i) => [t, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
 }
 const TOOL_ORDER = [/prasthanatrayi-search/, /corpus-chat/, /tool-vedic-search/, /scratchpad/];
 function openSettings() { if (window.VVSettings) window.VVSettings.open(); }

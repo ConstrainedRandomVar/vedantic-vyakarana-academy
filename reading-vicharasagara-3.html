@@ -3,33 +3,33 @@
 <title>विचारसागरः — तृतीयतरङ्गः</title>
 <style>#tip .kvh{cursor:pointer}#tip .kva::before{content:"▸";opacity:.7}#tip .kvrow.open .kva::before{content:"▾"}#tip .kvbody{display:none}#tip .kvrow.open .kvbody{display:block}#tip .kvb{margin:1px 0 3px 8px}#tip .kv1 .kvb{margin:0 0 2px}#tip .kvs{font-family:"Noto Serif Devanagari",serif;font-weight:700}#tip .kvl{font-size:12px;line-height:1.45;margin:1px 0;font-family:"Noto Serif Devanagari",serif}#tip .kvd{opacity:.6;font-size:11px}#tip .kvx{display:none}#tip .kvb.open .kvx{display:block}#tip .kvlong:not(.open) .kvl{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#tip .kvlong:not(.open) .kvx{display:none}#tip .kvm{font-size:11px;opacity:.75;border:1px solid var(--tipline,rgba(255,255,255,.3));border-radius:8px;padding:0 6px;margin-left:2px;cursor:pointer}
 :root{--bg:#faf7f0;--ink:#2b2620;--mula:#1a1a2e;--tip:#5a4632;--tipbg:#f3ead8;--accent:#8a5a2b;--brand:#d97706;--cite:#0e7490;--tr:#4a5568;--rule:#e0d6c2;
-  --pp:#b91c1c;--sid:#15803d;--tat:#6d28d9;--lak:#4d7c0f;--phalita:#be123c;--drs:#a16207;--eka:#c2410c;--maha:#db2777;
+  --purva:#b91c1c;--sid:#15803d;--import:#6d28d9;--lakshana:#4d7c0f;--phalita:#be123c;--drs:#a16207;--eka:#c2410c;--maha:#db2777;
   --card:#fff;--muted:#8a7d68;--muted2:#a08d6f;--label:#6b5d47;--connector:#9a8f78;--gold:var(--gold);--gold2:#a07f45;--hover:#f0e4c8;--flash:var(--flash);--tipedge:#e6d6b3;--trrule:#d8cbb0;--gloss:#3f4653;--anuvada:#6b6255;--secbase:#6a5f8f;--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.2);--tm:#a7f3d0;--topicbg:#ebe8f4}
 /* dark palette (#9c tokens) — explicit ◐ toggle, or the OS preference when no explicit choice */
-:root[data-theme=dark]{--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#c9bda6;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--pp:#f79a9a;--sid:#83e0a0;--tat:#c9b6f7;--lak:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#c9bda6;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}}
-/* महावाक्य · verse-level identity pill, ALWAYS shown (no toggle since 2026-09-22); two shades मुख्य/बाधायाम्, styled hover note (not native title=). Pink --maha is distinct from the fuchsia --lak lakṣaṇa hue (#9c). */
+:root[data-theme=dark]{--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--purva:#f79a9a;--sid:#83e0a0;--import:#c9b6f7;--lakshana:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#c9bda6;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--ink:#e6e8ec;--mula:#ece6d6;--tip:#d8c6a6;--tipbg:#262117;--accent:#e2a96b;--brand:#f5b544;--cite:#67d3e8;--tr:#aab4c2;--rule:#2d2a25;--purva:#f79a9a;--sid:#83e0a0;--import:#c9b6f7;--lakshana:#a3d65c;--phalita:#fb7185;--drs:#fcd34d;--eka:#fb923c;--maha:#f472b6;--card:#1c1f26;--muted:#c9bda6;--muted2:#9d8e72;--label:#c3b79f;--connector:#8f8672;--gold:#c9a45e;--gold2:#d3ac68;--hover:#332c1f;--flash:#4a3d1c;--tipedge:#4a3f2c;--trrule:#4a4234;--gloss:#c2c8d2;--anuvada:#b8b2a8;--secbase:#b9b0dc;--tipacc:#065f46;--tipline:rgba(0,0,0,.18);--tm:#15803d;--topicbg:#1e2431}}
+/* महावाक्य · verse-level identity pill, ALWAYS shown (no toggle since 2026-09-22); two shades मुख्य/बाधायाम्, styled hover note (not native title=). Pink --maha is distinct from the fuchsia --lakshana lakṣaṇa hue (#9c). */
 .maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
 .maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
 .maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}
 .maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
 .maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
-/* bhāṣya-matched: citation=teal(--cite) · pūrvapakṣa=red(--pp) · siddhānta=green(--sid) · tātparya/phalita=purple(--tat,=bhāṣya import) · ekadeshi=orange(--eka). VS-new: lakṣaṇa=magenta(--lak) · dṛṣṭānta=sepia(--drs) */
-.w.r-purvapaksha{color:var(--pp)} .w.r-siddhanta{color:var(--sid)} .w.r-phalita{color:var(--phalita)} .w.r-lakshana{color:var(--lak)} .w.r-drishtanta{color:var(--drs)} .w.r-ekadeshi{color:var(--eka)} .w.r-anuvada{color:var(--anuvada)}
+/* bhāṣya-matched: citation=teal(--cite) · pūrvapakṣa=red(--purva) · siddhānta=green(--sid) · tātparya/phalita=purple(--import,=bhāṣya import) · ekadeshi=orange(--eka). VS-new: lakṣaṇa=magenta(--lakshana) · dṛṣṭānta=sepia(--drs) */
+.w.r-purvapaksha{color:var(--purva)} .w.r-siddhanta{color:var(--sid)} .w.r-phalita{color:var(--phalita)} .w.r-lakshana{color:var(--lakshana)} .w.r-drishtanta{color:var(--drs)} .w.r-ekadeshi{color:var(--eka)} .w.r-anuvada{color:var(--anuvada)}
 .w.ga{font-weight:650}                          /* A = pratīka (term being glossed) */
 .w.gb{color:var(--gloss);font-style:italic}          /* B = gloss (synonym / vivaraṇa) */
 .geq{color:var(--connector);padding:0 2px}               /* the author's = gloss connector */
-.skt.pp{color:var(--pp)} .skt.sid{color:var(--sid)} .skt.def{color:var(--lak)}   /* deterministic fallback (whole-sentence) when a sentence has no roleSpans */
+.skt.pp{color:var(--purva)} .skt.sid{color:var(--sid)} .skt.def{color:var(--lakshana)}   /* deterministic fallback (whole-sentence) when a sentence has no roleSpans */
 /* section-role ribbon — a role-coloured band before the first āvarta of each topical (A. n-m) section */
 /* section-role band = a double-pointed CHEVRON RIBBON (<====>), deliberately a different SHAPE and a cool
    lavender fill so it can never be mistaken for the ṭippaṇī note card (a warm cream #f3ead8 rounded box).
    Role = the heading colour (exposition muted; argumentative roles pop in their hue). */
 .secband{margin:32px 0 12px;padding:6px 30px;background:var(--topicbg);clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);border:none;border-radius:0;font-family:system-ui;font-size:14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;scroll-margin-top:var(--smt,180px)}
 .secband .st{font-weight:700;color:var(--secbase)} .secband .srange{margin-left:auto;font-size:11px;color:color-mix(in srgb,var(--secbase) 70%,var(--bg));font-weight:700;white-space:nowrap}
-.secband.r-purvapaksha{background:color-mix(in srgb,var(--pp) 11%,var(--bg))} .secband.r-purvapaksha .st{color:var(--pp)} .secband.r-purvapaksha .srange{color:color-mix(in srgb,var(--pp) 55%,var(--bg))}
+.secband.r-purvapaksha{background:color-mix(in srgb,var(--purva) 11%,var(--bg))} .secband.r-purvapaksha .st{color:var(--purva)} .secband.r-purvapaksha .srange{color:color-mix(in srgb,var(--purva) 55%,var(--bg))}
 .secband.r-siddhanta{background:color-mix(in srgb,var(--sid) 11%,var(--bg))} .secband.r-siddhanta .st{color:var(--sid)} .secband.r-siddhanta .srange{color:color-mix(in srgb,var(--sid) 55%,var(--bg))}
 .secband.r-drishtanta{background:color-mix(in srgb,var(--drs) 11%,var(--bg))} .secband.r-drishtanta .st{color:var(--drs)} .secband.r-drishtanta .srange{color:color-mix(in srgb,var(--drs) 55%,var(--bg))}
-.secband.r-lakshana{background:color-mix(in srgb,var(--lak) 11%,var(--bg))} .secband.r-lakshana .st{color:var(--lak)} .secband.r-lakshana .srange{color:color-mix(in srgb,var(--lak) 55%,var(--bg))}
+.secband.r-lakshana{background:color-mix(in srgb,var(--lakshana) 11%,var(--bg))} .secband.r-lakshana .st{color:var(--lakshana)} .secband.r-lakshana .srange{color:color-mix(in srgb,var(--lakshana) 55%,var(--bg))}
 .secband.r-phalita{background:color-mix(in srgb,var(--phalita) 11%,var(--bg))} .secband.r-phalita .st{color:var(--phalita)} .secband.r-phalita .srange{color:color-mix(in srgb,var(--phalita) 55%,var(--bg))}
 .secband.r-ekadeshi{background:color-mix(in srgb,var(--eka) 11%,var(--bg))} .secband.r-ekadeshi .st{color:var(--eka)} .secband.r-ekadeshi .srange{color:color-mix(in srgb,var(--eka) 55%,var(--bg))}
 .secband.sangraha .st{text-decoration:underline;text-decoration-color:currentColor;text-underline-offset:3px}
@@ -49,10 +49,10 @@ h1{margin:0;font-size:20px;color:var(--accent);line-height:1.2} .by{font-size:12
 .nowsec{margin-top:4px;font-family:system-ui;font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;border-left:3px solid var(--gold);padding-left:9px;min-height:1.2em;transition:border-color .2s}
 .nowsec .ns-r{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
 .nowsec .ns-t{font-weight:600;color:var(--mula)} .nowsec .ns-range{font-size:11px;color:var(--gold2);font-weight:700;white-space:nowrap}
-.nowsec.r-purvapaksha{border-left-color:var(--pp)} .nowsec.r-purvapaksha .ns-r{color:var(--pp)}
+.nowsec.r-purvapaksha{border-left-color:var(--purva)} .nowsec.r-purvapaksha .ns-r{color:var(--purva)}
 .nowsec.r-siddhanta{border-left-color:var(--sid)} .nowsec.r-siddhanta .ns-r{color:var(--sid)}
 .nowsec.r-drishtanta{border-left-color:var(--drs)} .nowsec.r-drishtanta .ns-r{color:var(--drs)}
-.nowsec.r-lakshana{border-left-color:var(--lak)} .nowsec.r-lakshana .ns-r{color:var(--lak)}
+.nowsec.r-lakshana{border-left-color:var(--lakshana)} .nowsec.r-lakshana .ns-r{color:var(--lakshana)}
 .nowsec.r-phalita{border-left-color:var(--phalita)} .nowsec.r-phalita .ns-r{color:var(--phalita)}
 .nowsec.r-ekadeshi{border-left-color:var(--eka)} .nowsec.r-ekadeshi .ns-r{color:var(--eka)}
 .byline{font-size:11.5px;color:var(--muted2);margin-top:3px;font-family:system-ui}
@@ -81,16 +81,16 @@ h1{margin:0;font-size:20px;color:var(--accent);line-height:1.2} .by{font-size:12
 a.toc-i:hover{background:var(--tipbg)}
 .toc-i .toc-r{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:800}
 .toc-i .toc-t{color:var(--mula)} .toc-i .toc-rng{margin-left:auto;font-size:11px;color:var(--gold2);font-weight:700;white-space:nowrap;padding-left:8px}
-.toc-i.r-purvapaksha{border-left-color:var(--pp)} .toc-i.r-purvapaksha .toc-r{color:var(--pp)}
+.toc-i.r-purvapaksha{border-left-color:var(--purva)} .toc-i.r-purvapaksha .toc-r{color:var(--purva)}
 .toc-i.r-siddhanta{border-left-color:var(--sid)} .toc-i.r-siddhanta .toc-r{color:var(--sid)}
 .toc-i.r-drishtanta{border-left-color:var(--drs)} .toc-i.r-drishtanta .toc-r{color:var(--drs)}
-.toc-i.r-lakshana{border-left-color:var(--lak)} .toc-i.r-lakshana .toc-r{color:var(--lak)}
+.toc-i.r-lakshana{border-left-color:var(--lakshana)} .toc-i.r-lakshana .toc-r{color:var(--lakshana)}
 .toc-i.r-phalita{border-left-color:var(--phalita)} .toc-i.r-phalita .toc-r{color:var(--phalita)}
 .toc-i.r-ekadeshi{border-left-color:var(--eka)} .toc-i.r-ekadeshi .toc-r{color:var(--eka)}
 .toc-i.exp .toc-t{color:var(--muted)}
 .lg-w{border-bottom:1px dotted var(--muted)} .lg-c{border-bottom:1px dashed var(--gold)} .lg-q{color:var(--cite)}
 .lg-lk{color:var(--cite);text-decoration:underline} .lg-t{background:var(--tipbg);border-left:3px solid var(--gold);padding:0 6px;border-radius:3px}
-.lg-pp{color:var(--pp)} .lg-sid{color:var(--sid)} .lg-lak{color:var(--lak)} .lg-drs{color:var(--drs)} .lg-tat{color:var(--tat)}
+.lg-pp{color:var(--purva)} .lg-sid{color:var(--sid)} .lg-lak{color:var(--lakshana)} .lg-drs{color:var(--drs)} .lg-tat{color:var(--import)}
 main{max-width:860px;margin:0 auto;padding:24px 20px}
 .av{margin:0 0 34px;padding-bottom:24px;border-bottom:1px solid var(--rule)}
 .avn{font-family:system-ui;font-size:13px;color:var(--accent);font-weight:700;margin-bottom:8px}
@@ -133,8 +133,8 @@ body.notip .tip-wrap{display:none}
 .vs-ab-row{display:grid;grid-template-columns:130px 1fr;gap:10px;margin:.35em 0;font-size:14px;line-height:1.5}
 .vs-ab-k{color:var(--muted,#8a7a5c);font-family:system-ui,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
 .vs-ab-note{margin:.9em 0;font-size:14px;line-height:1.65;color:var(--ink,#3a3a3a)}
-.vs-ab-ded{margin:.9em 0;padding:.7em .9em;background:var(--tipbg,#f4efe6);border-left:3px solid var(--tat,#6d28d9);border-radius:4px}
-.vs-ab-ded-h{font-family:system-ui,sans-serif;font-size:12px;color:var(--tat,#6d28d9);margin-bottom:.5em}
+.vs-ab-ded{margin:.9em 0;padding:.7em .9em;background:var(--tipbg,#f4efe6);border-left:3px solid var(--import,#6d28d9);border-radius:4px}
+.vs-ab-ded-h{font-family:system-ui,sans-serif;font-size:12px;color:var(--import,#6d28d9);margin-bottom:.5em}
 .vs-ab-verse-l{text-align:center;margin:.15em 0;color:var(--mula,#2a2a2a)}
 .vs-ab-verse-trwrap{margin-top:.7em;padding-top:.6em;border-top:1px dotted #cdbfa0}
 .vs-ab-verse-tr{font-family:system-ui,sans-serif;font-size:13px;font-style:italic;color:var(--tr,#5a5245);line-height:1.6;margin:.35em 0}

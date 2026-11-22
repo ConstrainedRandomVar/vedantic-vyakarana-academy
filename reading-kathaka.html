@@ -155,6 +155,8 @@ body.tken .tk-en{display:block}
 .w[data-flag]::after{content:"⚑";font-size:.62em;vertical-align:super;color:var(--muted);margin-left:1px}
 .tk-vy{color:var(--ink)}
 .tk-mng{color:var(--ink);font-style:italic;font-weight:600}   /* maṅgala = commentator's own benedictory verse: ink + italic (verse presence), NOT the pratīka brown (--role) it used to share, and NOT the muted avataraṇikā (--muted). #9c: no colour reuse. */
+.tk-sprat{color:var(--tika);font-weight:700}   /* the vivṛti quoting its own śloka (→ श्लोकः) */
+.ap-sl .tk-prat.ap-mq{color:var(--cite);font-weight:inherit}   /* Vidyāraṇya's verse quoting the Upaniṣad (bucket 4) — the citation colour, #9c */
 /* अनुभूतिप्रकाशः: verses in ink, one line per half-verse; the Mitaprakāśa commentary in a fold (VVStore FOLDS anubhuti-mitaprakasha) */
 .ap-hd{display:block;font-family:-apple-system,sans-serif;font-size:11.5px;color:var(--muted);margin:2px 0 4px}
 .ap-q{color:var(--tika);font-weight:700}
@@ -186,6 +188,7 @@ details.ap-tk>summary::before{content:'▸ '}details.ap-tk[open]>summary::before
 .vk details.vk-tk>summary::before{content:'▸ '}.vk details.vk-tk[open]>summary::before{content:'▾ '}
 .vk .vk-tkb{font-size:15.5px;line-height:1.85;margin-top:4px;padding-left:9px;border-left:2px solid color-mix(in srgb,var(--tika) 35%,transparent)}
 .vk .vk-prat{cursor:help}.vk-prat .tk-vy{font-weight:400}.vk .vkw.vk-hl{background:color-mix(in srgb,var(--tika) 22%,transparent);border-radius:3px}
+.vnm-own{cursor:help;color:var(--tika);font-weight:700}.vnm-kl .vkw.vk-hl{background:color-mix(in srgb,var(--tika) 22%,transparent);border-radius:3px}   /* VNM vistara quoting its own kārikā (bucket 3) */
 .vk .vk-at{font-family:-apple-system,sans-serif;font-size:12px;color:var(--muted);margin:0 0 6px}   /* anchored block: the bhāṣya words it sits at */
 /* पार्श्वे layout — two balanced columns, widened page */
 body.parshve .wrap{max-width:1320px}
@@ -590,8 +593,9 @@ function findTikaEl(ref,sk,pre){if(!sk)return null;var c=document.getElementById
 // mantra ṭīkā to the mantra bhāṣya, even on a section-opener verse that shows both. Zone is carried in data-jz.
 function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'),src=pr||t;
   // a sub-ṭīkā pratīka (Pūrṇānandī) → the exact word of the commentary note it explains; that word → back to the pratīka
-  var sp=t.closest('.tk-sprat'); if(sp&&sp.getAttribute('data-jst')) rows.push(jr('tk',ref,sp.getAttribute('data-jst'),'',tkLabel(sp.getAttribute('data-jst'))||'→ टीका'));
-  var js=!pr&&!sp&&t.getAttribute('data-jsb'); if(js){var jse=document.querySelector('[data-k="'+js+'"]'),jsd=jse&&jse.closest('details.tk-sub'); rows.push(jr('tk',ref,js,'','→ '+(jsd?jsd.getAttribute('data-label'):'टीका')));}
+  var vmq=t.closest('.vs-mq'); if(vmq) rows.push(jr('mk',ref,vmq.getAttribute('data-jmt'),'',''));   // a verse quoting the Upaniṣad (Vārttikasāra / vārttika, bucket 4)
+  var sp=t.closest('.tk-sprat'); if(sp&&sp.getAttribute('data-jst')) rows.push(jr('tk',ref,sp.getAttribute('data-jst'),'',sp.getAttribute('data-jstl')||tkLabel(sp.getAttribute('data-jst'))||'→ टीका'));
+  var js=!pr&&!sp&&t.getAttribute('data-jsb'); if(js){var jse=document.querySelector('[data-k="'+js+'"]'),jsd=jse&&jse.closest('details.tk-sub,details.ap-tk'),jsm=jsd&&jsd.querySelector('summary'); rows.push(jr('tk',ref,js,'','→ '+(jsd?(jsd.getAttribute('data-label')||(jsm&&jsm.textContent.trim())||'टीका'):'टीका')));}
   // EXACT targets written at build time by jump_resolve.js (CLAUDE.md #9e) — no click-time matching:
   // data-jmt → the mūla word · data-jbt → the bhāṣya word · data-jtt → the ṭīkā pratīka (absent = ambiguous → no link)
   var jm=src.getAttribute('data-jmt'), jmm=src.getAttribute('data-jmm');
@@ -661,7 +665,7 @@ function jrN(cat,ref,list,zone,lab){var lb=lab||{bk:'→ भाष्यम्',
     +' <span class="jof">(1 of '+list.length+')</span><span class="jnext" title="next quotation of this word">next ›</span></span>';}
 function navFlash(el){el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit');},1800);}
 // a target inside a collapsed sub-ṭīkā fold-out: open that fold in the copy the reader sees (inline or side) before landing
-function openFolds(k){[].forEach.call(document.querySelectorAll('[data-k="'+k+'"]'),function(e){var d=e.closest('details.tk-sub');if(!d||d.open)return;var c=d.closest('.tk-inline,.side-zone');if(!c||c.offsetParent!==null)d.open=true;});}
+function openFolds(k){[].forEach.call(document.querySelectorAll('[data-k="'+k+'"]'),function(e){var d=e.closest('details.tk-sub,details.ap-tk');if(!d||d.open)return;var c=d.closest('.tk-inline,.side-zone');if(!c||c.offsetParent!==null)d.open=true;});}
 function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttribute('data-jr'),sk=jrEl.getAttribute('data-jk'),z=jrEl.getAttribute('data-jz'),el=null;
   if(cat==='tp'){var tpb=document.querySelector('button[data-side="tippani"]');   // the ṭippaṇī lane first; then the note copy on screen (अन्तः id / पार्श्वे data-tpid)
     if(tpb&&document.body.getAttribute('data-side')!=='tippani')tpb.click();

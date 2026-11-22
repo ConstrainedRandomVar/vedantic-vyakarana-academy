@@ -428,7 +428,7 @@ function card(el){
     var hf='<div class="tw">'+(el.textContent||'')+'</div>';
     if(mn.length)hf+='<div class="tm">'+mn.join(' · ')+'</div>';
     hf+='<div class="row"><span class="lb">पदच्छेद</span> '+pd.join(' ')+'</div>';
-    if(gr.length)hf+='<div class="row"><span class="lb">व्याकरणम्</span> '+gr.join(' · ')+'</div>';
+    if(gr.length)hf+='<div class="row"><span class="lb">व्याकरणम्</span> '+gr.join(' · ')+'</div>';var kk=[];for(var z=0;z<gws.length;z++){var za=gws[z].getAttribute('data-kv');if(za)kk=kk.concat(za.split(';'));}if(kk.length&&typeof kvrow==='function')hf+=kvrow(kk.map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:(x.charAt(0)==='+'||gws.length>1)?[(x.charAt(0)==='+'?x.slice(1):x),2]:[x];}));
     if(pl.length)hf+='<div class="peel">'+pl.join('§§').split('§§').join('<br>')+'</div>';
     for(var j=0;j<gws.length;j++){var tj=gws[j].getAttribute('data-t');if(tj&&document.getElementById(tj)){hf+=jrowM(tj);break;}}
     return hf;}
@@ -436,7 +436,7 @@ function card(el){
   if(!mng&&!gram&&!peel)return '';
   var h='<div class="tw">'+w+'</div>';
   if(mng)h+='<div class="tm">'+mng+'</div>';
-  if(gram)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+gram+'</div>';
+  if(gram)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+gram+'</div>';var kvs=el.getAttribute('data-kv');if(kvs&&typeof kvrow==='function')h+=kvrow(kvs.split(';').map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:x.charAt(0)==='+'?[x.slice(1),2]:[x];}));
   if(peel)h+='<div class="peel">'+peel.split('§§').join('<br>')+'</div>';
   var tt=el.getAttribute('data-t');if(tt&&document.getElementById(tt))h+=jrowM(tt);
   return h;}

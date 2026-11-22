@@ -1,0 +1,574 @@
+<!doctype html><html lang="sa"><head><script data-vv-theme>(function(){var d=document.documentElement,K="vv_theme",m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)"),last=null;function pref(){try{var t=localStorage.getItem(K);return t==="light"||t==="dark"?t:""}catch(e){return ""}}function apply(){last=pref()||(m&&m.matches?"dark":"light");d.setAttribute("data-theme",last)}apply();if(m&&m.addEventListener)m.addEventListener("change",function(){if(!pref())apply()});window.addEventListener("storage",function(e){if(e.key===K)apply()});try{new MutationObserver(function(){var v=d.getAttribute("data-theme");if(v!==last&&(v==="light"||v==="dark")){last=v;try{localStorage.setItem(K,v)}catch(e){}}}).observe(d,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}window.__vvTheme={get:pref,set:function(v){try{v?localStorage.setItem(K,v):localStorage.removeItem(K)}catch(e){}apply()}}})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>श्रीरमणगीता (Śrī Ramaṇa Gītā)</title><style>:root{--bg:#fbfaf7;--card:#fff;--ink:#20242c;--muted:#6b7280;--line:#e6e2da;--moola:#7c5a1e;--mng:#15803d;--morph:#1a56db;--role:#b45309;--sam:#6d28d9;--brand:#d97706;--tm:#a7f3d0;--topicbg:#edf1f8}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}}
+:root[data-theme=dark]{--bg:#14161a;--card:#1c1f26;--ink:#e6e8ec;--muted:#bcc2cb;--line:#2b2f38;--moola:#d9b877;--mng:#83e0a0;--morph:#7ab0ff;--role:#f8b06a;--sam:#c9b6f7;--brand:#f5b544;--tm:#15803d;--topicbg:#1e2431}
+/* महावाक्य hue (#9c named token) + verse-level identity pill, ALWAYS shown (no toggle since 2026-09-22); two shades by sub-type, styled hover note (not native title=) */
+:root{--maha:#db2777}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--maha:#f472b6}}:root[data-theme=dark]{--maha:#f472b6}
+:root{--tarka:#5b6472;--drs:#a16207}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tarka:#9aa7b8;--drs:#fcd34d}}:root[data-theme=dark]{--tarka:#9aa7b8;--drs:#fcd34d}
+/* प्रमाण reserved hue (#9c named token, 298°) — reserved in every renderer palette; graded refs only (VC, SD so far) */
+:root{--praman:#ad24b2;--prb-shruti:#5c0f60;--prb-yukti:#7a1a7e;--prb-anubhava:#9d1fa2}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--praman:#e67bea;--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5}}:root[data-theme=dark]{--praman:#e67bea;--prb-shruti:#d977de;--prb-yukti:#e67bea;--prb-anubhava:#f3b6f5}
+/* gloss-card accent + separator — the card is INVERTED (bg=--ink), so these flip with the theme (#9c; a literal light accent vanished on the light dark-mode card) */
+:root{--tipacc:#a7f3d0;--tipline:rgba(255,255,255,.2)}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--tipacc:#065f46;--tipline:rgba(0,0,0,.18)}}:root[data-theme=dark]{--tipacc:#065f46;--tipline:rgba(0,0,0,.18)}
+/* प्रमाण श्रुति/युक्ति/अनुभव pills — ONE reserved hue --praman (298°), 3 explicit lightness steps (AA ≥4.5:1 on the tinted pill, both themes); always-on; COPY-SAFE (empty span + ::after + user-select:none) */
+.prb{display:inline-block;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:4px;vertical-align:1px;border:1px solid;font-family:"Noto Serif Devanagari",serif;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.prb-shruti{color:var(--prb-shruti);border-color:var(--prb-shruti);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-yukti{color:var(--prb-yukti);border-color:var(--prb-yukti);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-anubhava{color:var(--prb-anubhava);border-color:var(--prb-anubhava);background:color-mix(in srgb,var(--praman) 12%,transparent)}
+.prb-shruti::after{content:"श्रुतिः"}.prb-yukti::after{content:"युक्तिः"}.prb-anubhava::after{content:"अनुभवः"}
+.maha-mark{display:inline-block;position:relative;font-size:10px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:9px;margin-inline-end:5px;vertical-align:1px;border:1px solid var(--maha);color:var(--maha);font-family:"Noto Serif Devanagari",serif;cursor:help;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.maha-mark::before{content:"महावाक्यम्"}   /* label via generated content — never captured by copy/select */
+.maha-mark-muk{background:color-mix(in srgb,var(--maha) 16%,transparent)}
+.maha-mark-bad{background:color-mix(in srgb,var(--maha) 6%,transparent);border-style:dashed}
+/* concession (अभ्युपगमः) superscript on the bhāṣya/ṭīkā — citation श्रु/स्मृ/न्या + तर्क हे॰/निग॰ RETIRED 2026-09-23 (CLAUDE.md #9c) */
+.dm-conc::after{vertical-align:super;font-size:.56em;font-weight:700;color:var(--muted);margin-inline-start:1px;font-family:"Noto Serif Devanagari",serif;content:"अभ्यु॰"}
+.maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:26px 22px 90px}h1{font-size:22px;margin:0 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.legend{padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
+.legend.vleg>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600}.legend.vleg>summary::-webkit-details-marker{display:none}
+.legend.vleg>summary .tw{margin-left:auto;font-weight:400;font-size:11.5px}.legend.vleg>summary .tw::before{content:"▸ "}.legend.vleg[open]>summary .tw::before{content:"▾ "}
+.legend.vleg .legtxt{margin-top:6px;line-height:1.55}   /* legend folded by default (Harsha 2026-10-17) */
+.v{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
+.rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
+/* topic band (SAD per-verse viṣaya · AB section · VC two-tier) — its own card ABOVE the verse, tinted --topicbg so a
+   topic reads apart from the prelude (--introbg-style dashed zone), mūla and commentary; role colours = left border (#9c) */
+.secband{margin:22px 0 8px;padding:6px 16px;background:var(--topicbg);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.secband .st{font-weight:600;color:var(--ink)} .secband .srange{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.secband.r-purvapaksha{border-left-color:var(--purva)} .secband.r-siddhanta{border-left-color:var(--sid)} .secband.r-drishtanta{border-left-color:var(--drs)} .secband.r-lakshana{border-left-color:var(--lakshana)} .secband.r-phalita{border-left-color:var(--phalita,var(--import))}
+/* avatārikā (prelude) — dashed pre-zone ABOVE the mūla; bhāṣya content, hidden in मूलम्-only mode.
+   Small-caps ::before label matches the prasthānatrayī pre-zone (CLAUDE.md consistency). */
+.pre-zone{margin:0 0 12px;padding:10px 14px 6px;border-left:3px dashed var(--muted);border-radius:0 10px 10px 0}
+.pre-zone::before{content:"अवतारिका";display:block;font-family:-apple-system,sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin-bottom:4px}
+/* the ONLY rule is the pre-zone's dashed gray border — strip inner .avat/.gs solid borders (no double line) */
+.pre-zone .avat,.pre-zone .gs{border:0;padding:0;margin:0 0 4px}
+body.view-mula .pre-zone{display:none}
+.moola,.vjoin,.vpada{font-family:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT",serif}
+.moola{font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
+/* सन्धि layer: the pretty metrical verse (centred pāda-lines) */
+.vjoin{font-size:22px;line-height:1.85;color:var(--moola);font-weight:600;text-align:center}
+.vjoin .jl{margin:1px 0}
+@media(max-width:640px){.vjoin .jl{overflow-wrap:anywhere}}   /* phones: a pāda that is one long samāsa wraps instead of widening the page (2026-10-30) */
+.vjoin .dnd{color:var(--muted);font-weight:400;padding:0 .15em}
+/* पद layer: sandhi-split hover words in matching pāda-lines */
+.vpada{font-size:22px;line-height:2.0;color:var(--moola);font-weight:600}
+.vpada .pl{margin:2px 0}
+.vpada .dnd{color:var(--muted);font-weight:400;padding:0 .15em}
+/* सन्धि MODE (default): joined verse is the star; पद becomes a muted word-help line under it */
+body.mode-sandhi .vpada:not(.single){font-size:14.5px;line-height:1.85;color:var(--muted);font-weight:500;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
+body.mode-sandhi .vpada:not(.single) .pl{margin:1px 0}
+/* पद MODE: hide the joined verse; the split words become primary */
+body.mode-pada .vjoin{display:none}
+.modebar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 0 18px}
+.modebar button{float:none;border:none;border-radius:0;background:var(--card);color:var(--muted);padding:6px 15px;font-size:12.5px;border-right:1px solid var(--line)}
+.modebar button:last-child{border-right:none}
+.modebar button.on{background:var(--morph);color:#fff}
+.en{color:var(--muted);font-size:14px;font-style:italic;margin-top:8px}
+.trans{color:var(--muted);font-size:14px;line-height:1.55;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
+.w{cursor:help}.w:hover{background:rgba(120,120,120,.14);border-radius:3px}
+#tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
+#tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px var(--tipacc)}
+#tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
+#tip .tm{color:var(--tm);font-style:italic;margin:2px 0 5px}#tip .row{margin:1px 0}#tip .lb{opacity:.6;font-size:11px}
+#tip .peel{margin-top:5px;padding-top:5px;border-top:1px solid var(--tipline);font-family:"Noto Serif Devanagari",serif}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;float:right}
+.chapgrid{display:flex;flex-wrap:wrap;gap:10px}.chapgrid a{display:inline-block;padding:12px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-decoration:none;font-weight:600;color:var(--morph)}
+/* अनुवादः knob — ALL English translation hidden by default: the mūla clause-gloss line (.trans-layer) AND
+   the bhāṣya gloss sentence translations (.gtr, incl. the edition-unit .moolatr). (Harsha 2026-09-04) */
+body:not(.trans-on) .trans-layer,body:not(.trans-on) .gtr{display:none}
+/* भाष्यम् toggle — मूलम् (default) hides the commentary; मूलम्+भाष्यम् shows it. The 3 ardha stretches
+   swap whole blocks: spine integers (.ardha-int) in मूलम् mode ↔ edition .5 units (.ardha-half) in भाष्यम्. */
+body.view-mula .bhashya-layer{display:none}
+body.view-mula .ardha-half{display:none}
+body.view-both .ardha-int{display:none}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:0 8px}
+.viewbar{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:0 8px 18px 0}
+.viewbar button{float:none;border:none;border-radius:0;background:var(--card);color:var(--muted);padding:6px 15px;font-size:12.5px;border-right:1px solid var(--line);cursor:pointer}
+.viewbar button:last-child{border-right:none}
+.viewbar button.on{background:var(--role);color:#fff}
+.tglbtn{float:none;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:6px 14px;font-size:12.5px;margin:0 0 18px 0;cursor:pointer}
+.tglbtn.on{background:var(--mng);color:#fff;border-color:var(--mng)}
+
+/* भाष्यम् layer */
+.bhashya-layer{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.avat{font-style:italic;color:var(--muted);font-family:"Noto Serif Devanagari","Kohinoor Devanagari",serif;font-size:15px;margin:0 0 8px;padding-left:10px;border-left:2px solid var(--line)}
+.tika{font-family:"Noto Serif Devanagari","Kohinoor Devanagari",serif;font-size:17px;line-height:2.0}
+.tika.bhaṣya-none{font-style:italic;color:var(--muted);font-size:14px;font-family:-apple-system,sans-serif}
+.tlabel{display:inline-block;font-size:11px;font-family:-apple-system,sans-serif;color:#fff;background:var(--tipbg,#0f766e);border-radius:5px;padding:1px 7px;margin-right:6px;vertical-align:middle;font-weight:700}
+.gs{margin:0 0 12px;padding:2px 0 2px 12px;border-left:3px solid var(--line)}
+.gsanskrit{font-family:"Noto Serif Devanagari","Kohinoor Devanagari",serif;font-size:17px;line-height:2.0;color:var(--ink)}
+/* सन्धि/पद toggle for the bhāṣya (shares the mūla's body.mode-*): सन्धि (default) = commentator's verbatim
+   joined text; पद = the sandhi-split gloss words. A fused सन्धि unit (मयोक्तमिति) hints its split with a dotted
+   underline. */
+.gsanskrit .bhsp{display:none} body.mode-pada .gsanskrit .bhsj{display:none} body.mode-pada .gsanskrit .bhsp{display:inline}
+.gw.bhfuse{border-bottom:1px dotted var(--muted)}
+.gw{cursor:help;border-radius:3px;transition:background .15s}.gw:hover{background:rgba(26,86,219,.12);box-shadow:0 1px 0 var(--morph)}
+.gw.pinned{background:rgba(26,86,219,.18);box-shadow:0 1px 0 var(--morph)}
+.gtr{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;color:var(--muted);margin-top:3px;line-height:1.5}.gtr i{color:var(--sam);font-style:italic}
+.moola.gmoola{font-size:19px}.gmoola .gw{cursor:help}.moolatr{margin:0 0 10px}
+.mw{padding:1px;border-radius:4px;transition:background .25s}.mw.flash{background:#fde68a;color:#7c2d12}
+.pratika{color:var(--morph);font-weight:700;cursor:pointer;border-bottom:1.5px dotted var(--morph)}.pratika:hover{background:rgba(26,86,219,.09)}
+.bhcite{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:.68em;color:var(--cite);white-space:nowrap;vertical-align:.12em;opacity:.9;user-select:all}
+.pratika{transition:background .25s}.pratika.flash{background:#fde68a;color:#7c2d12}
+/* a mūla word the commentary quotes — dotted hint (मूलम्+भाष्यम् mode); the JUMP is the → row in its gloss card
+   (cross-layer links, same affordance as the upaniṣad views: word-click only pins the card / presenter highlight) */
+body.view-both .mulq{border-bottom:1.5px dotted var(--mula)}
+/* cross-layer jump row inside the gloss cards (#tip mūla card, .gtip commentary card) + saffron arrival flash */
+#tip .jumps,.gtip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline,rgba(255,255,255,.2));display:flex;flex-wrap:wrap;gap:5px 8px}
+#tip .jrow,.gtip .jrow{cursor:pointer;color:var(--tipacc,#a7f3d0);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc,#a7f3d0) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+#tip .jrow:hover,.gtip .jrow:hover{background:color-mix(in srgb,var(--tipacc,#a7f3d0) 16%,transparent)}
+#tip .jrow .jof{opacity:.8;font-size:11px}#tip .jrow .jnext{margin-left:7px;padding-left:7px;border-left:1px solid color-mix(in srgb,var(--tipacc,#a7f3d0) 40%,transparent);font-weight:700}#tip .jrow .jnext:hover{text-decoration:underline}
+.gtip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text}
+body.vvnopeek .gtip{display:none !important}
+@keyframes navflashw{0%{background:rgba(217,119,6,.42);box-shadow:0 0 0 2px rgba(217,119,6,.5)}100%{background:transparent;box-shadow:0 0 0 2px transparent}}
+.navhit{animation:navflashw 1.7s ease-out;border-radius:4px}
+/* भाष्य gloss tooltip = the SAME stacked card as the mūla #tip (CLAUDE.md #9b) */
+.gtip{position:fixed;z-index:9999;max-width:min(92vw,360px);background:var(--ink);color:var(--bg);padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;white-space:normal;font-family:"Noto Serif Devanagari","Kohinoor Devanagari",serif;display:none}
+.gtip .tw{font-size:16px;font-weight:700;color:var(--bg)}
+.gtip .tm{color:var(--tm,#15803d);font-style:italic;margin:2px 0 5px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px}
+.gtip .row{margin:1px 0}
+.gtip .lb{opacity:.6;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.gtip .peel{margin-top:5px;padding-top:5px;border-top:1px solid var(--tipline,rgba(255,255,255,.2))}
+/* bhāṣyam role palette (light) + dark — matched to build_unified_reading_view's Śaṅkara-bhāṣya scheme */
+:root{--purva:#b91c1c;--sid:#15803d;--eka:#c2410c;--import:#6d28d9;--vyak:#6b6255;--cite:#0e7490;--drs:#a16207;--gloss:#3f4653;--mula:#1a56db;--phalita:#be123c;--lakshana:#4d7c0f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--purva:#f79a9a;--sid:#83e0a0;--eka:#fb923c;--import:#c9b6f7;--vyak:#b8b2a8;--cite:#67d3e8;--drs:#fcd34d;--gloss:#c2c8d2;--mula:#7ab0ff;--phalita:#fb7185;--lakshana:#a3d65c}}
+:root[data-theme=dark]{--purva:#f79a9a;--sid:#83e0a0;--eka:#fb923c;--import:#c9b6f7;--vyak:#b8b2a8;--cite:#67d3e8;--drs:#fcd34d;--gloss:#c2c8d2;--mula:#7ab0ff;--phalita:#fb7185;--lakshana:#a3d65c}
+/* discourse-role WORD colours (bhāṣyam style — colour the word, not a border) */
+.gw.r-purvapaksha{color:var(--purva)}.gw.r-siddhanta{color:var(--sid)}.gw.r-ekadeshi{color:var(--eka)}
+.gw.r-phalita{color:var(--phalita);font-style:italic}.gw.r-lakshana{color:var(--lakshana);font-style:italic}
+.gw.r-drishtanta{color:var(--drs)}.gw.r-anuvada{color:var(--gloss)}
+/* inline-ANNOTATION word roles (authentic commentary structure, loose tātparya) + the = / → connectors */
+.gw.a-purvapaksha{color:var(--purva)}.gw.a-siddhanta{color:var(--sid)}.gw.a-ekadeshi{color:var(--eka)}
+.gw.a-import{color:var(--import);font-style:italic}.gw.a-vyakarana{color:var(--vyak);font-style:italic}
+.gw.a-quote{color:var(--cite)}.gw.a-gloss{color:var(--gloss)}.gw.a-mula{color:var(--mula);font-weight:700}
+.gw.a-sangraha{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.bconn{color:var(--muted);font-weight:700;padding:0 1px;user-select:none}
+/* pramāṇa citations → hosted-text deep-links (teal = the bhāṣya quote colour) */
+.cite.lk{color:var(--cite);text-decoration:none;border-bottom:1px dotted var(--cite);cursor:pointer}
+.cite.lk:hover{background:rgba(14,116,144,.14);border-radius:3px}
+.cite.lk.quote{border-bottom:none;text-decoration:underline;text-decoration-color:var(--cite);text-underline-offset:.22em;text-decoration-thickness:1px;color:inherit}.cite{color:var(--cite)}
+/* legend — collapsible card in the upaniṣad bhāṣyam format */
+.legend.rolelegend{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 16px;font-family:-apple-system,sans-serif;font-size:12.5px;color:var(--muted)}
+.legend.rolelegend>summary{list-style:none;cursor:pointer;padding:9px 13px}.legend.rolelegend>summary::-webkit-details-marker{display:none}
+.legend.rolelegend>summary .tw{font-size:11.5px;margin-left:6px}.legend.rolelegend>summary .tw::before{content:"▸ "}.legend.rolelegend[open]>summary .tw::before{content:"▾ "}
+.legend.rolelegend .legbody{padding:2px 13px 11px;display:flex;flex-wrap:wrap;gap:6px 16px}
+.rlgi{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.rlsw{display:inline-block;width:11px;height:11px;border-radius:3px}
+body.view-mula .rolelegend{display:none}
+
+.sad-about{margin:1em 0;border:1px solid var(--line,#d8cfc0);border-radius:8px;background:var(--card,#fbf9f5)}
+.sad-about>summary{cursor:pointer;padding:.6em .9em;font-weight:600;color:var(--brand,#5a3e00);font-family:system-ui,sans-serif;font-size:14px}
+.sad-about-body{padding:.4em .9em 1em}
+.sad-ab-lede{margin:.4em 0 1em;font-size:14.5px;line-height:1.7;color:var(--ink,#3a3a3a)}
+.sad-ab-row{display:grid;grid-template-columns:120px 1fr;gap:10px;margin:.35em 0;font-size:14px;line-height:1.55}
+.sad-ab-k{color:var(--muted,#8a7a5c);font-family:system-ui,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
+.sad-ab-ded{margin:1em 0 0;padding:.7em .9em;background:rgba(109,40,217,.05);border-left:3px solid var(--sam,#6d28d9);border-radius:4px}
+.sad-ab-ded-h{font-family:system-ui,sans-serif;font-size:12px;color:var(--sam,#6d28d9);margin-bottom:.7em}
+.sad-ab-v-block{margin:.2em 0 1em;padding-bottom:.8em;border-bottom:1px dotted var(--line,#cdbfa0)}
+.sad-ab-v-block:last-child{border-bottom:0;margin-bottom:0}
+.sad-ab-v-to{font-family:system-ui,sans-serif;font-size:11.5px;color:var(--muted,#8a7a5c);text-transform:uppercase;letter-spacing:.03em;margin-bottom:.3em}
+.sad-ab-verse-l{text-align:center;margin:.15em 0;color:var(--moola,#2a2a2a);font-size:15px}
+.sad-ab-verse-tr{font-family:system-ui,sans-serif;font-size:13px;font-style:italic;color:var(--muted,#5a5245);line-height:1.6;margin:.5em 0 0}
+
+.secband .st-en{color:var(--muted);font-size:12.5px;font-weight:400}
+.spk{font-family:"Noto Serif Devanagari",serif;font-size:13px;font-weight:600;color:var(--muted);text-align:left;margin:4px 0 0;letter-spacing:.02em}
+.spk::after{content:" —"}
+body.mode-sandhi .vpada .spk{display:none}</style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body class="mode-sandhi view-mula"><div class="wrap">
+<a href="index.html" style="color:var(--brand);font-weight:800;font-size:14px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home">अध्ययन-सहकारी</a><a href="index.html" style="float:right;margin:6px 0 0 10px;color:var(--muted);font-size:13px;text-decoration:none">← back</a><button id="tog">◐ theme</button>
+<h1>श्रीरमणगीता (Śrī Ramaṇa Gītā) — reading (मनन)</h1><p class="sub">hover-to-read · word analysis generated (Gemini), not hand-curated</p>
+<details class="sad-about"><summary>About the book</summary>
+<div class="sad-about-body">
+<div class="sad-ab-lede">Three hundred verses in eighteen chapters in which Kāvyakaṇṭha Gaṇapati Muni sets down, in Sanskrit, the answers Bhagavān Śrī Ramaṇa Maharṣi gave to his questions and to those of other disciples: upāsanā and its place, the heart (hṛdaya-vidyā), control of the mind, self-enquiry and who is fit for it, the āśramas, the cutting of the knot of the heart, the saṅgha, siddhis and knowledge, śakti, jīvanmukti, śravaṇa–manana–nididhyāsana, bhakti; the last chapter praises the Maharṣi.</div>
+<div class="sad-ab-row"><span class="sad-ab-k">Text</span><span class="sad-ab-v">श्रीरमणगीता (Śrī Ramaṇa Gītā)</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Author</span><span class="sad-ab-v">Kāvyakaṇṭha Vāsiṣṭha Gaṇapati Muni, from the teaching of Bhagavān Śrī Ramaṇa Maharṣi</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Edition</span><span class="sad-ab-v">श्रीरमणगीता प्रकाशाख्यव्याख्यासहिता — first edition, July 1946, published by Śrī Ramaṇāśramam, Tiruvannamalai (printed at Shri Nandini Mudranalaya, Sirsi). Text read from a scan of this print and checked word by word against the page images (two independent OCR readings, a blind re-read of every disagreement, and a check of each doubtful word on the scan). The book’s own spellings and printer’s errors are kept as printed; the errors are listed below.</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Source</span><span class="sad-ab-v">Chapter headings: the titles in the book’s contents (विषयसूचिका). Word analysis of the verses and of the commentary (sandhi split, grammar, meaning, samāsa) and the colouring of the commentary: Gemini, generated (not hand-curated); no translation.</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Commentary</span><span class="sad-ab-v">प्रकाशः — Sanskrit commentary by Bhāradvāja Kapālī (T. V. Kapali Sastriar), disciple of Gaṇapati Muni; his closing verses give its completion and dedication to the Maharṣi. The book’s introduction (पीठिका) and its appendix (गुरुमन्त्रभाष्यम्) are not included here.</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Commentator’s closing verses</span><span class="sad-ab-v"><span lang="sa">अथास्य गीताशास्त्रस्य व्याख्यातस्य समासतः ॥ स्मृत्युपस्थापनायेह विषयान्सम्प्रचक्ष्महे ॥१॥<br>उपासनस्य प्राधान्यं स्वरूपं च परा स्थितिः ॥ निर्णीतं प्रथमेऽध्याये काम्योपास्तेश्च यत्फलम् ॥२॥<br>आर्षवाण्या द्वितीये तु रमणस्य महागुरोः ॥ ब्रह्मात्मभावः सम्प्रोक्तो हृद्यहंस्फुरणात्मकः ॥३॥<br>जपेन वाऽप्युपायेन स्वस्वरूपावबोधनम् ॥ नरस्य मुख्यकर्तव्यं तृतीये समुदीरितम् ॥४॥<br>चतुर्थे ज्ञानमुद्दिश्य रहस्यं कथितं महत् ॥ आत्माकारतया वृत्तेरवस्थानं स्वतःप्रभम् ॥५॥<br>प्रोक्ता हृदयविद्याऽथ महर्षेः स्वत उद्गता ॥ अध्याये पञ्चमे षष्ठे मनोनिग्रहसाधनम् ॥६॥<br>स्वविचाराधिकारस्य तदङ्गानां निरूपणम् ॥ चातुराश्रम्यधर्मस्य सप्तमाष्टमयोस्तथा ॥७॥<br>नवमे हृदयग्रन्थिभेदस्यात्मविचारतः ॥ सङ्घसाङ्घिकधर्मस्य दशमे तु प्रदर्शनम् ॥८॥<br>एकादशेऽथ सिद्धीनां ज्ञानस्य च परस्परम् ॥ सामरस्यं समासेन रहस्यं प्रतिपादितम् ॥९॥<br>विचारो द्वादशेऽध्याये सूक्ष्मतः शक्तिशक्तयोः ॥ स्त्रियोऽधिकारः सन्न्यासे पुंसा तुल्यस्त्रयोदशे ॥१०॥<br>जीवन्मुक्तिविचारस्तु कृतोऽध्याये चतुर्दशे ॥ विवृतं श्रवणादीनां तत्त्वं पञ्चदशे परम् ॥ स्वरूपं षोडशे भक्तेः ज्ञानप्राप्तिरनन्तरे ॥११॥<br>अष्टादशे तु माहात्म्यं सिद्धानां शिवरूपिणाम् ॥ स्तुतश्च तत्र भगवान् स्वशिष्येण महात्मना ॥१२॥<br>एवमध्यात्मकामानां पाकभेदानुसारतः ॥ रोचना रुचिभिन्नानां सामरस्यपरिप्लुता ॥१३॥<br>महर्षिणोपदिष्टेयं नित्यमात्मनि तिष्ठता ॥ अध्यात्मदृष्ट्या सन्दोहं सन्देहानां व्यपोहता ॥१४॥<br>श्लोकानां त्रिशतैर्वाण्या गैर्वाण्या कविकुञ्जरः ॥ अष्टादशभिरध्यायैर्गीतामेतां निबद्धवान् ॥१५॥<br>गुरोर्गणपतेर्भाति वासिष्ठस्य महामुनेः ॥ निबन्धो हारवत्सूत्रे रमणीयार्थभाविते ॥१६॥<br>व्याख्या प्रभैव तस्येयं प्रसन्ना शुभ्रविस्तरा ॥ भारद्वाजेन कलिता व्रतिनेह कपालिना ॥१७॥<br>ईशपुत्रशके भूमिवेदनन्दधरामिते ॥ दशमे मासि दशमे दिवसे शुक्रवासरे ॥१८॥<br>ध्यानिभिः कृतिभिर्विद्भिः प्रणतैर्नित्यमुज्ज्वले ॥ पावने सन्निधानेऽस्मिन् महर्षिचरणाब्जयोः ॥१९॥<br>समर्प्यते कृतिरियं सुदिनं मेऽद्य जन्मनि ॥ मातृभूतमहेशाय रमणाय नमोनमः ॥२०॥</span></span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Colophon</span><span class="sad-ab-v"><span lang="sa">इति श्रीमहर्षिरमणभगवत्पादानुध्यातश्रीभगवद्वासिष्ठगणपतिमुनेरन्तेवासिनः भारद्वाजस्य विश्वेश्वरसूनोः कपालिनः कृतिः श्रीरमणगीताप्रकाशाख्या व्याख्या समाप्ता ॥</span></span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Printer’s errors</span><span class="sad-ab-v">Kept as printed; the intended reading in brackets:<br>1.14 <span lang="sa">प्रायुञ्जि</span> (<span lang="sa">प्रायोजि / प्रायुक्षि</span>)<br>2.5 <span lang="sa">परोक्षत्वं</span> (<span lang="sa">अपरोक्षत्वं</span>)<br>4.7 <span lang="sa">करुणापूणविलोकनेन</span> (<span lang="sa">करुणापूर्णविलोकनेन</span>)<br>5.7 <span lang="sa">तदायत्तानलौकिकाननुभवान्</span> (<span lang="sa">तदायत्ताँल्लौकिकाननुभवान्</span>)<br>5.16 <span lang="sa">पामरो</span> (<span lang="sa">पामरः</span>)<br>6.3 <span lang="sa">प्राणरुद्धो</span> (<span lang="sa">प्राणरुद्धं</span>)<br>9.10 <span lang="sa">चेतन्यं</span> (<span lang="sa">चैतन्यं</span>)<br>9.16 <span lang="sa">बन्धो</span> (<span lang="sa">बन्धः</span>)<br>10.1 <span lang="sa">महर्षिरमणस्यं</span> (<span lang="sa">महर्षिरमणस्य</span>)<br>10.2 <span lang="sa">पृच्छयते</span> (<span lang="sa">पृच्छ्यते</span>)<br>10.3 <span lang="sa">तत्तदांचारशालिनां</span> (<span lang="sa">तत्तदाचारशालिनां</span>)<br>11.14 <span lang="sa">अमतस्तृप्तैः</span> (<span lang="sa">अतस्तृप्तैः</span>)<br>11.20 <span lang="sa">साधनेनं</span> (<span lang="sa">साधनेन</span>)<br>11.25 <span lang="sa">तस्मायदहङ्कारिणां</span> (<span lang="sa">तस्माद्यदहङ्कारिणां</span>)<br>12.10 <span lang="sa">सञ्चलेति</span> (<span lang="sa">सञ्चलति</span>)<br>14.4 <span lang="sa">व्यवह्रियतेऽनिष्टत्वादूरापास्तत्वाच्च</span> (<span lang="sa">व्यवह्रियतेऽनिष्टत्वाद्दूरापास्तत्वाच्च</span>)<br>16.4 <span lang="sa">पुरुषस्तमारूढश्चेत्</span> (<span lang="sa">पुरुषस्तामारूढश्चेत्</span>)<br>16.8 <span lang="sa">लीम</span> (<span lang="sa">लीन</span>)<br>16.12 <span lang="sa">ज्ञानेनं</span> (<span lang="sa">ज्ञानेन</span>)<br>17.5 <span lang="sa">स्वरूपनिष्ठां</span> (<span lang="sa">स्वरूपनिष्ठा</span>)<br>18.18 <span lang="sa">वागनुवर्तत</span> (<span lang="sa">वागनुवर्तते</span>)<br>4.2 <span lang="sa">अन्तःकरणप्रकाशपरिणामविशेषरूपया वृत्या</span> (<span lang="sa">वृत्त्या</span>)<br>4.7 <span lang="sa">निजपादश्रितानां</span> (<span lang="sa">निजपादाश्रितानां</span>)<br>5.4 <span lang="sa">हृदेशे</span> (<span lang="sa">हृद्देशे</span>)<br>5.5 <span lang="sa">सदर्शने—</span> (<span lang="sa">सद्दर्शने</span>)<br>9.12 <span lang="sa">निवृत्युपायमुपन्यस्यति</span> (<span lang="sa">निवृत्त्युपायम्</span>)<br>13.4 <span lang="sa">वाल</span> (<span lang="sa">बाल</span>)<br>13.4 <span lang="sa">तस्माद्विन्ध्याचलादक्षिणदेशेऽविदितपूर्वायास्तारामहाविद्यायाः</span> (<span lang="sa">चलाद्दक्षिण</span>)<br>14.4 <span lang="sa">अहिनिर्ल्यवनी</span> (<span lang="sa">अहिनिर्ल्वयनी</span>)<br>18.24 <span lang="sa">वृहद्विचित्रं</span> (<span lang="sa">बृहद्विचित्रं</span>)<br>2.7 <span lang="sa">मज्जनाभिख्यौ</span> (<span lang="sa">मज्जनाभिख्यो</span>)<br>12.9 <span lang="sa">प्रायुञ्जि</span> (<span lang="sa">प्रायोजि / प्रायुक्षि</span>)<br>12.10 <span lang="sa">शक्तेः सञ्चलनात्’</span> (<span lang="sa">‘शक्तेः सञ्चलनात्’</span>)<br>4.4 <span lang="sa">सदर्शनवाक्यमपीममर्थमाह</span> (<span lang="sa">सद्दर्शनवाक्यमपीममर्थमाह</span>)</span></div>
+<div class="sad-ab-row"><span class="sad-ab-k">Uncertain readings</span><span class="sad-ab-v">Where our scan is faded or cut off at the page edge, the reading shown is our best one and needs checking against another copy:<br>2.7 <span lang="sa">मज्जनाभिख्यौ</span> · 5.5 <span lang="sa">हृदेशे</span> · 18.23 <span lang="sa">तदनुकूल्यवि</span> · 5.5 <span lang="sa">रक्तपिण्डादन्यत्</span> · 5.5 <span lang="sa">हृद्</span> · 5.5 <span lang="sa">स्वरूपसिद्धेर्</span> · 5.5 <span lang="sa">वाच्यं</span> · 5.5 <span lang="sa">शारीरं</span> · 5.5 <span lang="sa">अहंस्फूर्तिरूपेण</span> · 5.5 <span lang="sa">हृद् आत्मनो</span> · 5.5 <span lang="sa">पुरुषः हृदेवायमात्मा इति</span> · 5.5 <span lang="sa">स्वरूपसिद्धेर्हृदेवायमित्युपपन्नतरम्</span> · 5.5 <span lang="sa">आत्मस्वरूपवाचकहृदयशब्दवाच्यं उपपद्येत</span> · 5.5 <span lang="sa">तस्माद्वैलक्षण्यमापादयितुं</span> · 5.5 <span lang="sa">इयत्तापरिच्छेदरहितस्य</span> · 5.5 <span lang="sa">आत्मस्वरूपस्याखण्डत्वानवच्छिन्नत्वादि</span> · 5.5 <span lang="sa">करोमि इत्यादि</span> · 5.5 <span lang="sa">शारीरं क्वापि</span> · 5.5 <span lang="sa">वृत्तीनामहङ्कृतिमूलकत्वेनाहंवृत्तौ</span> · 5.5 <span lang="sa">अहंस्फूर्तिरूपेण ब्रह्मात्मभावसिद्धौ</span> · 5.5 <span lang="sa">स्थानमिति</span> · 5.18 <span lang="sa">अहङ्कारवृत्त्यात्मकं</span> · 8.10 <span lang="sa">सन्न्यासः</span> · 18.17 <span lang="sa">गुप्तमल्पमपि’</span> · 18.23 <span lang="sa">तदनुकूल्यवि</span> · 18.24 <span lang="sa">विधीयतामिति ॥</span> · 18.24 <span lang="sa">जगत्पितैव ⟨?⟩</span></span></div>
+</div></details>
+<style>#reading-nav{position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+#reading-nav .rn-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+#reading-nav .rn-tools>*{margin:0 !important}
+#reading-nav .rn-picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+#reading-nav .rn-tools+.rn-picker{margin-left:auto}
+#reading-nav .rn-brand{color:var(--brand,#d97706);font-weight:800;font-size:15px;text-decoration:none;font-family:"Noto Serif Devanagari",serif;white-space:nowrap;margin:0 2px 0 0 !important}
+#reading-nav .rn-brand .rn-bs{display:none}
+@media (max-width:640px){#reading-nav .rn-brand .rn-bf{display:none}#reading-nav .rn-brand .rn-bs{display:inline}}
+
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
+.v{scroll-margin-top:78px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.v.navhit{animation:navflash 1.6s ease-out}</style>
+<div id="reading-nav"><div class="rn-tools"><div class="viewbar" role="radiogroup" aria-label="commentary"><button data-view="mula" role="radio">मूलम्</button><button data-view="both" role="radio">मूलम् + प्रकाशः</button></div><div class="modebar" role="radiogroup" aria-label="verse rendering"><button data-mode="sandhi" role="radio">सन्धि · verse</button><button data-mode="pada" role="radio">पद · split</button></div></div><div class="rn-picker" id="reading-nav-picker"></div></div>
+<script>'use strict';
+/*
+ * reading-nav.js — THE ONE shared cascading verse-navigator for the whole app.
+ * ============================================================================
+ * A single source of truth (LEVELS + cascade logic + rendering) used by BOTH:
+ *   1. the static svādhyāya reading pages (मनन bhāṣya + पदार्थ mūla) — via nav.js's buildNav,
+ *      which now emits a container + calls ReadingNav.mount(...) at runtime; and
+ *   2. the in-app "read-a-verse" picker (app.js renderReadingPicker).
+ * Fix the chapter/verse scheme HERE and it percolates to every page — no per-surface drift/creep.
+ *
+ * UMD: works as a browser global (window.ReadingNav) AND a Node require() (nav.js / build tooling).
+ *
+ * API
+ *   ReadingNav.LEVELS                       // { slug: [level-label, ...] }  (per-text native divisions)
+ *   ReadingNav.levelsFor(slug, refs)        // -> [labels]; falls back by ref-depth for an unlisted text
+ *   ReadingNav.comps(ref, nlev)             // -> ref split into nlev comps (extra trailing comps folded into last)
+ *   ReadingNav.optionsFor(refs, nlev, L, prefix)  // -> distinct options at level L under `prefix`
+ *   ReadingNav.STYLE                        // the navbar <style> text (injected once per page)
+ *   ReadingNav.mount(container, opts)       // render cascading <select>s + wire cascade & selection
+ *
+ * mount(container, {
+ *   slug,                 // text slug (LEVELS key)
+ *   refs,                 // ORDERED array of every ref in the text, e.g. ["1.1.1","1.1.2", ...]
+ *   curRef,               // optional: pre-select this ref
+ *   mode,                 // 'jump' (reading pages) | 'callback' (picker)
+ *   pageByRef, curFile,   // 'jump' mode only: {ref:file} + this page's file → same-page scroll or cross-page #v-<ref>
+ *   onSelect,             // called with (ref) whenever the selection changes (both modes)
+ * })  ->  { getRef(), setRef(ref), refresh() }
+ */
+(function (root, factory) {
+  const mod = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = mod;   // Node (nav.js, tooling)
+  if (typeof window !== 'undefined') window.ReadingNav = mod;                   // browser global
+})(this, function () {
+
+  // Level labels per text — MUST span the full ref depth (uniform depth per text). Single source; keep this
+  // the only copy. (Was duplicated in nav.js; nav.js now imports it from here.)
+  const LEVELS = {
+    Gita: ['अध्याय', 'श्लोक'], Isha: ['अध्याय', 'मन्त्र'], Kena: ['खण्ड', 'मन्त्र'], Kena_pada: ['खण्ड', 'मन्त्र'], Kena_vakya: ['खण्ड', 'मन्त्र'],
+    Kathaka: ['अध्याय', 'वल्ली', 'मन्त्र'], Prashna: ['प्रश्न', 'मन्त्र'], Mundaka: ['मुण्डक', 'खण्ड', 'मन्त्र'],
+    Mandukya: ['प्रकरण', 'मन्त्र'], Aitareya: ['अध्याय', 'खण्ड', 'मन्त्र'], Chandogya: ['अध्याय', 'खण्ड', 'मन्त्र'],
+    Taitiriya: ['वल्ली', 'अनुवाक', 'मन्त्र'], Brha: ['अध्याय', 'ब्राह्मण', 'मन्त्र'], BS: ['अध्याय', 'पाद', 'सूत्र'],
+    VC: ['श्लोक'], PD: ['अध्याय', 'श्लोक'], AB: ['श्लोक'], UPS: ['श्लोक'], SAD: ['श्लोक'], Vicharasagara: ['तरङ्ग', 'आवर्त'],
+  };
+  const FALLBACK = ['भाग', 'उप', 'क्रम', 'मन्त्र'];
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function levelsFor(slug, refs) {
+    let lv = LEVELS[slug];
+    if (!lv) { const depth = Math.max(1, ...(refs || []).map(r => String(r).split('.').length)); lv = FALLBACK.slice(Math.max(0, FALLBACK.length - depth)); }
+    return lv;
+  }
+
+  // Split a ref into exactly nlev components; a ref DEEPER than nlev folds its extra trailing comps into the
+  // last level (e.g. brihad "3.9.28.1" under a 3-level scheme → ["3","9","28.1"]). Mirrors nav.js's old comps().
+  function comps(ref, nlev) {
+    let p = String(ref).split('.');
+    if (p.length > nlev) p = p.slice(0, nlev - 1).concat(p.slice(nlev - 1).join('.'));
+    return p;
+  }
+
+  // Distinct options at level L, given the chosen values for levels 0..L-1 (`prefix`), in first-seen order.
+  function optionsFor(refs, nlev, level, prefix) {
+    const out = [], seen = {};
+    for (const r of refs) {
+      const p = comps(r, nlev);
+      if (p.length <= level) continue;
+      let ok = true;
+      for (let i = 0; i < level; i++) if (p[i] !== prefix[i]) { ok = false; break; }
+      if (ok && !seen[p[level]]) { seen[p[level]] = 1; out.push(p[level]); }
+    }
+    return out;
+  }
+
+  // Inner styling, keyed on the `.reading-nav` CLASS that mount() adds to its container — so it applies in
+  // BOTH surfaces regardless of the container's id (reading pages ALSO get the sticky card bar via nav.js's
+  // own #reading-nav rule; the picker gets just this inner row).
+  const STYLE = `
+.reading-nav{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.reading-nav .navlvl{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted,#667)}
+.reading-nav select{font:inherit;font-size:14px;color:var(--ink,#111);background:var(--bg,#fff);border:1px solid var(--line,#ccc);border-radius:8px;padding:5px 9px;min-width:64px}
+.v{scroll-margin-top:78px}
+@keyframes navflash{0%{background:rgba(120,120,180,.28)}100%{background:transparent}}
+.v.navhit{animation:navflash 1.6s ease-out}`;
+
+  // Render cascading <select>s into `container` and wire them. Returns a small controller.
+  function mount(container, opts) {
+    opts = opts || {};
+    const refs = (opts.refs || []).filter(r => r != null).map(String);
+    const slug = opts.slug;
+    const levels = levelsFor(slug, refs);
+    const nlev = levels.length;
+    if (refs.length < 2 && opts.mode !== 'callback') { container.innerHTML = ''; return { getRef: () => refs[0] || null, setRef: () => {}, setRefs: () => {}, refresh: () => {} }; }
+
+    container.classList.add('reading-nav');   // so ReadingNav.STYLE applies regardless of the container's id
+    container.innerHTML = levels.map((lb, i) => `<label class="navlvl"><span>${esc(lb)}</span><select data-lvl="${i}"></select></label>`).join('');
+    const sels = [].slice.call(container.querySelectorAll('select'));
+
+    function chosen(uptoLevel) { const a = []; for (let i = 0; i <= uptoLevel; i++) a.push(sels[i].value); return a; }
+    function fill(sel, options, val) { sel.innerHTML = options.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join(''); }
+    // (Re)build levels from `from` downward, each defaulting to its first valid option under the ones above.
+    function rebuild(from) { for (let L = from; L < sels.length; L++) { const o = optionsFor(refs, nlev, L, chosen(L - 1)); fill(sels[L], o, o[0]); } }
+    function currentRef() { return sels.map(s => s.value).join('.'); }
+    function setRef(ref) {
+      const p = comps(ref, nlev);
+      rebuild(0);
+      for (let L = 0; L < sels.length && L < p.length; L++) { const o = optionsFor(refs, nlev, L, p.slice(0, L)); fill(sels[L], o, p[L]); }
+    }
+    // Swap the ref list in place (same level structure) and repopulate the selects — used by VC's भाष्यम् toggle,
+    // where the picker options differ per mode (मूलम् integers ↔ edition units incl .5). Keeps the current
+    // selection if it survives the swap, else the caller's `keep`, else the first ref.
+    function setRefs(newRefs, keep) {
+      const nr = (newRefs || []).filter(r => r != null).map(String);
+      if (nr.length < 1) return;
+      const prev = currentRef();
+      refs.length = 0; Array.prototype.push.apply(refs, nr);   // mutate in place so the scrollspy closure sees it
+      setRef(nr.indexOf(prev) >= 0 ? prev : (keep != null && nr.indexOf(String(keep)) >= 0 ? String(keep) : nr[0]));
+    }
+
+    let spyUntil = 0;   // scrollspy suppression window: quiet the spy while a programmatic jump smooth-scrolls
+    // Pick the VISIBLE anchor for a ref. VC's ardha-region swap renders each affected verse under BOTH a spine
+    // `v-<ref>` (.ardha-int) and an edition-unit `vb-<ref>` (.ardha-half), and hides one via display:none per
+    // mode (मूलम् hides .ardha-half; भाष्यम् hides .ardha-int). Targeting the always-`v-` anchor scrolled to the
+    // hidden copy in भाष्यम् mode (picker "did nothing", gloss looked empty). display:none ⇒ offsetParent null.
+    function anchorFor(ref) {
+      const spine = document.getElementById('v-' + ref), unit = document.getElementById('vb-' + ref);
+      if (spine && spine.offsetParent !== null) return spine;
+      if (unit && unit.offsetParent !== null) return unit;
+      return spine || unit;   // neither visible (or non-VC text: no vb-) → the spine anchor / null
+    }
+    function jump(ref) {
+      if (opts.mode !== 'jump') return;
+      const file = opts.pageByRef ? opts.pageByRef[ref] : null;
+      if (file == null) return;
+      if (opts.curFile != null && file === opts.curFile) {
+        spyUntil = (typeof Date !== 'undefined' ? Date.now() : 0) + 700;   // don't flicker the picker through intermediate verses
+        const el = anchorFor(ref);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('navhit'); void el.offsetWidth; el.classList.add('navhit'); }
+      } else location.href = file + '#v-' + ref;
+    }
+    function onChange() { const ref = currentRef(); if (typeof opts.onSelect === 'function') opts.onSelect(ref); jump(ref); }
+    sels.forEach((s, L) => s.addEventListener('change', function () { rebuild(L + 1); onChange(); }));
+
+    // initial selection: explicit curRef → #v-<ref> hash → (jump mode) first ref ON THIS PAGE → first ref
+    // overall. The "first on this page" step matters for split texts (chandogya/brihad/gita spread across
+    // files): landing on page N with no hash must show page N's first verse, not the global first (nav.js parity).
+    let init = opts.curRef, fromHash = false;
+    if (!init && typeof location !== 'undefined') { const h = (location.hash || '').replace(/^#v-/, ''); if (h && refs.indexOf(h) >= 0) { init = h; fromHash = true; } }
+    if (!init && opts.mode === 'jump' && opts.pageByRef && opts.curFile != null) init = refs.find(r => opts.pageByRef[r] === opts.curFile) || null;
+    setRef(init || refs[0]);
+    // arriving via #v-<ref>: mirror nav.js's flash cue on the target verse.
+    if (fromHash && opts.mode === 'jump' && typeof document !== 'undefined') { const el = anchorFor(init); if (el) el.classList.add('navhit'); }
+
+    // scrollspy (jump mode only): keep the picker in sync with the verse at the top of the viewport as the
+    // reader scrolls. setRef only repaints the selects (no jump / no onSelect), so there is NO scroll↔jump
+    // feedback loop. The read-a-verse picker (mode 'callback') is untouched.
+    if (opts.mode === 'jump' && typeof document !== 'undefined' && typeof addEventListener !== 'undefined') {
+      // the "you are here" line = bottom of the nearest sticky/fixed ancestor of the nav (else top of viewport)
+      const stickyBottom = function () {
+        let e = container, best = 0;
+        while (e && e !== document.body && e.nodeType === 1) {
+          const cs = getComputedStyle(e);
+          if (cs.position === 'sticky' || cs.position === 'fixed') { const b = e.getBoundingClientRect().bottom; if (b > best) best = b; }
+          e = e.parentElement;
+        }
+        return best;
+      };
+      const spy = function () {
+        if (Date.now() < spyUntil) return;
+        const y = stickyBottom() + 8; let pick = null;
+        for (let i = 0; i < refs.length; i++) {
+          const el = anchorFor(refs[i]);
+          if (!el) continue;                                   // ref not on THIS page (split texts) → skip
+          if (el.getBoundingClientRect().top <= y) pick = refs[i];
+          else if (pick !== null) break;                       // first on-page verse below the line → done (verses are in order)
+        }
+        if (pick && pick !== currentRef()) setRef(pick);
+      };
+      let ticking = false;
+      addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; spy(); }); } }, { passive: true });
+    }
+
+    return { getRef: currentRef, setRef, setRefs, refresh: () => setRef(currentRef()) };
+  }
+
+  return { LEVELS, FALLBACK, levelsFor, comps, optionsFor, esc, STYLE, mount };
+});
+
+;(function(){if(window.ReadingNav)Object.assign(window.ReadingNav.LEVELS,{"RG":["अध्याय","श्लोक"]});window.__readingNavRefs={"mula":["1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","1.10","1.11","1.12","1.13","1.14","1.15","1.16","1.17","2.1","2.2","2.3","2.4","2.5","2.6","2.7","3.1","3.2","3.3","3.4","3.5","3.6","3.7","3.8","3.9","3.10","3.11","3.12","4.1","4.2","4.3","4.4","4.5","4.6","4.7","4.8","4.9","5.1","5.2","5.3","5.4","5.5","5.6","5.7","5.8","5.9","5.10","5.11","5.12","5.13","5.14","5.15","5.16","5.17","5.18","5.19","5.20","5.21","6.1","6.2","6.3","6.4","6.5","6.6","6.7","6.8","6.9","6.10","6.11","6.12","7.1","7.2","7.3","7.4","7.5","7.6","7.7","7.8","7.9","7.10","7.11","7.12","7.13","7.14","7.15","7.16","7.17","7.18","7.19","7.20","7.21","7.22","7.23","7.24","7.25","7.26","8.1","8.2","8.3","8.4","8.5","8.6","8.7","8.8","8.9","8.10","8.11","9.1","9.2","9.3","9.4","9.5","9.6","9.7","9.8","9.9","9.10","9.11","9.12","9.13","9.14","9.15","9.16","9.17","9.18","9.19","9.20","9.21","9.22","10.1","10.2","10.3","10.4","10.5","10.6","10.7","10.8","10.9","10.10","10.11","10.12","11.1","11.2","11.3","11.4","11.5","11.6","11.7","11.8","11.9","11.10","11.11","11.12","11.13","11.14","11.15","11.16","11.17","11.18","11.19","11.20","11.21","11.22","11.23","11.24","11.25","11.26","12.1","12.2","12.3","12.4","12.5","12.6","12.7","12.8","12.9","12.10","12.11","12.12","12.13","12.14","12.15","12.16","12.17","12.18","12.19","12.20","12.21","12.22","12.23","12.24","12.25","12.26","12.27","12.28","12.29","12.30","12.31","12.32","12.33","12.34","12.35","13.1","13.2","13.3","13.4","13.5","13.6","13.7","13.8","13.9","13.10","13.11","14.1","14.2","14.3","14.4","14.5","14.6","14.7","14.8","14.9","14.10","14.11","14.12","14.13","14.14","14.15","14.16","14.17","15.1","15.2","15.3","15.4","15.5","15.6","15.7","15.8","15.9","15.10","15.11","15.12","15.13","15.14","16.1","16.2","16.3","16.4","16.5","16.6","16.7","16.8","16.9","16.10","16.11","16.12","17.1","17.2","17.3","17.4","17.5","17.6","17.7","17.8","17.9","17.10","18.1","18.2","18.3","18.4","18.5","18.6","18.7","18.8","18.9","18.10","18.11","18.12","18.13","18.14","18.15","18.16","18.17","18.18","18.19","18.20","18.21","18.22","18.23","18.24","18.25","18.26"],"both":["1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","1.10","1.11","1.12","1.13","1.14","1.15","1.16","1.17","2.1","2.2","2.3","2.4","2.5","2.6","2.7","3.1","3.2","3.3","3.4","3.5","3.6","3.7","3.8","3.9","3.10","3.11","3.12","4.1","4.2","4.3","4.4","4.5","4.6","4.7","4.8","4.9","5.1","5.2","5.3","5.4","5.5","5.6","5.7","5.8","5.9","5.10","5.11","5.12","5.13","5.14","5.15","5.16","5.17","5.18","5.19","5.20","5.21","6.1","6.2","6.3","6.4","6.5","6.6","6.7","6.8","6.9","6.10","6.11","6.12","7.1","7.2","7.3","7.4","7.5","7.6","7.7","7.8","7.9","7.10","7.11","7.12","7.13","7.14","7.15","7.16","7.17","7.18","7.19","7.20","7.21","7.22","7.23","7.24","7.25","7.26","8.1","8.2","8.3","8.4","8.5","8.6","8.7","8.8","8.9","8.10","8.11","9.1","9.2","9.3","9.4","9.5","9.6","9.7","9.8","9.9","9.10","9.11","9.12","9.13","9.14","9.15","9.16","9.17","9.18","9.19","9.20","9.21","9.22","10.1","10.2","10.3","10.4","10.5","10.6","10.7","10.8","10.9","10.10","10.11","10.12","11.1","11.2","11.3","11.4","11.5","11.6","11.7","11.8","11.9","11.10","11.11","11.12","11.13","11.14","11.15","11.16","11.17","11.18","11.19","11.20","11.21","11.22","11.23","11.24","11.25","11.26","12.1","12.2","12.3","12.4","12.5","12.6","12.7","12.8","12.9","12.10","12.11","12.12","12.13","12.14","12.15","12.16","12.17","12.18","12.19","12.20","12.21","12.22","12.23","12.24","12.25","12.26","12.27","12.28","12.29","12.30","12.31","12.32","12.33","12.34","12.35","13.1","13.2","13.3","13.4","13.5","13.6","13.7","13.8","13.9","13.10","13.11","14.1","14.2","14.3","14.4","14.5","14.6","14.7","14.8","14.9","14.10","14.11","14.12","14.13","14.14","14.15","14.16","14.17","15.1","15.2","15.3","15.4","15.5","15.6","15.7","15.8","15.9","15.10","15.11","15.12","15.13","15.14","16.1","16.2","16.3","16.4","16.5","16.6","16.7","16.8","16.9","16.10","16.11","16.12","17.1","17.2","17.3","17.4","17.5","17.6","17.7","17.8","17.9","17.10","18.1","18.2","18.3","18.4","18.5","18.6","18.7","18.8","18.9","18.10","18.11","18.12","18.13","18.14","18.15","18.16","18.17","18.18","18.19","18.20","18.21","18.22","18.23","18.24","18.25","18.26"]};var el=document.getElementById('reading-nav-picker');if(el&&window.ReadingNav)window.__readingNav=window.ReadingNav.mount(el, {"slug":"RG","refs":["1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","1.10","1.11","1.12","1.13","1.14","1.15","1.16","1.17","2.1","2.2","2.3","2.4","2.5","2.6","2.7","3.1","3.2","3.3","3.4","3.5","3.6","3.7","3.8","3.9","3.10","3.11","3.12","4.1","4.2","4.3","4.4","4.5","4.6","4.7","4.8","4.9","5.1","5.2","5.3","5.4","5.5","5.6","5.7","5.8","5.9","5.10","5.11","5.12","5.13","5.14","5.15","5.16","5.17","5.18","5.19","5.20","5.21","6.1","6.2","6.3","6.4","6.5","6.6","6.7","6.8","6.9","6.10","6.11","6.12","7.1","7.2","7.3","7.4","7.5","7.6","7.7","7.8","7.9","7.10","7.11","7.12","7.13","7.14","7.15","7.16","7.17","7.18","7.19","7.20","7.21","7.22","7.23","7.24","7.25","7.26","8.1","8.2","8.3","8.4","8.5","8.6","8.7","8.8","8.9","8.10","8.11","9.1","9.2","9.3","9.4","9.5","9.6","9.7","9.8","9.9","9.10","9.11","9.12","9.13","9.14","9.15","9.16","9.17","9.18","9.19","9.20","9.21","9.22","10.1","10.2","10.3","10.4","10.5","10.6","10.7","10.8","10.9","10.10","10.11","10.12","11.1","11.2","11.3","11.4","11.5","11.6","11.7","11.8","11.9","11.10","11.11","11.12","11.13","11.14","11.15","11.16","11.17","11.18","11.19","11.20","11.21","11.22","11.23","11.24","11.25","11.26","12.1","12.2","12.3","12.4","12.5","12.6","12.7","12.8","12.9","12.10","12.11","12.12","12.13","12.14","12.15","12.16","12.17","12.18","12.19","12.20","12.21","12.22","12.23","12.24","12.25","12.26","12.27","12.28","12.29","12.30","12.31","12.32","12.33","12.34","12.35","13.1","13.2","13.3","13.4","13.5","13.6","13.7","13.8","13.9","13.10","13.11","14.1","14.2","14.3","14.4","14.5","14.6","14.7","14.8","14.9","14.10","14.11","14.12","14.13","14.14","14.15","14.16","14.17","15.1","15.2","15.3","15.4","15.5","15.6","15.7","15.8","15.9","15.10","15.11","15.12","15.13","15.14","16.1","16.2","16.3","16.4","16.5","16.6","16.7","16.8","16.9","16.10","16.11","16.12","17.1","17.2","17.3","17.4","17.5","17.6","17.7","17.8","17.9","17.10","18.1","18.2","18.3","18.4","18.5","18.6","18.7","18.8","18.9","18.10","18.11","18.12","18.13","18.14","18.15","18.16","18.17","18.18","18.19","18.20","18.21","18.22","18.23","18.24","18.25","18.26"],"pageByRef":{"1.1":"reading-rg-1.html","1.2":"reading-rg-1.html","1.3":"reading-rg-1.html","1.4":"reading-rg-1.html","1.5":"reading-rg-1.html","1.6":"reading-rg-1.html","1.7":"reading-rg-1.html","1.8":"reading-rg-1.html","1.9":"reading-rg-1.html","1.10":"reading-rg-1.html","1.11":"reading-rg-1.html","1.12":"reading-rg-1.html","1.13":"reading-rg-1.html","1.14":"reading-rg-1.html","1.15":"reading-rg-1.html","1.16":"reading-rg-1.html","1.17":"reading-rg-1.html","2.1":"reading-rg-2.html","2.2":"reading-rg-2.html","2.3":"reading-rg-2.html","2.4":"reading-rg-2.html","2.5":"reading-rg-2.html","2.6":"reading-rg-2.html","2.7":"reading-rg-2.html","3.1":"reading-rg-3.html","3.2":"reading-rg-3.html","3.3":"reading-rg-3.html","3.4":"reading-rg-3.html","3.5":"reading-rg-3.html","3.6":"reading-rg-3.html","3.7":"reading-rg-3.html","3.8":"reading-rg-3.html","3.9":"reading-rg-3.html","3.10":"reading-rg-3.html","3.11":"reading-rg-3.html","3.12":"reading-rg-3.html","4.1":"reading-rg-4.html","4.2":"reading-rg-4.html","4.3":"reading-rg-4.html","4.4":"reading-rg-4.html","4.5":"reading-rg-4.html","4.6":"reading-rg-4.html","4.7":"reading-rg-4.html","4.8":"reading-rg-4.html","4.9":"reading-rg-4.html","5.1":"reading-rg-5.html","5.2":"reading-rg-5.html","5.3":"reading-rg-5.html","5.4":"reading-rg-5.html","5.5":"reading-rg-5.html","5.6":"reading-rg-5.html","5.7":"reading-rg-5.html","5.8":"reading-rg-5.html","5.9":"reading-rg-5.html","5.10":"reading-rg-5.html","5.11":"reading-rg-5.html","5.12":"reading-rg-5.html","5.13":"reading-rg-5.html","5.14":"reading-rg-5.html","5.15":"reading-rg-5.html","5.16":"reading-rg-5.html","5.17":"reading-rg-5.html","5.18":"reading-rg-5.html","5.19":"reading-rg-5.html","5.20":"reading-rg-5.html","5.21":"reading-rg-5.html","6.1":"reading-rg-6.html","6.2":"reading-rg-6.html","6.3":"reading-rg-6.html","6.4":"reading-rg-6.html","6.5":"reading-rg-6.html","6.6":"reading-rg-6.html","6.7":"reading-rg-6.html","6.8":"reading-rg-6.html","6.9":"reading-rg-6.html","6.10":"reading-rg-6.html","6.11":"reading-rg-6.html","6.12":"reading-rg-6.html","7.1":"reading-rg-7.html","7.2":"reading-rg-7.html","7.3":"reading-rg-7.html","7.4":"reading-rg-7.html","7.5":"reading-rg-7.html","7.6":"reading-rg-7.html","7.7":"reading-rg-7.html","7.8":"reading-rg-7.html","7.9":"reading-rg-7.html","7.10":"reading-rg-7.html","7.11":"reading-rg-7.html","7.12":"reading-rg-7.html","7.13":"reading-rg-7.html","7.14":"reading-rg-7.html","7.15":"reading-rg-7.html","7.16":"reading-rg-7.html","7.17":"reading-rg-7.html","7.18":"reading-rg-7.html","7.19":"reading-rg-7.html","7.20":"reading-rg-7.html","7.21":"reading-rg-7.html","7.22":"reading-rg-7.html","7.23":"reading-rg-7.html","7.24":"reading-rg-7.html","7.25":"reading-rg-7.html","7.26":"reading-rg-7.html","8.1":"reading-rg-8.html","8.2":"reading-rg-8.html","8.3":"reading-rg-8.html","8.4":"reading-rg-8.html","8.5":"reading-rg-8.html","8.6":"reading-rg-8.html","8.7":"reading-rg-8.html","8.8":"reading-rg-8.html","8.9":"reading-rg-8.html","8.10":"reading-rg-8.html","8.11":"reading-rg-8.html","9.1":"reading-rg-9.html","9.2":"reading-rg-9.html","9.3":"reading-rg-9.html","9.4":"reading-rg-9.html","9.5":"reading-rg-9.html","9.6":"reading-rg-9.html","9.7":"reading-rg-9.html","9.8":"reading-rg-9.html","9.9":"reading-rg-9.html","9.10":"reading-rg-9.html","9.11":"reading-rg-9.html","9.12":"reading-rg-9.html","9.13":"reading-rg-9.html","9.14":"reading-rg-9.html","9.15":"reading-rg-9.html","9.16":"reading-rg-9.html","9.17":"reading-rg-9.html","9.18":"reading-rg-9.html","9.19":"reading-rg-9.html","9.20":"reading-rg-9.html","9.21":"reading-rg-9.html","9.22":"reading-rg-9.html","10.1":"reading-rg-10.html","10.2":"reading-rg-10.html","10.3":"reading-rg-10.html","10.4":"reading-rg-10.html","10.5":"reading-rg-10.html","10.6":"reading-rg-10.html","10.7":"reading-rg-10.html","10.8":"reading-rg-10.html","10.9":"reading-rg-10.html","10.10":"reading-rg-10.html","10.11":"reading-rg-10.html","10.12":"reading-rg-10.html","11.1":"reading-rg-11.html","11.2":"reading-rg-11.html","11.3":"reading-rg-11.html","11.4":"reading-rg-11.html","11.5":"reading-rg-11.html","11.6":"reading-rg-11.html","11.7":"reading-rg-11.html","11.8":"reading-rg-11.html","11.9":"reading-rg-11.html","11.10":"reading-rg-11.html","11.11":"reading-rg-11.html","11.12":"reading-rg-11.html","11.13":"reading-rg-11.html","11.14":"reading-rg-11.html","11.15":"reading-rg-11.html","11.16":"reading-rg-11.html","11.17":"reading-rg-11.html","11.18":"reading-rg-11.html","11.19":"reading-rg-11.html","11.20":"reading-rg-11.html","11.21":"reading-rg-11.html","11.22":"reading-rg-11.html","11.23":"reading-rg-11.html","11.24":"reading-rg-11.html","11.25":"reading-rg-11.html","11.26":"reading-rg-11.html","12.1":"reading-rg-12.html","12.2":"reading-rg-12.html","12.3":"reading-rg-12.html","12.4":"reading-rg-12.html","12.5":"reading-rg-12.html","12.6":"reading-rg-12.html","12.7":"reading-rg-12.html","12.8":"reading-rg-12.html","12.9":"reading-rg-12.html","12.10":"reading-rg-12.html","12.11":"reading-rg-12.html","12.12":"reading-rg-12.html","12.13":"reading-rg-12.html","12.14":"reading-rg-12.html","12.15":"reading-rg-12.html","12.16":"reading-rg-12.html","12.17":"reading-rg-12.html","12.18":"reading-rg-12.html","12.19":"reading-rg-12.html","12.20":"reading-rg-12.html","12.21":"reading-rg-12.html","12.22":"reading-rg-12.html","12.23":"reading-rg-12.html","12.24":"reading-rg-12.html","12.25":"reading-rg-12.html","12.26":"reading-rg-12.html","12.27":"reading-rg-12.html","12.28":"reading-rg-12.html","12.29":"reading-rg-12.html","12.30":"reading-rg-12.html","12.31":"reading-rg-12.html","12.32":"reading-rg-12.html","12.33":"reading-rg-12.html","12.34":"reading-rg-12.html","12.35":"reading-rg-12.html","13.1":"reading-rg-13.html","13.2":"reading-rg-13.html","13.3":"reading-rg-13.html","13.4":"reading-rg-13.html","13.5":"reading-rg-13.html","13.6":"reading-rg-13.html","13.7":"reading-rg-13.html","13.8":"reading-rg-13.html","13.9":"reading-rg-13.html","13.10":"reading-rg-13.html","13.11":"reading-rg-13.html","14.1":"reading-rg-14.html","14.2":"reading-rg-14.html","14.3":"reading-rg-14.html","14.4":"reading-rg-14.html","14.5":"reading-rg-14.html","14.6":"reading-rg-14.html","14.7":"reading-rg-14.html","14.8":"reading-rg-14.html","14.9":"reading-rg-14.html","14.10":"reading-rg-14.html","14.11":"reading-rg-14.html","14.12":"reading-rg-14.html","14.13":"reading-rg-14.html","14.14":"reading-rg-14.html","14.15":"reading-rg-14.html","14.16":"reading-rg-14.html","14.17":"reading-rg-14.html","15.1":"reading-rg-15.html","15.2":"reading-rg-15.html","15.3":"reading-rg-15.html","15.4":"reading-rg-15.html","15.5":"reading-rg-15.html","15.6":"reading-rg-15.html","15.7":"reading-rg-15.html","15.8":"reading-rg-15.html","15.9":"reading-rg-15.html","15.10":"reading-rg-15.html","15.11":"reading-rg-15.html","15.12":"reading-rg-15.html","15.13":"reading-rg-15.html","15.14":"reading-rg-15.html","16.1":"reading-rg-16.html","16.2":"reading-rg-16.html","16.3":"reading-rg-16.html","16.4":"reading-rg-16.html","16.5":"reading-rg-16.html","16.6":"reading-rg-16.html","16.7":"reading-rg-16.html","16.8":"reading-rg-16.html","16.9":"reading-rg-16.html","16.10":"reading-rg-16.html","16.11":"reading-rg-16.html","16.12":"reading-rg-16.html","17.1":"reading-rg-17.html","17.2":"reading-rg-17.html","17.3":"reading-rg-17.html","17.4":"reading-rg-17.html","17.5":"reading-rg-17.html","17.6":"reading-rg-17.html","17.7":"reading-rg-17.html","17.8":"reading-rg-17.html","17.9":"reading-rg-17.html","17.10":"reading-rg-17.html","18.1":"reading-rg-18.html","18.2":"reading-rg-18.html","18.3":"reading-rg-18.html","18.4":"reading-rg-18.html","18.5":"reading-rg-18.html","18.6":"reading-rg-18.html","18.7":"reading-rg-18.html","18.8":"reading-rg-18.html","18.9":"reading-rg-18.html","18.10":"reading-rg-18.html","18.11":"reading-rg-18.html","18.12":"reading-rg-18.html","18.13":"reading-rg-18.html","18.14":"reading-rg-18.html","18.15":"reading-rg-18.html","18.16":"reading-rg-18.html","18.17":"reading-rg-18.html","18.18":"reading-rg-18.html","18.19":"reading-rg-18.html","18.20":"reading-rg-18.html","18.21":"reading-rg-18.html","18.22":"reading-rg-18.html","18.23":"reading-rg-18.html","18.24":"reading-rg-18.html","18.25":"reading-rg-18.html","18.26":"reading-rg-18.html"},"curFile":"reading-rg.html","mode":"jump"});})();(function(){var bar=document.getElementById('reading-nav');if(!bar)return;var b=document.querySelector('a[data-vv-brand]')||document.querySelector('a[href="index.html"][title*="Home"]');if(!b||bar.contains(b)||b.closest('[data-vv-brand-pinned]'))return;var full=(b.textContent||'').trim(),SH={'अध्ययन-सहकारी':'अध्य·सहकारी','साहित्य-व्याकरणम्':'सा·व्या','वैदान्तिक-व्याकरणम्':'वै·व्या'};var sh=b.getAttribute('data-short')||SH[full]||full;b.removeAttribute('style');b.className='rn-brand';b.innerHTML='<span class="rn-bf"></span><span class="rn-bs"></span>';b.firstChild.textContent=full;b.lastChild.textContent=sh;bar.insertBefore(b,bar.firstChild);})();</script><script src="vv-store.js"></script><script src="vv-reader.js"></script><details class="legend vleg"><summary>॥ सङ्केत-सूची · legend <span class="tw">toggle to fold / unfold</span></summary><div class="legtxt">Hover on any word for its <span style="color:var(--mng)">meaning</span> and grammar (व्याकरणम् — stem or root, case·number·gender, and the samāsa type). The word analysis of the verses and of the commentary is generated (Gemini), checked against Kapālī Śāstrī’s commentary, not hand-curated; there is no kāraka analysis. The text is the 1946 first edition (Śrī Ramaṇāśramam), read against the page images; its printer’s errors are kept as printed and listed, with the readings our scan cannot settle, under “About the book”. The प्रकाशः is Kapālī Śāstrī’s commentary; its colouring marks how each passage argues.</div></details><details class="legend rolelegend"><summary>॥ प्रकाशः-भूमिकाः · commentary roles <span class="tw">toggle to fold / unfold</span></summary><div class="legbody"><span class="rlgi" data-lg="pratika"><span class="rlsw" style="background:var(--morph,var(--mula))"></span>मूल-प्रतीकम् · quoted mūla</span>पूर्वपक्षः · objection</span>सिद्धान्तः · conclusion</span>दृष्टान्तः · example</span>लक्षणम् · definition</span>फलितम् · upshot</span>एकदेशी · partial view</span>अनुवादः · restatement</span>तात्पर्यम् · import (italic)</span>व्याकरणम् · grammar note (italic)</span>सङ्ग्रहः · summary (underlined)</span><span class="rlgi" data-lg="bhcite"><span class="rlsw" style="background:var(--cite)"></span>प्रमाण-वाक्यम् · citation (→ hosted text)</span></div></details><div class="chapgrid"><a href="reading-rg-1.html">प्रथमः अध्यायः · उपासनप्राधान्यनिरूपणम्</a><a href="reading-rg-2.html">द्वितीयः अध्यायः · मार्गत्रयकथनम्</a><a href="reading-rg-3.html">तृतीयः अध्यायः · मुख्यकर्तव्यनिरूपणम्</a><a href="reading-rg-4.html">चतुर्थः अध्यायः · ज्ञानस्वरूपनिरूपणम्</a><a href="reading-rg-5.html">पञ्चमः अध्यायः · हृदयविद्या</a><a href="reading-rg-6.html">षष्ठः अध्यायः · मनोनिग्रहोपायः</a><a href="reading-rg-7.html">सप्तमः अध्यायः · आत्मविचाराधिकारि-तदङ्गनिरूपणम्</a><a href="reading-rg-8.html">अष्टमः अध्यायः · आश्रमविचारः</a><a href="reading-rg-9.html">नवमः अध्यायः · ग्रन्थिभेदकथनम्</a><a href="reading-rg-10.html">दशमः अध्यायः · संघविद्या</a><a href="reading-rg-11.html">एकादशः अध्यायः · ज्ञानसिद्धिसामरस्यकथनम्</a><a href="reading-rg-12.html">द्वादशः अध्यायः · शक्तिविचारः</a><a href="reading-rg-13.html">त्रयोदशः अध्यायः · सन्यासे स्त्रीपुरुषयोस्तुल्याधिकारनिरूपणम्</a><a href="reading-rg-14.html">चतुर्दशः अध्यायः · जीवन्मुक्तिविचारः</a><a href="reading-rg-15.html">पञ्चदशः अध्यायः · श्रवणमनननिदिध्यासननिरूपणम्</a><a href="reading-rg-16.html">षोडशः अध्यायः · भक्तिविचारः</a><a href="reading-rg-17.html">सप्तदशः अध्यायः · ज्ञानप्राप्तिविचारः</a><a href="reading-rg-18.html">अष्टादशः अध्यायः · सिद्धमहिमानुकीर्तनम्</a></div></div><div id="tip"></div><script>const G={};const tip=document.getElementById('tip');
+(function(){var K='vvMetMode';function set(m){document.body.classList.remove('mode-sandhi','mode-pada');document.body.classList.add('mode-'+m);document.querySelectorAll('.modebar button').forEach(function(b){b.classList.toggle('on',b.dataset.mode===m);});try{localStorage.setItem(K,m);}catch(e){}}
+document.querySelectorAll('.modebar button').forEach(function(b){b.addEventListener('click',function(){set(b.dataset.mode);});});
+var init='sandhi';try{init=localStorage.getItem(K)||'sandhi';}catch(e){}set(init);})();
+(function(){var K='vvViewMode';var bs=document.querySelectorAll('.viewbar button');if(!bs.length)return;function set(m){document.body.classList.remove('view-mula','view-both');document.body.classList.add('view-'+m);bs.forEach(function(b){b.classList.toggle('on',b.dataset.view===m);});if(window.__readingNav&&window.__readingNavRefs)window.__readingNav.setRefs(window.__readingNavRefs[m==='both'?'both':'mula']);try{localStorage.setItem(K,m);}catch(e){}}bs.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.view);});});var iv='mula';try{iv=localStorage.getItem(K)||'mula';}catch(e){}set(iv);})();(function(){var K='vvTransMode';var btn=document.getElementById('transtog');if(!btn)return;function set(on){document.body.classList.toggle('trans-on',on);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');try{localStorage.setItem(K,on?'1':'0');}catch(e){}}btn.addEventListener('click',function(){set(!document.body.classList.contains('trans-on'));});var it=false;try{it=localStorage.getItem(K)==='1';}catch(e){}set(it);})();window.__vcJL="टीका";
+document.addEventListener('click',function(e){var p=e.target.closest('.pratika');if(!p)return;var t=document.getElementById(p.dataset.t);if(!t)return;t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.add('flash');setTimeout(function(){t.classList.remove('flash')},1400);});
+// mūla ⇄ commentary links: tag each pratīka's target mūla word .mulq (+ remember its pratīka[s]). The jump itself is
+// a → row inside the gloss card (mūla #tip: → भाष्यम्/टीका; commentary .gtip: → मूलम्) — NOT a word-click, which
+// stays "pin the card" / the presenter's highlight (the old capture-phase mūla click swallowed both).
+(function(){var ps=document.querySelectorAll('.pratika[data-t]');for(var i=0;i<ps.length;i++){var t=document.getElementById(ps[i].dataset.t);if(t){t.classList.add('mulq');(t.__prat=t.__prat||[]).push(ps[i]);}}})();
+window.__vcNav=function(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.remove('navhit');void el.offsetWidth;el.classList.add('navhit');setTimeout(function(){el.classList.remove('navhit')},1800);
+  var k=el.getAttribute('data-k'),sec=el.closest('[id^="v-"],[id^="vb-"]'),ref=k?k.split(':')[1]:(sec?sec.id.replace(/^vb?-/,''):null);
+  if(ref&&window.__vvJump)window.__vvJump(ref,k||null);};   // presenter → carry followers
+// "→ भाष्यम् (1 of N) · next ›" (Harsha 2026-10-21): EVERY visible pratīka on this mūla word, in page order (t.__prat comes from the
+// build-time data-t targets — no click-time matching). __vcJumpList/__vcJumpIdx drive "next ›" (build_vc_reading_view tip handler).
+window.__vcMulaJump=function(t){if(!t||!t.__prat||!document.body.classList.contains('view-both'))return '';var P=[];
+  for(var i=0;i<t.__prat.length;i++){var q=t.__prat[i],p=null;if(q.offsetParent!==null)p=q;
+    else{// a pratīka inside a sandhi-fused unit sits in the hidden पद copy (.fumembers) in सन्धि mode → land on the visible fused word
+      var fu=q.closest('.fu'),host=fu?(fu.querySelector('.bhfuse .fup[data-t="'+q.dataset.t+'"]')||fu.querySelector('.bhfuse')):null;if(host&&host.offsetParent!==null)p=host;}
+    if(p&&P.indexOf(p)<0)P.push(p);}
+  if(!P.length)return '';window.__vcJumpList=P;window.__vcJumpIdx=0;window.__vcJumpTo=P[0];
+  var lb='→ '+(window.__vcJL||'भाष्यम्');
+  return '<div class="jumps"><span class="jrow'+(P.length>1?' jrn':'')+'" data-jp="1">'+lb+(P.length>1?' <span class="jof">(1 of '+P.length+')</span><span class="jnext" title="next quotation of this word">next ›</span>':'')+'</span></div>';};
+(function(){var tip=document.createElement('div');tip.className='gtip';document.body.appendChild(tip);var pinned=null;tip.classList.remove('pinned');
+function card(el){
+  // fused सन्धि unit (.bhfuse): no inline data — build the combined card from the sibling पद member spans
+  if(el.classList.contains('bhfuse')){var fu=el.parentNode,mem=fu?fu.querySelector('.fumembers'):null,gws=mem?mem.querySelectorAll('.gw'):[];
+    if(!gws.length)return '';var pd=[],mn=[],gr=[],pl=[];
+    for(var i=0;i<gws.length;i++){var g=gws[i];pd.push(g.getAttribute('data-hw')||g.textContent||'');
+      var m=g.getAttribute('data-mng');if(m)mn.push(m);var gg=g.getAttribute('data-gram');if(gg)gr.push(gg);var pp=g.getAttribute('data-peel');if(pp)pl.push(pp);}
+    var hf='<div class="tw">'+(el.textContent||'')+'</div>';
+    if(mn.length)hf+='<div class="tm">'+mn.join(' · ')+'</div>';
+    hf+='<div class="row"><span class="lb">पदच्छेद</span> '+pd.join(' ')+'</div>';
+    if(gr.length)hf+='<div class="row"><span class="lb">व्याकरणम्</span> '+gr.join(' · ')+'</div>';var kk=[];for(var z=0;z<gws.length;z++){var za=gws[z].getAttribute('data-kv');if(za)kk=kk.concat(za.split(';'));}if(kk.length&&typeof kvrow==='function')hf+=kvrow(kk.map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:(x.charAt(0)==='+'||gws.length>1)?[(x.charAt(0)==='+'?x.slice(1):x),2]:[x];}));
+    if(pl.length)hf+='<div class="peel">'+pl.join('§§').split('§§').join('<br>')+'</div>';
+    for(var j=0;j<gws.length;j++){var tj=gws[j].getAttribute('data-t');if(tj&&document.getElementById(tj)){hf+=jrowM(tj);break;}}
+    return hf;}
+  var w=el.getAttribute('data-hw')||el.textContent||'';var mng=el.getAttribute('data-mng')||'';var gram=el.getAttribute('data-gram')||'';var peel=el.getAttribute('data-peel')||'';
+  if(!mng&&!gram&&!peel)return '';
+  var h='<div class="tw">'+w+'</div>';
+  if(mng)h+='<div class="tm">'+mng+'</div>';
+  if(gram)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+gram+'</div>';var kvs=el.getAttribute('data-kv');if(kvs&&typeof kvrow==='function')h+=kvrow(kvs.split(';').map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:x.charAt(0)==='+'?[x.slice(1),2]:[x];}));
+  if(peel)h+='<div class="peel">'+peel.split('§§').join('<br>')+'</div>';
+  var tt=el.getAttribute('data-t');if(tt&&document.getElementById(tt))h+=jrowM(tt);
+  return h;}
+function jrowM(id){return '<div class="jumps"><span class="jrow" data-jt="'+id+'">→ मूलम्</span></div>';}
+function place(x,y){var r=tip.getBoundingClientRect();var px=Math.max(6,Math.min(x+13,window.innerWidth-r.width-8));var py=y+18;if(py+r.height>window.innerHeight-6)py=Math.max(6,y-r.height-14);tip.style.left=px+'px';tip.style.top=py+'px';}
+function show(el,x,y){var h=card(el);if(!h)return;tip.innerHTML=h;tip.style.display='block';place(x,y);}
+function hide(){tip.style.display='none';}
+document.addEventListener('mouseover',function(e){if(pinned)return;var el=e.target.closest('.gw');if(el)show(el,e.clientX,e.clientY);});
+document.addEventListener('mousemove',function(e){if(pinned||tip.style.display!=='block')return;var el=e.target.closest('.gw');if(el)place(e.clientX,e.clientY);else hide();});
+document.addEventListener('mouseout',function(e){if(pinned)return;if(e.target.closest('.gw'))hide();});
+document.addEventListener('click',function(e){if(tip.contains(e.target)){var jr=e.target.closest('.jrow');if(jr){e.stopPropagation();var tg=document.getElementById(jr.getAttribute('data-jt'));if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');}hide();if(tg)window.__vcNav(tg);}return;}var el=e.target.closest('.gw');if(!el){if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();}return;}if(!card(el))return;e.stopPropagation();if(pinned===el){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();return;}if(pinned)pinned.classList.remove('pinned');pinned=el;el.classList.add('pinned');tip.classList.add('pinned');var r=el.getBoundingClientRect();show(el,r.left,r.top+r.height-18);},true);
+})();
+function html(d){let h='<div class="tw">'+d.w+'</div>';if(d.mng)h+='<div class="tm">'+d.mng+'</div>';
+if(d.lemLabel==='धातुः'&&d.lem)h+='<div class="row"><span class="lb">धातुः</span> '+d.lem+'</div>';if(d.dnote)h+='<div class="row"><span class="lb">टिप्पणी</span> '+d.dnote+'</div>';
+if(d.g)h+='<div class="row"><span class="lb">व्याकरणम्</span> '+d.g+'</div>';
+if(d.role||d.sutra)h+='<div class="row"><span class="lb">kāraka</span> '+(d.role||'—')+(d.sutra?' <span class="lb">सूत्र</span> '+d.sutra:'')+'</div>';
+if(d.sam)h+='<div class="row"><span class="lb">samāsa</span> '+d.sam+'</div>';
+if(d.note)h+='<div class="row"><span class="lb">⚑</span> '+d.note+'</div>';
+if(d.peel&&d.peel.length)h+='<div class="peel">'+d.peel.join('<br>')+'</div>';return h;}
+// anchor the tip to the tapped word: centred below it, flipped above when near the viewport bottom,
+// clamped to the screen width — so it never lands off-screen / needs scrolling (esp. mobile, right column).
+function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;
+  let left=r.left+r.width/2-tw/2;left=Math.max(m,Math.min(left,innerWidth-tw-m));
+  let top=r.bottom+8;if(top+th>innerHeight-m)top=Math.max(m,r.top-th-8);
+  tip.style.left=left+'px';tip.style.top=top+'px';}
+function show(t){const d=G[t.dataset.k];if(!d)return;tip.innerHTML=html(d)+(window.__vcMulaJump?window.__vcMulaJump(t):'');tip.style.opacity=1;if(pinned)tip.classList.add('pinned');place(t);}
+const touch=('ontouchstart'in window)||navigator.maxTouchPoints>0;
+// PIN: click a word to pin the tooltip (selectable/copyable); hover stays preview-only. Additive & sync-safe
+// (no preventDefault/stopImmediatePropagation → sync.js onWordTap + Esc/click-empty clears still fire).
+let pinned=false;
+function hideTip(force){if(pinned&&!force)return;pinned=false;tip.style.opacity=0;tip.classList.remove('pinned');}
+document.addEventListener('mouseover',e=>{if(touch||pinned)return;const t=e.target.closest('.w');if(t)show(t);});
+document.addEventListener('mouseout',e=>{if(touch||pinned)return;if(e.target.closest('.w'))tip.style.opacity=0;});
+document.addEventListener('click',e=>{if(tip.contains(e.target))return;const t=e.target.closest('.w');if(t){pinned=true;show(t);tip.classList.add('pinned');return;}hideTip(true);});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Esc')hideTip(true);});
+tip.addEventListener('click',e=>{
+  const nx=e.target.closest('.jnext'),L=window.__vcJumpList;   // "next ›": the next pratīka on this word; the card stays pinned and follows it
+  if(nx&&L&&L.length>1&&window.__vcNav){e.stopPropagation();const i=((window.__vcJumpIdx||0)+1)%L.length;window.__vcJumpIdx=i;window.__vcJumpTo=L[i];
+    const of=nx.parentNode.querySelector('.jof');if(of)of.textContent='('+(i+1)+' of '+L.length+')';window.__vcNav(L[i]);setTimeout(()=>place(L[i]),450);return;}
+  const jr=e.target.closest('.jrow');if(jr&&window.__vcJumpTo&&window.__vcNav){e.stopPropagation();hideTip(true);window.__vcNav(window.__vcJumpTo);}});   // mūla → commentary (cross-layer link)
+const r=document.documentElement;document.getElementById('tog').onclick=()=>{const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c=='dark'?'light':'dark')};</script><style>
+#rpt-btn{position:fixed;right:14px;bottom:14px;z-index:80;font:inherit;font-size:13px;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;
+  padding:8px 14px;box-shadow:0 3px 12px rgba(0,0,0,.18);cursor:pointer}
+#rpt-btn:hover{background:var(--bg)}
+#rpt-ov{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
+#rpt-ov.on{display:flex}
+#rpt-box{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;
+  max-width:440px;width:100%;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+#rpt-box h3{margin:0 0 4px;font-size:16px}
+#rpt-box .rpt-sub{margin:0 0 12px;font-size:12px;color:var(--muted)}
+#rpt-box textarea{width:100%;min-height:90px;font:inherit;font-size:14px;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px;resize:vertical;box-sizing:border-box}
+#rpt-box .rpt-ctx{margin:10px 0 0;font-size:11px;color:var(--muted);line-height:1.5;
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;white-space:pre-wrap;max-height:120px;overflow:auto}
+#rpt-box .rpt-row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+#rpt-box button{font:inherit;font-size:13px;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--line)}
+#rpt-send{background:var(--ink);color:var(--bg)}
+#rpt-cancel{background:var(--card);color:var(--ink)}
+#rpt-box .rpt-two{display:flex;gap:8px;margin-top:8px}#rpt-box .rpt-two input{flex:1;min-width:0;font:inherit;font-size:13px;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;box-sizing:border-box}
+#rpt-box .rpt-st{flex:1;align-self:center;font-size:12px;color:var(--muted)}#rpt-box .rpt-hp{position:absolute;left:-9999px}
+</style>
+<button id="rpt-btn" title="Report an issue on this page">⚑ report an issue</button>
+<div id="rpt-ov"><div id="rpt-box">
+  <h3>Report an issue</h3>
+  <p class="rpt-sub">Noticed a wrong meaning, kāraka role, or bhāṣya marking? Tell us — it goes straight to the editors.</p>
+  <textarea id="rpt-txt" placeholder="What looks wrong? (e.g. the kāraka role on a word, a wrong meaning, a mis-coloured bhāṣya span…)"></textarea>
+  <div class="rpt-two"><input id="rpt-name" placeholder="Name (optional)" autocomplete="name"><input id="rpt-mail" type="email" placeholder="Email, for a reply (optional)" autocomplete="email"></div>
+  <input class="rpt-hp" id="rpt-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+  <div class="rpt-ctx" id="rpt-ctx"></div>
+  <div class="rpt-row"><span class="rpt-st" id="rpt-st"></span><button id="rpt-cancel">Cancel</button><button id="rpt-send">Send</button></div>
+</div></div>
+<script>(function(){
+  var EMAIL="narayanamurthysharma@gmail.com",RELAY="https://script.google.com/macros/s/AKfycbx5m6cln3vbabv_wMq2Rlg6phAzdd1gMJXsf5jmb7OVC_62ULg3wPafuLK6i7593cFwAw/exec";
+  // our Google Apps Script relay (15 s limit) → else the reader's mail app; same as vv-reader.js sendReport
+  function post(url,opt,ms){var c=window.AbortController?new AbortController():null,t;if(c)opt.signal=c.signal;
+    return Promise.race([fetch(url,opt),new Promise(function(_,no){t=setTimeout(function(){if(c)c.abort();no(new Error('timeout'));},ms);})])
+      .then(function(r){clearTimeout(t);return r;},function(e){clearTimeout(t);throw e;});}
+  function sendReport(d){
+    return post(RELAY,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({name:d.name||'',email:d.email||'',subject:d.subject,page:location.href,message:d.message})},15000)
+      .then(function(r){return r.ok?r.json():{};}).then(function(j){if(!(j&&j.ok===true))throw new Error('not accepted');});}
+  var NAME_KEY='sandhiQuizReporterName',EMAIL_KEY='sandhiQuizReporterEmail';   // shared with the word-card + gym reporters
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v);}catch(e){return '';}}
+  function ua(){try{
+    var u=navigator.userAgent||'';
+    var os=/Android/i.test(u)?'Android':/iPhone|iPod/i.test(u)?'iOS':/iPad/i.test(u)?'iPadOS':/Windows/i.test(u)?'Windows':/Mac OS X|Macintosh/i.test(u)?'macOS':/CrOS/i.test(u)?'ChromeOS':/Linux/i.test(u)?'Linux':'unknown OS';
+    var dev=/iPad|Tablet/i.test(u)?'tablet':/Mobi|Android|iPhone|iPod/i.test(u)?'phone':'desktop/laptop';
+    var br=/Edg\//.test(u)?'Edge':/OPR\//.test(u)?'Opera':/Chrome\//.test(u)?'Chrome':/Firefox\//.test(u)?'Firefox':/Version\/.*Safari/.test(u)?'Safari':'unknown browser';
+    return {line:dev+' · '+os+' · '+br+' · viewport '+(window.innerWidth||0)+'×'+(window.innerHeight||0),raw:u};
+  }catch(e){return {line:'(device unavailable)',raw:''};}}
+  function mode(){var p=(location.pathname||'').toLowerCase();
+    return (/-mula|reading-(vc|pd|ab)([.-]|$)/.test(p))?'mūla (padārtha)':'bhāṣya (manana)';}
+  function curVerse(){try{
+    var els=document.querySelectorAll('[id^="v-"]');var best=null,bestTop=-1e9;
+    for(var i=0;i<els.length;i++){var t=els[i].getBoundingClientRect().top;
+      if(t<=120&&t>bestTop){bestTop=t;best=els[i];}}
+    if(!best&&els.length)best=els[0];
+    return best?best.id.replace(/^v-/,''):'(n/a)';
+  }catch(e){return '(n/a)';}}
+  function ctxBlock(){var d=ua();var ctrl=(navigator.serviceWorker&&navigator.serviceWorker.controller)?'sw-controlled':'no-controller';
+    return 'page: '+(location.pathname.split('/').pop()||location.pathname)+'\n'
+      +'text: '+(document.title||'')+'\n'
+      +'mode: '+mode()+'\n'
+      +'verse in view: '+curVerse()+'\n'
+      +'url: '+location.href+'\n'
+      +'device: '+d.line+'\n'
+      +'sw: '+ctrl+'\n'
+      +'user-agent: '+d.raw;}
+  var btn=document.getElementById('rpt-btn'),ov=document.getElementById('rpt-ov'),
+      txt=document.getElementById('rpt-txt'),ctx=document.getElementById('rpt-ctx');
+  if(!btn||!ov)return;
+  var nm=document.getElementById('rpt-name'),ml=document.getElementById('rpt-mail'),st=document.getElementById('rpt-st'),
+      send=document.getElementById('rpt-send'),cancel=document.getElementById('rpt-cancel');
+  function open(){ctx.textContent=ctxBlock();nm.value=ls(NAME_KEY);ml.value=ls(EMAIL_KEY);st.textContent='';send.style.display='';send.disabled=false;
+    cancel.textContent='Cancel';ov.classList.add('on');txt.focus();}
+  function close(){ov.classList.remove('on');}
+  btn.addEventListener('click',open);
+  document.getElementById('rpt-cancel').addEventListener('click',close);
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  send.addEventListener('click',function(){
+    var note=txt.value.trim(),name=nm.value.trim(),mail=ml.value.trim();ls(NAME_KEY,name);ls(EMAIL_KEY,mail);
+    if(document.getElementById('rpt-hp').value){close();return;}   // a bot filled the hidden field
+    var subj='Page report: '+(document.title||'reading')+' — '+curVerse()+' ('+mode()+')';
+    // "Details:" = the reader's words (fetch_reports.py reads it as the comment); the context lines below are key: value fields
+    var message='Problem: Page report\n'+(note?'Details: '+note.replace(/\n+/g,' ')+'\n':'')+'\n--- context (auto-captured) ---\n'+ctxBlock();
+    send.disabled=true;st.textContent='Sending…';
+    sendReport({name:name,email:mail,subject:subj,message:message}).then(function(){
+      st.textContent='Sent — thank you.';send.style.display='none';cancel.textContent='Close';txt.value='';
+    }).catch(function(){
+      // offline or the form service refused: hand the same report to the reader's mail app
+      st.textContent='Could not send from here — opening your mail app instead.';
+      location.href='mailto:'+EMAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent((name?'From: '+name+(mail?' <'+mail+'>':'')+'\n\n':'')+message);
+      send.disabled=false;
+    });
+  });
+})();</script><script>window.VVSYNC={slug:"RG"};</script><script src="sync.js" defer></script><script src="translit.js"></script></body></html>

@@ -99,11 +99,10 @@
     if (!sisterSite()) h += '<div class="row"><div class="lab">Commentary links</div><div class="mk"><label class="chk"><input type="checkbox" id="vvset-tkm"> Underline the words a commentary explains</label>'
       + '<div class="sample"><span class="vvset-tkm">अशोच्यान्</span> अन्वशोचस्त्वं प्रज्ञावादांश्च भाषसे</div></div>'
       + '<div class="hint">A light dashed line under each word that the chosen commentary quotes as a pratīka — tap it to jump there. With no commentary chosen, every such word in the bhāṣya, darker the more commentaries quote it. On by default.</div></div>';
-    // argument-role colours — BETA (Swamiji via Harsha 2026-11-22): on by default, called out as beta, can be turned off
-    if (!sisterSite()) h += '<div class="row"><div class="lab">Argument roles <span class="vvset-beta">beta</span></div><div class="mk"><label class="chk"><input type="checkbox" id="vvset-roles"> Colour the bhāṣya’s pūrvapakṣa / siddhānta / ekadeśī passages</label>'
+    // argument-role colours (Swamiji via Harsha 2026-11-22; beta tag removed 2026-11-23): on by default, can be turned off
+    if (!sisterSite()) h += '<div class="row"><div class="lab">Argument roles</div><div class="mk"><label class="chk"><input type="checkbox" id="vvset-roles"> Colour the bhāṣya’s pūrvapakṣa / siddhānta / ekadeśī passages</label>'
       + '<div class="sample"><span class="vvset-pp">ननु च … इति चेत् —</span> <span class="vvset-sid">न, …</span></div></div>'
-      + '<div class="hint"><b>Beta.</b> These colours are marked by machine and have not been checked by hand, so some passages are coloured wrongly — especially in the Brahmasūtra bhāṣya. Use them as a rough guide only, never as the final word on who is speaking. '
-      + (window.__vvRoles && window.__vvRoles.bs ? '<b>Not shown on the Brahmasūtra pages</b> — the marking there was too unreliable, and is being redone.' : 'On by default. Never shown on the Brahmasūtra pages (the marking there is being redone).') + '</div></div>';
+      + '<div class="hint">In Śaṅkara\'s bhāṣya on the Upaniṣads, the Gītā and the Brahmasūtra, each coloured passage was checked against what the commentators (Ānandagiri, Ratnaprabhā …) say about who is speaking; in the other commentaries the colours are still marked by machine. Either way, use them as a guide, never as the final word on who is speaking. On by default.</div></div>';
     if (!sisterSite()) h += '<div class="row"><div class="lab">Word derivations</div><select id="vvset-vyut"><option value="">Folded (one line)</option><option value="open">Open</option><option value="0">Off</option></select>'
       + '<div class="hint">The व्युत्पत्तिः row on word cards — how a word is derived, quoted from शब्दार्थकौस्तुभः, वाचस्पत्यम् and शब्दकल्पद्रुमः. Folded by default; tap ▸ on a pinned card to open it.</div></div>';
     h += '<div class="row"><div class="lab">Page buttons</div>'

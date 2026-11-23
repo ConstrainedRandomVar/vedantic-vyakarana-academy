@@ -589,10 +589,10 @@ function buildJumps(t,ref){if(!ref)return '';var rows=[],pr=t.closest('.tk-prat'
   var js=!pr&&!sp&&t.getAttribute('data-jsb'); if(js){var jse=document.querySelector('[data-k="'+js+'"]'),jsd=jse&&jse.closest('details.tk-sub,details.ap-tk'),jsm=jsd&&jsd.querySelector('summary'); rows.push(jr('tk',ref,js,'','→ '+(jsd?(jsd.getAttribute('data-label')||(jsm&&jsm.textContent.trim())||'टीका'):'टीका')));}
   // EXACT targets written at build time by jump_resolve.js (CLAUDE.md #9e) — no click-time matching:
   // data-jmt → the mūla word · data-jbt → the bhāṣya word · data-jtt → the ṭīkā pratīka (absent = ambiguous → no link)
-  var jm=src.getAttribute('data-jmt'), jmm=src.getAttribute('data-jmm');
+  var jm=src.getAttribute('data-jmt'), jmm=src.getAttribute('data-jmm'), jmx=src.getAttribute('data-jmx');   // jmx: a FUSED quote's other verse words — flashed with the target
   // a quote of the NEIGHBOURING verse (jump_resolve pass 1h — a joint bhāṣya looking back) names that verse: "→ मूलम् · १।३"
   var jmr=jm?jm.split(':')[1]:'', xv=jm&&jmr!==ref?' · '+jmr.split('.').join('।').replace(/[0-9]/g,function(d){return '०१२३४५६७८९'[d];}):'';
-  if(jm){ if(jmm){ var tw=byKey(jm), mem=tw?memText(tw.textContent,jmm):''; rows.push(jr('mk',ref,jm,'','→ मूलम्'+xv+(mem?' · '+mem:'')).replace('class="jrow"','class="jrow" data-jmm="'+jmm+'"')); } else rows.push(jr('mk',ref,jm,'',xv?'→ मूलम्'+xv:'')); }
+  if(jm){ if(jmm){ var tw=byKey(jm), mem=tw?memText(tw.textContent,jmm):''; rows.push(jr('mk',ref,jm,'','→ मूलम्'+xv+(mem?' · '+mem:'')).replace('class="jrow"','class="jrow" data-jmm="'+jmm+'"')); } else rows.push(jr('mk',ref,jm,'',xv?'→ मूलम्'+xv:'').replace('class="jrow"','class="jrow"'+(jmx?' data-jmx="'+jmx+'"':''))); }
   else if(!pr&&t.getAttribute('data-jmq')){var sk=SK(surfOf(t)); if(sk&&mqTarget(sk)) rows.push(jr('mq','',sk,''));}   // intro cross-verse quote (unique verse only)
   // a VERSE word: "→ भाष्यम् (1 of N) · next ›" — every quotation of it in a layer, in reading order (quotesOf); one quote → plain row
   var isM=!pr&&!!t.closest('.mula-zone')&&t.getAttribute('data-k');
@@ -645,8 +645,9 @@ function flashMember(el,jmm){ try{ if(!el||el.childNodes.length!==1||el.firstChi
     var r=document.createRange(); r.setStart(el.firstChild,st); r.setEnd(el.firstChild,en); var sp=document.createElement('span'); sp.className='navmem'; r.surroundContents(sp);
     setTimeout(function(){ var pa=sp.parentNode; if(!pa)return; while(sp.firstChild)pa.insertBefore(sp.firstChild,sp); pa.removeChild(sp); pa.normalize(); },2200); }catch(e){} }
 function quotesOf(ref,mk,side){var c=document.getElementById('v-'+ref);if(!c||!mk)return [];var out=[],seen={};
-  var els=c.querySelectorAll('[data-jmt="'+mk+'"]');
+  var els=c.querySelectorAll('[data-jmt="'+mk+'"],[data-jmx]');   // data-jmx: the other verse words of a FUSED quote (partial_quotes.js fusedRuns)
   for(var i=0;i<els.length;i++){var e=els[i],lane=e.closest('.tk-inline,.side-zone'),w=null;
+    if(e.getAttribute('data-jmt')!==mk&&('|'+(e.getAttribute('data-jmx')||'')+'|').indexOf('|'+mk+'|')<0)continue;
     if(side){if(!lane||lane.getAttribute('data-side')!==side)continue;w=e.classList.contains('w')?e:e.querySelector('.w[data-k]');}
     else{if(lane||e.closest('.mula-zone'))continue;w=e.classList.contains('w')?e:e.closest('.w');}
     var k=w&&w.getAttribute('data-k');if(k&&!seen[k]){seen[k]=1;out.push(k);}}
@@ -684,7 +685,7 @@ function doJump(jrEl,keep){var cat=jrEl.getAttribute('data-jc'),ref=jrEl.getAttr
     if(tt&&tt.el) el=tt.el;
     else if(tt&&tt.page){ hideTip(true); location.assign(tt.page===CURPAGE?('#v-'+tt.ref):(tt.page+'#v-'+tt.ref)); return; } }
   if(!keep)hideTip(true);
-  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});navFlash(el);if(jrEl.getAttribute('data-jmm'))flashMember(el,jrEl.getAttribute('data-jmm'));if(keep)setTimeout(function(){place(el);},450);}   // "next ›": the card follows the quote
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});navFlash(el);if(jrEl.getAttribute('data-jmm'))flashMember(el,jrEl.getAttribute('data-jmm'));if(jrEl.getAttribute('data-jmx'))jrEl.getAttribute('data-jmx').split('|').forEach(function(k){var e2=byKey(k);if(e2)navFlash(e2);});if(keep)setTimeout(function(){place(el);},450);}   // "next ›": the card follows the quote
   else{var vv=document.getElementById('v-'+ref);if(vv){vv.scrollIntoView({behavior:'smooth',block:'start'});vv.classList.remove('navhit');void vv.offsetWidth;vv.classList.add('navhit');setTimeout(function(){vv.classList.remove('navhit');},1700);}}
   if(window.__vvJump)window.__vvJump(ref,el?el.getAttribute('data-k'):null);}   // presenter → carry followers
 function show(t){
@@ -695,7 +696,7 @@ function show(t){
   var d=t.dataset.k?GM[t.dataset.k]:null;
   if(d){base=mulaHtml(d);}
   else if(t.dataset.w){var gb=(t.dataset.wv&&GBV[t.dataset.w])||GB[t.dataset.w],pl=GBP[t.dataset.w];
-    if(t.dataset.k&&GBO[t.dataset.k])gb=Object.assign({},gb||{},GBO[t.dataset.k]);   // one occurrence's adjudicated card (word-occurrence-fixes.json)
+    if(t.dataset.k&&GBO[t.dataset.k]){gb=Object.assign({},gb||{},GBO[t.dataset.k]);if(GBO[t.dataset.k].peel)pl=GBO[t.dataset.k].peel;}   // one occurrence's adjudicated card (word-occurrence-fixes.json; its own samāsa lines when the spelling's vigraha does not fit this passage)
     // bhāṣya word: the SAME stacked card as the mūla (CLAUDE.md #9b) — meaning (green) + पदच्छेद (sandhi-split,
     // e.g. मयोक्तमिति → मया + उक्तम् + इति) + व्याकरणम् + recursive samāsa peel. The commentary TEXT stays
     // un-split inline (sacrosanct); the padaccheda is revealed here on hover.

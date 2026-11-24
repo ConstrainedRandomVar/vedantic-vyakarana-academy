@@ -23,10 +23,14 @@
 .maha-mark[data-note]:hover::after,.maha-mark[data-note]:focus::after{content:attr(data-note);position:absolute;left:0;top:calc(100% + 4px);z-index:30;max-width:min(80vw,340px);white-space:normal;font-size:11.5px;font-weight:400;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
 .wrap{max-width:860px;margin:0 auto;padding:26px 22px 90px}h1{font-size:22px;margin:0 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
-.legend{padding:11px 14px;margin:0 0 20px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--muted)}
-.legend.vleg>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600}.legend.vleg>summary::-webkit-details-marker{display:none}
-.legend.vleg>summary .tw{margin-left:auto;font-weight:400;font-size:11.5px}.legend.vleg>summary .tw::before{content:"▸ "}.legend.vleg[open]>summary .tw::before{content:"▾ "}
-.legend.vleg .legtxt{margin-top:6px;line-height:1.55}   /* legend folded by default (Harsha 2026-10-17) */
+.legend{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 18px;font-size:12.5px}
+.legend>summary{list-style:none;cursor:pointer;padding:10px 14px;color:var(--muted);display:flex;align-items:center;gap:8px;font-weight:600}
+.legend>summary::-webkit-details-marker{display:none}
+.legend>summary .tw{margin-left:auto;font-weight:400;font-size:11.5px}
+.legend>summary .tw::before{content:"▸ "}.legend[open]>summary .tw::before{content:"▾ "}
+.topbar{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+.topbar .grow{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.legend.vleg .legtxt{padding:2px 14px 13px;line-height:1.55;color:var(--muted)}   /* legend folded by default (Harsha 2026-10-17); box + fold line = reading_shell.js (round 8 stage S) */
 .v{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:0 0 16px}
 .rf{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
 /* topic band (SAD per-verse viṣaya · AB section · VC two-tier) — its own card ABOVE the verse, tinted --topicbg so a
@@ -63,7 +67,7 @@ body.mode-pada .vjoin{display:none}
 .modebar button.on{background:var(--morph);color:#fff}
 .en{color:var(--muted);font-size:14px;font-style:italic;margin-top:8px}
 .trans{color:var(--muted);font-size:14px;line-height:1.55;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
-.w{cursor:help}.w:hover{background:rgba(120,120,120,.14);border-radius:3px}
+.w{cursor:help}.w:hover{background:rgba(120,120,120,.15);border-radius:3px}
 #tip{position:fixed;z-index:99;max-width:min(340px,92vw);background:var(--ink);color:var(--bg);font-size:13px;line-height:1.5;padding:10px 13px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .1s}
 #tip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px var(--tipacc)}
 #tip .tw{font-family:"Noto Serif Devanagari",serif;font-size:16px;font-weight:700;color:var(--bg)}
@@ -114,10 +118,11 @@ body.view-both .ardha-int{display:none}
    (cross-layer links, same affordance as the upaniṣad views: word-click only pins the card / presenter highlight) */
 body.view-both .mulq{border-bottom:1.5px dotted var(--mula)}
 /* cross-layer jump row inside the gloss cards (#tip mūla card, .gtip commentary card) + saffron arrival flash */
-#tip .jumps,.gtip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline,rgba(255,255,255,.2));display:flex;flex-wrap:wrap;gap:5px 8px}
-#tip .jrow,.gtip .jrow{cursor:pointer;color:var(--tipacc,#a7f3d0);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc,#a7f3d0) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-#tip .jrow:hover,.gtip .jrow:hover{background:color-mix(in srgb,var(--tipacc,#a7f3d0) 16%,transparent)}
-#tip .jrow .jof{opacity:.8;font-size:11px}#tip .jrow .jnext{margin-left:7px;padding-left:7px;border-left:1px solid color-mix(in srgb,var(--tipacc,#a7f3d0) 40%,transparent);font-weight:700}#tip .jrow .jnext:hover{text-decoration:underline}
+#tip .jumps,.gtip .jumps{margin-top:6px;padding-top:5px;border-top:1px solid var(--tipline);display:flex;flex-wrap:wrap;gap:5px 8px}
+#tip .jrow,.gtip .jrow{cursor:pointer;color:var(--tipacc);font-size:12px;border:1px solid color-mix(in srgb,var(--tipacc) 40%,transparent);border-radius:11px;padding:1px 9px;white-space:nowrap}
+#tip .jrow:hover,.gtip .jrow:hover{background:color-mix(in srgb,var(--tipacc) 16%,transparent)}
+#tip .jrow .jof,.gtip .jrow .jof{opacity:.8;font-size:11px}#tip .jrow .jnext,.gtip .jrow .jnext{margin-left:7px;padding-left:7px;border-left:1px solid color-mix(in srgb,var(--tipacc) 40%,transparent);font-weight:700}
+#tip .jrow .jnext:hover,.gtip .jrow .jnext:hover{text-decoration:underline}
 .gtip.pinned{pointer-events:auto;user-select:text;-webkit-user-select:text}
 body.vvnopeek .gtip{display:none !important}
 @keyframes navflashw{0%{background:rgba(217,119,6,.42);box-shadow:0 0 0 2px rgba(217,119,6,.5)}100%{background:transparent;box-shadow:0 0 0 2px transparent}}
@@ -148,10 +153,8 @@ body.vvnopeek .gtip{display:none !important}
 .cite.lk:hover{background:rgba(14,116,144,.14);border-radius:3px}
 .cite.lk.quote{border-bottom:none;text-decoration:underline;text-decoration-color:var(--cite);text-underline-offset:.22em;text-decoration-thickness:1px;color:inherit}.cite{color:var(--cite)}
 /* legend — collapsible card in the upaniṣad bhāṣyam format */
-.legend.rolelegend{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 16px;font-family:-apple-system,sans-serif;font-size:12.5px;color:var(--muted)}
-.legend.rolelegend>summary{list-style:none;cursor:pointer;padding:9px 13px}.legend.rolelegend>summary::-webkit-details-marker{display:none}
-.legend.rolelegend>summary .tw{font-size:11.5px;margin-left:6px}.legend.rolelegend>summary .tw::before{content:"▸ "}.legend.rolelegend[open]>summary .tw::before{content:"▾ "}
-.legend.rolelegend .legbody{padding:2px 13px 11px;display:flex;flex-wrap:wrap;gap:6px 16px}
+/* box + fold line = the shared legend (reading_shell.js CSS.legend, on the page — round 8 stage S) */
+.legend.rolelegend .legbody{padding:2px 14px 13px;display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted)}
 .rlgi{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .rlsw{display:inline-block;width:11px;height:11px;border-radius:3px}
 body.view-mula .rolelegend{display:none}
@@ -175,7 +178,7 @@ body.view-mula .rolelegend{display:none}
 .pd-ab-quote{margin:.3em 0;padding:.2em 0 .2em 1em;border-left:2px solid var(--line,#cdbfa0);font-size:13.5px;line-height:1.7;color:var(--muted,#5a5245);font-style:italic}
 .pd-ab-insp-attr{font-family:system-ui,sans-serif;font-size:12px;color:var(--muted,#8a7a5c);margin-top:.4em}
 </style><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body class="mode-sandhi view-mula"><div class="wrap">
-<a href="index.html" style="color:var(--brand);font-weight:800;font-size:14px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home">अध्ययन-सहकारी</a><a href="index.html" style="float:right;margin:6px 0 0 10px;color:var(--muted);font-size:13px;text-decoration:none">← back</a><button id="tog">◐ theme</button>
+<div class="topbar"><a href="index.html" style="color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;font-family:'Noto Serif Devanagari',serif" data-vv-brand data-short="अध्य·सहकारी" title="अध्ययन-सहकारी — Home" aria-label="अध्ययन-सहकारी — Home">अध्ययन-सहकारी</a><a href="index.html" style="color:var(--muted);font-size:13px;text-decoration:none">← back</a><div class="grow"><button id="tog">◐ theme</button></div></div>
 <h1>Pañcadaśī — reading (मनन)</h1><p class="sub">hover-to-read · analysis from the Gemini kāraka dataset</p>
 <details class="pd-about"><summary>About this edition</summary>
 <div class="pd-about-body">
@@ -427,12 +430,15 @@ function card(el){
     if(!gws.length)return '';var pd=[],mn=[],gr=[],pl=[];
     for(var i=0;i<gws.length;i++){var g=gws[i];pd.push(g.getAttribute('data-hw')||g.textContent||'');
       var m=g.getAttribute('data-mng');if(m)mn.push(m);var gg=g.getAttribute('data-gram');if(gg)gr.push(gg);var pp=g.getAttribute('data-peel');if(pp)pl.push(pp);}
-    var hf=VVCard.html({w:el.textContent||'',mng:mn.join(' · '),p:pd.join(' '),g:gr.join(' · '),peel:pl.length?pl.join('§§').split('§§'):null},{pAlways:true,kv:(function(){var kk=[];for(var z=0;z<gws.length;z++){var za=gws[z].getAttribute('data-kv');if(za)kk=kk.concat(za.split(';'));}return kk.length&&typeof kvrow==='function'?kvrow(kk.map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:(x.charAt(0)==='+'||gws.length>1)?[(x.charAt(0)==='+'?x.slice(1):x),2]:[x];})):'';})()});   // the ONE card shell (app/vv-card.js); पदच्छेद always drawn
+    var hf=VVCard.text({w:el.textContent||'',mng:mn.join(' · '),p:pd.join(' '),g:gr.join(' · '),peel:pl.length?pl.join('§§').split('§§'):null},{kv:(function(){var kk=[];for(var z=0;z<gws.length;z++){var za=gws[z].getAttribute('data-kv');if(za)kk=kk.concat(za.split(';'));}return kk.length&&typeof kvrow==='function'?kvrow(kk.map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:(x.charAt(0)==='+'||gws.length>1)?[(x.charAt(0)==='+'?x.slice(1):x),2]:[x];})):'';})()});   // the ONE card shell (app/vv-card.js); plain-text values, escaped there
     for(var j=0;j<gws.length;j++){var tj=gws[j].getAttribute('data-t');if(tj&&document.getElementById(tj)){hf+=jrowM(tj);break;}}
     return hf;}
-  var w=el.getAttribute('data-hw')||el.textContent||'';var mng=el.getAttribute('data-mng')||'';var gram=el.getAttribute('data-gram')||'';var peel=el.getAttribute('data-peel')||'';
+  // a sandhi-differing word (data-hw = its पद form, .bhsj = the printed slice): headword = the PRINTED word, पदच्छेद row = the पद —
+  // the unified views' rule (#9b; round 8 stage S, Harsha 2026-11-24)
+  var hw=el.getAttribute('data-hw'),sj=hw?el.querySelector('.bhsj'):null,w=sj?sj.textContent:(hw||el.textContent||''),p=sj&&hw!==w?hw:'';
+  var mng=el.getAttribute('data-mng')||'';var gram=el.getAttribute('data-gram')||'';var peel=el.getAttribute('data-peel')||'';
   if(!mng&&!gram&&!peel)return '';
-  var h=VVCard.html({w:w,mng:mng,g:gram,peel:peel?peel.split('§§'):null},{kv:(function(){var kvs=el.getAttribute('data-kv');return kvs&&typeof kvrow==='function'?kvrow(kvs.split(';').map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:x.charAt(0)==='+'?[x.slice(1),2]:[x];})):'';})()});   // the ONE card shell (app/vv-card.js)
+  var h=VVCard.text({w:w,mng:mng,p:p,g:gram,peel:peel?peel.split('§§'):null},{kv:(function(){var kvs=el.getAttribute('data-kv');return kvs&&typeof kvrow==='function'?kvrow(kvs.split(';').map(function(x){return x.charAt(0)==='*'?[x.slice(1),1]:x.charAt(0)==='+'?[x.slice(1),2]:[x];})):'';})()});   // the ONE card shell (app/vv-card.js); plain-text values, escaped there
   var tt=el.getAttribute('data-t');if(tt&&document.getElementById(tt))h+=jrowM(tt);
   return h;}
 function jrowM(id){return '<div class="jumps"><span class="jrow" data-jt="'+id+'">→ मूलम्</span></div>';}
@@ -444,7 +450,7 @@ document.addEventListener('mousemove',function(e){if(pinned||tip.style.display!=
 document.addEventListener('mouseout',function(e){if(pinned)return;if(e.target.closest('.gw'))hide();});
 document.addEventListener('click',function(e){if(tip.contains(e.target)){var jr=e.target.closest('.jrow');if(jr){e.stopPropagation();var tg=document.getElementById(jr.getAttribute('data-jt'));if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');}hide();if(tg)window.__vcNav(tg);}return;}var el=e.target.closest('.gw');if(!el){if(pinned){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();}return;}if(!card(el))return;e.stopPropagation();if(pinned===el){pinned.classList.remove('pinned');pinned=null;tip.classList.remove('pinned');hide();return;}if(pinned)pinned.classList.remove('pinned');pinned=el;el.classList.add('pinned');tip.classList.add('pinned');var r=el.getBoundingClientRect();show(el,r.left,r.top+r.height-18);},true);
 })();
-function html(d){return VVCard.html(d,{kv:'',noNote:true});}   // the ONE card shell (app/vv-card.js, #9b)
+function html(d){return VVCard.text(d,{kv:''});}   // the ONE card shell (app/vv-card.js, #9b): plain-text values (escaped there); ⚑ note row wherever the data has one (round 8 stage S)
 // anchor the tip to the tapped word: centred below it, flipped above when near the viewport bottom,
 // clamped to the screen width — so it never lands off-screen / needs scrolling (esp. mobile, right column).
 function place(el){const r=el.getBoundingClientRect();const tw=tip.offsetWidth||300,th=tip.offsetHeight||80,m=8;

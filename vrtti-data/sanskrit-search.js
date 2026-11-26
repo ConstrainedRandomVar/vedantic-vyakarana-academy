@@ -226,6 +226,9 @@
   // as `rAvyaya` (spelled here in its bare-र् form instead of its विसर्ग form) — a blanket
   // "any word ending in र्" redirect was tried and rejected (regressed 50 corpus cases,
   // e.g. अहर्+एव must keep its र् — day/अहन्-अहर् retains र् before a vowel, not this rule).
+  // a word ending in a SHORT vowel (6.1.73 ह्रस्वस्य): a bare consonant (inherent अ), a short mātrā, or a short independent vowel
+  var SHORTV = function (a) { var c = a[a.length - 1]; return isCons(c) || 'िुृॢ'.indexOf(c) >= 0 || 'अइउऋऌ'.indexOf(c) >= 0; };
+  var LONGV = function (a) { var c = a[a.length - 1]; return 'ाीूॄॣेैोौ'.indexOf(c) >= 0 || 'आईऊॠॡएऐओऔ'.indexOf(c) >= 0; };
   var RAVYAYA_BARE_R = { 'पुनर्': 1, 'अन्तर्': 1, 'प्रातर्': 1, 'बहिर्': 1, 'आविर्': 1, 'तिरर्': 1, 'सुवर्': 1, 'अहर्': 1 };
   function sandhiJoin(a, b, elideAv) {
     if (!a) return b; if (!b) return a;
@@ -252,8 +255,7 @@
         if (Q === 'ह') return stem + 'द्ध' + b.slice(1);                     // त्+ह → द्ध
         if ('ङञणनम'.indexOf(Q) >= 0) return stem + 'न्' + b;                 // यरोऽनुनासिके ऽनुनासिको वा (8.4.45): त्/द् + any nasal → न् (dental class's OWN nasal, not a copy of Q) — तत्+मयः→तन्मयः, NOT तम्मयः; same pattern as क्/ट्/प् below (line ~250), which already gets this right
         if (P === 'त' && 'गघजझडढदधबभयरवह'.indexOf(Q) >= 0) return stem + 'द्' + b; // त्+voiced → द्
-        if ('कखपफ'.indexOf(Q) >= 0) return stem + 'त्' + b;                  // चर्त्व (8.4.55 खरि च): remaining voiceless stops devoice/stay त् — तद्+परः → तत्परः (the specific pairs above — श्चुत्व, ष्टुत्व, ल, ह, न/म — are already covered; this is the general case for everything else voiceless)
-      }
+      }                                                                      // (त्/द् before the rest of खर् — क ख प फ त थ स ष: चर्त्व, the general rule just below)
       if (P === 'न') {                                                       // word-final dental न् + voiceless stop → anusvāra + class sibilant (vikārān cet → vikārāṃś cet)
         if (Q === 'च' || Q === 'छ') return stem + 'ंश्' + b;                  // न्+c/ch → ṃś (रामान्+च → रामांश्च)
         if (Q === 'त' || Q === 'थ') return stem + 'ंस्' + b;                  // न्+t/th → ṃs
@@ -264,7 +266,16 @@
         if ('गघजझडढदधबभयरवह'.indexOf(Q) >= 0) return stem + { 'क': 'ग', 'ट': 'ड', 'प': 'ब' }[P] + '्' + b; // → voiced stop (samyak jñānam → samyag jñānam; vāk devī → vāg devī)
         if ('ङञणनम'.indexOf(Q) >= 0) return stem + { 'क': 'ङ', 'ट': 'ण', 'प': 'म' }[P] + '्' + b;          // → homorganic nasal before a nasal (vāk maya → vāṅ-maya; ṣaṭ māsa → ṣaṇ-māsa)
       }
-      return a + b;                                                          // other C् + C → abut (क्/ट्/प् before voiceless/sibilant stay; ङ्/ण् finals — see limitations)
+      // चर्त्व — 8.4.55 खरि च: «खरि च परतो झलां चरादेशो भवति। जश्ग्रहणं नानुवर्तते» (Kāśikā; झलां from 8.4.53 झलां जश् झशि; SK: «खरि परे झलां
+      // चरः स्युः … तच्छिवः»). A final stop before any खर् letter (क ख च छ ट ठ त थ प फ श ष स) becomes the चर् of ITS OWN class (स्थानेऽन्तरतमः
+      // 1.1.50): क-वर्ग → क्, ट-वर्ग → ट्, त-वर्ग → त्, प-वर्ग → प् — तद्+साधारणम् → तत्साधारणम्, क्षुध्+पिपासा → क्षुत्पिपासा, त्रिष्टुब्+छन्दः →
+      // त्रिष्टुप्छन्दः. Tripādī order is kept: 8.2.39 झलां जशोऽन्ते (the पद's citation द्/ग्/ड्/ब्) and the earlier 8.4.40 स्तोः श्चुना श्चुः /
+      // 8.4.41 ष्टुना ष्टुः above (त्/द् + च/छ/ट/ठ, + श → च्छ by 8.4.63) come first; 8.4.55 then devoices what is left. Not here: a च-वर्ग final
+      // (8.2.30 चोः कुः vs 8.2.36 व्रश्च… — which one depends on the word, not the letter) and ह्/sibilant finals; 8.4.56 वाऽवसाने is pause-only.
+      // No ष्टुत्व for त्+ष (8.4.43 तोः षि) or for a पदान्त ट-वर्ग before a dental (8.4.42 न पदान्ताट्टोरनाम्): तद्+षट् → तत्षट्, षड्+सु → षट्सु.
+      var CAR = { 'ख': 'क', 'ग': 'क', 'घ': 'क', 'ठ': 'ट', 'ड': 'ट', 'ढ': 'ट', 'थ': 'त', 'द': 'त', 'ध': 'त', 'फ': 'प', 'ब': 'प', 'भ': 'प' }[P];
+      if (CAR && 'कखचछटठतथपफशषस'.indexOf(Q) >= 0) return stem + CAR + '्' + b;
+      return a + b;                                                          // other C् + C → abut (क्/ट्/त्/प् before voiceless/sibilant stay; ङ्/ण् finals — see limitations)
     }
     if (a.endsWith('ं')) return vs ? a.slice(0, -1) + 'म' + IM[b[0]] + b.slice(1) : a + b; // word-final -ṃ(=-m) + V → m+mātrā
     if (a.endsWith('ः')) {                                                    // visarga sandhi
@@ -288,6 +299,12 @@
       if ('िीुूृॄॢॣेैोौ'.indexOf(base[base.length - 1]) >= 0 || rAvyaya) return base + 'र्' + b; //  (i/u/ṛ/e/o…)ḥ + voiced cons → r
       return base + 'ो' + b;                                                //  aḥ + voiced cons → o
     }
+    // तुक् before छ — 6.1.73 छे च («छकारे परतः संहितायां विषये ह्रस्वस्य तुगागमो भवति», Kāśikā; tuk = त्, then 8.4.40 श्चुत्व → च्: SK
+    // «स्वच्छाया । शिवच्छाया»): a SHORT final vowel (a consonant's inherent अ, ि ु ृ ॢ, or a one-vowel word अ इ उ ऋ) before छ takes च् —
+    // न+छायात्मा → नच्छायात्मा. After a LONG vowel at a पद end it is OPTIONAL (6.1.76 पदान्ताद्वा, overriding the obligatory 6.1.75 दीर्घात्
+    // inside a word: «कुटीच्छाया, कुटीछाया», Kāśikā) — that form is a sandhiJoinVariants variant, the primary keeps छ. (6.1.74 आङ्माङोश्च makes
+    // it obligatory after the preverb आ and the prohibitive मा — a matter of meaning, not of letters; the variant covers आच्छादयति / माच्छिदत्.)
+    if (b[0] === 'छ' && SHORTV(a)) return a + 'च्' + b;
     if (/^ओ[मं]/.test(b) && (a.endsWith('ा') || isCons(a[a.length - 1])))   // पररूप (6.1.95 ओमाङोश्च): a/ā + ओम् → ओम् absorbs the vowel — सविता+ओम् → सवितोम्, तदा+ओम् → तदोम् (not vṛddhi सवितौम्)
       return (a.endsWith('ा') ? a.slice(0, -1) : a) + 'ो' + b.slice(1);
     return vowelSandhi(a, b, elideAv);                                       // vowel-final
@@ -308,6 +325,9 @@
     if (a2 && a2.endsWith('ः') && b && 'शषस'.indexOf(b[0]) >= 0) add(a2.slice(0, -1) + b[0] + '्' + b);
     // इस्/उस् (not a suffix) + क/ख/प/फ → ष् (8.3.41 इदुदुपधस्य चाप्रत्ययस्य): आविस्+कृणोमि → आविष्कृणोमि, निस्+काम → निष्काम
     if (a2 && /[िु]ः$/.test(a2) && b && 'कखपफ'.indexOf(b[0]) >= 0) add(a2.slice(0, -1) + 'ष्' + b);
+    // तुक् before छ after a LONG final vowel: optional at a पद end (6.1.76 पदान्ताद्वा: «कुटीच्छाया, कुटीछाया», Kāśikā; SK «लक्ष्मीच्छाया ।
+    // लक्ष्मीछाया») — लक्ष्मी+छाया → लक्ष्मीच्छाया beside the primary लक्ष्मीछाया
+    if (a && b && b[0] === 'छ' && LONGV(a)) add(a + 'च्' + b);
     // the vyāhṛti स्वर् (r-final) beside the pronoun स्वः (sva): स्वरिति, स्वर्लोकः — a variant only, never the primary
     if (a2 === 'स्वः' && b) { if (b[0] in IM) add('स्वर' + IM[b[0]] + b.slice(1)); else if ('गघङजझञडढणदधनबभमयरलवह'.indexOf(b[0]) >= 0) add('स्वर्' + b); }
     return out;

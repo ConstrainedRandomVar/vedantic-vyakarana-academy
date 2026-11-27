@@ -974,8 +974,8 @@ document.getElementById('tog').onclick=function(){
   function load(){ if(loading) return loading; loading=fetch('gloss-taitiriya.json').then(function(r){return r.ok?r.json():{};}).then(function(d){ if(d.__kv){ if(window.__kvMerge) window.__kvMerge(d.__kv); delete d.__kv; } if(window.GT) for(var k in d) if(!(k in GT)) GT[k]=d[k]; }).catch(function(){}); return loading; }
   var RE=/(<span class="bhsj">[^<]*<[/]span><span class="bhsp">[^<]*<[/]span>)|(<a[ >][^]*?<[/]a>)|(<[^>]+>)|([ऀ-ॣ०-९ॱ-ॿ]+)/g;
   // a verse's Upaniṣad quotes (data-vmq "vw0-vw1:key:word;…", bucket 4 — NOT data-vq, the Śāstraprakāśikā's quote length) → <span class="vs-mq" data-jmt> around those words, once they exist
-  function vq(x){ var q=x.getAttribute('data-vmq'); if(!q||x.querySelector('.vs-mq')) return; q.split(';').forEach(function(t){ var p=t.split(':'), r=p[0].split('-'), k=p.slice(1,-1).join(':');
-      var a=x.querySelector('.vkw[data-vw="'+r[0]+'"]'), b=x.querySelector('.vkw[data-vw="'+r[1]+'"]'); if(!a||!b||a.parentNode!==b.parentNode) return;
+  function vq(x){ var q=x.getAttribute('data-vmq'); if(!q||x.querySelector('.vs-mq')) return; var IW=JSON.parse(x.getAttribute('data-vmqi')||'[]'); q.split(';').forEach(function(t,qi){ var p=t.split(':'), r=p[0].split('-'), k=p.slice(1,-1).join(':');
+      var a=x.querySelector('.vkw[data-vw="'+r[0]+'"]'), b=x.querySelector('.vkw[data-vw="'+r[1]+'"]'); if(!a||!b||a.parentNode!==b.parentNode) return; var E=IW.filter(function(e){ return e[0]===qi; }), T=document.createElement('span'); if(!E.every(function(e){ var w=x.querySelector('.vkw[data-vw="'+e[1]+'"]'); T.innerHTML=e[2]; return w&&w.textContent===T.textContent; })) return; E.forEach(function(e){ x.querySelector('.vkw[data-vw="'+e[1]+'"]').innerHTML=e[2]; });
       var sp=document.createElement('span'); sp.className='vs-mq'; sp.setAttribute('data-jmt',k); sp.setAttribute('data-jmw',p[p.length-1]); a.parentNode.insertBefore(sp,a);
       var n=a; while(n){ var nx=n.nextSibling; sp.appendChild(n); if(n===b) break; n=nx; } }); }
   // the VNM vistara's quotes of its own kārikā (data-ovq "vw0-vw1:<kārikā line data-k>:<vw>;…", bucket 3) → .vk-prat around those words
